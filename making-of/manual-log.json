@@ -123,6 +123,19 @@
           "url": "https://github.com/fischerq/ludumdare60/pull/5"
         }
       ]
+    },
+    {
+      "date": "2026-10-08",
+      "seq": 22.5,
+      "kind": "human",
+      "title": "Reviewed and merged pull request #6",
+      "body": "Merged the chat-style timeline, the screenshots, the light/dark toggle and the new event subtitle into `main`.",
+      "links": [
+        {
+          "label": "Pull request #6",
+          "url": "https://github.com/fischerq/ludumdare60/pull/6"
+        }
+      ]
     }
   ]
 }
