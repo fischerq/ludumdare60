@@ -136,6 +136,19 @@
           "url": "https://github.com/fischerq/ludumdare60/pull/6"
         }
       ]
+    },
+    {
+      "date": "2026-10-08",
+      "seq": 23.5,
+      "kind": "human",
+      "title": "Reviewed and merged pull request #7",
+      "body": "Merged the event page's Munich eSports link and Games card into `main`.",
+      "links": [
+        {
+          "label": "Pull request #7",
+          "url": "https://github.com/fischerq/ludumdare60/pull/7"
+        }
+      ]
     }
   ]
 }

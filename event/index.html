@@ -37,12 +37,17 @@
     .sched td:first-child { color: var(--muted); padding-right: 12px; }
     .sched td:last-child { text-align: right; font-weight: 600; }
     #local-note { font-size: 13px; color: var(--muted); margin-top: 8px; }
-    .games { list-style: none; padding: 0; margin: 0; }
-    .games li { padding: 12px 0 2px; border-top: 1px solid var(--line); }
-    .games li:first-child { border-top: 0; padding-top: 4px; }
-    .g-title { font-weight: 700; font-size: 18px; }
-    .g-by { color: var(--muted); font-size: 14px; }
-    .games .links { margin-top: 8px; }
+    .games { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+    .game { background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+    .g-shot { display: block; aspect-ratio: 3 / 4; background: #1d2333; }
+    .g-shot img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+    .g-info { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 2px; flex: 1; }
+    .g-title { font-weight: 700; font-size: 16px; }
+    .g-by { color: var(--muted); font-size: 13px; }
+    .g-actions { display: flex; gap: 6px; margin-top: 8px; }
+    .g-actions a { flex: 1; text-align: center; text-decoration: none; font-weight: 600; font-size: 13px; padding: 8px 2px; white-space: nowrap;
+      border-radius: 10px; border: 1px solid var(--line); color: var(--accent-strong); background: var(--surface); }
+    .g-actions a:first-child { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
   </style>
 </head>
 <body>
@@ -98,13 +103,16 @@
     <section class="card" aria-labelledby="games">
       <h2 id="games">Games</h2>
       <p style="color:var(--muted)">Games made at the jam will be listed here.</p>
-      <ul class="games">
-        <li><span class="g-title">mini-gurke</span> <span class="g-by">by Quirin · work in progress</span>
-          <nav class="links">
-            <a href="../">Play</a>
-            <a href="../making-of/">How it's being made</a>
-          </nav></li>
-      </ul>
+      <div class="games">
+        <article class="game">
+          <a class="g-shot" href="../"><img src="games/mini-gurke.jpg" alt="mini-gurke main menu" loading="lazy"></a>
+          <div class="g-info">
+            <div class="g-title">mini-gurke</div>
+            <div class="g-by">by Quirin · work in progress</div>
+            <div class="g-actions"><a href="../">Play</a><a href="../making-of/">Making-of</a></div>
+          </div>
+        </article>
+      </div>
     </section>
   </main>
 

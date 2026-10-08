@@ -75,7 +75,8 @@ Every human prompt and its token usage/cost is published in `making-of/` as a sc
 Munich eSports). It only states facts with a source. The official start (Sat 17 Oct 00:00 CEST) is from the ldjam.com countdown.
 Venue hours (Sat 9:00 to Sun 17:00) are the user's current plan, and coordination happens on the Gamedev/Muc Discord
 (https://discord.gg/FeZ96Z89A). Update the page when the plan changes.
-The Games card lists the jam's games; add each game (title, author, play link) as people share them.
+The Games card shows one tile per game (thumbnail in `event/games/`, title, author, Play and Making-of
+buttons); add a tile for each game as people share them.
 
 ## Times in the published log
 The repo must not contain detailed timestamps. Every timeline item (Claude Code turn or `manual-log.json` entry) has
@@ -83,6 +84,7 @@ only a `date` (Munich) and a project-wide `seq` for ordering. A clock time (`tim
 during the jam (`show_times_between` in `making-of/meta.json`). `tools/ai_log.py` uses exact times from the local
 transcript internally and never writes them. Durations are fine. When adding a manual entry, set `seq` to the current
 max + 1, or to a fraction between two neighbours for something that happened earlier.
+The making-of timeline shows newest first by default, with a button to flip the order.
 
 ## Testing
 - Run `python3 -m http.server` and open the page; check the browser console for errors.

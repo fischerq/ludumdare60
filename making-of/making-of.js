@@ -269,7 +269,11 @@ function timelineItem(item, ctx) {
   return li;
 }
 
+// Newest first by default; the order button flips it.
+let newestFirst = true;
+
 function renderTimeline(items, ctx) {
+  if (newestFirst) items = [...items].reverse();
   const tl = $('#timeline');
   tl.textContent = '';
   if (!items.length) { tl.innerHTML = '<p class="empty">Nothing logged yet.</p>'; return; }
@@ -319,7 +323,7 @@ function chatThread(e) {
 function renderConvos(threads) {
   const box = $('#convos');
   box.innerHTML = '';
-  for (const th of [...threads].sort((a, b) => a.seq - b.seq)) {
+  for (const th of [...threads].sort((a, b) => (newestFirst ? b.seq - a.seq : a.seq - b.seq))) {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'convo-card';
@@ -400,12 +404,23 @@ async function main() {
   for (const s of sessions) threads.set(s, sessionThread(s, ctx));
   for (const e of manual) if (e.conversation?.length) threads.set(e, chatThread(e));
   renderConvos(threads.values());
+  const allThreads = [...threads.values()];
 
   const items = [
     ...sessions.flatMap((s) => s.turns.map((turn) => ({ seq: turn.seq, date: turn.date, turn, session: s, n: numbering.get(turn) }))),
     ...manual.map((entry) => ({ seq: entry.seq, date: entry.date, entry })),
   ].sort((x, y) => x.seq - y.seq);
   renderTimeline(items, ctx);
+
+  const btn = $('#order');
+  const paint = () => { btn.textContent = newestFirst ? 'Newest first ↓' : 'Oldest first ↑'; };
+  paint();
+  btn.addEventListener('click', () => {
+    newestFirst = !newestFirst;
+    paint();
+    renderTimeline(items, ctx);
+    renderConvos(allThreads);
+  });
 }
 
 main().catch((err) => {
