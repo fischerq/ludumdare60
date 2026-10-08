@@ -18,6 +18,10 @@ Game jam project: a mobile-first Phaser 3 browser game deployed to Netlify as a 
   tweaks are one-line edits.
 - One scene per file in `src/scenes/`, registered in the scene list in `src/main.js`.
 
+## Workflow
+- After committing and pushing work to the session's branch, always open a pull request against `main`
+  automatically (no need to ask first). If a PR for the branch is already open, push to it instead of opening a new one.
+
 ## Testing
 - Run `python3 -m http.server` and open the page; check the browser console for errors.
 - Sanity-check in a narrow portrait viewport with touch emulation (e.g. Playwright with `hasTouch`/`isMobile`).
