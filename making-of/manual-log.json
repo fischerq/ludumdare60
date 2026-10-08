@@ -1,11 +1,29 @@
 {
-  "_readme": "Work done outside Claude Code sessions, merged into the making-of timeline. Edit by hand. 'at' is an ISO UTC timestamp, or a YYYY-MM-DD date when the time wasn't recorded. kind: human | claude-chat | other. Optional: body (markdown), prompts (list of verbatim prompts), links [{label, url}], duration.",
+  "_readme": "Work done outside Claude Code sessions, merged into the making-of timeline. Edit by hand. 'at' is an ISO UTC timestamp (approximate is fine: outside the jam it only decides the order, clock times aren't shown) or a YYYY-MM-DD date. kind: human | claude-chat | other. Optional: body (markdown), prompts (list of verbatim prompts), links [{label, url}], duration. Optional conversation: [{q, a}] for an imported chat (q verbatim, a markdown).",
   "entries": [
     {
       "at": "2026-10-07",
       "kind": "claude-chat",
-      "title": "Picked the game engine in a separate Claude chat",
-      "body": "Before any code, a separate claude.ai conversation compared engines for a phone-first browser jam game. Outcome: **Phaser 3**, loaded from a CDN with no build step, which is what the first Claude Code prompt asks for.\n\n*The full conversation hasn't been imported yet, and its date and time are still to be confirmed.*"
+      "title": "Picked the engine and wrote the bootstrap prompt in a separate Claude chat",
+      "body": "Before any code, a claude.ai conversation compared engines for a phone-first browser jam game and settled on **Phaser 3 from a CDN, no build step**, deployed on Netlify. It also drafted the bootstrap prompt that started the first Claude Code session.\n\nThat prompt was cut off when it was pasted: everything after \"Placeholder art is drawn in\" got lost. The missing rules were added later in the Claude Code session.\n\n*Lightly condensed by Quirin: a superseded GitHub Pages version of the prompt is reduced to a one-line note.*",
+      "conversation": [
+        {
+          "q": "What's the best framework for a game jam with Claude? I want to run and iterate in the browser, primarily on my phone, maybe also a laptop. Not sure about the engine.",
+          "a": "Phaser, delivered as a single HTML file that pulls Phaser from a CDN, is the best fit.\n\n**Why this combination works**\n- **No build step.** One self-contained HTML page, published and opened on the phone right away. Each change is edited and republished to the same link; you reload. No toolchain, no local server, no laptop required.\n- **Phaser is well-trodden ground.** Mature, well documented, with lots of example code, so Claude is reliable with it. It covers what jam games need: sprites, tilemaps, arcade physics, tweens, particles, sound, cameras, scene management.\n- **It handles phones properly.** Built-in touch/pointer input, and a scale manager that fits and letterboxes the game to any screen.\n\n**Alternatives depending on the game**\n- **Plain Canvas / vanilla JS** for very small or abstract games (puzzles, one-button games). Less to learn, but you rebuild basics like collision yourself.\n- **KAPLAY** (formerly Kaboom.js) for tiny arcade games; quicker and more playful than Phaser, smaller ecosystem.\n- **Three.js** if the game needs to be 3D. Same single-file/CDN workflow, but 3D costs much more jam time.\n- **Godot** is a great engine but doesn't fit this workflow: editor on a laptop and a web export for every iteration.\n\n**Tips**\n- Design for touch from minute one (tap/swipe, big hit areas, decide portrait vs. landscape early).\n- Use generated or placeholder art (shapes, emoji, art drawn in code).\n- Iterate in small changes after each playtest.\n- Keep state in memory, not browser storage."
+        },
+        {
+          "q": "Give me a prompt to bootstrap the repo for this with Phaser.",
+          "a": "*(First version targeted GitHub Pages; superseded by the Netlify version below.)*"
+        },
+        {
+          "q": "I'll serve via Netlify.",
+          "a": "Only a few lines change, since a no-build repo works on Netlify as-is: swap the Pages workflow for a `netlify.toml` (publish = \".\", no build command, no-cache headers), update the README note, and drop the Pages setup step.\n\nTo connect it in Netlify: \"Add new site\" → \"Import from Git\" → pick the repo. It reads netlify.toml, so leave the build command empty. Every push to main deploys to your `*.netlify.app` URL. Pull requests get deploy previews, so a change on a branch can be playtested at its own URL before merging."
+        },
+        {
+          "q": "Give me a new prompt for the bootstrap.",
+          "a": "**Final bootstrap prompt (paste into Claude Code):**\n\n```\nBootstrap a game jam repo for a mobile-first browser game using Phaser 3, deployed on Netlify.\n\nConstraints:\n- No build step, no npm, no bundler. Plain ES modules served as static files.\n- Load Phaser from a CDN (jsdelivr, pinned to a specific 3.x version) in index.html.\n- Must run as-is on any static host, so use relative paths only.\n- Phone is the primary target: touch controls first, keyboard as a bonus on laptop.\n\nStructure:\n- index.html: viewport meta (no zoom), full-screen canvas, Phaser script tag, loads src/main.js\n- src/main.js: Phaser game config with Scale.FIT + CENTER_BOTH, a fixed logical resolution (portrait 720x1280 unless I say otherwise), arcade physics, and the scene list\n- src/scenes/: BootScene (generates placeholder textures in code with Graphics, no image files), MenuScene (tap to start), GameScene (a tiny playable demo: a player that moves toward where you touch or drag, plus something to collect, plus a score), GameOverScene (tap to restart)\n- src/config.js: tunable constants (speeds, sizes, colors) in one place, so I can ask for \"feel\" changes quickly\n- assets/: empty folder with a .gitkeep, for later\n- netlify.toml: publish = \".\" with no build command; add a header rule so index.html and src/** are served with Cache-Control: no-cache (so the phone always picks up the latest push)\n- README.md: how to play locally (any static server, e.g. `python3 -m http.server`) and a note that Netlify deploys on push\n\nAlso create CLAUDE.md with working rules for future sessions:\n- Keep it no-build and CDN-only. Don't add npm dependencies.\n- Every change must keep the game playable on a phone. Touch input is the primary control scheme.\n- Placeholder art is drawn in code unless I provide assets.\n- Don't use localStorage for anything important.\n- Put tunables in src/config.js, not inline.\n- Make small, focused changes and commit each one with a clear message, so I can playtest after every push.\n- After each change, tell me in one or two sentences what to test on the phone.\n\nFinally, prevent the usual mobile pitfalls: block pull-to-refresh and double-tap zoom on the canvas, handle multi-touch, and pause the game when the tab is hidden.\n\nWhen done, commit and push.\n```"
+        }
+      ]
     },
     {
       "at": "2026-10-07T21:29:31Z",
@@ -13,14 +31,23 @@
       "title": "Created the GitHub repository",
       "body": "Created `fischerq/ludumdare60` on GitHub with an initial README commit.",
       "links": [
-        { "label": "Initial commit", "url": "https://github.com/fischerq/ludumdare60/commit/1932492cfa7c78324570d19677c4dcd0868d8c5e" }
+        {
+          "label": "Initial commit",
+          "url": "https://github.com/fischerq/ludumdare60/commit/1932492cfa7c78324570d19677c4dcd0868d8c5e"
+        }
       ]
     },
     {
       "at": "2026-10-08",
       "kind": "human",
-      "title": "Connected the repository to Netlify",
-      "body": "Linked the GitHub repo to Netlify, so every push to `main` deploys the site. No build command; `netlify.toml` publishes the repo root as-is.\n\n*Exact time not recorded.*"
+      "title": "Started following r/aigamedev",
+      "body": "Started reading the AI game-dev community on Reddit for ideas and to see what others build with AI tools.",
+      "links": [
+        {
+          "label": "r/aigamedev",
+          "url": "https://www.reddit.com/r/aigamedev/"
+        }
+      ]
     },
     {
       "at": "2026-10-08T09:00:07Z",
@@ -28,7 +55,28 @@
       "title": "Reviewed and merged pull request #1",
       "body": "Merged Claude's first pull request (starter game, making-of log, plan-usage tracking) into `main`, which deployed it.",
       "links": [
-        { "label": "Pull request #1", "url": "https://github.com/fischerq/ludumdare60/pull/1" }
+        {
+          "label": "Pull request #1",
+          "url": "https://github.com/fischerq/ludumdare60/pull/1"
+        }
+      ]
+    },
+    {
+      "at": "2026-10-08T11:00:00Z",
+      "kind": "human",
+      "title": "Connected the repository to Netlify",
+      "body": "Linked the GitHub repo to Netlify during a lunch break, so every push to `main` now deploys the site. No build command; `netlify.toml` publishes the repo root as-is."
+    },
+    {
+      "at": "2026-10-08T11:56:42Z",
+      "kind": "human",
+      "title": "Reviewed and merged pull request #2",
+      "body": "Merged the menu link to the making-of page, the plan-usage filtering, the event page and this outside-Claude log into `main`.",
+      "links": [
+        {
+          "label": "Pull request #2",
+          "url": "https://github.com/fischerq/ludumdare60/pull/2"
+        }
       ]
     }
   ]
