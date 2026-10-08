@@ -1,6 +1,11 @@
 # Working rules
 
-Game jam project: a mobile-first Phaser 3 browser game deployed to Netlify as a static site.
+Game jam project: **mini-gurke** (working title) by Quirin (https://fischerq.de) for Ludum Dare 60, made at the
+in-person jam hosted by Munich eSports at the Gamerei. A mobile-first Phaser 3 browser game deployed to Netlify as
+a static site.
+
+When the title changes, update `GAME_TITLE` in `src/config.js`, `<title>` in `index.html`, `title` in
+`making-of/meta.json` and the README heading.
 
 ## Hard constraints
 - **No build, CDN only.** Plain ES modules served as static files. Don't add npm, `package.json`, bundlers,
@@ -30,8 +35,8 @@ Every human prompt and its token usage/cost is published in `making-of/` as a sc
 - **Plan usage:** at the start of every turn, call the claude-code-remote `list_events` tool with
   `session_id` = `session_` + the part of `$CLAUDE_CODE_REMOTE_SESSION_ID` after `cse_`,
   `kinds: ["rate_limit_event"]` and `limit: 20`. That's enough; the exporter reads the 5-hour and weekly
-  utilization out of the tool result in the transcript. If this turn's event isn't in the result yet, call it again
-  later in the turn. Skip silently when the tool isn't available (e.g. local CLI sessions).
+  utilization out of the tool result in the transcript. If this turn's event isn't in the result yet, call it once more
+  before the final commit; events aren't emitted every turn, so if there's still none, move on. Skip silently when the tool isn't available (e.g. local CLI sessions).
 - Even a turn that changes no code (a question, a plan) must still commit and push the updated log.
 - Never hand-edit `making-of/sessions/*.json`; regenerate them. Never delete a session file: the transcript it came
   from is gone once the cloud container is reclaimed. `making-of/meta.json` is the place for hand-written notes.

@@ -1,7 +1,11 @@
 {
-  "title": "Ludum Dare 60",
+  "title": "mini-gurke",
+  "event": "Ludum Dare 60",
+  "venue": "the in-person jam hosted by Munich eSports at the Gamerei",
+  "author": "Quirin",
+  "author_url": "https://fischerq.de",
   "game_url": "../",
   "repo_url": "https://github.com/fischerq/ludumdare60",
-  "plan_note": "Built on a Claude Max (10x) subscription, which is a flat monthly fee. The dollar figures are what the same tokens would cost at API list prices. The plan-usage figures show how much of the subscription's 5-hour and weekly limits each prompt used. Those limits are account-wide, so any other Claude use at the same time is included.",
-  "plan": "Claude Max (10x)"
+  "plan": "Claude Max (10x)",
+  "plan_note": "Built on a Claude Max (10x) subscription, which is a flat monthly fee. The dollar figures are what the same tokens would cost at API list prices. The plan-usage figures show how much of the subscription's 5-hour and weekly limits each prompt used. Those limits are account-wide, so any other Claude use at the same time is included."
 }

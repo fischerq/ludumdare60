@@ -1,6 +1,10 @@
-# ludumdare60
+# mini-gurke
 
-Mobile-first browser game for Ludum Dare 60, built with [Phaser 3](https://phaser.io/) (loaded from CDN).
+*(working title)*
+
+A mobile-first browser game by [Quirin](https://fischerq.de) for the upcoming **Ludum Dare 60** game jam,
+made at the in-person jam hosted by Munich eSports at the Gamerei. Built with [Phaser 3](https://phaser.io/)
+(loaded from CDN) and Claude Code.
 No build step, no npm: plain ES modules served as static files.
 
 ## Play locally

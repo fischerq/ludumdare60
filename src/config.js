@@ -1,5 +1,9 @@
 // All tunable constants live here. Tweak these for "feel" changes.
 
+// Working title, still to be changed. Also update index.html <title> and making-of/meta.json.
+export const GAME_TITLE = 'mini-gurke';
+export const EVENT = 'Ludum Dare 60';
+
 export const GAME_WIDTH = 720;
 export const GAME_HEIGHT = 1280;
 

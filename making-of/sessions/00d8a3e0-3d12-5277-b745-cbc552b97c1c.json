@@ -4,7 +4,7 @@
  "session_url": "https://claude.ai/code/session_01PtMahQJbmP42BEmVcc5niZ",
  "claude_code_version": "2.1.293",
  "started_at": "2026-10-07T22:33:11.106Z",
- "ended_at": "2026-10-08T07:23:58.167Z",
+ "ended_at": "2026-10-08T07:27:37.446Z",
  "turns": [
   {
    "index": 1,
@@ -166,15 +166,16 @@
   {
    "index": 4,
    "sent_at": "2026-10-08T07:21:42.159Z",
-   "ended_at": "2026-10-08T07:23:58.167Z",
-   "duration_s": 136,
+   "ended_at": "2026-10-08T07:24:09.558Z",
+   "duration_s": 147,
    "prompt": "Is there any other way to get the plan limit, eg checking some claude code api at start/end of turns/sessions? Im on a 10x max plan",
-   "reply": "Lists render now. Exporting and pushing.",
+   "reply": "Yes. Cloud sessions record your real plan usage in their event stream, and the making-of page now tracks it per prompt. That's pushed to pull request #1.\n\n**Where it comes from:** at the start of each turn, Claude Code logs a rate-limit event with your utilization of both Max limits. That's the 5-hour rolling window and the weekly limit, each with its reset time. These events aren't saved anywhere in the container, but I can read them with the cloud session's `list_events` tool.\n\n**How it's captured:**\n- **Fetching:** `CLAUDE.md` now tells Claude to call that tool at the start of every turn. It's a small call, about 20 events filtered to just the rate-limit ones.\n- **Saving:** the tool's result lands in the local transcript, and `tools/ai_log.py` picks it up from there. Snapshots are also kept in the session files, so nothing is lost when the container is thrown away.\n\n**Readings for this project so far:**\n\n| Prompt | 5-hour window at start | Weekly limit at start |\n|---|---|---|\n| #1 bootstrap (Oct 7) | 1% | 31% |\n| #2 auto PR | 3% | 32% |\n| #3 making-of | 5% | 32% |\n| #4 this one | 6% | 32% |\n\nSo building the game, the log and this page has used about 1% of your weekly Max (10x) limit so far. At API list prices the same tokens would cost about $3.32.\n\n**On the page:** a new totals tile shows the share of the weekly limit used. Each prompt card shows how much of each limit went up before the next prompt, for example \"plan +1% of 5h · 0% of week\". `making-of/meta.json` now names your plan.\n\n**Limitations:**\n- **Only 1% steps.** Small prompts often show +0%; the total across the project is the more meaningful number.\n- **Account-wide.** The limits cover all your Claude use, so a claude.ai chat or another session at the same time gets counted against whichever prompt was running.\n- **Cloud sessions only.** The event stream exists only in cloud sessions. In a local Claude Code CLI session there's nothing to read, so those prompts get token and cost figures but no plan figures.\n- **This prompt's own figure arrives late.** Like the reply text, it's filled in once you send the next prompt.",
    "progress_notes": [
     "No rate-limit data in the local transcript. The cloud session's event stream has a `rate_limit_event` kind, though. Checking whether those events carry plan utilization.",
     "It works: the making-of turn used about 1% of your 5-hour window and under 1% of the weekly limit. Fetching older events to backfill the first two turns.",
     "All four turns now have snapshots. Turn 1 started at 31% of the weekly limit, and the account was at 32% by turn 2. Updating the page and the workflow rules.",
-    "Rendering works. One fix: a bullet list that comes straight after a line of text shows as raw `-` lines. Fixing the mini-markdown renderer."
+    "Rendering works. One fix: a bullet list that comes straight after a line of text shows as raw `-` lines. Fixing the mini-markdown renderer.",
+    "Lists render now. Exporting and pushing."
    ],
    "tools": {
     "Bash": 12,
@@ -182,20 +183,26 @@
     "mcp__claude-code-remote__list_events": 2,
     "ToolSearch": 1
    },
-   "api_requests": 17,
+   "api_requests": 18,
    "usage": {
     "claude-opus-5-5": {
-     "input": 34,
+     "input": 36,
      "cache_write_5m": 0,
-     "cache_write_1h": 24448,
-     "cache_read": 3034455,
-     "output": 10982,
-     "thinking": 4106,
-     "cost_usd": 1.022251
+     "cache_write_1h": 24909,
+     "cache_read": 3224516,
+     "output": 11778,
+     "thinking": 4139,
+     "cost_usd": 1.079879
     }
    },
-   "cost_usd": 1.022251,
-   "commits": [],
+   "cost_usd": 1.079879,
+   "commits": [
+    {
+     "sha": "4f4a4ee68da18c7a14eb6e6f36f4efca82ba91eb",
+     "subject": "Track Claude plan usage (5-hour and weekly limits) per prompt",
+     "time": "2026-10-08T07:23:58+00:00"
+    }
+   ],
    "entrypoint": "remote_mobile",
    "branch": "ccr-f83e2812-i8p69i",
    "plan_usage_at_start": {
@@ -206,6 +213,44 @@
     "seven_day": 0.32,
     "seven_day_resets_at": 1791867600
    },
+   "plan_usage_delta": {
+    "five_hour": null,
+    "seven_day": null
+   }
+  },
+  {
+   "index": 5,
+   "sent_at": "2026-10-08T07:26:36.085Z",
+   "ended_at": "2026-10-08T07:27:37.446Z",
+   "duration_s": 61,
+   "prompt": "Tweak the copy. This game is for the upcoming ludum dare 60 gamejam. Project name mini-gurke (to be changed). I'm Quirin, link to my website fischerq.de I'll be hosted by Munich eSports at the Gamerei, for an in-person jam",
+   "reply": "No new rate-limit event has been emitted for this turn; they don't come every turn. I'll make the `CLAUDE.md` rule say so, then commit.",
+   "progress_notes": [
+    "This turn's plan-usage event isn't in the stream yet, so I'll fetch it again later. On to the copy changes.",
+    "Both look right. Fetching this turn's plan-usage event, then committing."
+   ],
+   "tools": {
+    "Bash": 4,
+    "mcp__claude-code-remote__list_events": 2,
+    "Read": 2
+   },
+   "api_requests": 7,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 14,
+     "cache_write_5m": 0,
+     "cache_write_1h": 6994,
+     "cache_read": 1357070,
+     "output": 5365,
+     "thinking": 953,
+     "cost_usd": 0.434722
+    }
+   },
+   "cost_usd": 0.434722,
+   "commits": [],
+   "entrypoint": "remote_mobile",
+   "branch": "ccr-f83e2812-i8p69i",
+   "plan_usage_at_start": null,
    "plan_usage_delta": null
   }
  ],
@@ -244,10 +289,10 @@
   }
  ],
  "totals": {
-  "prompts": 4,
-  "cost_usd": 3.678671,
-  "output_tokens": 46996,
-  "input_tokens": 6653639
+  "prompts": 5,
+  "cost_usd": 4.171021,
+  "output_tokens": 53157,
+  "input_tokens": 8208241
  },
  "reported_by_claude_code": {
   "total_usd": 0.6944781,
