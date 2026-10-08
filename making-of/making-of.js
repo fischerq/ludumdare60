@@ -104,7 +104,7 @@ const planCounted = (t, w) => {
   return u && u.delta != null && !u.concurrent ? Math.max(0, u.delta) : 0;
 };
 
-const MANUAL_KINDS = { human: 'By hand', 'claude-chat': 'Claude chat', other: 'Outside' };
+const MANUAL_KINDS = { human: 'By hand', 'claude-chat': 'Separate Claude chat', other: 'Outside Claude Code' };
 const sign = (f) => (f > 0 ? '+' : '') + fmtPct(f);
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 
@@ -174,10 +174,65 @@ function commitList(commits, repoUrl) {
   }).join('')}</ul>`;
 }
 
-const humanBubble = (text, { clamp = false, sub = '' } = {}) =>
-  `<div class="bubble human${clamp ? ' clamp' : ''}"><div class="who">Human${sub ? `<span class="note-sub">${esc(sub)}</span>` : ''}</div><div class="text">${esc(text)}</div></div>`;
-const claudeBubble = (html) => `<div class="bubble claude"><div class="who">Claude</div><div class="md">${html}</div></div>`;
-const isLong = (t) => t.length > 400 || t.split('\n').length > 8;
+// ---- Chat rendering (shared by the timeline and the conversation dialog) ----------------------
+
+const isLong = (t) => t.length > 500 || t.split('\n').length > 10;
+const imgs = (list, who) => (list?.length
+  ? `<div class="attach ${who}">${list.map((src) => `<a href="${esc(src)}" target="_blank" rel="noopener"><img src="${esc(src)}" alt="Screenshot" loading="lazy"></a>`).join('')}</div>`
+  : '');
+const meMsg = (text, { images = [], note = '' } = {}) => `
+  <div class="msg me">
+    ${note ? `<div class="msg-note">${esc(note)}</div>` : ''}
+    ${text ? `<div class="bubble me${isLong(text) ? ' clamp' : ''}"><div class="text">${esc(text)}</div></div>` : ''}
+    ${imgs(images, 'me')}
+  </div>`;
+const claudeMsg = (html, { images = [], model = '' } = {}) => `
+  <div class="msg them">
+    <div class="msg-note">Claude${model ? ` · ${esc(model)}` : ''}</div>
+    <div class="bubble them"><div class="md">${html}</div></div>
+    ${imgs(images, 'them')}
+  </div>`;
+const stepsMsg = (notes) => (notes.length
+  ? `<details class="steps"><summary>Claude worked through ${plural(notes.length, 'step')}</summary>${notes.map((x) => `<div class="md">${md(x)}</div>`).join('')}</details>`
+  : '');
+
+// One Claude Code turn as chat: the prompt, anything sent while Claude worked, folded progress
+// notes, the reply with its screenshots, and a small line of numbers at the end.
+function chatTurn(t, ctx) {
+  const texts = [...t.progress_notes, t.reply].filter(Boolean);
+  const follow = t.followups || [];
+  const out = [meMsg(t.prompt, { images: t.images })];
+  let pending = [];
+  const flush = () => { out.push(stepsMsg(pending)); pending = []; };
+  texts.forEach((x, i) => {
+    for (const f of follow.filter((f) => f.after_reply_index === i)) { flush(); out.push(meMsg(f.text, { note: 'Sent while Claude was working' })); }
+    if (i === texts.length - 1) {
+      flush();
+      out.push(claudeMsg(md(x), { images: t.claude_images, model: modelsOf(t).join(' + ') }));
+    } else pending.push(x);
+  });
+  for (const f of follow.filter((f) => f.after_reply_index >= texts.length)) out.push(meMsg(f.text, { note: 'Sent while Claude was working' }));
+  if (!t.reply) out.push(`<div class="steps-line">Claude was still working when this log was exported.</div>`);
+  const tk = tokens(t);
+  const tools = Object.entries(t.tools).map(([k, c]) => `${k.split('__').pop()} ×${c}`).join(', ');
+  out.push(`<div class="turn-facts">
+      <span class="chip model">${esc(modelsOf(t).join(' + '))}</span>
+      <span class="chip"><b>${fmtNum(tk.out)}</b> written · <b>${fmtNum(tk.read)}</b> read</span>
+      <span class="chip">${fmtDur(t.duration_s)}</span>
+      ${planChip(t)}
+      ${tools ? `<span class="chip">${esc(tools)}</span>` : ''}
+      <span class="chip fine">≈${fmtUSD(t.cost_usd)} at API list prices</span>
+    </div>${commitList(t.commits, ctx.repoUrl)}`);
+  return out.join('');
+}
+
+function chatPairs(conversation) {
+  return conversation.map((c) => meMsg(c.q) + claudeMsg(md(c.a))).join('');
+}
+
+function wireChat(root) {
+  root.querySelectorAll('.bubble.clamp').forEach((el) => el.addEventListener('click', () => el.classList.remove('clamp'), { once: true }));
+}
 
 // ---- Timeline -------------------------------------------------------------------------------
 
@@ -189,39 +244,28 @@ function timelineItem(item, ctx) {
     const e = item.entry;
     li.className = 'item manual';
     d.innerHTML = `
-      <summary><span class="tag">${esc(MANUAL_KINDS[e.kind] || MANUAL_KINDS.other)}</span>
-        <span class="line">${esc(e.title)}</span>${e.time ? `<span class="side">${esc(e.time)}</span>` : ''}</summary>
+      <summary><span class="kicker">${esc(MANUAL_KINDS[e.kind] || MANUAL_KINDS.other)}${e.time ? ` · ${esc(e.time)}` : ''}</span>
+        <span class="line">${esc(e.title)}</span></summary>
       <div class="body">
         ${e.body ? `<div class="md">${md(e.body)}</div>` : ''}
-        ${e.conversation?.length ? `<button class="open-thread" type="button">Read the conversation (${plural(e.conversation.length, 'prompt')}) →</button>` : ''}
+        ${e.conversation?.length ? `<div class="chat">${chatPairs(e.conversation)}</div>` : ''}
         ${e.links?.length ? `<ul class="commits">${e.links.map((l) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label || l.url)}</a></li>`).join('')}</ul>` : ''}
       </div>`;
-    d.querySelector('.open-thread')?.addEventListener('click', () => openThread(ctx.threads.get(e), 0));
+    wireChat(d);
     return li;
   }
   const { turn, n } = item;
-  const tk = tokens(turn);
-  const tools = Object.entries(turn.tools).map(([k, c]) => `${k.replace(/^mcp__\w+?__/, '')} ×${c}`).join(', ');
+  const first = firstSentence(turn.prompt);
+  const more = turn.prompt.replace(/\s+/g, ' ').trim().length > first.replace(/…$/, '').length + 1 || turn.images?.length;
   li.className = 'item';
   d.innerHTML = `
-    <summary><span class="tag">#${n}</span><span class="line">${esc(firstSentence(turn.prompt))}</span>
-      <span class="side">${turn.time ? `${esc(turn.time)} · ` : ''}${fmtNum(totalTokens(turn))} tok</span></summary>
-    <div class="body">
-      <button class="tap" type="button" aria-label="Open this conversation">${humanBubble(turn.prompt, { clamp: isLong(turn.prompt) })}</button>
-      <div class="hint">Tap the message to read the whole conversation →</div>
-      ${claudeBubble(turn.reply ? md(turn.reply) : '<p><i>(still working when this log was exported)</i></p>')}
-      <div class="facts">
-        <span class="chip model">${esc(modelsOf(turn).join(' + '))}</span>
-        <span class="chip"><b>${fmtNum(tk.out)}</b> written · <b>${fmtNum(tk.read)}</b> read</span>
-        <span class="chip"><b>${turn.api_requests}</b> model calls</span>
-        <span class="chip">${fmtDur(turn.duration_s)}</span>
-        ${planChip(turn)}
-        ${tools ? `<span class="chip">${esc(tools)}</span>` : ''}
-      </div>
-      <p class="fine">≈${fmtUSD(turn.cost_usd)} at API list prices</p>
-      ${commitList(turn.commits, ctx.repoUrl)}
+    <summary><span class="kicker">Claude prompt #${n}${turn.time ? ` · ${esc(turn.time)}` : ''}<span class="tok">${fmtNum(totalTokens(turn))} tokens</span></span>
+      <span class="line">${esc(first)}${more && !first.endsWith('…') ? '<span class="more-dots"> …</span>' : ''}</span></summary>
+    <div class="body chat">${chatTurn(turn, ctx)}
+      <button class="open-thread" type="button">Show the whole conversation →</button>
     </div>`;
-  d.querySelector('button.tap').addEventListener('click', () => openThread(ctx.threads.get(item.session), turn.index));
+  wireChat(d);
+  d.querySelector('.open-thread').addEventListener('click', () => openThread(ctx.threads.get(item.session), turn.index));
   return li;
 }
 
@@ -249,7 +293,7 @@ function renderTimeline(items, ctx) {
 // ---- Conversations --------------------------------------------------------------------------
 
 // A thread is a whole conversation: a Claude Code session (all its turns) or an imported chat.
-function sessionThread(s, numbering) {
+function sessionThread(s, ctx) {
   return {
     kind: 'Claude Code session',
     title: s.title || 'Claude Code session',
@@ -257,25 +301,7 @@ function sessionThread(s, numbering) {
     first: s.turns[0]?.prompt || '',
     meta: `${plural(s.turns.length, 'prompt')} · ${fmtNum(s.turns.reduce((a, t) => a + totalTokens(t), 0))} tokens · ${[...new Set(s.turns.flatMap(modelsOf))].join(', ')} · ${dayKey(s.first_date)}${s.last_date !== s.first_date ? ` – ${dayKey(s.last_date)}` : ''}`,
     seq: s.turns[0]?.seq || 0,
-    render: () => s.turns.map((t) => {
-      const texts = [...t.progress_notes, t.reply].filter(Boolean);
-      const follow = t.followups || [];
-      // Claude's in-between notes fold away; messages sent mid-turn go where they arrived.
-      const parts = [];
-      let pending = [];
-      const flush = () => {
-        if (pending.length) parts.push(`<details class="steps"><summary>${plural(pending.length, 'progress note')}</summary><div class="md">${pending.map((x) => `<div>${md(x)}</div>`).join('')}</div></details>`);
-        pending = [];
-      };
-      texts.forEach((x, i) => {
-        follow.filter((f) => f.after_reply_index === i).forEach((f) => { flush(); parts.push(`<div class="msg human">${humanBubble(f.text, { clamp: isLong(f.text), sub: 'while Claude was working' })}</div>`); });
-        if (i === texts.length - 1) { flush(); parts.push(`<div class="msg claude">${claudeBubble(md(x))}</div>`); } else pending.push(x);
-      });
-      follow.filter((f) => f.after_reply_index >= texts.length).forEach((f) => parts.push(`<div class="msg human">${humanBubble(f.text, { sub: 'while Claude was working' })}</div>`));
-      return `<div class="turn-sep">#${numbering.get(t)} · ${esc(modelsOf(t).join(' + '))} · ${fmtNum(totalTokens(t))} tokens · ${fmtDur(t.duration_s)}</div>
-        <div class="msg human" data-turn="${t.index}">${humanBubble(t.prompt, { clamp: isLong(t.prompt) })}</div>
-        ${parts.join('')}`;
-    }).join(''),
+    render: () => s.turns.map((t) => `<div class="turn-sep" data-turn="${t.index}">Claude prompt #${ctx.numbering.get(t)}</div>${chatTurn(t, ctx)}`).join(''),
   };
 }
 
@@ -286,9 +312,7 @@ function chatThread(e) {
     first: e.conversation[0]?.q || '',
     meta: `${plural(e.conversation.length, 'prompt')}${e.model ? ` · ${e.model}` : ''} · ${dayKey(e.date)}`,
     seq: e.seq,
-    render: () => e.conversation.map((c) => `
-      <div class="msg human">${humanBubble(c.q, { clamp: isLong(c.q) })}</div>
-      <div class="msg claude">${claudeBubble(md(c.a))}</div>`).join(''),
+    render: () => chatPairs(e.conversation),
   };
 }
 
@@ -312,14 +336,13 @@ function openThread(th, turnIndex) {
   $('#thread-title').innerHTML = th.url ? `<a href="${esc(th.url)}" target="_blank" rel="noopener">${esc(th.title)}</a>` : esc(th.title);
   const body = $('#thread-body');
   body.innerHTML = th.render();
-  // Long messages expand on tap.
-  body.querySelectorAll('.bubble.clamp').forEach((el) => el.addEventListener('click', () => el.classList.remove('clamp')));
+  wireChat(body);
   if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
-  const target = turnIndex ? body.querySelector(`[data-turn="${turnIndex}"]`) : null;
   dlg.scrollTop = 0;
+  const target = turnIndex ? body.querySelector(`.turn-sep[data-turn="${turnIndex}"]`) : null;
   if (target) {
     target.classList.add('target');
-    requestAnimationFrame(() => target.previousElementSibling?.scrollIntoView({ block: 'start' }));
+    requestAnimationFrame(() => target.scrollIntoView({ block: 'start' }));
   }
 }
 
@@ -373,7 +396,8 @@ async function main() {
   [...turns].sort((a, b) => a.seq - b.seq).forEach((t, i) => numbering.set(t, i + 1));
 
   const threads = new Map();
-  for (const s of sessions) threads.set(s, sessionThread(s, numbering));
+  const ctx = { numbering, repoUrl: meta.repo_url, threads };
+  for (const s of sessions) threads.set(s, sessionThread(s, ctx));
   for (const e of manual) if (e.conversation?.length) threads.set(e, chatThread(e));
   renderConvos(threads.values());
 
@@ -381,7 +405,7 @@ async function main() {
     ...sessions.flatMap((s) => s.turns.map((turn) => ({ seq: turn.seq, date: turn.date, turn, session: s, n: numbering.get(turn) }))),
     ...manual.map((entry) => ({ seq: entry.seq, date: entry.date, entry })),
   ].sort((x, y) => x.seq - y.seq);
-  renderTimeline(items, { threads, repoUrl: meta.repo_url });
+  renderTimeline(items, ctx);
 }
 
 main().catch((err) => {
