@@ -24,6 +24,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "making-of" / "sessions"
 MANUAL_LOG = ROOT / "making-of" / "manual-log.json"
+MEDIA_DIR = ROOT / "making-of" / "media"
+MEDIA_MAX_WIDTH = 720
 META = ROOT / "making-of" / "meta.json"
 LOCAL_TZ = ZoneInfo("Europe/Berlin")
 
@@ -64,6 +66,39 @@ def public_when(dt, window):
     out = {"date": local.date().isoformat()}
     if window and window[0] <= dt <= window[1]:
         out["time"] = local.strftime("%H:%M")
+    return out
+
+
+def publish_image(data, dest, crop_status_bar=False):
+    """Write an image for the making-of page: JPEG, at most MEDIA_MAX_WIDTH wide. Phone screenshots
+    lose their status bar (clock, notifications). Falls back to the raw bytes without Pillow."""
+    if dest.exists():
+        return
+    MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        import io
+        from PIL import Image
+        im = Image.open(io.BytesIO(data)).convert("RGB")
+        if crop_status_bar and im.height > im.width * 1.6:
+            im = im.crop((0, int(im.height * 0.065), im.width, im.height))
+        if im.width > MEDIA_MAX_WIDTH:
+            im = im.resize((MEDIA_MAX_WIDTH, round(im.height * MEDIA_MAX_WIDTH / im.width)), Image.LANCZOS)
+        im.save(dest, "JPEG", quality=80, optimize=True)
+    except Exception:
+        dest.write_bytes(data)
+
+
+def prompt_images(entry):
+    """Base64 images attached to a human prompt."""
+    content = entry.get("message", {}).get("content")
+    if not isinstance(content, list):
+        return []
+    out = []
+    for c in content:
+        src = c.get("source") or {} if isinstance(c, dict) and c.get("type") == "image" else {}
+        if src.get("type") == "base64" and src.get("data"):
+            import base64
+            out.append(base64.b64decode(src["data"]))
     return out
 
 
@@ -231,7 +266,7 @@ def export_session(path, commits, next_seq, window):
         if text is not None:
             close(cur)
             cur = {"prompt": text, "sent_at": ts, "ended_at": ts, "first_response_at": None,
-                   "texts": [], "tools": {}, "followups": [],
+                   "texts": [], "tools": {}, "followups": [], "images_raw": prompt_images(e),
                    "usage": {}, "requests": 0, "entrypoint": e.get("entrypoint"),
                    "branch": e.get("gitBranch")}
             continue
@@ -341,6 +376,16 @@ def export_session(path, commits, next_seq, window):
             else:
                 total_cost += c
         seq = prev_seq.get(i + 1) or next_seq()
+        # Images: ones pasted into the prompt are published from the transcript; screenshots Claude
+        # saved as media/<session8>-<turn>-c*.jpg|png are attached as Claude's.
+        stem = f"{session_id[:8]}-{i + 1}"
+        images = []
+        for k, raw in enumerate(turn["images_raw"], 1):
+            dest = MEDIA_DIR / f"{stem}-u{k}.jpg"
+            publish_image(raw, dest, crop_status_bar=True)
+            images.append(f"media/{dest.name}")
+        claude_images = sorted(f"media/{p.name}" for p in MEDIA_DIR.glob(f"{stem}-c*")
+                               if p.suffix.lower() in (".jpg", ".jpeg", ".png", ".webp"))
         out_turns.append({
             "index": i + 1,
             "seq": seq,
@@ -350,6 +395,8 @@ def export_session(path, commits, next_seq, window):
             # Messages the human sent mid-turn; after_reply_index = how many of Claude's texts
             # in this turn came before it (for placing it in the conversation view).
             "followups": turn["followups"],
+            "images": images,
+            "claude_images": claude_images,
             "reply": turn["texts"][-1] if turn["texts"] else "",
             "progress_notes": turn["texts"][:-1],
             "tools": dict(sorted(turn["tools"].items(), key=lambda kv: -kv[1])),
