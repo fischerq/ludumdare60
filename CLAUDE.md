@@ -24,8 +24,11 @@ When the title changes, update `GAME_TITLE` in `src/config.js`, `<title>` in `in
 - One scene per file in `src/scenes/`, registered in the scene list in `src/main.js`.
 
 ## Workflow
-- After committing and pushing work to the session's branch, always open a pull request against `main`
-  automatically (no need to ask first). If a PR for the branch is already open, push to it instead of opening a new one.
+- **Every push must end up in an open pull request against `main`. Open it yourself, without asking.**
+  - Before pushing, check whether the branch's previous PR is still open. If it is, push to it.
+  - If it was merged or closed, start the branch again from the latest `main`, rebase any commits that weren't merged
+    onto it, push, and open a new PR in the same turn. Never leave pushed commits that no open PR covers.
+  - Put the PR link in your reply.
 
 ## AI-use log (making-of)
 Every human prompt and its token usage/cost is published in `making-of/` as a scrollable "making of" page.
@@ -47,6 +50,15 @@ Every human prompt and its token usage/cost is published in `making-of/` as a sc
 - The exporter only reads prompts, Claude's visible replies, tool names and token counts. Tool outputs, system
   prompts and thinking stay out. If a prompt ever contains a secret, tell the user before committing the log.
 - If a new model shows up, add its prices to `PRICES` in `tools/ai_log.py`.
+- **Work outside Claude Code** goes in `making-of/manual-log.json` (format in its `_readme`): separate claude.ai
+  chats, repo or Netlify setup, merges, playtests, art made by hand. When the user mentions such work, or you notice it
+  (e.g. a PR was merged), add an entry. Use exact times from GitHub where available; otherwise use a date-only `at`
+  and say the time wasn't recorded. Never invent details the user didn't give.
+
+## Event page
+`event/index.html` is a shareable page for the in-person Ludum Dare 60 site in Munich (Die Gamerei, hosted by
+Munich eSports). It only states facts with a source. Venue hours and sign-up stay "to be announced" until the user
+provides them. Once ldjam.com publishes official times, replace the unofficial LdDB times.
 
 ## Testing
 - Run `python3 -m http.server` and open the page; check the browser console for errors.

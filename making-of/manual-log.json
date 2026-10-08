@@ -1,0 +1,35 @@
+{
+  "_readme": "Work done outside Claude Code sessions, merged into the making-of timeline. Edit by hand. 'at' is an ISO UTC timestamp, or a YYYY-MM-DD date when the time wasn't recorded. kind: human | claude-chat | other. Optional: body (markdown), prompts (list of verbatim prompts), links [{label, url}], duration.",
+  "entries": [
+    {
+      "at": "2026-10-07",
+      "kind": "claude-chat",
+      "title": "Picked the game engine in a separate Claude chat",
+      "body": "Before any code, a separate claude.ai conversation compared engines for a phone-first browser jam game. Outcome: **Phaser 3**, loaded from a CDN with no build step, which is what the first Claude Code prompt asks for.\n\n*The full conversation hasn't been imported yet, and its date and time are still to be confirmed.*"
+    },
+    {
+      "at": "2026-10-07T21:29:31Z",
+      "kind": "human",
+      "title": "Created the GitHub repository",
+      "body": "Created `fischerq/ludumdare60` on GitHub with an initial README commit.",
+      "links": [
+        { "label": "Initial commit", "url": "https://github.com/fischerq/ludumdare60/commit/1932492cfa7c78324570d19677c4dcd0868d8c5e" }
+      ]
+    },
+    {
+      "at": "2026-10-08",
+      "kind": "human",
+      "title": "Connected the repository to Netlify",
+      "body": "Linked the GitHub repo to Netlify, so every push to `main` deploys the site. No build command; `netlify.toml` publishes the repo root as-is.\n\n*Exact time not recorded.*"
+    },
+    {
+      "at": "2026-10-08T09:00:07Z",
+      "kind": "human",
+      "title": "Reviewed and merged pull request #1",
+      "body": "Merged Claude's first pull request (starter game, making-of log, plan-usage tracking) into `main`, which deployed it.",
+      "links": [
+        { "label": "Pull request #1", "url": "https://github.com/fischerq/ludumdare60/pull/1" }
+      ]
+    }
+  ]
+}

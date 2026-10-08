@@ -24,7 +24,9 @@ function md(src) {
     t = t.replace(/`([^`]+)`/g, (_, c) => { codes.push(`<code>${esc(c)}</code>`); return `\u0001${codes.length - 1}\u0001`; });
     t = esc(t)
       .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+      .replace(/(^|[^*\w])\*(\S[^*\n]*?\S|\S)\*(?!\w)/g, '$1<i>$2</i>')
       .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+      .replace(/\[([^\]]+)\]\((\.{1,2}\/[^)\s]*)\)/g, '<a href="$2">$1</a>')
       .replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
     return t.replace(/\u0001(\d+)\u0001/g, (_, i) => codes[i]);
   };
@@ -187,6 +189,7 @@ async function main() {
   $('#links').innerHTML = [
     meta.game_url && `<a href="${esc(meta.game_url)}">Play the game</a>`,
     meta.repo_url && `<a href="${esc(meta.repo_url)}" target="_blank" rel="noopener">Source code</a>`,
+    meta.event_url && `<a href="${esc(meta.event_url)}">The Munich jam</a>`,
   ].filter(Boolean).join('');
 
   const { sessions: files } = await getJSON('./sessions/index.json');
@@ -196,37 +199,73 @@ async function main() {
   filterPlanUsage(sessions.flatMap((s) => s.turns));
   renderStats(sessions);
 
+  const manual = (await getJSON('./manual-log.json').catch(() => ({ entries: [] }))).entries || [];
+
+  // One chronological stream: Claude Code turns plus hand-logged work outside Claude Code.
+  // Date-only manual entries ("2026-10-08") sort to the start of their day.
+  const items = [
+    ...sessions.flatMap((s) => s.turns.map((turn) => ({ at: turn.sent_at, turn, session: s }))),
+    ...manual.map((entry) => ({ at: entry.at.length === 10 ? `${entry.at}T00:00:00Z` : entry.at, entry })),
+  ].sort((x, y) => new Date(x.at) - new Date(y.at));
+
   const tl = $('#timeline');
   tl.textContent = '';
-  if (!sessions.length) { tl.innerHTML = '<p class="empty">No sessions logged yet.</p>'; return; }
+  if (!items.length) { tl.innerHTML = '<p class="empty">Nothing logged yet.</p>'; return; }
 
   const running = { n: 0, cost: 0 };
   let lastDay = null;
-  for (const s of sessions) {
-    let headerDone = false;
-    for (const turn of s.turns) {
-      const day = dayKey(turn.sent_at);
-      if (day !== lastDay) {
-        const d = document.createElement('h2');
-        d.className = 'day';
-        d.textContent = day;
-        tl.append(d);
-        lastDay = day;
-        headerDone = false;
-      }
-      if (!headerDone) {
-        const h = document.createElement('p');
-        h.className = 'session-head';
-        const name = esc(s.title || 'Claude Code session');
-        h.innerHTML = `Session: ${s.session_url ? `<a href="${esc(s.session_url)}" target="_blank" rel="noopener">${name}</a>` : name}`;
-        tl.append(h);
-        headerDone = true;
-      }
-      running.n += 1;
-      running.cost += turn.cost_usd || 0;
-      tl.append(renderTurn(turn, s, running, meta.repo_url));
+  let lastSession = null;
+  for (const item of items) {
+    const day = dayKey(item.at);
+    if (day !== lastDay) {
+      const d = document.createElement('h2');
+      d.className = 'day';
+      d.textContent = day;
+      tl.append(d);
+      lastDay = day;
+      lastSession = null;
     }
+    if (item.entry) {
+      tl.append(renderManual(item.entry));
+      lastSession = null;
+      continue;
+    }
+    const s = item.session;
+    if (s !== lastSession) {
+      const h = document.createElement('p');
+      h.className = 'session-head';
+      const name = esc(s.title || 'Claude Code session');
+      h.innerHTML = `Claude Code session: ${s.session_url ? `<a href="${esc(s.session_url)}" target="_blank" rel="noopener">${name}</a>` : name}`;
+      tl.append(h);
+      lastSession = s;
+    }
+    running.n += 1;
+    running.cost += item.turn.cost_usd || 0;
+    tl.append(renderTurn(item.turn, s, running, meta.repo_url));
   }
+}
+
+const MANUAL_KINDS = {
+  human: 'Done by hand',
+  'claude-chat': 'Separate Claude chat',
+  other: 'Outside Claude Code',
+};
+
+function renderManual(entry) {
+  const el = document.createElement('article');
+  el.className = `turn manual kind-${entry.kind || 'other'}`;
+  const when = entry.at.length === 10 ? 'time not recorded' : timeOf(entry.at);
+  const links = (entry.links || []).map((l) =>
+    `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label || l.url)}</a></li>`).join('');
+  el.innerHTML = `
+    <div class="turn-meta"><span class="n">${esc(MANUAL_KINDS[entry.kind] || MANUAL_KINDS.other)}</span><span>${when}</span>
+      ${entry.duration ? `<span>${esc(entry.duration)}</span>` : ''}</div>
+    <div class="manual-card"><div class="manual-title">${esc(entry.title)}</div>
+      ${entry.body ? `<div class="md">${md(entry.body)}</div>` : ''}
+      ${entry.prompts?.length ? `<details class="notes"><summary>${entry.prompts.length} prompt${entry.prompts.length > 1 ? 's' : ''} in that chat</summary><ol>${entry.prompts.map((p) => `<li class="prompt-quote">${esc(p)}</li>`).join('')}</ol></details>` : ''}
+      ${links ? `<ul class="commits">${links}</ul>` : ''}
+    </div>`;
+  return el;
 }
 
 main().catch((err) => {

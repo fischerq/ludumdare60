@@ -23,3 +23,8 @@
   for = "/making-of/*"
   [headers.values]
     Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/event/*"
+  [headers.values]
+    Cache-Control = "no-cache"
