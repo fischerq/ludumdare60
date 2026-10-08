@@ -60,6 +60,10 @@ Every human prompt and its token usage/cost is published in `making-of/` as a sc
 - The timeline row for a prompt is the prompt's own first sentence; don't write summaries.
 - Tokens and the model per prompt are the main numbers; the headline cost is the share of the subscription
   (`plan`, `plan_price_month` and `plan_currency` in `meta.json`; the billed price is 214,20 € a month). API list prices are reference only.
+- **Screenshots:** images pasted into prompts are published automatically (status bar cropped, resized). When you
+  check a change in a headless browser, save one or two representative screenshots as
+  `making-of/media/<first 8 chars of session id>-<turn index>-c<n>.jpg` (use `publish_image` in `tools/ai_log.py`);
+  the exporter attaches them to that turn as Claude's images.
 - If a new model shows up, add its prices to `PRICES` in `tools/ai_log.py` (models are read from the transcript).
 - **Work outside Claude Code** goes in `making-of/manual-log.json` (format in its `_readme`): separate claude.ai
   chats, repo or Netlify setup, merges, playtests, art made by hand. When the user mentions such work, or you notice it

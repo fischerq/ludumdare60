@@ -110,6 +110,19 @@
           "url": "https://github.com/fischerq/ludumdare60/pull/4"
         }
       ]
+    },
+    {
+      "date": "2026-10-08",
+      "seq": 20.5,
+      "kind": "human",
+      "title": "Reviewed and merged pull request #5",
+      "body": "Merged the dark/green theme, tokens-and-models-first numbers and the subscription-share headline into `main`.",
+      "links": [
+        {
+          "label": "Pull request #5",
+          "url": "https://github.com/fischerq/ludumdare60/pull/5"
+        }
+      ]
     }
   ]
 }
