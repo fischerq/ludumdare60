@@ -19,13 +19,27 @@ export default class MenuScene extends Phaser.Scene {
 
     this.tweens.add({ targets: prompt, alpha: 0.3, duration: 700, yoyo: true, repeat: -1 });
 
-    this.add.text(cx, GAME_HEIGHT - 120, 'Touch & drag to move · collect yellow · avoid red', {
+    this.add.text(cx, GAME_HEIGHT - 200, 'Touch & drag to move · collect yellow · avoid red', {
       fontFamily: UI.fontFamily, fontSize: 28, color: COLORS.textDim,
       align: 'center', wordWrap: { width: GAME_WIDTH - 80 },
     }).setOrigin(0.5);
 
-    const start = () => this.scene.start('Game');
-    this.input.once('pointerdown', start);
+    // Link to the making-of page. Big padded hit area; tapping it must not start the game.
+    const link = this.add.text(cx, GAME_HEIGHT - 80, 'How this game was made →', {
+      fontFamily: UI.fontFamily, fontSize: UI.linkSize, color: COLORS.link,
+      padding: { x: 40, y: 28 },
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    link.on('pointerup', () => { window.location.href = './making-of/'; });
+
+    let started = false;
+    const start = () => {
+      if (started) return;
+      started = true;
+      this.scene.start('Game');
+    };
+    this.input.on('pointerdown', (pointer, over) => {
+      if (!over.includes(link)) start();
+    });
     this.input.keyboard?.once('keydown-SPACE', start);
     this.input.keyboard?.once('keydown-ENTER', start);
   }

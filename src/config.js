@@ -13,6 +13,7 @@ export const COLORS = {
   hazard: 0xef5350,
   text: '#ffffff',
   textDim: '#9aa4bf',
+  link: '#ffb38a',
 };
 
 export const PLAYER = {
@@ -46,4 +47,5 @@ export const UI = {
   scoreSize: 56,
   titleSize: 96,
   bodySize: 44,
+  linkSize: 32,
 };
