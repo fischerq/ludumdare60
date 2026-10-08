@@ -17,7 +17,7 @@ import os
 import re
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -33,6 +33,10 @@ PRICES = {
     "claude-opus-5": {"in": 5.00, "out": 25.00, "cache_read": 0.50},
     "claude-sonnet-5": {"in": 2.00, "out": 10.00, "cache_read": 0.20},
 }
+
+# Readings within this many seconds of a turn's first model response still reflect usage from
+# before the turn (concurrent work while the session was idle), so they count as its baseline.
+BASELINE_GRACE_S = 10
 
 REMINDER_RE = re.compile(r"<system-reminder>.*?</system-reminder>", re.S)
 
@@ -200,7 +204,8 @@ def export_session(path, commits):
         text = prompt_text(e)
         if text is not None:
             close(cur)
-            cur = {"prompt": text, "sent_at": ts, "ended_at": ts, "texts": [], "tools": {},
+            cur = {"prompt": text, "sent_at": ts, "ended_at": ts, "first_response_at": None,
+                   "texts": [], "tools": {},
                    "usage": {}, "requests": 0, "entrypoint": e.get("entrypoint"),
                    "branch": e.get("gitBranch")}
             continue
@@ -209,6 +214,7 @@ def export_session(path, commits):
         if ts and t in ("assistant", "user"):
             cur["ended_at"] = ts
         if t == "assistant":
+            cur["first_response_at"] = cur["first_response_at"] or ts
             msg = e.get("message", {})
             for c in msg.get("content", []):
                 if c.get("type") == "text" and c.get("text", "").strip():
@@ -253,20 +259,33 @@ def export_session(path, commits):
     merged.update({sn["at"]: sn for sn in snaps})
     snaps = sorted(merged.values(), key=lambda x: x["at"])
 
-    # The first snapshot after a prompt is sent reflects plan usage at the start of that turn.
-    starts = []
-    for i, turn in enumerate(turns):
-        lo = parse_ts(turn["sent_at"])
-        hi = parse_ts(turns[i + 1]["sent_at"]) if i + 1 < len(turns) else None
-        starts.append(next((sn for sn in snaps
-                            if parse_ts(sn["at"]) >= lo and (hi is None or parse_ts(sn["at"]) < hi)), None))
+    # Plan usage per turn. A rate_limit_event is emitted whenever this session sees the
+    # utilization change, so the latest snapshot at time t is the value as of t. Usage from
+    # concurrent work while the session sat idle surfaces in the first reading(s) of the next
+    # turn, so the baseline is taken a little after the turn's first model response, and the
+    # end value at the turn's last activity. Idle gaps are never attributed to a turn.
+    def value_at(window, t):
+        best = None
+        for sn in snaps:
+            if parse_ts(sn["at"]) > t:
+                break
+            if sn.get(window) is not None:
+                best = sn
+        return None if best is None else {
+            "value": best[window], "resets_at": best.get(window + "_resets_at"), "at": best["at"]}
 
-    def delta(a, b, window):
-        if not a or not b or a.get(window) is None or b.get(window) is None:
-            return None
-        if a.get(window + "_resets_at") != b.get(window + "_resets_at"):
-            return None  # the window rolled over in between
-        return round(b[window] - a[window], 4)
+    def plan_usage(turn):
+        first = parse_ts(turn["first_response_at"] or turn["sent_at"])
+        start_t = first + timedelta(seconds=BASELINE_GRACE_S)
+        end_t = parse_ts(turn["ended_at"]) + timedelta(seconds=5)
+        out = {}
+        for w in ("five_hour", "seven_day"):
+            a, b = value_at(w, start_t), value_at(w, end_t)
+            d = None
+            if a and b and a["resets_at"] == b["resets_at"]:
+                d = round(b["value"] - a["value"], 4)
+            out[w] = {"start": a and a["value"], "end": b and b["value"], "delta": d}
+        return out
 
     out_turns = []
     for i, turn in enumerate(turns):
@@ -303,11 +322,10 @@ def export_session(path, commits):
             "commits": turn_commits,
             "entrypoint": turn["entrypoint"],
             "branch": turn["branch"],
-            "plan_usage_at_start": starts[i],
-            # Change until the next prompt's snapshot. Account-wide, so other Claude use in the
-            # same window (claude.ai chats, other sessions) is included. 1% resolution.
-            "plan_usage_delta": None if i + 1 >= len(turns) else {
-                w: delta(starts[i], starts[i + 1], w) for w in ("five_hour", "seven_day")},
+            # Utilization (0..1, 1% resolution) of the plan's 5-hour and weekly limits at the
+            # start and end of this turn. Account-wide: concurrent work during the turn is
+            # included; the making-of page filters implausible jumps against the turn's cost.
+            "plan_usage": plan_usage(turn),
         })
 
     if not out_turns:

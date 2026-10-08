@@ -30,8 +30,11 @@
           so "read" is large but mostly served from a cheap cache.</li>
         <li><b>Cost</b>: what those tokens would cost at Anthropic's public API prices. It's computed from the
           exact token counts Claude Code logs. <span id="plan-note"></span></li>
-        <li><b>Plan</b>: how much of the subscription's rolling 5-hour and weekly usage limits went up between
-          this prompt and the next one. It's read from Claude Code's own rate-limit events, which have 1% resolution.</li>
+        <li><b>Plan</b>: how much of the subscription's rolling 5-hour and weekly usage limits went up while
+          Claude worked on this prompt, read from Claude Code's own rate-limit events (1% resolution, so small prompts
+          usually show +0%). The limits are shared with other Claude use on the same account. Time between prompts is
+          never counted, and a jump far larger than the prompt's token cost explains is marked as concurrent use and
+          left out of the total.</li>
         <li><b>Time</b>: from sending the prompt to Claude's last action, including running the game in a
           headless browser to check it.</li>
       </ul>

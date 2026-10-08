@@ -32,11 +32,15 @@ Every human prompt and its token usage/cost is published in `making-of/` as a sc
 - Run `python3 tools/ai_log.py` right before the **last commit of every turn** and include the changes under
   `making-of/sessions/` in that commit. A `UserPromptSubmit` hook (`.claude/settings.json`) also runs it at the
   start of each turn, so the previous turn's tail is picked up even if it was missed.
-- **Plan usage:** at the start of every turn, call the claude-code-remote `list_events` tool with
+- **Plan usage:** call the claude-code-remote `list_events` tool twice per turn: once at the **start** (before
+  any other work) and once at the **end**, right before running the exporter for the final commit. Use
   `session_id` = `session_` + the part of `$CLAUDE_CODE_REMOTE_SESSION_ID` after `cse_`,
-  `kinds: ["rate_limit_event"]` and `limit: 20`. That's enough; the exporter reads the 5-hour and weekly
-  utilization out of the tool result in the transcript. If this turn's event isn't in the result yet, call it once more
-  before the final commit; events aren't emitted every turn, so if there's still none, move on. Skip silently when the tool isn't available (e.g. local CLI sessions).
+  `kinds: ["rate_limit_event"]`, `limit: 100`. The exporter reads the 5-hour and weekly utilization from those tool
+  results in the transcript. Events fire whenever the session sees the value change, so the start call also catches
+  the tail of the previous turn and the end call catches this turn's changes. An empty result is fine. Skip silently
+  when the tool isn't available (e.g. local CLI sessions). Plan usage is account-wide and concurrent work happens:
+  the exporter only counts changes inside a turn, and the making-of page drops jumps that the turn's token cost
+  can't explain. Don't try to correct the numbers by hand.
 - Even a turn that changes no code (a question, a plan) must still commit and push the updated log.
 - Never hand-edit `making-of/sessions/*.json`; regenerate them. Never delete a session file: the transcript it came
   from is gone once the cloud container is reclaimed. `making-of/meta.json` is the place for hand-written notes.
