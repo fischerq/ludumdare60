@@ -1,8 +1,8 @@
 # Working rules
 
-Game jam project: **mini-gurke** (working title) by Quirin (https://fischerq.de) for Ludum Dare 60, made at the
-in-person jam hosted by Munich eSports at the Gamerei. A mobile-first Phaser 3 browser game deployed to Netlify as
-a static site.
+Game jam project: **mini-gurke** (working title) for Ludum Dare 60, a mobile-first Phaser 3 browser game deployed
+to Netlify as a static site. Keep branding light: who made it and where lives in one note on the making-of page
+(`about` in `making-of/meta.json`), not in the game or README.
 
 When the title changes, update `GAME_TITLE` in `src/config.js`, `<title>` in `index.html`, `title` in
 `making-of/meta.json` and the README heading.

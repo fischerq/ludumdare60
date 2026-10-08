@@ -1,9 +1,6 @@
 {
   "title": "mini-gurke",
-  "event": "Ludum Dare 60",
-  "venue": "the in-person jam hosted by Munich eSports at the Gamerei",
-  "author": "Quirin",
-  "author_url": "https://fischerq.de",
+  "about": "Made by [Quirin](https://fischerq.de) for [Ludum Dare 60](https://ldjam.com), at the in-person jam hosted by [Munich eSports](https://munich-esports.de) at [Die Gamerei](https://www.games-bavaria.com/die-gamerei/) in Munich.",
   "game_url": "../",
   "repo_url": "https://github.com/fischerq/ludumdare60",
   "plan": "Claude Max (10x)",

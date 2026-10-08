@@ -146,22 +146,15 @@ async function main() {
     $('#title').textContent = `How ${meta.title} was built`;
     document.title = `Making of ${meta.title}`;
   }
-  if (meta.event) $('#eyebrow').textContent = `Making of · ${meta.event}`;
-  const author = meta.author
-    ? (meta.author_url ? `<a href="${esc(meta.author_url)}" target="_blank" rel="noopener">${esc(meta.author)}</a>` : esc(meta.author))
-    : 'a human';
-  if (meta.event) {
-    $('#lede').innerHTML = `${author} built ${esc(meta.title || 'this game')} for ${esc(meta.event)}${meta.venue ? `, at ${esc(meta.venue)}` : ''}, `
-      + 'with Claude Code writing the code. Below is every prompt sent to Claude, in order, with what Claude did, how long it '
-      + 'took and what it cost. Nothing is edited out. If it looks like something you could do too: you can.';
+  if (meta.about) {
+    $('#about').innerHTML = md(meta.about);
+    $('#about').hidden = false;
   }
-  if (meta.author) $('#credit').innerHTML = `Made by ${author}${meta.event ? ` for ${esc(meta.event)}` : ''}.`;
   plan = meta.plan || '';
   if (meta.plan_note) $('#plan-note').textContent = meta.plan_note;
   $('#links').innerHTML = [
     meta.game_url && `<a href="${esc(meta.game_url)}">Play the game</a>`,
     meta.repo_url && `<a href="${esc(meta.repo_url)}" target="_blank" rel="noopener">Source code</a>`,
-    meta.author_url && `<a href="${esc(meta.author_url)}" target="_blank" rel="noopener">About ${esc(meta.author || 'the author')}</a>`,
   ].filter(Boolean).join('');
 
   const { sessions: files } = await getJSON('./sessions/index.json');

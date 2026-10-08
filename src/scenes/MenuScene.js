@@ -1,4 +1,4 @@
-import { GAME_TITLE, EVENT, GAME_WIDTH, GAME_HEIGHT, COLORS, UI } from '../config.js';
+import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, UI } from '../config.js';
 
 export default class MenuScene extends Phaser.Scene {
   constructor() {
@@ -9,12 +9,8 @@ export default class MenuScene extends Phaser.Scene {
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;
 
-    this.add.text(cx, cy - 220, GAME_TITLE, {
+    this.add.text(cx, cy - 200, GAME_TITLE, {
       fontFamily: UI.fontFamily, fontSize: UI.titleSize, color: COLORS.text, fontStyle: 'bold',
-    }).setOrigin(0.5);
-
-    this.add.text(cx, cy - 130, `made for ${EVENT}`, {
-      fontFamily: UI.fontFamily, fontSize: 32, color: COLORS.textDim,
     }).setOrigin(0.5);
 
     const prompt = this.add.text(cx, cy + 120, 'Tap to start', {

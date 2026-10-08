@@ -9,10 +9,11 @@
 </head>
 <body>
   <header class="hero">
-    <p class="eyebrow" id="eyebrow">Making of</p>
+    <p class="eyebrow">Making of</p>
     <h1 id="title">How this game was built</h1>
-    <p class="lede" id="lede">Every prompt a human sent to Claude while building this game, in order, with what Claude
+    <p class="lede">Every prompt a human sent to Claude while building this game, in order, with what Claude
       did, how long it took and what it cost. Nothing is edited out.</p>
+    <aside class="about md" id="about" hidden></aside>
     <nav class="links" id="links"></nav>
   </header>
 
@@ -40,7 +41,6 @@
   <main id="timeline" aria-live="polite"><p class="loading">Loading…</p></main>
 
   <footer class="foot">
-    <span id="credit"></span>
     Generated from Claude Code session logs by <code>tools/ai_log.py</code>.
   </footer>
 
