@@ -1,4 +1,5 @@
-// Renders the making-of timeline from sessions/*.json (written by tools/ai_log.py).
+// Renders the making-of page: a timeline of one-line entries (Claude Code turns and work done
+// outside Claude Code), a conversations view, and a thread dialog that shows a whole conversation.
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -103,8 +104,19 @@ const planCounted = (t, w) => {
   return u && u.delta != null && !u.concurrent ? Math.max(0, u.delta) : 0;
 };
 
-function renderStats(sessions) {
-  const turns = sessions.flatMap((s) => s.turns);
+const MANUAL_KINDS = { human: 'By hand', 'claude-chat': 'Claude chat', other: 'Outside' };
+const sign = (f) => (f > 0 ? '+' : '') + fmtPct(f);
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+
+// First sentence of a prompt, as a fallback one-liner when no summary was written.
+function firstSentence(text, max = 110) {
+  const t = text.replace(/\s+/g, ' ').trim();
+  const m = t.match(/^(.+?[.!?])(\s|$)/);
+  const s = m ? m[1] : t;
+  return s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s;
+}
+
+function renderStats(turns) {
   const cost = turns.reduce((a, t) => a + (t.cost_usd || 0), 0);
   const secs = turns.reduce((a, t) => a + t.duration_s, 0);
   const tk = turns.map(tokens).reduce((a, t) => ({ read: a.read + t.read, out: a.out + t.out }), { read: 0, out: 0 });
@@ -112,69 +124,200 @@ function renderStats(sessions) {
   const weekly = turns.reduce((a, t) => a + planCounted(t, 'seven_day'), 0);
   const tracked = turns.some((t) => t.plan_usage?.seven_day?.delta != null);
   const stats = [
-    [turns.length, 'prompts sent'],
-    [fmtUSD(cost), 'API-equivalent cost'],
-    [fmtDur(secs), 'Claude working time'],
-    [commits, 'commits'],
-    [fmtNum(tk.out), 'tokens written'],
-    [fmtNum(tk.read), 'tokens read (mostly cached)'],
-  ];
-  if (tracked) stats.splice(2, 0, [weekly < 0.005 ? '<1%' : `≈${fmtPct(weekly)}`, `of a weekly ${plan || 'plan'} limit`]);
-  $('#stats').innerHTML = stats.map(([v, k]) => `<div class="stat"><div class="v">${esc(v)}</div><div class="k">${esc(k)}</div></div>`).join('');
+    [turns.length, 'prompts'],
+    [fmtUSD(cost), 'at API prices'],
+    tracked ? [weekly < 0.005 ? '<1%' : `≈${fmtPct(weekly)}`, `of a weekly ${plan || 'plan'} limit`] : null,
+    [fmtDur(secs), 'Claude working'],
+  ].filter(Boolean);
+  $('#stats').innerHTML = stats.map(([v, k]) => `<div class="stat"><div class="v">${esc(v)}</div><div class="k">${esc(k)}</div></div>`).join('')
+    + `<div class="stats-sub">${fmtNum(tk.out)} tokens written · ${fmtNum(tk.read)} read · ${plural(commits, 'commit')}</div>`;
 }
 
-function renderTurn(turn, session, running, repoUrl) {
-  const tk = tokens(turn);
-  const tools = Object.entries(turn.tools).map(([n, c]) => `${n.replace(/^mcp__\w+?__/, '')} ×${c}`).join(', ');
-  const long = turn.prompt.length > 600 || turn.prompt.split('\n').length > 12;
-  const commits = turn.commits.map((c) => {
-    const href = repoUrl ? `${repoUrl}/commit/${c.sha}` : null;
-    const label = `<code>${c.sha.slice(0, 7)}</code> ${esc(c.subject)}`;
-    return `<li>${href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${label}</a>` : label}</li>`;
-  }).join('');
-  const notes = turn.progress_notes.length
-    ? `<details class="notes"><summary>${turn.progress_notes.length} progress note${turn.progress_notes.length > 1 ? 's' : ''} while working</summary><ol>${turn.progress_notes.map((n) => `<li class="md">${md(n)}</li>`).join('')}</ol></details>`
-    : '';
-
-  const pu = turn.plan_usage;
-  const sign = (f) => (f > 0 ? '+' : '') + fmtPct(f);
+function planChip(turn) {
   const part = (w, label) => {
-    const u = pu?.[w];
+    const u = turn.plan_usage?.[w];
     if (!u || u.delta == null) return null;
-    return u.concurrent
-      ? `<s>${sign(u.delta)}</s> of ${label} (concurrent use, not counted)`
-      : `<b>${sign(u.delta)}</b> of ${label}`;
+    return u.concurrent ? `<s>${sign(u.delta)}</s> ${label} (concurrent, not counted)` : `<b>${sign(u.delta)}</b> ${label}`;
   };
   const parts = [part('five_hour', '5h'), part('seven_day', 'week')].filter(Boolean);
-  const planChip = parts.length ? `<span class="chip">plan ${parts.join(' · ')}</span>` : '';
+  return parts.length ? `<span class="chip">plan ${parts.join(' · ')}</span>` : '';
+}
 
-  const el = document.createElement('article');
-  el.className = 'turn';
-  el.innerHTML = `
-    <div class="turn-meta"><span class="n">#${running.n}</span>${timeSpan(turn)}
-      <span>${fmtDur(turn.duration_s)}</span><span>${fmtUSD(turn.cost_usd)}</span>
-      <span>running total ${fmtUSD(running.cost)}</span></div>
-    <div class="prompt${long ? ' long' : ''}"><div class="who">Human</div><div class="body">${esc(turn.prompt)}</div>
-      ${long ? '<button class="more" type="button">Show full prompt</button>' : ''}</div>
-    <div class="reply"><div class="who">Claude</div><div class="md">${turn.reply ? md(turn.reply) : '<p><i>(still working when this log was exported)</i></p>'}</div>
-      ${notes}
+function commitList(commits, repoUrl) {
+  if (!commits?.length) return '';
+  return `<ul class="commits">${commits.map((c) => {
+    const label = `<code>${c.sha.slice(0, 7)}</code> ${esc(c.subject)}`;
+    return `<li>${repoUrl ? `<a href="${esc(`${repoUrl}/commit/${c.sha}`)}" target="_blank" rel="noopener">${label}</a>` : label}</li>`;
+  }).join('')}</ul>`;
+}
+
+const humanBubble = (text, { clamp = false, sub = '' } = {}) =>
+  `<div class="bubble human${clamp ? ' clamp' : ''}"><div class="who">Human${sub ? `<span class="note-sub">${esc(sub)}</span>` : ''}</div><div class="text">${esc(text)}</div></div>`;
+const claudeBubble = (html) => `<div class="bubble claude"><div class="who">Claude</div><div class="md">${html}</div></div>`;
+const isLong = (t) => t.length > 400 || t.split('\n').length > 8;
+
+// ---- Timeline -------------------------------------------------------------------------------
+
+function timelineItem(item, ctx) {
+  const li = document.createElement('li');
+  const d = document.createElement('details');
+  li.append(d);
+  if (item.entry) {
+    const e = item.entry;
+    li.className = 'item manual';
+    d.innerHTML = `
+      <summary><span class="tag">${esc(MANUAL_KINDS[e.kind] || MANUAL_KINDS.other)}</span>
+        <span class="line">${esc(e.title)}</span>${e.time ? `<span class="side">${esc(e.time)}</span>` : ''}</summary>
+      <div class="body">
+        ${e.body ? `<div class="md">${md(e.body)}</div>` : ''}
+        ${e.conversation?.length ? `<button class="open-thread" type="button">Read the conversation (${plural(e.conversation.length, 'prompt')}) →</button>` : ''}
+        ${e.links?.length ? `<ul class="commits">${e.links.map((l) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label || l.url)}</a></li>`).join('')}</ul>` : ''}
+      </div>`;
+    d.querySelector('.open-thread')?.addEventListener('click', () => openThread(ctx.threads.get(e), 0));
+    return li;
+  }
+  const { turn, n } = item;
+  const tk = tokens(turn);
+  const tools = Object.entries(turn.tools).map(([k, c]) => `${k.replace(/^mcp__\w+?__/, '')} ×${c}`).join(', ');
+  li.className = 'item';
+  d.innerHTML = `
+    <summary><span class="tag">#${n}</span><span class="line">${esc(item.summary)}</span>
+      <span class="side">${turn.time ? `${esc(turn.time)} · ` : ''}${fmtUSD(turn.cost_usd)}</span></summary>
+    <div class="body">
+      <button class="tap" type="button" aria-label="Open this conversation">${humanBubble(turn.prompt, { clamp: isLong(turn.prompt) })}</button>
+      <div class="hint">Tap the message to read the whole conversation →</div>
+      ${claudeBubble(turn.reply ? md(turn.reply) : '<p><i>(still working when this log was exported)</i></p>')}
       <div class="facts">
-        <span class="chip"><b>${fmtNum(tk.out)}</b> written</span>
-        <span class="chip"><b>${fmtNum(tk.read)}</b> read</span>
+        <span class="chip">${fmtDur(turn.duration_s)}</span>
+        <span class="chip"><b>${fmtNum(tk.out)}</b> written · <b>${fmtNum(tk.read)}</b> read</span>
         <span class="chip"><b>${turn.api_requests}</b> model calls</span>
-        ${planChip}
+        ${planChip(turn)}
         ${tools ? `<span class="chip">${esc(tools)}</span>` : ''}
       </div>
-      ${commits ? `<ul class="commits">${commits}</ul>` : ''}
+      ${commitList(turn.commits, ctx.repoUrl)}
     </div>`;
-  const btn = el.querySelector('.more');
-  if (btn) btn.addEventListener('click', () => {
-    const box = el.querySelector('.prompt');
-    box.classList.toggle('open');
-    btn.textContent = box.classList.contains('open') ? 'Show less' : 'Show full prompt';
-  });
-  return el;
+  d.querySelector('button.tap').addEventListener('click', () => openThread(ctx.threads.get(item.session), turn.index));
+  return li;
 }
+
+function renderTimeline(items, ctx) {
+  const tl = $('#timeline');
+  tl.textContent = '';
+  if (!items.length) { tl.innerHTML = '<p class="empty">Nothing logged yet.</p>'; return; }
+  let day = null;
+  let list = null;
+  for (const item of items) {
+    const k = dayKey(item.date);
+    if (k !== day) {
+      day = k;
+      const h = document.createElement('h2');
+      h.className = 'day';
+      h.textContent = k;
+      list = document.createElement('ol');
+      list.className = 'list';
+      tl.append(h, list);
+    }
+    list.append(timelineItem(item, ctx));
+  }
+}
+
+// ---- Conversations --------------------------------------------------------------------------
+
+// A thread is a whole conversation: a Claude Code session (all its turns) or an imported chat.
+function sessionThread(s, summaries, numbering) {
+  return {
+    kind: 'Claude Code session',
+    title: s.title || 'Claude Code session',
+    url: s.session_url,
+    first: s.turns[0]?.prompt || '',
+    meta: `${plural(s.turns.length, 'prompt')} · ${fmtUSD(s.turns.reduce((a, t) => a + (t.cost_usd || 0), 0))} · ${dayKey(s.first_date)}${s.last_date !== s.first_date ? ` – ${dayKey(s.last_date)}` : ''}`,
+    seq: s.turns[0]?.seq || 0,
+    render: () => s.turns.map((t) => {
+      const texts = [...t.progress_notes, t.reply].filter(Boolean);
+      const follow = t.followups || [];
+      // Claude's in-between notes fold away; messages sent mid-turn go where they arrived.
+      const parts = [];
+      let pending = [];
+      const flush = () => {
+        if (pending.length) parts.push(`<details class="steps"><summary>${plural(pending.length, 'progress note')}</summary><div class="md">${pending.map((x) => `<div>${md(x)}</div>`).join('')}</div></details>`);
+        pending = [];
+      };
+      texts.forEach((x, i) => {
+        follow.filter((f) => f.after_reply_index === i).forEach((f) => { flush(); parts.push(`<div class="msg human">${humanBubble(f.text, { clamp: isLong(f.text), sub: 'while Claude was working' })}</div>`); });
+        if (i === texts.length - 1) { flush(); parts.push(`<div class="msg claude">${claudeBubble(md(x))}</div>`); } else pending.push(x);
+      });
+      follow.filter((f) => f.after_reply_index >= texts.length).forEach((f) => parts.push(`<div class="msg human">${humanBubble(f.text, { sub: 'while Claude was working' })}</div>`));
+      return `<div class="turn-sep">#${numbering.get(t)} · ${esc(summaries(s, t))} · ${fmtDur(t.duration_s)} · ${fmtUSD(t.cost_usd)}</div>
+        <div class="msg human" data-turn="${t.index}">${humanBubble(t.prompt, { clamp: isLong(t.prompt) })}</div>
+        ${parts.join('')}`;
+    }).join(''),
+  };
+}
+
+function chatThread(e) {
+  return {
+    kind: 'Separate Claude chat',
+    title: e.title,
+    first: e.conversation[0]?.q || '',
+    meta: `${plural(e.conversation.length, 'prompt')} · ${dayKey(e.date)}`,
+    seq: e.seq,
+    render: () => e.conversation.map((c) => `
+      <div class="msg human">${humanBubble(c.q, { clamp: isLong(c.q) })}</div>
+      <div class="msg claude">${claudeBubble(md(c.a))}</div>`).join(''),
+  };
+}
+
+function renderConvos(threads) {
+  const box = $('#convos');
+  box.innerHTML = '';
+  for (const th of [...threads].sort((a, b) => a.seq - b.seq)) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'convo-card';
+    b.innerHTML = `<div class="k">${esc(th.kind)}</div><div class="t">${esc(th.title)}</div>
+      <div class="first">${esc(th.first)}</div><div class="m">${esc(th.meta)}</div>`;
+    b.addEventListener('click', () => openThread(th, 0));
+    box.append(b);
+  }
+}
+
+function openThread(th, turnIndex) {
+  const dlg = $('#thread');
+  $('#thread-kind').textContent = th.kind;
+  $('#thread-title').innerHTML = th.url ? `<a href="${esc(th.url)}" target="_blank" rel="noopener">${esc(th.title)}</a>` : esc(th.title);
+  const body = $('#thread-body');
+  body.innerHTML = th.render();
+  // Long messages expand on tap.
+  body.querySelectorAll('.bubble.clamp').forEach((el) => el.addEventListener('click', () => el.classList.remove('clamp')));
+  if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+  const target = turnIndex ? body.querySelector(`[data-turn="${turnIndex}"]`) : null;
+  dlg.scrollTop = 0;
+  if (target) {
+    target.classList.add('target');
+    requestAnimationFrame(() => target.previousElementSibling?.scrollIntoView({ block: 'start' }));
+  }
+}
+
+function setupDialog() {
+  const dlg = $('#thread');
+  const close = () => (typeof dlg.close === 'function' ? dlg.close() : dlg.removeAttribute('open'));
+  dlg.querySelector('.close').addEventListener('click', close);
+  dlg.addEventListener('click', (ev) => { if (ev.target === dlg) close(); });
+}
+
+function setupTabs() {
+  const tabs = { 'tab-timeline': '#timeline', 'tab-convos': '#convos' };
+  for (const [id, panel] of Object.entries(tabs)) {
+    $(`#${id}`).addEventListener('click', () => {
+      for (const [other, p] of Object.entries(tabs)) {
+        $(`#${other}`).setAttribute('aria-selected', String(other === id));
+        $(p).hidden = p !== panel;
+      }
+    });
+  }
+}
+
+// ---- Main -----------------------------------------------------------------------------------
 
 async function main() {
   const meta = await getJSON('./meta.json').catch(() => ({}));
@@ -182,94 +325,40 @@ async function main() {
     $('#title').textContent = `How ${meta.title} was built`;
     document.title = `Making of ${meta.title}`;
   }
-  if (meta.about) {
-    $('#about').innerHTML = md(meta.about);
-    $('#about').hidden = false;
-  }
+  if (meta.about) $('#lede').innerHTML = md(meta.about);
   plan = meta.plan || '';
   if (meta.plan_note) $('#plan-note').textContent = meta.plan_note;
   $('#links').innerHTML = [
     meta.game_url && `<a href="${esc(meta.game_url)}">Play the game</a>`,
     meta.repo_url && `<a href="${esc(meta.repo_url)}" target="_blank" rel="noopener">Source code</a>`,
-    meta.event_url && `<a href="${esc(meta.event_url)}">The Munich jam</a>`,
   ].filter(Boolean).join('');
+  setupTabs();
+  setupDialog();
 
   const { sessions: files } = await getJSON('./sessions/index.json');
   const sessions = (await Promise.all(files.map((f) => getJSON(`./sessions/${f}`).catch(() => null)))).filter(Boolean);
-  sessions.sort((a, b) => (a.turns[0]?.seq || 0) - (b.turns[0]?.seq || 0));
-
-  filterPlanUsage(sessions.flatMap((s) => s.turns));
-  renderStats(sessions);
-
   const manual = (await getJSON('./manual-log.json').catch(() => ({ entries: [] }))).entries || [];
+  const sums = (await getJSON('./summaries.json').catch(() => ({ sessions: {} }))).sessions || {};
+  const summaryOf = (s, t) => sums[s.session_id]?.[String(t.index)] || firstSentence(t.prompt);
 
-  // One stream in project order: Claude Code turns plus hand-logged work outside Claude Code,
-  // sorted by their shared sequence number.
+  const turns = sessions.flatMap((s) => s.turns);
+  filterPlanUsage(turns);
+  renderStats(turns);
+
+  // Number Claude Code prompts across the whole project, in order.
+  const numbering = new Map();
+  [...turns].sort((a, b) => a.seq - b.seq).forEach((t, i) => numbering.set(t, i + 1));
+
+  const threads = new Map();
+  for (const s of sessions) threads.set(s, sessionThread(s, summaryOf, numbering));
+  for (const e of manual) if (e.conversation?.length) threads.set(e, chatThread(e));
+  renderConvos(threads.values());
+
   const items = [
-    ...sessions.flatMap((s) => s.turns.map((turn) => ({ seq: turn.seq, date: turn.date, turn, session: s }))),
+    ...sessions.flatMap((s) => s.turns.map((turn) => ({ seq: turn.seq, date: turn.date, turn, session: s, n: numbering.get(turn), summary: summaryOf(s, turn) }))),
     ...manual.map((entry) => ({ seq: entry.seq, date: entry.date, entry })),
   ].sort((x, y) => x.seq - y.seq);
-
-  const tl = $('#timeline');
-  tl.textContent = '';
-  if (!items.length) { tl.innerHTML = '<p class="empty">Nothing logged yet.</p>'; return; }
-
-  const running = { n: 0, cost: 0 };
-  let lastDay = null;
-  let lastSession = null;
-  for (const item of items) {
-    const day = dayKey(item.date);
-    if (day !== lastDay) {
-      const d = document.createElement('h2');
-      d.className = 'day';
-      d.textContent = day;
-      tl.append(d);
-      lastDay = day;
-      lastSession = null;
-    }
-    if (item.entry) {
-      tl.append(renderManual(item.entry));
-      lastSession = null;
-      continue;
-    }
-    const s = item.session;
-    if (s !== lastSession) {
-      const h = document.createElement('p');
-      h.className = 'session-head';
-      const name = esc(s.title || 'Claude Code session');
-      h.innerHTML = `Claude Code session: ${s.session_url ? `<a href="${esc(s.session_url)}" target="_blank" rel="noopener">${name}</a>` : name}`;
-      tl.append(h);
-      lastSession = s;
-    }
-    running.n += 1;
-    running.cost += item.turn.cost_usd || 0;
-    tl.append(renderTurn(item.turn, s, running, meta.repo_url));
-  }
-}
-
-const MANUAL_KINDS = {
-  human: 'Done by hand',
-  'claude-chat': 'Separate Claude chat',
-  other: 'Outside Claude Code',
-};
-
-function renderManual(entry) {
-  const el = document.createElement('article');
-  el.className = `turn manual kind-${entry.kind || 'other'}`;
-  const links = (entry.links || []).map((l) =>
-    `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label || l.url)}</a></li>`).join('');
-  el.innerHTML = `
-    <div class="turn-meta"><span class="n">${esc(MANUAL_KINDS[entry.kind] || MANUAL_KINDS.other)}</span>${timeSpan(entry)}
-      ${entry.duration ? `<span>${esc(entry.duration)}</span>` : ''}</div>
-    <div class="manual-card"><div class="manual-title">${esc(entry.title)}</div>
-      ${entry.body ? `<div class="md">${md(entry.body)}</div>` : ''}
-      ${entry.conversation?.length ? `<details class="notes convo"><summary>Show the conversation (${entry.conversation.length} prompt${entry.conversation.length > 1 ? 's' : ''})</summary>${entry.conversation.map((c) => `
-        <div class="prompt"><div class="who">Human</div><div class="body">${esc(c.q)}</div></div>
-        <div class="reply"><div class="who">Claude</div><div class="md">${md(c.a)}</div></div>`).join('')}</details>` : ''}
-      ${entry.prompts?.length ? `<details class="notes"><summary>${entry.prompts.length} prompt${entry.prompts.length > 1 ? 's' : ''} in that chat</summary><ol>${entry.prompts.map((p) => `<li class="prompt-quote">${esc(p)}</li>`).join('')}</ol></details>` : ''}
-      ${links ? `<ul class="commits">${links}</ul>` : ''}
-    </div>`;
-  return el;
+  renderTimeline(items, { threads, repoUrl: meta.repo_url });
 }
 
 main().catch((err) => {
