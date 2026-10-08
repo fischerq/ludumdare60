@@ -75,6 +75,7 @@ Every human prompt and its token usage/cost is published in `making-of/` as a sc
 Munich eSports). It only states facts with a source. The official start (Sat 17 Oct 00:00 CEST) is from the ldjam.com countdown.
 Venue hours (Sat 9:00 to Sun 17:00) are the user's current plan, and coordination happens on the Gamedev/Muc Discord
 (https://discord.gg/FeZ96Z89A). Update the page when the plan changes.
+The Games card lists the jam's games; add each game (title, author, play link) as people share them.
 
 ## Times in the published log
 The repo must not contain detailed timestamps. Every timeline item (Claude Code turn or `manual-log.json` entry) has
