@@ -37,6 +37,12 @@
     .sched td:first-child { color: var(--muted); padding-right: 12px; }
     .sched td:last-child { text-align: right; font-weight: 600; }
     #local-note { font-size: 13px; color: var(--muted); margin-top: 8px; }
+    .games { list-style: none; padding: 0; margin: 0; }
+    .games li { padding: 12px 0 2px; border-top: 1px solid var(--line); }
+    .games li:first-child { border-top: 0; padding-top: 4px; }
+    .g-title { font-weight: 700; font-size: 18px; }
+    .g-by { color: var(--muted); font-size: 14px; }
+    .games .links { margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -75,6 +81,7 @@
       <nav class="links">
         <a href="https://www.google.com/maps/search/?api=1&amp;query=Die%20Gamerei%2C%20Hohenlindener%20Str.%204%2C%2081677%20M%C3%BCnchen" target="_blank" rel="noopener">Map</a>
         <a href="https://www.games-bavaria.com/die-gamerei/" target="_blank" rel="noopener">About the venue</a>
+        <a href="https://munich-esports.de" target="_blank" rel="noopener">About Munich eSports</a>
       </nav>
     </section>
 
@@ -87,10 +94,21 @@
         <a href="https://ldjam.com" target="_blank" rel="noopener">ldjam.com</a>
       </nav>
     </section>
+
+    <section class="card" aria-labelledby="games">
+      <h2 id="games">Games</h2>
+      <p style="color:var(--muted)">Games made at the jam will be listed here.</p>
+      <ul class="games">
+        <li><span class="g-title">mini-gurke</span> <span class="g-by">by Quirin · work in progress</span>
+          <nav class="links">
+            <a href="../">Play</a>
+            <a href="../making-of/">How it's being made</a>
+          </nav></li>
+      </ul>
+    </section>
   </main>
 
-  <footer class="foot wrap">Unofficial page, not affiliated with Ludum Dare. ·
-    <a href="../making-of/">How my game is being made</a></footer>
+  <footer class="foot wrap">Unofficial page, not affiliated with Ludum Dare.</footer>
 
   <script>
     // Times: official start from the ldjam.com countdown; venue hours are the organizer's plan.
