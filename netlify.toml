@@ -18,3 +18,8 @@
   for = "/src/*"
   [headers.values]
     Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/making-of/*"
+  [headers.values]
+    Cache-Control = "no-cache"

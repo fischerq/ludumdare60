@@ -20,6 +20,12 @@ Then open <http://localhost:8000>. To test on your phone, open `http://<your-lap
 Netlify deploys automatically on every push. `netlify.toml` publishes the repo root with no build command and
 serves `index.html` and `src/**` with `Cache-Control: no-cache`, so a reload on the phone picks up the latest push.
 
+## Making-of / AI-use log
+
+This game is built with Claude Code. Every prompt, Claude's replies, token usage and API-equivalent cost are
+logged in `making-of/` and shown at [`/making-of/`](making-of/) as a scrollable timeline.
+`python3 tools/ai_log.py` regenerates `making-of/sessions/*.json` from the local Claude Code transcripts.
+
 ## Layout
 
 ```
@@ -28,4 +34,6 @@ src/main.js           Phaser config (720x1280 portrait, Scale.FIT, arcade physic
 src/config.js         tunable constants: speeds, sizes, colors
 src/scenes/           Boot (placeholder textures), Menu, Game, GameOver
 assets/               real art/audio goes here later
+making-of/            AI-use log + making-of page (index.html, sessions/*.json)
+tools/ai_log.py       exports Claude Code transcripts into making-of/sessions/
 ```

@@ -22,6 +22,18 @@ Game jam project: a mobile-first Phaser 3 browser game deployed to Netlify as a 
 - After committing and pushing work to the session's branch, always open a pull request against `main`
   automatically (no need to ask first). If a PR for the branch is already open, push to it instead of opening a new one.
 
+## AI-use log (making-of)
+Every human prompt and its token usage/cost is published in `making-of/` as a scrollable "making of" page.
+- Run `python3 tools/ai_log.py` right before the **last commit of every turn** and include the changes under
+  `making-of/sessions/` in that commit. A `UserPromptSubmit` hook (`.claude/settings.json`) also runs it at the
+  start of each turn, so the previous turn's tail is picked up even if it was missed.
+- Even a turn that changes no code (a question, a plan) must still commit and push the updated log.
+- Never hand-edit `making-of/sessions/*.json`; regenerate them. Never delete a session file: the transcript it came
+  from is gone once the cloud container is reclaimed. `making-of/meta.json` is the place for hand-written notes.
+- The exporter only reads prompts, Claude's visible replies, tool names and token counts. Tool outputs, system
+  prompts and thinking stay out. If a prompt ever contains a secret, tell the user before committing the log.
+- If a new model shows up, add its prices to `PRICES` in `tools/ai_log.py`.
+
 ## Testing
 - Run `python3 -m http.server` and open the page; check the browser console for errors.
 - Sanity-check in a narrow portrait viewport with touch emulation (e.g. Playwright with `hasTouch`/`isMobile`).
