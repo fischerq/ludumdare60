@@ -20,13 +20,14 @@
   <details class="explainer wrap">
     <summary>How to read the numbers</summary>
     <ul>
-      <li><b>Cost</b>: what the tokens would cost at Anthropic's public API prices, computed from the exact token
-        counts Claude Code logs. <span id="plan-note"></span></li>
-      <li><b>Plan</b>: how much of the subscription's 5-hour and weekly limits went up while Claude worked on a
-        prompt. The limits are account-wide, so time between prompts never counts, and jumps that a prompt's own
-        cost can't explain are left out as concurrent use. Readings have 1% resolution.</li>
-      <li><b>Tokens</b>: text the model read and wrote. Every tool call re-reads the conversation, so "read" is
+      <li><b>Subscription share</b>: how much of the plan's weekly limit went up while Claude worked, converted
+        to a share of one month (a month holds about 4.35 weekly allowances). The limits are account-wide, so time
+        between prompts never counts, and jumps that a prompt's own tokens can't explain are left out as concurrent
+        use. Readings have 1% resolution. <span id="plan-note"></span></li>
+      <li><b>Tokens</b>: text the model read and wrote, with the model that did it. Every tool call re-reads the conversation, so "read" is
         large but mostly served from a cheap cache.</li>
+      <li><b>API list price</b>: what the same tokens would cost on Anthropic's pay-as-you-go API. Shown only for
+        reference.</li>
       <li><b>Time</b>: from sending a prompt to Claude's last action, including checking the game in a headless
         browser.</li>
     </ul>

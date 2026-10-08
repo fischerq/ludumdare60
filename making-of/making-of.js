@@ -108,29 +108,52 @@ const MANUAL_KINDS = { human: 'By hand', 'claude-chat': 'Claude chat', other: 'O
 const sign = (f) => (f > 0 ? '+' : '') + fmtPct(f);
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 
-// First sentence of a prompt, as a fallback one-liner when no summary was written.
-function firstSentence(text, max = 110) {
-  const t = text.replace(/\s+/g, ' ').trim();
-  const m = t.match(/^(.+?[.!?])(\s|$)/);
-  const s = m ? m[1] : t;
+// The prompt's own first sentence (or first line, if that ends sooner): the timeline row.
+function firstSentence(text, max = 140) {
+  const firstLine = text.trim().split('\n')[0].trim();
+  const m = firstLine.match(/^(.+?[.!?])(\s|$)/);
+  const s = m ? m[1] : firstLine;
   return s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s;
 }
 
-function renderStats(turns) {
+// Models used in a turn, as short names ("claude-opus-5-5" → "Opus 5.5").
+const MODEL_NAMES = { opus: 'Opus', sonnet: 'Sonnet', haiku: 'Haiku', fable: 'Fable', mythos: 'Mythos' };
+function modelName(id) {
+  const m = String(id).match(/^claude-([a-z]+)-(\d+)(?:-(\d+))?/);
+  return m ? `${MODEL_NAMES[m[1]] || m[1]} ${m[2]}${m[3] ? `.${m[3]}` : ''}` : String(id);
+}
+// Main model first (most output), helpers after.
+const modelsOf = (turn) => Object.entries(turn.usage).sort((a, b) => b[1].output - a[1].output).map(([id]) => modelName(id));
+const totalTokens = (turn) => { const t = tokens(turn); return t.read + t.out; };
+
+// Share of the subscription: the weekly limit resets every 7 days, so one month holds
+// 30.44 / 7 ≈ 4.35 weekly allowances.
+const WEEKS_PER_MONTH = 30.44 / 7;
+
+function renderStats(turns, meta) {
   const cost = turns.reduce((a, t) => a + (t.cost_usd || 0), 0);
   const secs = turns.reduce((a, t) => a + t.duration_s, 0);
   const tk = turns.map(tokens).reduce((a, t) => ({ read: a.read + t.read, out: a.out + t.out }), { read: 0, out: 0 });
   const commits = new Set(turns.flatMap((t) => t.commits.map((c) => c.sha))).size;
   const weekly = turns.reduce((a, t) => a + planCounted(t, 'seven_day'), 0);
   const tracked = turns.some((t) => t.plan_usage?.seven_day?.delta != null);
-  const stats = [
-    [turns.length, 'prompts'],
-    [fmtUSD(cost), 'at API prices'],
-    tracked ? [weekly < 0.005 ? '<1%' : `≈${fmtPct(weekly)}`, `of a weekly ${plan || 'plan'} limit`] : null,
-    [fmtDur(secs), 'Claude working'],
-  ].filter(Boolean);
-  $('#stats').innerHTML = stats.map(([v, k]) => `<div class="stat"><div class="v">${esc(v)}</div><div class="k">${esc(k)}</div></div>`).join('')
-    + `<div class="stats-sub">${fmtNum(tk.out)} tokens written · ${fmtNum(tk.read)} read · ${plural(commits, 'commit')}</div>`;
+  const month = weekly / WEEKS_PER_MONTH;
+  const price = meta.plan_price_month;
+  const money = (n) => new Intl.NumberFormat(undefined, { style: 'currency', currency: meta.plan_currency || 'USD' }).format(n);
+  const models = [...new Set(turns.flatMap(modelsOf))];
+
+  const stats = [];
+  if (tracked) {
+    const v = weekly < 0.005 ? `<${(1 / WEEKS_PER_MONTH).toFixed(2)}%` : `≈${(month * 100).toFixed(1)}%`;
+    const below = weekly < 0.005;  // under the 1% resolution of the weekly reading
+    const amount = below ? `<${money(0.01 / WEEKS_PER_MONTH * price)}` : `≈${money(month * price)}`;
+    const k = `of a month of ${plan || 'the subscription'}${price ? ` (${amount} of ${money(price)})` : ''}`;
+    stats.push([v, k, 'hero']);
+  }
+  stats.push([fmtNum(tk.read + tk.out), 'tokens'], [turns.length, 'prompts'], [fmtDur(secs), 'Claude working']);
+  $('#stats').innerHTML = stats.map(([v, k, cls]) => `<div class="stat${cls ? ` ${cls}` : ''}"><div class="v">${esc(v)}</div><div class="k">${esc(k)}</div></div>`).join('')
+    + `<div class="stats-sub">${esc(models.join(' · '))} · ${fmtNum(tk.out)} written, ${fmtNum(tk.read)} read · ${plural(commits, 'commit')}
+      · ${tracked ? `${weekly < 0.005 ? '<1%' : fmtPct(weekly)} of a weekly limit · ` : ''}${fmtUSD(cost)} at API list prices</div>`;
 }
 
 function planChip(turn) {
@@ -181,19 +204,21 @@ function timelineItem(item, ctx) {
   const tools = Object.entries(turn.tools).map(([k, c]) => `${k.replace(/^mcp__\w+?__/, '')} ×${c}`).join(', ');
   li.className = 'item';
   d.innerHTML = `
-    <summary><span class="tag">#${n}</span><span class="line">${esc(item.summary)}</span>
-      <span class="side">${turn.time ? `${esc(turn.time)} · ` : ''}${fmtUSD(turn.cost_usd)}</span></summary>
+    <summary><span class="tag">#${n}</span><span class="line">${esc(firstSentence(turn.prompt))}</span>
+      <span class="side">${turn.time ? `${esc(turn.time)} · ` : ''}${fmtNum(totalTokens(turn))} tok</span></summary>
     <div class="body">
       <button class="tap" type="button" aria-label="Open this conversation">${humanBubble(turn.prompt, { clamp: isLong(turn.prompt) })}</button>
       <div class="hint">Tap the message to read the whole conversation →</div>
       ${claudeBubble(turn.reply ? md(turn.reply) : '<p><i>(still working when this log was exported)</i></p>')}
       <div class="facts">
-        <span class="chip">${fmtDur(turn.duration_s)}</span>
+        <span class="chip model">${esc(modelsOf(turn).join(' + '))}</span>
         <span class="chip"><b>${fmtNum(tk.out)}</b> written · <b>${fmtNum(tk.read)}</b> read</span>
         <span class="chip"><b>${turn.api_requests}</b> model calls</span>
+        <span class="chip">${fmtDur(turn.duration_s)}</span>
         ${planChip(turn)}
         ${tools ? `<span class="chip">${esc(tools)}</span>` : ''}
       </div>
+      <p class="fine">≈${fmtUSD(turn.cost_usd)} at API list prices</p>
       ${commitList(turn.commits, ctx.repoUrl)}
     </div>`;
   d.querySelector('button.tap').addEventListener('click', () => openThread(ctx.threads.get(item.session), turn.index));
@@ -224,13 +249,13 @@ function renderTimeline(items, ctx) {
 // ---- Conversations --------------------------------------------------------------------------
 
 // A thread is a whole conversation: a Claude Code session (all its turns) or an imported chat.
-function sessionThread(s, summaries, numbering) {
+function sessionThread(s, numbering) {
   return {
     kind: 'Claude Code session',
     title: s.title || 'Claude Code session',
     url: s.session_url,
     first: s.turns[0]?.prompt || '',
-    meta: `${plural(s.turns.length, 'prompt')} · ${fmtUSD(s.turns.reduce((a, t) => a + (t.cost_usd || 0), 0))} · ${dayKey(s.first_date)}${s.last_date !== s.first_date ? ` – ${dayKey(s.last_date)}` : ''}`,
+    meta: `${plural(s.turns.length, 'prompt')} · ${fmtNum(s.turns.reduce((a, t) => a + totalTokens(t), 0))} tokens · ${[...new Set(s.turns.flatMap(modelsOf))].join(', ')} · ${dayKey(s.first_date)}${s.last_date !== s.first_date ? ` – ${dayKey(s.last_date)}` : ''}`,
     seq: s.turns[0]?.seq || 0,
     render: () => s.turns.map((t) => {
       const texts = [...t.progress_notes, t.reply].filter(Boolean);
@@ -247,7 +272,7 @@ function sessionThread(s, summaries, numbering) {
         if (i === texts.length - 1) { flush(); parts.push(`<div class="msg claude">${claudeBubble(md(x))}</div>`); } else pending.push(x);
       });
       follow.filter((f) => f.after_reply_index >= texts.length).forEach((f) => parts.push(`<div class="msg human">${humanBubble(f.text, { sub: 'while Claude was working' })}</div>`));
-      return `<div class="turn-sep">#${numbering.get(t)} · ${esc(summaries(s, t))} · ${fmtDur(t.duration_s)} · ${fmtUSD(t.cost_usd)}</div>
+      return `<div class="turn-sep">#${numbering.get(t)} · ${esc(modelsOf(t).join(' + '))} · ${fmtNum(totalTokens(t))} tokens · ${fmtDur(t.duration_s)}</div>
         <div class="msg human" data-turn="${t.index}">${humanBubble(t.prompt, { clamp: isLong(t.prompt) })}</div>
         ${parts.join('')}`;
     }).join(''),
@@ -259,7 +284,7 @@ function chatThread(e) {
     kind: 'Separate Claude chat',
     title: e.title,
     first: e.conversation[0]?.q || '',
-    meta: `${plural(e.conversation.length, 'prompt')} · ${dayKey(e.date)}`,
+    meta: `${plural(e.conversation.length, 'prompt')}${e.model ? ` · ${e.model}` : ''} · ${dayKey(e.date)}`,
     seq: e.seq,
     render: () => e.conversation.map((c) => `
       <div class="msg human">${humanBubble(c.q, { clamp: isLong(c.q) })}</div>
@@ -338,24 +363,22 @@ async function main() {
   const { sessions: files } = await getJSON('./sessions/index.json');
   const sessions = (await Promise.all(files.map((f) => getJSON(`./sessions/${f}`).catch(() => null)))).filter(Boolean);
   const manual = (await getJSON('./manual-log.json').catch(() => ({ entries: [] }))).entries || [];
-  const sums = (await getJSON('./summaries.json').catch(() => ({ sessions: {} }))).sessions || {};
-  const summaryOf = (s, t) => sums[s.session_id]?.[String(t.index)] || firstSentence(t.prompt);
 
   const turns = sessions.flatMap((s) => s.turns);
   filterPlanUsage(turns);
-  renderStats(turns);
+  renderStats(turns, meta);
 
   // Number Claude Code prompts across the whole project, in order.
   const numbering = new Map();
   [...turns].sort((a, b) => a.seq - b.seq).forEach((t, i) => numbering.set(t, i + 1));
 
   const threads = new Map();
-  for (const s of sessions) threads.set(s, sessionThread(s, summaryOf, numbering));
+  for (const s of sessions) threads.set(s, sessionThread(s, numbering));
   for (const e of manual) if (e.conversation?.length) threads.set(e, chatThread(e));
   renderConvos(threads.values());
 
   const items = [
-    ...sessions.flatMap((s) => s.turns.map((turn) => ({ seq: turn.seq, date: turn.date, turn, session: s, n: numbering.get(turn), summary: summaryOf(s, turn) }))),
+    ...sessions.flatMap((s) => s.turns.map((turn) => ({ seq: turn.seq, date: turn.date, turn, session: s, n: numbering.get(turn) }))),
     ...manual.map((entry) => ({ seq: entry.seq, date: entry.date, entry })),
   ].sort((x, y) => x.seq - y.seq);
   renderTimeline(items, { threads, repoUrl: meta.repo_url });
