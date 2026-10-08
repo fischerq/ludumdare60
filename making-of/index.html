@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Making Of</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="hero">
+    <p class="eyebrow">Making of</p>
+    <h1 id="title">How this game was built</h1>
+    <p class="lede">Every prompt a human sent to Claude while building this game, in order, with what Claude
+      did, how long it took and what it cost. Nothing is edited out.</p>
+    <aside class="about md" id="about" hidden></aside>
+    <nav class="links" id="links"></nav>
+  </header>
+
+  <section class="stats" id="stats" aria-label="Totals"></section>
+
+  <section class="explainer">
+    <details>
+      <summary>How to read the numbers</summary>
+      <ul>
+        <li><b>Prompt</b>: a message a human typed, shown verbatim.</li>
+        <li><b>Claude's reply</b>: the final message Claude showed after working. Progress notes it wrote
+          along the way are folded underneath.</li>
+        <li><b>Tokens</b>: how much text the model read and wrote. Each tool call re-reads the conversation,
+          so "read" is large but mostly served from a cheap cache.</li>
+        <li><b>Cost</b>: what those tokens would cost at Anthropic's public API prices. It's computed from the
+          exact token counts Claude Code logs. <span id="plan-note"></span></li>
+        <li><b>Plan</b>: how much of the subscription's rolling 5-hour and weekly usage limits went up between
+          this prompt and the next one. It's read from Claude Code's own rate-limit events, which have 1% resolution.</li>
+        <li><b>Time</b>: from sending the prompt to Claude's last action, including running the game in a
+          headless browser to check it.</li>
+      </ul>
+    </details>
+  </section>
+
+  <main id="timeline" aria-live="polite"><p class="loading">Loading…</p></main>
+
+  <footer class="foot">
+    Generated from Claude Code session logs by <code>tools/ai_log.py</code>.
+  </footer>
+
+  <script type="module" src="./making-of.js"></script>
+</body>
+</html>

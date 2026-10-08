@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/tools/ai_log.py\" --hook",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
