@@ -31,8 +31,20 @@ export default class GameScene extends Phaser.Scene {
     // Touch / mouse: move toward the pointer while it is held down.
     this.input.on('pointerdown', (p) => { this.target = { x: p.worldX, y: p.worldY }; });
     this.input.on('pointermove', (p) => { if (p.isDown) this.target = { x: p.worldX, y: p.worldY }; });
+    // Multi-touch: when one finger lifts while another is still down, follow the remaining one.
     this.input.on('pointerup', () => {
-      if (!this.input.activePointer.isDown) this.target = null;
+      const held = this.input.manager.pointers.find((p) => p.isDown);
+      this.target = held ? { x: held.worldX, y: held.worldY } : null;
+    });
+
+    // Pause while the tab or app is in the background, resume when it's back.
+    const onHidden = () => this.scene.pause();
+    const onVisible = () => { this.target = null; this.scene.resume(); };
+    this.game.events.on(Phaser.Core.Events.HIDDEN, onHidden);
+    this.game.events.on(Phaser.Core.Events.VISIBLE, onVisible);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.game.events.off(Phaser.Core.Events.HIDDEN, onHidden);
+      this.game.events.off(Phaser.Core.Events.VISIBLE, onVisible);
     });
 
     // Keyboard bonus for laptops.

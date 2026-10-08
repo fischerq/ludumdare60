@@ -62,8 +62,10 @@ function fmtDur(s) {
   const m = Math.round(s / 60);
   return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${m % 60} min`;
 }
-const dayKey = (iso) => new Date(iso).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
-const timeOf = (iso) => new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+const dayKey = (date) => new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
+// The data only has a date and a sequence number per item; a clock time ("HH:MM", Munich)
+// exists only for items during the jam itself.
+const timeSpan = (item) => (item.time ? `<span>${esc(item.time)}</span>` : '');
 
 function tokens(turn) {
   let read = 0, out = 0;
@@ -149,7 +151,7 @@ function renderTurn(turn, session, running, repoUrl) {
   const el = document.createElement('article');
   el.className = 'turn';
   el.innerHTML = `
-    <div class="turn-meta"><span class="n">#${running.n}</span><span>${timeOf(turn.sent_at)}</span>
+    <div class="turn-meta"><span class="n">#${running.n}</span>${timeSpan(turn)}
       <span>${fmtDur(turn.duration_s)}</span><span>${fmtUSD(turn.cost_usd)}</span>
       <span>running total ${fmtUSD(running.cost)}</span></div>
     <div class="prompt${long ? ' long' : ''}"><div class="who">Human</div><div class="body">${esc(turn.prompt)}</div>
@@ -194,19 +196,19 @@ async function main() {
 
   const { sessions: files } = await getJSON('./sessions/index.json');
   const sessions = (await Promise.all(files.map((f) => getJSON(`./sessions/${f}`).catch(() => null)))).filter(Boolean);
-  sessions.sort((a, b) => a.started_at.localeCompare(b.started_at));
+  sessions.sort((a, b) => (a.turns[0]?.seq || 0) - (b.turns[0]?.seq || 0));
 
   filterPlanUsage(sessions.flatMap((s) => s.turns));
   renderStats(sessions);
 
   const manual = (await getJSON('./manual-log.json').catch(() => ({ entries: [] }))).entries || [];
 
-  // One chronological stream: Claude Code turns plus hand-logged work outside Claude Code.
-  // Date-only manual entries ("2026-10-08") sort to the start of their day.
+  // One stream in project order: Claude Code turns plus hand-logged work outside Claude Code,
+  // sorted by their shared sequence number.
   const items = [
-    ...sessions.flatMap((s) => s.turns.map((turn) => ({ at: turn.sent_at, turn, session: s }))),
-    ...manual.map((entry) => ({ at: entry.at.length === 10 ? `${entry.at}T00:00:00Z` : entry.at, entry })),
-  ].sort((x, y) => new Date(x.at) - new Date(y.at));
+    ...sessions.flatMap((s) => s.turns.map((turn) => ({ seq: turn.seq, date: turn.date, turn, session: s }))),
+    ...manual.map((entry) => ({ seq: entry.seq, date: entry.date, entry })),
+  ].sort((x, y) => x.seq - y.seq);
 
   const tl = $('#timeline');
   tl.textContent = '';
@@ -216,7 +218,7 @@ async function main() {
   let lastDay = null;
   let lastSession = null;
   for (const item of items) {
-    const day = dayKey(item.at);
+    const day = dayKey(item.date);
     if (day !== lastDay) {
       const d = document.createElement('h2');
       d.className = 'day';
@@ -254,14 +256,16 @@ const MANUAL_KINDS = {
 function renderManual(entry) {
   const el = document.createElement('article');
   el.className = `turn manual kind-${entry.kind || 'other'}`;
-  const when = entry.at.length === 10 ? 'time not recorded' : timeOf(entry.at);
   const links = (entry.links || []).map((l) =>
     `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label || l.url)}</a></li>`).join('');
   el.innerHTML = `
-    <div class="turn-meta"><span class="n">${esc(MANUAL_KINDS[entry.kind] || MANUAL_KINDS.other)}</span><span>${when}</span>
+    <div class="turn-meta"><span class="n">${esc(MANUAL_KINDS[entry.kind] || MANUAL_KINDS.other)}</span>${timeSpan(entry)}
       ${entry.duration ? `<span>${esc(entry.duration)}</span>` : ''}</div>
     <div class="manual-card"><div class="manual-title">${esc(entry.title)}</div>
       ${entry.body ? `<div class="md">${md(entry.body)}</div>` : ''}
+      ${entry.conversation?.length ? `<details class="notes convo"><summary>Show the conversation (${entry.conversation.length} prompt${entry.conversation.length > 1 ? 's' : ''})</summary>${entry.conversation.map((c) => `
+        <div class="prompt"><div class="who">Human</div><div class="body">${esc(c.q)}</div></div>
+        <div class="reply"><div class="who">Claude</div><div class="md">${md(c.a)}</div></div>`).join('')}</details>` : ''}
       ${entry.prompts?.length ? `<details class="notes"><summary>${entry.prompts.length} prompt${entry.prompts.length > 1 ? 's' : ''} in that chat</summary><ol>${entry.prompts.map((p) => `<li class="prompt-quote">${esc(p)}</li>`).join('')}</ol></details>` : ''}
       ${links ? `<ul class="commits">${links}</ul>` : ''}
     </div>`;

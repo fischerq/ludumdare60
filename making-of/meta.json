@@ -5,5 +5,9 @@
   "repo_url": "https://github.com/fischerq/ludumdare60",
   "plan": "Claude Max (10x)",
   "plan_note": "Built on a Claude Max (10x) subscription, which is a flat monthly fee. The dollar figures are what the same tokens would cost at API list prices. The plan-usage figures show how much of the subscription's 5-hour and weekly limits each prompt used. Those limits are account-wide, so any other Claude use at the same time is included.",
-  "event_url": "../event/"
+  "event_url": "../event/",
+  "show_times_between": [
+    "2026-10-16T22:00:00Z",
+    "2026-10-19T22:00:00Z"
+  ]
 }

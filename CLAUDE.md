@@ -17,11 +17,18 @@ When the title changes, update `GAME_TITLE` in `src/config.js`, `<title>` in `in
   at the 720x1280 logical resolution.
 
 ## Conventions
-- Placeholder art is drawn in code with `Graphics` + `generateTexture` in `BootScene`; no image files until real
-  assets exist. When real art lands, put it in `assets/` and load it in `BootScene` under the same texture keys.
+- Placeholder art is drawn in code with `Graphics` + `generateTexture` in `BootScene`, unless the user provides
+  assets. When real art lands, put it in `assets/` and load it in `BootScene` under the same texture keys.
 - All tunable numbers (speeds, sizes, colors, timings) go in `src/config.js`, not inline in scenes, so "feel"
   tweaks are one-line edits.
 - One scene per file in `src/scenes/`, registered in the scene list in `src/main.js`.
+- Don't use localStorage for anything important. A best score is fine; game state isn't.
+- Keep the mobile pitfalls handled: no pull-to-refresh, no pinch or double-tap zoom, multi-touch works, and the game
+  pauses while the tab is hidden.
+
+## Working style
+- Make small, focused changes and commit each one with a clear message, so the user can playtest after every push.
+- After each change, tell the user in one or two sentences what to test on the phone.
 
 ## Workflow
 - **Every push must end up in an open pull request against `main`. Open it yourself, without asking.**
@@ -57,8 +64,16 @@ Every human prompt and its token usage/cost is published in `making-of/` as a sc
 
 ## Event page
 `event/index.html` is a shareable page for the in-person Ludum Dare 60 site in Munich (Die Gamerei, hosted by
-Munich eSports). It only states facts with a source. Venue hours and sign-up stay "to be announced" until the user
-provides them. Once ldjam.com publishes official times, replace the unofficial LdDB times.
+Munich eSports). It only states facts with a source. The official start (Sat 17 Oct 00:00 CEST) is from the ldjam.com countdown.
+Venue hours (Sat 9:00 to Sun 17:00) are the user's current plan, and coordination happens on the Gamedev/Muc Discord
+(https://discord.gg/FeZ96Z89A). Update the page when the plan changes.
+
+## Times in the published log
+The repo must not contain detailed timestamps. Every timeline item (Claude Code turn or `manual-log.json` entry) has
+only a `date` (Munich) and a project-wide `seq` for ordering. A clock time (`time: "HH:MM"`, Munich) is allowed only
+during the jam (`show_times_between` in `making-of/meta.json`). `tools/ai_log.py` uses exact times from the local
+transcript internally and never writes them. Durations are fine. When adding a manual entry, set `seq` to the current
+max + 1, or to a fraction between two neighbours for something that happened earlier.
 
 ## Testing
 - Run `python3 -m http.server` and open the page; check the browser console for errors.

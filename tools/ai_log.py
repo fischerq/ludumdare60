@@ -18,10 +18,19 @@ import re
 import subprocess
 import sys
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "making-of" / "sessions"
+MANUAL_LOG = ROOT / "making-of" / "manual-log.json"
+META = ROOT / "making-of" / "meta.json"
+LOCAL_TZ = ZoneInfo("Europe/Berlin")
+
+# Privacy: the repo only gets a date (Munich) and a global sequence number per timeline item.
+# Exact timestamps are read from the local transcript for computing things (plan usage, which
+# commits belong to which turn) but never written out, except a clock time inside the jam window
+# (meta.json show_times_between).
 
 # USD per million tokens (Anthropic first-party API list prices).
 # Cache writes: 5-minute TTL = 1.25x input, 1-hour TTL = 2x input.
@@ -39,6 +48,23 @@ PRICES = {
 BASELINE_GRACE_S = 10
 
 REMINDER_RE = re.compile(r"<system-reminder>.*?</system-reminder>", re.S)
+
+
+def jam_window():
+    try:
+        a, b = json.loads(META.read_text()).get("show_times_between") or (None, None)
+        return parse_ts(a), parse_ts(b)
+    except Exception:
+        return None
+
+
+def public_when(dt, window):
+    """Date (and, during the jam only, clock time) as published in the repo."""
+    local = dt.astimezone(LOCAL_TZ)
+    out = {"date": local.date().isoformat()}
+    if window and window[0] <= dt <= window[1]:
+        out["time"] = local.strftime("%H:%M")
+    return out
 
 
 def transcripts_dir():
@@ -171,7 +197,7 @@ def load_entries(path):
     return entries
 
 
-def export_session(path, commits):
+def export_session(path, commits, next_seq, window):
     entries = load_entries(path)
     # Subagent transcripts (if any) live next to the main file; their usage counts too.
     sub_dir = path.with_suffix("")
@@ -248,16 +274,6 @@ def export_session(path, commits):
                 break
 
     snaps = plan_snapshots(entries)
-    previous_snaps = []
-    prev_file = OUT_DIR / f"{session_id}.json"
-    if prev_file.exists():
-        try:
-            previous_snaps = json.loads(prev_file.read_text()).get("plan_usage_snapshots") or []
-        except Exception:
-            previous_snaps = []
-    merged = {sn["at"]: sn for sn in previous_snaps}
-    merged.update({sn["at"]: sn for sn in snaps})
-    snaps = sorted(merged.values(), key=lambda x: x["at"])
 
     # Plan usage per turn. A rate_limit_event is emitted whenever this session sees the
     # utilization change, so the latest snapshot at time t is the value as of t. Usage from
@@ -287,16 +303,25 @@ def export_session(path, commits):
             out[w] = {"start": a and a["value"], "end": b and b["value"], "delta": d}
         return out
 
+    out_file = OUT_DIR / f"{session_id}.json"
+    previous = {}
+    if out_file.exists():
+        try:
+            previous = json.loads(out_file.read_text())
+        except Exception:
+            previous = {}
+    prev_seq = {t.get("index"): t.get("seq") for t in previous.get("turns", [])}
+
     out_turns = []
     for i, turn in enumerate(turns):
         start = parse_ts(turn["sent_at"])
         end = parse_ts(turn["ended_at"])
         nxt = parse_ts(turns[i + 1]["sent_at"]) if i + 1 < len(turns) else None
         turn_commits = [
-            {"sha": c["sha"], "subject": c["subject"], "time": c["time"].isoformat()}
-            for c in commits if c["time"] >= start and (nxt is None or c["time"] < nxt)
+            {"sha": c["sha"], "subject": c["subject"]}
+            for c in sorted(commits, key=lambda c: c["time"])
+            if c["time"] >= start and (nxt is None or c["time"] < nxt)
         ]
-        turn_commits.sort(key=lambda c: c["time"])
         usage = {}
         total_cost = 0.0
         cost_known = True
@@ -307,10 +332,11 @@ def export_session(path, commits):
                 cost_known = False
             else:
                 total_cost += c
+        seq = prev_seq.get(i + 1) or next_seq()
         out_turns.append({
             "index": i + 1,
-            "sent_at": turn["sent_at"],
-            "ended_at": turn["ended_at"],
+            "seq": seq,
+            **public_when(start, window),
             "duration_s": round((end - start).total_seconds()),
             "prompt": turn["prompt"],
             "reply": turn["texts"][-1] if turn["texts"] else "",
@@ -336,23 +362,14 @@ def export_session(path, commits):
     if remote_id.startswith("cse_") and os.environ.get("CLAUDE_CODE_SESSION_ID") == session_id:
         session_url = "https://claude.ai/code/session_" + remote_id[len("cse_"):]
 
-    out_file = OUT_DIR / f"{session_id}.json"
-    previous = {}
-    if out_file.exists():
-        try:
-            previous = json.loads(out_file.read_text())
-        except Exception:
-            previous = {}
-
     data = {
         "session_id": session_id,
         "title": title or previous.get("title"),
         "session_url": session_url or previous.get("session_url"),
         "claude_code_version": next((e.get("version") for e in entries if e.get("version")), None),
-        "started_at": out_turns[0]["sent_at"],
-        "ended_at": out_turns[-1]["ended_at"],
+        "first_date": out_turns[0]["date"],
+        "last_date": out_turns[-1]["date"],
         "turns": out_turns,
-        "plan_usage_snapshots": snaps,
         "totals": {
             "prompts": len(out_turns),
             "cost_usd": round(sum(t["cost_usd"] or 0 for t in out_turns), 6),
@@ -378,18 +395,40 @@ def write_manifest():
             d = json.loads(p.read_text())
         except Exception:
             continue
-        files.append((d.get("started_at") or "", p.name))
+        files.append((min((t.get("seq") or 0) for t in d.get("turns", [{}])), p.name))
     files.sort()
     (OUT_DIR / "index.json").write_text(json.dumps({"sessions": [f for _, f in files]}, indent=1) + "\n")
+
+
+def max_seq():
+    """Highest sequence number already used by any session file or the manual log."""
+    seqs = [0]
+    for p in OUT_DIR.glob("*.json"):
+        try:
+            seqs += [t.get("seq") or 0 for t in json.loads(p.read_text()).get("turns", [])]
+        except Exception:
+            pass
+    try:
+        seqs += [e.get("seq") or 0 for e in json.loads(MANUAL_LOG.read_text()).get("entries", [])]
+    except Exception:
+        pass
+    return int(max(seqs))
 
 
 def main():
     commits = git_commits()
     src = transcripts_dir()
+    window = jam_window()
+    counter = [max_seq()]
+
+    def next_seq():
+        counter[0] += 1
+        return counter[0]
+
     written = []
     if src.is_dir():
         for path in sorted(src.glob("*.jsonl")):
-            out = export_session(path, commits)
+            out = export_session(path, commits, next_seq, window)
             if out:
                 written.append(out)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
