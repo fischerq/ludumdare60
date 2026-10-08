@@ -138,15 +138,16 @@ function renderStats(turns, meta) {
   const weekly = turns.reduce((a, t) => a + planCounted(t, 'seven_day'), 0);
   const tracked = turns.some((t) => t.plan_usage?.seven_day?.delta != null);
   const month = weekly / WEEKS_PER_MONTH;
-  const price = meta.plan_price_usd_month;
+  const price = meta.plan_price_month;
+  const money = (n) => new Intl.NumberFormat(undefined, { style: 'currency', currency: meta.plan_currency || 'USD' }).format(n);
   const models = [...new Set(turns.flatMap(modelsOf))];
 
   const stats = [];
   if (tracked) {
     const v = weekly < 0.005 ? `<${(1 / WEEKS_PER_MONTH).toFixed(2)}%` : `≈${(month * 100).toFixed(1)}%`;
     const below = weekly < 0.005;  // under the 1% resolution of the weekly reading
-    const dollars = below ? `<$${(0.01 / WEEKS_PER_MONTH * price).toFixed(2)}` : `≈$${(month * price).toFixed(2)}`;
-    const k = `of a month of ${plan || 'the subscription'}${price ? ` (${dollars} of $${price})` : ''}`;
+    const amount = below ? `<${money(0.01 / WEEKS_PER_MONTH * price)}` : `≈${money(month * price)}`;
+    const k = `of a month of ${plan || 'the subscription'}${price ? ` (${amount} of ${money(price)})` : ''}`;
     stats.push([v, k, 'hero']);
   }
   stats.push([fmtNum(tk.read + tk.out), 'tokens'], [turns.length, 'prompts'], [fmtDur(secs), 'Claude working']);

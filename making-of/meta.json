@@ -4,10 +4,11 @@
   "game_url": "../",
   "repo_url": "https://github.com/fischerq/ludumdare60",
   "plan": "Claude Max (20x)",
-  "plan_note": "Built on a Claude Max (20x) subscription, a flat $200 a month. The headline cost is the share of that subscription this project used, from the plan's weekly limit; API list prices are only a reference.",
+  "plan_note": "Built on a Claude Max (20x) subscription, billed at a flat 214,20 € a month. The headline cost is the share of that subscription this project used, from the plan's weekly limit; API list prices are only a reference.",
   "show_times_between": [
     "2026-10-16T22:00:00Z",
     "2026-10-19T22:00:00Z"
   ],
-  "plan_price_usd_month": 200
+  "plan_price_month": 214.2,
+  "plan_currency": "EUR"
 }
