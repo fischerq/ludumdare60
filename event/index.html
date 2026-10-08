@@ -4,134 +4,129 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Ludum Dare 60 in Munich</title>
-  <meta name="description" content="In-person Ludum Dare 60 game jam at Die Gamerei, Munich, hosted by Munich eSports. October 2026.">
+  <meta name="description" content="In-person Ludum Dare 60 game jam at Die Gamerei, Munich. Saturday 17 October 9:00 to Sunday 18 October 17:00.">
   <meta property="og:title" content="Ludum Dare 60 in Munich">
-  <meta property="og:description" content="In-person game jam at Die Gamerei, hosted by Munich eSports. Saturday 17 October 9:00 to Sunday 18 October 17:00.">
+  <meta property="og:description" content="In-person game jam at Die Gamerei, Munich. Sat 17 Oct 9:00 to Sun 18 Oct 17:00.">
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="../making-of/style.css">
   <style>
-    .block { max-width: 760px; margin: 16px auto 0; background: var(--surface); border: 1px solid var(--line);
-      border-radius: 14px; padding: 16px 18px; }
-    .block h2 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin: 0 0 10px; }
-    .block p { margin: 0 0 10px; }
-    .block p:last-child { margin-bottom: 0; }
-    .block a { color: var(--accent); }
-    .countdown { font-size: clamp(26px, 7vw, 36px); font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; margin: 4px 0 2px; }
-    .sched { width: 100%; border-collapse: collapse; margin-top: 10px; font-variant-numeric: tabular-nums; }
-    .sched td { padding: 8px 0; border-top: 1px solid var(--line); vertical-align: top; }
-    .sched td:first-child { color: var(--muted); padding-right: 12px; width: 40%; }
-    .muted { color: var(--muted); font-size: 14px; }
-    .tba { color: var(--muted); font-style: italic; }
-    ul.plain { padding-left: 18px; margin: 0; }
-    ul.plain li { margin: 6px 0; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px;
+      margin-top: 14px; box-shadow: var(--shadow); }
+    .card h2 { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin: 0 0 8px; }
+    .card p { margin: 0 0 8px; }
+    .card p:last-child { margin-bottom: 0; }
+    .card .links { margin-top: 12px; }
+    .big { font-size: 20px; font-weight: 700; letter-spacing: -.01em; line-height: 1.3; }
+
+    /* Countdown in the style of the ldjam.com sidebar */
+    .ld { background: #4a4f55; color: #fff; border-radius: 16px; padding: 18px 16px 14px; margin-top: 24px; text-align: center; }
+    .ld-title { font-weight: 700; font-size: 18px; letter-spacing: .02em; line-height: 1.2; margin: 0 0 12px; text-transform: uppercase; }
+    .ld-row { display: inline-grid; grid-template-columns: repeat(3, auto); gap: 6px 14px; }
+    .ld-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #d6d9dc; }
+    .ld-digits { display: flex; gap: 4px; justify-content: center; }
+    .ld-digit { width: 34px; height: 44px; display: grid; place-items: center; background: linear-gradient(#fff, #e9ebee);
+      color: #333; border-radius: 4px; font: 700 26px/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .12), 0 1px 2px rgba(0, 0, 0, .35); }
+    .ld-sub { font-size: 12.5px; color: #c9cdd1; margin: 12px 0 0; }
+    .ld-sub b { color: #fff; }
+
+    .sched { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+    .sched td { padding: 7px 0; border-top: 1px solid var(--line); vertical-align: top; }
+    .sched tr:first-child td { border-top: 0; }
+    .sched td:first-child { color: var(--muted); padding-right: 12px; }
+    .sched td:last-child { text-align: right; font-weight: 600; }
+    #local-note { font-size: 13px; color: var(--muted); margin-top: 8px; }
   </style>
 </head>
 <body>
-  <header class="hero">
+  <header class="hero wrap">
     <p class="eyebrow">In-person game jam · Munich</p>
     <h1>Ludum Dare 60 at Die Gamerei</h1>
-    <p class="lede">Make a game from scratch in one weekend, around a theme nobody knows until it starts. This time
-      in person in Munich, hosted by Munich eSports at Die Gamerei.</p>
-    <nav class="links">
-      <a href="https://ldjam.com" target="_blank" rel="noopener">ldjam.com</a>
-      <a href="https://discord.gg/FeZ96Z89A" target="_blank" rel="noopener">Gamedev/Muc Discord</a>
-    </nav>
+    <p class="lede">Make a game in a weekend, together in one room. Organized by
+      <a href="https://fischerq.de" target="_blank" rel="noopener">Quirin</a>, hosted by
+      <a href="https://munich-esports.de" target="_blank" rel="noopener">Munich eSports</a>, Munich's community esports club.</p>
   </header>
 
-  <section class="block" aria-labelledby="when">
-    <h2 id="when">When</h2>
-    <p class="countdown" id="countdown">Saturday 17 October 2026, 9:00</p>
-    <p class="muted" id="countdown-note">Munich time (CEST). The theme is announced at the start.</p>
-    <table class="sched">
-      <tr><td><b>At Die Gamerei</b> (planned)</td><td><b>Sat 17 Oct, 9:00 to Sun 18 Oct, 17:00</b></td></tr>
-      <tr><td>Theme announced, jam starts</td><td id="t-start">Sat 17 Oct, 00:00</td></tr>
-      <tr><td>Compo ends (48 h, solo)</td><td id="t-compo">Mon 19 Oct, 00:00</td></tr>
-      <tr><td>Jam ends (72 h, solo or team)</td><td id="t-jam">Tue 20 Oct, 00:00</td></tr>
-    </table>
-    <p class="muted" id="local-note" hidden></p>
-    <p class="muted">All times are Munich time (CEST). The jam starts online at midnight, per the official countdown on
-      <a href="https://ldjam.com" target="_blank" rel="noopener">ldjam.com</a>. The theme is revealed then, so you can
-      come to the venue with it already known. After Sunday you can keep working from anywhere until the deadlines.</p>
-  </section>
+  <main class="wrap">
+    <section class="ld" aria-live="polite">
+      <p class="ld-title" id="ld-title">Ludum Dare 60 starts</p>
+      <div class="ld-row" id="ld-row">
+        <span class="ld-label">Days</span><span class="ld-label">Hours</span><span class="ld-label">Minutes</span>
+        <span class="ld-digits" id="ld-d"></span><span class="ld-digits" id="ld-h"></span><span class="ld-digits" id="ld-m"></span>
+      </div>
+      <p class="ld-sub" id="ld-sub">Starts Saturday at <b>12:00 AM CEST</b></p>
+    </section>
 
-  <section class="block" aria-labelledby="where">
-    <h2 id="where">Where</h2>
-    <p><b>Die Gamerei</b><br>Hohenlindener Str. 4<br>81677 München</p>
-    <p>Tram 19 or bus 149 to <b>Riedenburger Straße</b>, then about 3 minutes on foot. Or S2 to
-      <b>Leuchtenbergring</b> and walk about 16 minutes. There's limited parking behind the building.</p>
-    <nav class="links">
-      <a href="https://www.openstreetmap.org/search?query=Hohenlindener%20Str.%204%2C%2081677%20M%C3%BCnchen" target="_blank" rel="noopener">OpenStreetMap</a>
-      <a href="https://www.google.com/maps/search/?api=1&amp;query=Die%20Gamerei%2C%20Hohenlindener%20Str.%204%2C%2081677%20M%C3%BCnchen" target="_blank" rel="noopener">Google Maps</a>
-      <a href="https://www.games-bavaria.com/die-gamerei/" target="_blank" rel="noopener">About Die Gamerei</a>
-    </nav>
-  </section>
+    <section class="card" aria-labelledby="when">
+      <h2 id="when">When</h2>
+      <p class="big">Sat 17 Oct, 9:00 – Sun 18 Oct, 17:00</p>
+      <table class="sched">
+        <tr><td>Theme revealed, jam starts</td><td>Sat 00:00</td></tr>
+        <tr><td>Compo deadline (48 h)</td><td>Mon 00:00</td></tr>
+        <tr><td>Jam deadline (72 h)</td><td>Tue 00:00</td></tr>
+      </table>
+      <p id="local-note" hidden></p>
+    </section>
 
-  <section class="block" aria-labelledby="what">
-    <h2 id="what">What's Ludum Dare?</h2>
-    <ul class="plain">
-      <li>One of the oldest online game jams, running since 2002. Thousands of people make a game over the same weekend.</li>
-      <li>The theme is picked by community voting on ldjam.com and revealed when the jam starts.
-        Theme suggestions are open now.</li>
-      <li><b>Compo</b>: 48 hours, solo, everything made from scratch, source code included.
-        <b>Jam</b>: 72 hours, solo or in a team, with looser rules.</li>
-      <li>Any engine or tool is fine, and so are first-timers. Afterwards everyone plays and rates each other's games.</li>
-    </ul>
-    <p class="muted" style="margin-top:10px">Full rules: <a href="https://ldjam.com/events/ludum-dare/rules" target="_blank" rel="noopener">ldjam.com/events/ludum-dare/rules</a></p>
-  </section>
+    <section class="card" aria-labelledby="where">
+      <h2 id="where">Where</h2>
+      <p class="big">Die Gamerei<br><span style="font-weight:500">Hohenlindener Str. 4, 81677 München</span></p>
+      <p style="color:var(--muted)">Tram 19 or bus 149 to Riedenburger Straße.</p>
+      <nav class="links">
+        <a href="https://www.google.com/maps/search/?api=1&amp;query=Die%20Gamerei%2C%20Hohenlindener%20Str.%204%2C%2081677%20M%C3%BCnchen" target="_blank" rel="noopener">Map</a>
+        <a href="https://www.games-bavaria.com/die-gamerei/" target="_blank" rel="noopener">About the venue</a>
+      </nav>
+    </section>
 
-  <section class="block" aria-labelledby="who">
-    <h2 id="who">Hosted by</h2>
-    <p><a href="https://munich-esports.de" target="_blank" rel="noopener">Munich eSports e.V.</a>, a Munich esports
-      club, at Die Gamerei, the Games/Bavaria hub for Bavaria's games scene.</p>
-    <p>Coordination happens on the <b>Gamedev/Muc Discord</b>: who's coming, teams and updates to the plan.</p>
-    <nav class="links">
-      <a href="https://discord.gg/FeZ96Z89A" target="_blank" rel="noopener">Join the Discord</a>
-    </nav>
-  </section>
+    <section class="card" aria-labelledby="join">
+      <h2 id="join">Join</h2>
+      <p>Ludum Dare is a worldwide jam: everyone makes a game from scratch around a surprise theme. Any engine,
+        any skill level. Coordination happens on Discord.</p>
+      <nav class="links">
+        <a href="https://discord.gg/FeZ96Z89A" target="_blank" rel="noopener">Gamedev/Muc Discord</a>
+        <a href="https://ldjam.com" target="_blank" rel="noopener">ldjam.com</a>
+      </nav>
+    </section>
+  </main>
 
-  <section class="block" aria-labelledby="follow">
-    <h2 id="follow">Follow one jammer</h2>
-    <p>I'm jamming there and building a phone game with Claude Code, logging every prompt in public.</p>
-    <nav class="links">
-      <a href="../making-of/">How it's being made</a>
-      <a href="../">Play the work in progress</a>
-    </nav>
-  </section>
-
-  <footer class="foot">Unofficial page, not affiliated with Ludum Dare, Munich eSports or Die Gamerei.</footer>
+  <footer class="foot wrap">Unofficial page, not affiliated with Ludum Dare. ·
+    <a href="../making-of/">How my game is being made</a></footer>
 
   <script>
-    // Live countdown and times in the viewer's own time zone, if it isn't Munich's.
-    const START = Date.parse('2026-10-16T22:00:00Z');        // official: Sat 17 Oct, 00:00 CEST
-    const DOORS = Date.parse('2026-10-17T07:00:00Z');        // venue: Sat 9:00 CEST (planned)
-    const CLOSE = Date.parse('2026-10-18T15:00:00Z');        // venue: Sun 17:00 CEST (planned)
+    // Times: official start from the ldjam.com countdown; venue hours are the organizer's plan.
+    const START = Date.parse('2026-10-16T22:00:00Z');   // Sat 17 Oct 00:00 CEST
     const COMPO_END = START + 48 * 3600e3;
     const JAM_END = START + 72 * 3600e3;
-    const cd = document.getElementById('countdown');
-    const note = document.getElementById('countdown-note');
+    const digits = (el, n) => {
+      el.innerHTML = String(n).padStart(2, '0').split('').map((c) => `<span class="ld-digit">${c}</span>`).join('');
+    };
     function tick() {
       const now = Date.now();
-      const fmt = (ms) => {
-        const d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, m = Math.floor(ms / 6e4) % 60;
-        return d > 0 ? `${d} d ${h} h ${m} min` : `${h} h ${m} min`;
-      };
-      if (now < START) { cd.textContent = `Starts in ${fmt(START - now)}`; note.textContent = 'The theme drops at midnight; doors open Saturday 9:00.'; }
-      else if (now < DOORS) { cd.textContent = `Doors open in ${fmt(DOORS - now)}`; note.textContent = 'The theme is out. Check ldjam.com.'; }
-      else if (now < CLOSE) { cd.textContent = 'Jamming at Die Gamerei now'; note.textContent = `The venue is open until Sunday 17:00 (${fmt(CLOSE - now)} left).`; }
-      else if (now < JAM_END) { cd.textContent = `Jamming! ${fmt(JAM_END - now)} left`; note.textContent = now < COMPO_END ? `Compo ends in ${fmt(COMPO_END - now)}.` : 'The Compo is over; the Jam is still running.'; }
-      else { cd.textContent = 'The jam is over'; note.textContent = 'Go play and rate the games on ldjam.com.'; }
+      const [target, title, sub] = now < START
+        ? [START, 'Ludum Dare 60 starts', 'Starts Saturday at <b>12:00 AM CEST</b>']
+        : now < JAM_END
+          ? [JAM_END, 'Ludum Dare 60 ends', now < COMPO_END ? 'Compo ends Monday at <b>12:00 AM CEST</b>' : 'Jam ends Tuesday at <b>12:00 AM CEST</b>']
+          : [null, 'Ludum Dare 60 is over', 'Go play and rate the games on <b>ldjam.com</b>'];
+      document.getElementById('ld-title').textContent = title;
+      document.getElementById('ld-sub').innerHTML = sub;
+      document.getElementById('ld-row').hidden = !target;
+      if (!target) return;
+      const ms = Math.max(0, target - now);
+      digits(document.getElementById('ld-d'), Math.floor(ms / 864e5));
+      digits(document.getElementById('ld-h'), Math.floor(ms / 36e5) % 24);
+      digits(document.getElementById('ld-m'), Math.floor(ms / 6e4) % 60);
     }
     tick();
-    setInterval(tick, 30e3);
+    setInterval(tick, 15e3);
     try {
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       if (tz && tz !== 'Europe/Berlin') {
-        const f = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
-        const ln = document.getElementById('local-note');
-        ln.textContent = `In your time zone: the jam starts ${f.format(START)}, the Compo ends ${f.format(COMPO_END)} and the Jam ends ${f.format(JAM_END)}.`;
-        ln.hidden = false;
+        const f = new Intl.DateTimeFormat(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
+        const n = document.getElementById('local-note');
+        n.textContent = `Times are Munich time. In yours: start ${f.format(START)}, Compo ${f.format(COMPO_END)}, Jam ${f.format(JAM_END)}.`;
+        n.hidden = false;
       }
-    } catch (e) { /* Intl unavailable: Munich times above still apply */ }
+    } catch (e) { /* Intl unavailable: Munich times still apply */ }
   </script>
 </body>
 </html>
