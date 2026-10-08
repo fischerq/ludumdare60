@@ -24,7 +24,9 @@ function md(src) {
     t = t.replace(/`([^`]+)`/g, (_, c) => { codes.push(`<code>${esc(c)}</code>`); return `\u0001${codes.length - 1}\u0001`; });
     t = esc(t)
       .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+      .replace(/(^|[^*\w])\*(\S[^*\n]*?\S|\S)\*(?!\w)/g, '$1<i>$2</i>')
       .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+      .replace(/\[([^\]]+)\]\((\.{1,2}\/[^)\s]*)\)/g, '<a href="$2">$1</a>')
       .replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
     return t.replace(/\u0001(\d+)\u0001/g, (_, i) => codes[i]);
   };
@@ -72,14 +74,41 @@ function tokens(turn) {
   return { read, out };
 }
 
+// Plan-usage readings are account-wide, so concurrent Claude work leaks into them. The exporter
+// already leaves out idle gaps between turns; here the in-turn changes are checked against what
+// the turn's own token cost would predict. The rate (% of limit per API-dollar) is pooled over
+// all turns, and a turn whose jump is far above it is flagged as concurrent use and not counted.
+// Readings have 1% resolution, so small turns usually read +0% and the total is what matters.
+function filterPlanUsage(turns) {
+  for (const w of ['seven_day', 'five_hour']) {
+    const rows = turns.filter((t) => t.plan_usage?.[w]?.delta != null && t.cost_usd != null);
+    rows.forEach((t) => { t.plan_usage[w].concurrent = false; });
+    for (let pass = 0; pass < 2; pass++) {
+      const kept = rows.filter((t) => !t.plan_usage[w].concurrent);
+      const cost = kept.reduce((a, t) => a + t.cost_usd, 0);
+      const used = kept.reduce((a, t) => a + Math.max(0, t.plan_usage[w].delta), 0);
+      const rate = cost > 0 ? used / cost : 0;
+      for (const t of rows) {
+        const d = t.plan_usage[w].delta;
+        t.plan_usage[w].concurrent = d >= 0.02 && d > 3 * rate * t.cost_usd + 0.01;
+      }
+    }
+  }
+}
+
+const planCounted = (t, w) => {
+  const u = t.plan_usage?.[w];
+  return u && u.delta != null && !u.concurrent ? Math.max(0, u.delta) : 0;
+};
+
 function renderStats(sessions) {
   const turns = sessions.flatMap((s) => s.turns);
   const cost = turns.reduce((a, t) => a + (t.cost_usd || 0), 0);
   const secs = turns.reduce((a, t) => a + t.duration_s, 0);
   const tk = turns.map(tokens).reduce((a, t) => ({ read: a.read + t.read, out: a.out + t.out }), { read: 0, out: 0 });
   const commits = new Set(turns.flatMap((t) => t.commits.map((c) => c.sha))).size;
-  const weekly = turns.reduce((a, t) => a + Math.max(0, t.plan_usage_delta?.seven_day || 0), 0);
-  const tracked = turns.some((t) => t.plan_usage_delta?.seven_day != null);
+  const weekly = turns.reduce((a, t) => a + planCounted(t, 'seven_day'), 0);
+  const tracked = turns.some((t) => t.plan_usage?.seven_day?.delta != null);
   const stats = [
     [turns.length, 'prompts sent'],
     [fmtUSD(cost), 'API-equivalent cost'],
@@ -88,7 +117,7 @@ function renderStats(sessions) {
     [fmtNum(tk.out), 'tokens written'],
     [fmtNum(tk.read), 'tokens read (mostly cached)'],
   ];
-  if (tracked) stats.splice(2, 0, [fmtPct(weekly), `of a weekly ${plan || 'plan'} limit`]);
+  if (tracked) stats.splice(2, 0, [weekly < 0.005 ? '<1%' : `≈${fmtPct(weekly)}`, `of a weekly ${plan || 'plan'} limit`]);
   $('#stats').innerHTML = stats.map(([v, k]) => `<div class="stat"><div class="v">${esc(v)}</div><div class="k">${esc(k)}</div></div>`).join('');
 }
 
@@ -105,12 +134,17 @@ function renderTurn(turn, session, running, repoUrl) {
     ? `<details class="notes"><summary>${turn.progress_notes.length} progress note${turn.progress_notes.length > 1 ? 's' : ''} while working</summary><ol>${turn.progress_notes.map((n) => `<li class="md">${md(n)}</li>`).join('')}</ol></details>`
     : '';
 
-  const pu = turn.plan_usage_at_start;
-  const pd = turn.plan_usage_delta;
+  const pu = turn.plan_usage;
   const sign = (f) => (f > 0 ? '+' : '') + fmtPct(f);
-  const planChip = pd && (pd.five_hour != null || pd.seven_day != null)
-    ? `<span class="chip">plan <b>${pd.five_hour != null ? sign(pd.five_hour) : '?'}</b> of 5h · <b>${pd.seven_day != null ? sign(pd.seven_day) : '?'}</b> of week</span>`
-    : pu ? `<span class="chip">plan at start: 5h ${fmtPct(pu.five_hour)} · week ${fmtPct(pu.seven_day)}</span>` : '';
+  const part = (w, label) => {
+    const u = pu?.[w];
+    if (!u || u.delta == null) return null;
+    return u.concurrent
+      ? `<s>${sign(u.delta)}</s> of ${label} (concurrent use, not counted)`
+      : `<b>${sign(u.delta)}</b> of ${label}`;
+  };
+  const parts = [part('five_hour', '5h'), part('seven_day', 'week')].filter(Boolean);
+  const planChip = parts.length ? `<span class="chip">plan ${parts.join(' · ')}</span>` : '';
 
   const el = document.createElement('article');
   el.className = 'turn';
@@ -155,45 +189,83 @@ async function main() {
   $('#links').innerHTML = [
     meta.game_url && `<a href="${esc(meta.game_url)}">Play the game</a>`,
     meta.repo_url && `<a href="${esc(meta.repo_url)}" target="_blank" rel="noopener">Source code</a>`,
+    meta.event_url && `<a href="${esc(meta.event_url)}">The Munich jam</a>`,
   ].filter(Boolean).join('');
 
   const { sessions: files } = await getJSON('./sessions/index.json');
   const sessions = (await Promise.all(files.map((f) => getJSON(`./sessions/${f}`).catch(() => null)))).filter(Boolean);
   sessions.sort((a, b) => a.started_at.localeCompare(b.started_at));
 
+  filterPlanUsage(sessions.flatMap((s) => s.turns));
   renderStats(sessions);
+
+  const manual = (await getJSON('./manual-log.json').catch(() => ({ entries: [] }))).entries || [];
+
+  // One chronological stream: Claude Code turns plus hand-logged work outside Claude Code.
+  // Date-only manual entries ("2026-10-08") sort to the start of their day.
+  const items = [
+    ...sessions.flatMap((s) => s.turns.map((turn) => ({ at: turn.sent_at, turn, session: s }))),
+    ...manual.map((entry) => ({ at: entry.at.length === 10 ? `${entry.at}T00:00:00Z` : entry.at, entry })),
+  ].sort((x, y) => new Date(x.at) - new Date(y.at));
 
   const tl = $('#timeline');
   tl.textContent = '';
-  if (!sessions.length) { tl.innerHTML = '<p class="empty">No sessions logged yet.</p>'; return; }
+  if (!items.length) { tl.innerHTML = '<p class="empty">Nothing logged yet.</p>'; return; }
 
   const running = { n: 0, cost: 0 };
   let lastDay = null;
-  for (const s of sessions) {
-    let headerDone = false;
-    for (const turn of s.turns) {
-      const day = dayKey(turn.sent_at);
-      if (day !== lastDay) {
-        const d = document.createElement('h2');
-        d.className = 'day';
-        d.textContent = day;
-        tl.append(d);
-        lastDay = day;
-        headerDone = false;
-      }
-      if (!headerDone) {
-        const h = document.createElement('p');
-        h.className = 'session-head';
-        const name = esc(s.title || 'Claude Code session');
-        h.innerHTML = `Session: ${s.session_url ? `<a href="${esc(s.session_url)}" target="_blank" rel="noopener">${name}</a>` : name}`;
-        tl.append(h);
-        headerDone = true;
-      }
-      running.n += 1;
-      running.cost += turn.cost_usd || 0;
-      tl.append(renderTurn(turn, s, running, meta.repo_url));
+  let lastSession = null;
+  for (const item of items) {
+    const day = dayKey(item.at);
+    if (day !== lastDay) {
+      const d = document.createElement('h2');
+      d.className = 'day';
+      d.textContent = day;
+      tl.append(d);
+      lastDay = day;
+      lastSession = null;
     }
+    if (item.entry) {
+      tl.append(renderManual(item.entry));
+      lastSession = null;
+      continue;
+    }
+    const s = item.session;
+    if (s !== lastSession) {
+      const h = document.createElement('p');
+      h.className = 'session-head';
+      const name = esc(s.title || 'Claude Code session');
+      h.innerHTML = `Claude Code session: ${s.session_url ? `<a href="${esc(s.session_url)}" target="_blank" rel="noopener">${name}</a>` : name}`;
+      tl.append(h);
+      lastSession = s;
+    }
+    running.n += 1;
+    running.cost += item.turn.cost_usd || 0;
+    tl.append(renderTurn(item.turn, s, running, meta.repo_url));
   }
+}
+
+const MANUAL_KINDS = {
+  human: 'Done by hand',
+  'claude-chat': 'Separate Claude chat',
+  other: 'Outside Claude Code',
+};
+
+function renderManual(entry) {
+  const el = document.createElement('article');
+  el.className = `turn manual kind-${entry.kind || 'other'}`;
+  const when = entry.at.length === 10 ? 'time not recorded' : timeOf(entry.at);
+  const links = (entry.links || []).map((l) =>
+    `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label || l.url)}</a></li>`).join('');
+  el.innerHTML = `
+    <div class="turn-meta"><span class="n">${esc(MANUAL_KINDS[entry.kind] || MANUAL_KINDS.other)}</span><span>${when}</span>
+      ${entry.duration ? `<span>${esc(entry.duration)}</span>` : ''}</div>
+    <div class="manual-card"><div class="manual-title">${esc(entry.title)}</div>
+      ${entry.body ? `<div class="md">${md(entry.body)}</div>` : ''}
+      ${entry.prompts?.length ? `<details class="notes"><summary>${entry.prompts.length} prompt${entry.prompts.length > 1 ? 's' : ''} in that chat</summary><ol>${entry.prompts.map((p) => `<li class="prompt-quote">${esc(p)}</li>`).join('')}</ol></details>` : ''}
+      ${links ? `<ul class="commits">${links}</ul>` : ''}
+    </div>`;
+  return el;
 }
 
 main().catch((err) => {
