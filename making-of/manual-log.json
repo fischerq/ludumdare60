@@ -97,6 +97,19 @@
           "url": "https://github.com/fischerq/ludumdare60/pull/3"
         }
       ]
+    },
+    {
+      "date": "2026-10-08",
+      "seq": 18.5,
+      "kind": "human",
+      "title": "Reviewed and merged pull request #4",
+      "body": "Merged the making-of and event page redesign and the conversation view into `main`.",
+      "links": [
+        {
+          "label": "Pull request #4",
+          "url": "https://github.com/fischerq/ludumdare60/pull/4"
+        }
+      ]
     }
   ]
 }
