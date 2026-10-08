@@ -84,6 +84,19 @@
           "url": "https://www.reddit.com/r/aigamedev/"
         }
       ]
+    },
+    {
+      "date": "2026-10-08",
+      "seq": 17.5,
+      "kind": "human",
+      "title": "Reviewed and merged pull request #3",
+      "body": "Merged the event details, the engine-chat import, the hidden clock times and the mobile fixes into `main`.",
+      "links": [
+        {
+          "label": "Pull request #3",
+          "url": "https://github.com/fischerq/ludumdare60/pull/3"
+        }
+      ]
     }
   ]
 }

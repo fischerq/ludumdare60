@@ -56,6 +56,10 @@ Every human prompt and its token usage/cost is published in `making-of/` as a sc
   from is gone once the cloud container is reclaimed. `making-of/meta.json` is the place for hand-written notes.
 - The exporter only reads prompts, Claude's visible replies, tool names and token counts. Tool outputs, system
   prompts and thinking stay out. If a prompt ever contains a secret, tell the user before committing the log.
+- **One-line summaries:** at the end of every turn, add a one-sentence summary of what the turn did to
+  `making-of/summaries.json` (session id → turn index). It's the collapsed row on the timeline; write it in past tense,
+  about the outcome, under ~15 words.
+- Messages the user sends while Claude is working are logged as `followups` on that turn automatically.
 - If a new model shows up, add its prices to `PRICES` in `tools/ai_log.py`.
 - **Work outside Claude Code** goes in `making-of/manual-log.json` (format in its `_readme`): separate claude.ai
   chats, repo or Netlify setup, merges, playtests, art made by hand. When the user mentions such work, or you notice it

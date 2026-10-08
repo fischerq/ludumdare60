@@ -8,44 +8,52 @@
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-  <header class="hero">
+  <header class="hero wrap">
     <p class="eyebrow">Making of</p>
     <h1 id="title">How this game was built</h1>
-    <p class="lede">Every prompt a human sent to Claude while building this game, in order, with what Claude
-      did, how long it took and what it cost. Nothing is edited out.</p>
-    <aside class="about md" id="about" hidden></aside>
+    <div class="lede md" id="lede"><p>Every prompt sent to Claude while building this game, in order, with what it cost.</p></div>
     <nav class="links" id="links"></nav>
   </header>
 
-  <section class="stats" id="stats" aria-label="Totals"></section>
+  <section class="stats wrap" id="stats" aria-label="Totals"></section>
 
-  <section class="explainer">
-    <details>
-      <summary>How to read the numbers</summary>
-      <ul>
-        <li><b>Prompt</b>: a message a human typed, shown verbatim.</li>
-        <li><b>Claude's reply</b>: the final message Claude showed after working. Progress notes it wrote
-          along the way are folded underneath.</li>
-        <li><b>Tokens</b>: how much text the model read and wrote. Each tool call re-reads the conversation,
-          so "read" is large but mostly served from a cheap cache.</li>
-        <li><b>Cost</b>: what those tokens would cost at Anthropic's public API prices. It's computed from the
-          exact token counts Claude Code logs. <span id="plan-note"></span></li>
-        <li><b>Plan</b>: how much of the subscription's rolling 5-hour and weekly usage limits went up while
-          Claude worked on this prompt, read from Claude Code's own rate-limit events (1% resolution, so small prompts
-          usually show +0%). The limits are shared with other Claude use on the same account. Time between prompts is
-          never counted, and a jump far larger than the prompt's token cost explains is marked as concurrent use and
-          left out of the total.</li>
-        <li><b>Time</b>: from sending the prompt to Claude's last action, including running the game in a
-          headless browser to check it.</li>
-      </ul>
-    </details>
-  </section>
+  <details class="explainer wrap">
+    <summary>How to read the numbers</summary>
+    <ul>
+      <li><b>Cost</b>: what the tokens would cost at Anthropic's public API prices, computed from the exact token
+        counts Claude Code logs. <span id="plan-note"></span></li>
+      <li><b>Plan</b>: how much of the subscription's 5-hour and weekly limits went up while Claude worked on a
+        prompt. The limits are account-wide, so time between prompts never counts, and jumps that a prompt's own
+        cost can't explain are left out as concurrent use. Readings have 1% resolution.</li>
+      <li><b>Tokens</b>: text the model read and wrote. Every tool call re-reads the conversation, so "read" is
+        large but mostly served from a cheap cache.</li>
+      <li><b>Time</b>: from sending a prompt to Claude's last action, including checking the game in a headless
+        browser.</li>
+    </ul>
+  </details>
 
-  <main id="timeline" aria-live="polite"><p class="loading">Loading…</p></main>
+  <div class="tabs wrap" role="tablist">
+    <button role="tab" id="tab-timeline" aria-selected="true" aria-controls="timeline">Timeline</button>
+    <button role="tab" id="tab-convos" aria-selected="false" aria-controls="convos">Conversations</button>
+  </div>
 
-  <footer class="foot">
-    Generated from Claude Code session logs by <code>tools/ai_log.py</code>.
-  </footer>
+  <main class="wrap">
+    <section id="timeline" role="tabpanel" aria-labelledby="tab-timeline"><p class="empty">Loading…</p></section>
+    <section id="convos" role="tabpanel" aria-labelledby="tab-convos" hidden></section>
+  </main>
+
+  <dialog id="thread" aria-labelledby="thread-title">
+    <header class="thread-head">
+      <div>
+        <p class="eyebrow" id="thread-kind">Conversation</p>
+        <h2 id="thread-title"></h2>
+      </div>
+      <button class="close" type="button" aria-label="Close">✕</button>
+    </header>
+    <div class="thread-body" id="thread-body"></div>
+  </dialog>
+
+  <footer class="foot wrap">Generated from Claude Code session logs by <code>tools/ai_log.py</code>.</footer>
 
   <script type="module" src="./making-of.js"></script>
 </body>

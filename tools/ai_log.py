@@ -231,11 +231,19 @@ def export_session(path, commits, next_seq, window):
         if text is not None:
             close(cur)
             cur = {"prompt": text, "sent_at": ts, "ended_at": ts, "first_response_at": None,
-                   "texts": [], "tools": {},
+                   "texts": [], "tools": {}, "followups": [],
                    "usage": {}, "requests": 0, "entrypoint": e.get("entrypoint"),
                    "branch": e.get("gitBranch")}
             continue
         if cur is None:
+            continue
+        att = e.get("attachment") if t == "attachment" else None
+        if isinstance(att, dict) and att.get("type") == "queued_command" \
+                and (att.get("origin") or {}).get("kind") == "human" and att.get("commandMode", "prompt") == "prompt":
+            # A message the human sent while Claude was still working on this turn.
+            msg = REMINDER_RE.sub("", att.get("prompt") or "").strip()
+            if msg:
+                cur["followups"].append({"text": msg, "after_reply_index": len(cur["texts"])})
             continue
         if ts and t in ("assistant", "user"):
             cur["ended_at"] = ts
@@ -339,6 +347,9 @@ def export_session(path, commits, next_seq, window):
             **public_when(start, window),
             "duration_s": round((end - start).total_seconds()),
             "prompt": turn["prompt"],
+            # Messages the human sent mid-turn; after_reply_index = how many of Claude's texts
+            # in this turn came before it (for placing it in the conversation view).
+            "followups": turn["followups"],
             "reply": turn["texts"][-1] if turn["texts"] else "",
             "progress_notes": turn["texts"][:-1],
             "tools": dict(sorted(turn["tools"].items(), key=lambda kv: -kv[1])),
