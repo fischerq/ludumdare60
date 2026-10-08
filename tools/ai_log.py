@@ -115,6 +115,45 @@ def git_commits():
     return commits
 
 
+def plan_snapshots(entries):
+    """Plan-usage snapshots from `rate_limit_event`s fetched with the claude-code-remote
+    `list_events` tool. The events only live in the cloud session's event stream, so Claude
+    fetches them each turn (see CLAUDE.md) and the tool result lands in the transcript."""
+    snaps = {}
+    for e in entries:
+        content = e.get("message", {}).get("content") if e.get("type") == "user" else None
+        if not isinstance(content, list):
+            continue
+        for block in content:
+            if not isinstance(block, dict) or block.get("type") != "tool_result":
+                continue
+            raw = block.get("content")
+            texts = [raw] if isinstance(raw, str) else [
+                c.get("text", "") for c in (raw or []) if isinstance(c, dict)]
+            for text in texts:
+                if "rate_limit_info" not in text:
+                    continue
+                try:
+                    data = json.loads(text)
+                except json.JSONDecodeError:
+                    continue
+                for ev in (data.get("ccr") or data).get("data", []):
+                    rle = ev.get("rate_limit_event") or {}
+                    body = rle.get("internal_anthropic_catchall") or rle
+                    info = body.get("rate_limit_info")
+                    if not info or not ev.get("created_at"):
+                        continue
+                    windows = info.get("unifiedWindows") or {}
+                    snap = {"at": ev["created_at"], "status": info.get("status")}
+                    for name in ("five_hour", "seven_day"):
+                        w = windows.get(name)
+                        if w:
+                            snap[name] = w.get("utilization")
+                            snap[name + "_resets_at"] = w.get("resetsAt")
+                    snaps[rle.get("uuid") or ev["created_at"]] = snap
+    return sorted(snaps.values(), key=lambda x: x["at"])
+
+
 def load_entries(path):
     entries = []
     with open(path, encoding="utf-8") as f:
@@ -202,6 +241,33 @@ def export_session(path, commits):
                 turn["requests"] += 1
                 break
 
+    snaps = plan_snapshots(entries)
+    previous_snaps = []
+    prev_file = OUT_DIR / f"{session_id}.json"
+    if prev_file.exists():
+        try:
+            previous_snaps = json.loads(prev_file.read_text()).get("plan_usage_snapshots") or []
+        except Exception:
+            previous_snaps = []
+    merged = {sn["at"]: sn for sn in previous_snaps}
+    merged.update({sn["at"]: sn for sn in snaps})
+    snaps = sorted(merged.values(), key=lambda x: x["at"])
+
+    # The first snapshot after a prompt is sent reflects plan usage at the start of that turn.
+    starts = []
+    for i, turn in enumerate(turns):
+        lo = parse_ts(turn["sent_at"])
+        hi = parse_ts(turns[i + 1]["sent_at"]) if i + 1 < len(turns) else None
+        starts.append(next((sn for sn in snaps
+                            if parse_ts(sn["at"]) >= lo and (hi is None or parse_ts(sn["at"]) < hi)), None))
+
+    def delta(a, b, window):
+        if not a or not b or a.get(window) is None or b.get(window) is None:
+            return None
+        if a.get(window + "_resets_at") != b.get(window + "_resets_at"):
+            return None  # the window rolled over in between
+        return round(b[window] - a[window], 4)
+
     out_turns = []
     for i, turn in enumerate(turns):
         start = parse_ts(turn["sent_at"])
@@ -237,6 +303,11 @@ def export_session(path, commits):
             "commits": turn_commits,
             "entrypoint": turn["entrypoint"],
             "branch": turn["branch"],
+            "plan_usage_at_start": starts[i],
+            # Change until the next prompt's snapshot. Account-wide, so other Claude use in the
+            # same window (claude.ai chats, other sessions) is included. 1% resolution.
+            "plan_usage_delta": None if i + 1 >= len(turns) else {
+                w: delta(starts[i], starts[i + 1], w) for w in ("five_hour", "seven_day")},
         })
 
     if not out_turns:
@@ -263,6 +334,7 @@ def export_session(path, commits):
         "started_at": out_turns[0]["sent_at"],
         "ended_at": out_turns[-1]["ended_at"],
         "turns": out_turns,
+        "plan_usage_snapshots": snaps,
         "totals": {
             "prompts": len(out_turns),
             "cost_usd": round(sum(t["cost_usd"] or 0 for t in out_turns), 6),

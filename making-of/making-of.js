@@ -33,23 +33,26 @@ function md(src) {
     const p = para.trim();
     if (!p) continue;
     if (/^\u0000\d+\u0000$/.test(p)) { out.push(blocks[p.slice(1, -1)]); continue; }
-    const lines = p.split('\n');
-    if (lines.every((l) => /^\s*([-*]|\d+\.)\s/.test(l) || /^\s{2,}\S/.test(l))) {
-      const items = [];
-      for (const l of lines) {
-        if (/^\s*([-*]|\d+\.)\s/.test(l) && !/^\s{2,}/.test(l)) items.push(l.replace(/^\s*([-*]|\d+\.)\s/, ''));
-        else items[items.length - 1] += ' ' + l.trim().replace(/^([-*]|\d+\.)\s/, '· ');
-      }
-      out.push(`<ul>${items.map((i) => `<li>${inline(i)}</li>`).join('')}</ul>`);
-      continue;
-    }
     const h = p.match(/^#{1,4}\s+(.*)$/);
-    if (h && lines.length === 1) { out.push(`<h4>${inline(h[1])}</h4>`); continue; }
-    out.push(`<p>${lines.map(inline).join('<br>')}</p>`);
+    if (h && !p.includes('\n')) { out.push(`<h4>${inline(h[1])}</h4>`); continue; }
+    // Split the paragraph into runs of list lines and plain lines.
+    const isItem = (l) => /^\s*([-*]|\d+\.)\s/.test(l);
+    let text = [], items = null;
+    const flushText = () => { if (text.length) out.push(`<p>${text.map(inline).join('<br>')}</p>`); text = []; };
+    const flushList = () => { if (items) out.push(`<ul>${items.map((i) => `<li>${inline(i)}</li>`).join('')}</ul>`); items = null; };
+    for (const l of p.split('\n')) {
+      if (isItem(l) && !/^\s{2,}/.test(l)) { flushText(); (items ||= []).push(l.replace(/^\s*([-*]|\d+\.)\s/, '')); }
+      else if (items && (/^\s{2,}\S/.test(l))) items[items.length - 1] += ' ' + l.trim().replace(/^([-*]|\d+\.)\s/, '· ');
+      else { flushList(); text.push(l); }
+    }
+    flushList();
+    flushText();
   }
   return out.join('').replace(/\u0000(\d+)\u0000/g, (_, i) => blocks[i]);
 }
 
+let plan = '';
+const fmtPct = (f) => `${Math.round(f * 100)}%`;
 const fmtUSD = (n) => (n == null ? '—' : n < 0.01 ? '<$0.01' : `$${n.toFixed(2)}`);
 const fmtNum = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}k` : String(n));
 function fmtDur(s) {
@@ -75,6 +78,8 @@ function renderStats(sessions) {
   const secs = turns.reduce((a, t) => a + t.duration_s, 0);
   const tk = turns.map(tokens).reduce((a, t) => ({ read: a.read + t.read, out: a.out + t.out }), { read: 0, out: 0 });
   const commits = new Set(turns.flatMap((t) => t.commits.map((c) => c.sha))).size;
+  const weekly = turns.reduce((a, t) => a + Math.max(0, t.plan_usage_delta?.seven_day || 0), 0);
+  const tracked = turns.some((t) => t.plan_usage_delta?.seven_day != null);
   const stats = [
     [turns.length, 'prompts sent'],
     [fmtUSD(cost), 'API-equivalent cost'],
@@ -83,6 +88,7 @@ function renderStats(sessions) {
     [fmtNum(tk.out), 'tokens written'],
     [fmtNum(tk.read), 'tokens read (mostly cached)'],
   ];
+  if (tracked) stats.splice(2, 0, [fmtPct(weekly), `of a weekly ${plan || 'plan'} limit`]);
   $('#stats').innerHTML = stats.map(([v, k]) => `<div class="stat"><div class="v">${esc(v)}</div><div class="k">${esc(k)}</div></div>`).join('');
 }
 
@@ -99,6 +105,13 @@ function renderTurn(turn, session, running, repoUrl) {
     ? `<details class="notes"><summary>${turn.progress_notes.length} progress note${turn.progress_notes.length > 1 ? 's' : ''} while working</summary><ol>${turn.progress_notes.map((n) => `<li class="md">${md(n)}</li>`).join('')}</ol></details>`
     : '';
 
+  const pu = turn.plan_usage_at_start;
+  const pd = turn.plan_usage_delta;
+  const sign = (f) => (f > 0 ? '+' : '') + fmtPct(f);
+  const planChip = pd && (pd.five_hour != null || pd.seven_day != null)
+    ? `<span class="chip">plan <b>${pd.five_hour != null ? sign(pd.five_hour) : '?'}</b> of 5h · <b>${pd.seven_day != null ? sign(pd.seven_day) : '?'}</b> of week</span>`
+    : pu ? `<span class="chip">plan at start: 5h ${fmtPct(pu.five_hour)} · week ${fmtPct(pu.seven_day)}</span>` : '';
+
   const el = document.createElement('article');
   el.className = 'turn';
   el.innerHTML = `
@@ -113,6 +126,7 @@ function renderTurn(turn, session, running, repoUrl) {
         <span class="chip"><b>${fmtNum(tk.out)}</b> written</span>
         <span class="chip"><b>${fmtNum(tk.read)}</b> read</span>
         <span class="chip"><b>${turn.api_requests}</b> model calls</span>
+        ${planChip}
         ${tools ? `<span class="chip">${esc(tools)}</span>` : ''}
       </div>
       ${commits ? `<ul class="commits">${commits}</ul>` : ''}
@@ -132,6 +146,7 @@ async function main() {
     $('#title').textContent = `How ${meta.title} was built`;
     document.title = `Making Of ${meta.title}`;
   }
+  plan = meta.plan || '';
   if (meta.plan_note) $('#plan-note').textContent = meta.plan_note;
   $('#links').innerHTML = [
     meta.game_url && `<a href="${esc(meta.game_url)}">Play the game</a>`,
