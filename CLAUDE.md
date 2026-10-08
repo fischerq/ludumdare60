@@ -68,9 +68,12 @@ Munich eSports). It only states facts with a source. The official start (Sat 17 
 Venue hours (Sat 9:00 to Sun 17:00) are the user's current plan, and coordination happens on the Gamedev/Muc Discord
 (https://discord.gg/FeZ96Z89A). Update the page when the plan changes.
 
-## Times on the making-of page
-Clock times are hidden outside the jam (`show_times_between` in `making-of/meta.json`); only order and day show.
-Timestamps in the JSON files are still recorded and used for ordering.
+## Times in the published log
+The repo must not contain detailed timestamps. Every timeline item (Claude Code turn or `manual-log.json` entry) has
+only a `date` (Munich) and a project-wide `seq` for ordering. A clock time (`time: "HH:MM"`, Munich) is allowed only
+during the jam (`show_times_between` in `making-of/meta.json`). `tools/ai_log.py` uses exact times from the local
+transcript internally and never writes them. Durations are fine. When adding a manual entry, set `seq` to the current
+max + 1, or to a fraction between two neighbours for something that happened earlier.
 
 ## Testing
 - Run `python3 -m http.server` and open the page; check the browser console for errors.
