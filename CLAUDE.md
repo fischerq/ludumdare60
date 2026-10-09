@@ -64,6 +64,8 @@ Every human prompt and its token usage/cost is published in `making-of/` as a sc
   check a change in a headless browser, save one or two representative screenshots as
   `making-of/media/<first 8 chars of session id>-<turn index>-c<n>.jpg` (use `publish_image` in `tools/ai_log.py`);
   the exporter attaches them to that turn as Claude's images.
+- The headline has six equal tiles: prompts, merged PRs (lines of code, commits), subscription share, tokens, Claude
+  time, API list price. PR count and lines of code come from git via `making-of/repo-stats.json` (written by the exporter).
 - If a new model shows up, add its prices to `PRICES` in `tools/ai_log.py` (models are read from the transcript).
 - **Work outside Claude Code** goes in `making-of/manual-log.json` (format in its `_readme`): separate claude.ai
   chats, repo or Netlify setup, merges, playtests, art made by hand. When the user mentions such work, or you notice it
@@ -77,6 +79,10 @@ Venue hours (Sat 9:00 to Sun 17:00) are the user's current plan, and coordinatio
 (https://discord.gg/FeZ96Z89A). Update the page when the plan changes.
 The Games card shows one tile per game (thumbnail in `event/games/`, title, author, Play and Making-of
 buttons); add a tile for each game as people share them.
+
+## Impressum
+`impressum/index.html` is the legal notice (§ 5 DDG) with the address the user gave. It's linked from the game menu and
+the footers of the making-of and event pages; keep it reachable from every page.
 
 ## Times in the published log
 The repo must not contain detailed timestamps. Every timeline item (Claude Code turn or `manual-log.json` entry) has

@@ -149,6 +149,19 @@
           "url": "https://github.com/fischerq/ludumdare60/pull/7"
         }
       ]
+    },
+    {
+      "date": "2026-10-08",
+      "seq": 24.5,
+      "kind": "human",
+      "title": "Reviewed and merged pull request #8",
+      "body": "Merged the game tiles on the event page and the newest-first making-of timeline into `main`.",
+      "links": [
+        {
+          "label": "Pull request #8",
+          "url": "https://github.com/fischerq/ludumdare60/pull/8"
+        }
+      ]
     }
   ]
 }
