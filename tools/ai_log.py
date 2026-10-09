@@ -458,6 +458,24 @@ def write_manifest():
     (OUT_DIR / "index.json").write_text(json.dumps({"sessions": [f for _, f in files]}, indent=1) + "\n")
 
 
+CODE_EXTENSIONS = {".js", ".html", ".css", ".py", ".toml"}
+
+
+def write_repo_stats():
+    """Merged pull requests and lines of code in the project, for the making-of headline."""
+    def git(*args):
+        return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True).stdout
+    prs = sorted({int(m) for m in re.findall(r"Merge pull request #(\d+)", git("log", "HEAD", "--merges", "--format=%s"))})
+    loc = files = 0
+    for path in git("ls-files").splitlines():
+        if Path(path).suffix.lower() in CODE_EXTENSIONS and (ROOT / path).is_file():
+            files += 1
+            loc += sum(1 for line in (ROOT / path).read_text(errors="ignore").splitlines() if line.strip())
+    stats = {"prs_merged": len(prs), "lines_of_code": loc, "code_files": files,
+             "commits": int(git("rev-list", "--count", "--no-merges", "HEAD").strip() or 0)}
+    (ROOT / "making-of" / "repo-stats.json").write_text(json.dumps(stats, indent=1) + "\n")
+
+
 def max_seq():
     """Highest sequence number already used by any session file or the manual log."""
     seqs = [0]
@@ -491,6 +509,7 @@ def main():
                 written.append(out)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     write_manifest()
+    write_repo_stats()
     if "--hook" not in sys.argv:
         for w in written:
             print(f"exported {w.relative_to(ROOT)}")
