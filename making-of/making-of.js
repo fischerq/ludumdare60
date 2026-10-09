@@ -130,30 +130,29 @@ const totalTokens = (turn) => { const t = tokens(turn); return t.read + t.out; }
 // 30.44 / 7 ≈ 4.35 weekly allowances.
 const WEEKS_PER_MONTH = 30.44 / 7;
 
-function renderStats(turns, meta) {
+// Six equally weighted headline tiles; each carries its related detail as a subtitle.
+function renderStats(turns, meta, repo, manualCount, sessionCount) {
   const cost = turns.reduce((a, t) => a + (t.cost_usd || 0), 0);
   const secs = turns.reduce((a, t) => a + t.duration_s, 0);
   const tk = turns.map(tokens).reduce((a, t) => ({ read: a.read + t.read, out: a.out + t.out }), { read: 0, out: 0 });
-  const commits = new Set(turns.flatMap((t) => t.commits.map((c) => c.sha))).size;
   const weekly = turns.reduce((a, t) => a + planCounted(t, 'seven_day'), 0);
   const tracked = turns.some((t) => t.plan_usage?.seven_day?.delta != null);
-  const month = weekly / WEEKS_PER_MONTH;
+  const below = weekly < 0.005;  // under the 1% resolution of the weekly reading
   const price = meta.plan_price_month;
   const money = (n) => new Intl.NumberFormat(undefined, { style: 'currency', currency: meta.plan_currency || 'USD' }).format(n);
-  const models = [...new Set(turns.flatMap(modelsOf))];
+  const share = below ? `<${(1 / WEEKS_PER_MONTH).toFixed(2)}%` : `≈${(weekly / WEEKS_PER_MONTH * 100).toFixed(1)}%`;
+  const amount = price ? (below ? `<${money(0.01 / WEEKS_PER_MONTH * price)}` : `≈${money(weekly / WEEKS_PER_MONTH * price)}`) : '';
 
-  const stats = [];
-  if (tracked) {
-    const v = weekly < 0.005 ? `<${(1 / WEEKS_PER_MONTH).toFixed(2)}%` : `≈${(month * 100).toFixed(1)}%`;
-    const below = weekly < 0.005;  // under the 1% resolution of the weekly reading
-    const amount = below ? `<${money(0.01 / WEEKS_PER_MONTH * price)}` : `≈${money(month * price)}`;
-    const k = `of a month of ${plan || 'the subscription'}${price ? ` (${amount} of ${money(price)})` : ''}`;
-    stats.push([v, k, 'hero']);
-  }
-  stats.push([fmtNum(tk.read + tk.out), 'tokens'], [turns.length, 'prompts'], [fmtDur(secs), 'Claude working']);
-  $('#stats').innerHTML = stats.map(([v, k, cls]) => `<div class="stat${cls ? ` ${cls}` : ''}"><div class="v">${esc(v)}</div><div class="k">${esc(k)}</div></div>`).join('')
-    + `<div class="stats-sub">${esc(models.join(' · '))} · ${fmtNum(tk.out)} written, ${fmtNum(tk.read)} read · ${plural(commits, 'commit')}
-      · ${tracked ? `${weekly < 0.005 ? '<1%' : fmtPct(weekly)} of a weekly limit · ` : ''}${fmtUSD(cost)} at API list prices</div>`;
+  const tiles = [
+    [turns.length, 'prompts', `${plural(sessionCount, 'session')} · ${manualCount} steps by hand`],
+    repo ? [repo.prs_merged, 'pull requests merged', `${repo.lines_of_code.toLocaleString()} lines of code · ${plural(repo.commits, 'commit')}`] : null,
+    tracked ? [share, `of a month of ${plan || 'the subscription'}`, `${amount ? `${amount} of ${money(price)} · ` : ''}${below ? '<1%' : fmtPct(weekly)} of a weekly limit`] : null,
+    [fmtNum(tk.read + tk.out), 'tokens', `${fmtNum(tk.out)} written · ${fmtNum(tk.read)} read`],
+    [fmtDur(secs), 'Claude working', `${fmtDur(Math.round(secs / Math.max(1, turns.length)))} per prompt on average`],
+    [fmtUSD(cost), 'at API list prices', 'for reference; paid via the subscription'],
+  ].filter(Boolean);
+  $('#stats').innerHTML = tiles.map(([v, k, sub]) =>
+    `<div class="stat"><div class="v">${esc(String(v))}</div><div class="k">${esc(k)}</div><div class="sub">${esc(sub)}</div></div>`).join('');
 }
 
 function planChip(turn) {
@@ -393,7 +392,8 @@ async function main() {
 
   const turns = sessions.flatMap((s) => s.turns);
   filterPlanUsage(turns);
-  renderStats(turns, meta);
+  const repo = await getJSON('./repo-stats.json').catch(() => null);
+  renderStats(turns, meta, repo, manual.length, sessions.length);
 
   // Number Claude Code prompts across the whole project, in order.
   const numbering = new Map();

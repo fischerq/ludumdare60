@@ -48,4 +48,5 @@ export const UI = {
   titleSize: 96,
   bodySize: 44,
   linkSize: 32,
+  legalSize: 22,
 };
