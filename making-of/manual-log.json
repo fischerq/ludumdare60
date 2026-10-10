@@ -162,6 +162,19 @@
           "url": "https://github.com/fischerq/ludumdare60/pull/8"
         }
       ]
+    },
+    {
+      "date": "2026-10-09",
+      "seq": 25.5,
+      "kind": "human",
+      "title": "Reviewed and merged pull request #9",
+      "body": "Merged the six headline tiles (with merged PRs and lines of code) and the Impressum into `main`.",
+      "links": [
+        {
+          "label": "Pull request #9",
+          "url": "https://github.com/fischerq/ludumdare60/pull/9"
+        }
+      ]
     }
   ]
 }
