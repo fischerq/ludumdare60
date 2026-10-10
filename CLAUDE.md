@@ -30,6 +30,29 @@ When the title changes, update `GAME_TITLE` in `src/config.js`, `<title>` in `in
 - Make small, focused changes and commit each one with a clear message, so the user can playtest after every push.
 - After each change, tell the user in one or two sentences what to test on the phone.
 
+## Design docs (source of truth)
+`design/` holds the design hierarchy: `design/master.md` for the whole game, `design/systems/<name>.md` per system
+or mechanic (start from `design/systems/_template.md`). `design/README.md` explains the process. Quirin makes the
+creative calls; Claude handles the code and helps with design.
+- Read `design/master.md` (and the relevant system doc) before working on gameplay.
+- If something isn't in the docs, ask before adding it. Don't fill gaps with generic defaults.
+- **Questions first** for any new feature or mechanic: before writing code, ask up to 8 questions whose answers
+  would change how it's built, each with a suggested default, then stop and wait. Skip this only for small fixes
+  and tweaks the user spelled out.
+- Then write the slice scope into the doc: exactly what to build and what not to build.
+- Keep the docs updated as decisions are made, mark sections decided / proposed / open, and append a line to the
+  doc's decision log (never rewrite old lines). Commit doc changes with the code they belong to.
+- When a section of the master grows past a few paragraphs, move it into a system doc and leave a summary + link.
+
+## Lab (testing grounds)
+`lab/` is a browsable page (`/lab/`) of small benches that run one mechanic on its own, with variants side by side
+on the same scripted input (pause, speed, scrub, live touch mode). Use one when a mechanic's feel is in question.
+- Keep mechanic logic in pure modules under `src/systems/` (no Phaser) so the game and the bench run the same code,
+  with numbers from `src/config.js`.
+- A bench is `lab/benches/<id>.js` (default export: params, variants, scenarios, init/step/draw; see
+  `movement.js`), registered in `lab/benches/index.js`. The harness is `lab/lab.js`.
+- Link each bench from its system doc and vice versa. Benches must work on a phone too.
+
 ## Workflow
 - **Every push must end up in an open pull request against `main`. Open it yourself, without asking.**
   - Before pushing, check whether the branch's previous PR is still open. If it is, push to it.
