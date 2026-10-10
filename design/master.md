@@ -10,6 +10,8 @@ here is not decided yet: ask before adding it.
   bonus and never required.
 - Phaser 3 from a CDN, no build step, deployed to Netlify on every push.
 - Placeholder art drawn in code until real art exists. Test the fun before spending time on art.
+- Portrait orientation, whatever the theme: phone in one hand.
+- A run lasts 1 to 3 minutes, so a round (and a playtest) is quick.
 - The game has to fit the jam's theme, which is announced at the start. Everything below waits for it.
 
 ## Theme · open
@@ -47,11 +49,10 @@ for the real game.
 
 ## Open questions
 - Which jam do we enter: the 48-hour Compo (solo, everything made during the jam) or the 72-hour Jam?
-  *Default: the 72-hour Jam.*
-- Keep the portrait orientation for any theme? *Default: yes, phone in one hand.*
-- Session length per run? *Default: 1 to 3 minutes, so a playtest is quick.*
+  To be decided on Saturday 17 Oct.
 
 ## Decision log
 - 2026-10-07: Phaser 3 from a CDN, no build, Netlify, phone first, portrait 720x1280. (Quirin)
 - 2026-10-10: Design docs are the source of truth; features start with questions, then a slice scope; mechanics
   get lab benches for side-by-side comparisons. (Quirin)
+- 2026-10-10: Portrait for any theme; a run lasts 1 to 3 minutes. Compo or Jam is decided on Saturday. (Quirin)
