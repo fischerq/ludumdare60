@@ -1,3 +1,4 @@
+import { desiredVelocity, easeVelocity } from '../systems/movement.js';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, PLAYER, KEYBOARD, COIN, HAZARD, UI } from '../config.js';
 
 export default class GameScene extends Phaser.Scene {
@@ -56,31 +57,21 @@ export default class GameScene extends Phaser.Scene {
 
   update() {
     const body = this.player.body;
-    let vx = 0;
-    let vy = 0;
+    let desired;
 
     const kx = this.keyAxis('left', 'A', 'right', 'D');
     const ky = this.keyAxis('up', 'W', 'down', 'S');
 
     if (kx !== 0 || ky !== 0) {
       const len = Math.hypot(kx, ky);
-      vx = (kx / len) * KEYBOARD.speed;
-      vy = (ky / len) * KEYBOARD.speed;
+      desired = { x: (kx / len) * KEYBOARD.speed, y: (ky / len) * KEYBOARD.speed };
       this.target = null;
-    } else if (this.target) {
-      const dx = this.target.x - this.player.x;
-      const dy = this.target.y - this.player.y;
-      const dist = Math.hypot(dx, dy);
-      if (dist > PLAYER.arriveRadius) {
-        // Slow down smoothly as we approach the finger.
-        const speed = Math.min(PLAYER.maxSpeed, dist * 6);
-        vx = (dx / dist) * speed;
-        vy = (dy / dist) * speed;
-      }
+    } else {
+      desired = desiredVelocity(this.player.x, this.player.y, this.target, PLAYER);
     }
 
-    body.velocity.x += (vx - body.velocity.x) * PLAYER.followLerp;
-    body.velocity.y += (vy - body.velocity.y) * PLAYER.followLerp;
+    const v = easeVelocity(body.velocity, desired, PLAYER);
+    body.velocity.set(v.x, v.y);
 
     // Clean up hazards that left the screen.
     this.hazards.children.each((h) => {

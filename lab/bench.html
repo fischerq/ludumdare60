@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Bench · Lab</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="data:,">
+  <script src="../making-of/theme.js"></script>
+  <link rel="stylesheet" href="../making-of/style.css">
+  <link rel="stylesheet" href="./lab.css">
+</head>
+<body class="bench-page">
+  <header class="hero wrap">
+    <p class="eyebrow"><a href="./">Lab</a></p>
+    <h1 id="title">Bench</h1>
+    <div class="lede"><p id="summary"></p></div>
+    <nav class="links"><a id="doc" href="#" target="_blank" rel="noopener">Design doc</a></nav>
+  </header>
+  <main class="wrap" id="bench">
+    <div class="controls">
+      <select id="scenario" aria-label="Scenario"></select>
+      <select id="speed" aria-label="Playback speed"></select>
+      <button type="button" id="play">Pause</button>
+      <button type="button" id="restart">Restart</button>
+    </div>
+    <p class="scenario-note" id="scenario-note"></p>
+    <div class="timeline"><input type="range" id="time" min="0" step="0.0167" value="0" aria-label="Time">
+      <span id="clock"></span></div>
+    <div class="panels" id="panels"></div>
+  </main>
+  <footer class="foot wrap"><a href="../">Game</a> · <a href="./">Lab</a> · <a href="../making-of/">Making-of</a> · <a href="../impressum/">Impressum</a></footer>
+  <script type="module" src="./lab.js"></script>
+</body>
+</html>

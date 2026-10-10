@@ -382,6 +382,7 @@ async function main() {
   $('#links').innerHTML = [
     meta.game_url && `<a href="${esc(meta.game_url)}">Play the game</a>`,
     meta.repo_url && `<a href="${esc(meta.repo_url)}" target="_blank" rel="noopener">Source code</a>`,
+    `<a href="../lab/">Lab</a>`,
   ].filter(Boolean).join('');
   setupTabs();
   setupDialog();

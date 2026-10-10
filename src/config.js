@@ -20,6 +20,7 @@ export const PLAYER = {
   radius: 36,
   maxSpeed: 700,       // px/s
   arriveRadius: 12,    // stop jittering when this close to the target
+  slowdownGain: 6,     // speed = distance * gain near the target, capped at maxSpeed
   followLerp: 0.18,    // 0..1, how quickly velocity catches up to desired velocity
 };
 

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lab</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="data:,">
+  <script src="../making-of/theme.js"></script>
+  <link rel="stylesheet" href="../making-of/style.css">
+  <link rel="stylesheet" href="./lab.css">
+</head>
+<body>
+  <header class="hero wrap">
+    <p class="eyebrow">Lab</p>
+    <h1>Testing grounds</h1>
+    <div class="lede"><p>Small benches that run one mechanic of the game on its own, with variants side by side on the
+      same input, so a feel problem can be seen and fixed before it goes into the game.</p></div>
+    <nav class="links">
+      <a href="../">Play the game</a>
+      <a href="https://github.com/fischerq/ludumdare60/blob/main/design/master.md" target="_blank" rel="noopener">Design doc</a>
+    </nav>
+  </header>
+  <main class="wrap">
+    <ul class="bench-list" id="list"></ul>
+  </main>
+  <footer class="foot wrap"><a href="../">Game</a> · <a href="../making-of/">Making-of</a> · <a href="../impressum/">Impressum</a></footer>
+  <script type="module">
+    import { BENCHES } from './benches/index.js';
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    document.getElementById('list').innerHTML = BENCHES.map((b) => `
+      <li><a class="bench-card" href="./bench.html?b=${encodeURIComponent(b.id)}">
+        <b>${esc(b.title)}</b><span>${esc(b.summary)}</span></a></li>`).join('');
+  </script>
+</body>
+</html>
