@@ -1,6 +1,6 @@
 # The deep layers (below the maze)
 
-**Status:** first slices built 2026-10-17, mechanics and feel to be tuned
+**Status:** first slices of all seven built 2026-10-17, mechanics and feel to be tuned
 **Parent:** [layers](layers.md) · [emulator](emulator.md) · [master](../master.md)
 **Lab bench:** none yet
 **Code:** scene `src/scenes/DeepScene.js` (one scene for all of them, `?scene=Deep`), rules per layer in
@@ -56,6 +56,20 @@ replaying a real trace: `requestTrace` records the first `DEEP.cpu.trace` instru
 vblank interrupt on), replayed at `rate` per second. The line the PC jumps to is a hit if you're on it. Every
 instruction that leaves Zero or Carry set drops a Z or C on its line (right edge) to collect. The registers
 and flags after the current instruction are shown below. Goal: 25 flags.
+
+## Layer -6: the game logic · built
+No pixels: the maze as the rules see it, grid lines and wall outlines from VRAM, Pac-Man and the ghosts as
+points at their RAM positions. Each ghost that hunts shows its target vector, the line to the tile it aims
+for, computed from RAM with the same rules (`ghostTarget`): the scatter corner, or its chase rule. Vectors
+are deadly (`DEEP.logic.vectorWidth`); they swing as Pac-Man moves and flip with the mode. Frightened ghosts
+have none. The pellets are nodes to collect. Goal: 30.
+
+## Layer -7: the input wires · built
+The joystick's switches as pads on the board, wired to IN0's bits (START to IN1). Standing on a pad closes
+that switch: the bit goes low, the program polls it, and the machine's Pac-Man turns. You steer the real game,
+watching it on a small picture at the top, with IN0 and IN1 shown live. A switch chatters for
+`DEEP.input.bounce` s when it closes. The bot is off here (and so is the demo switch: deaths cost lives);
+the START pad starts a new game. Every dot Pac-Man eats counts, Pac-Man dying is a hit. Goal: 30 dots.
 
 ## Decision log
 - 2026-10-17: One scene for all deep layers with a pure module per layer; first slices of all seven layers

@@ -209,6 +209,14 @@ export const DEEP = {
     trace: 400,          // instructions recorded from the start of a frame
     goal: 25,
   },
+  logic: {
+    vectorWidth: 0.45,   // tiles: how close to a target vector line counts as touching it
+    goal: 30,
+  },
+  input: {
+    bounce: 0.25,        // s a switch chatters on and off after you step on it
+    goal: 30,            // dots Pac-Man eats while you steer
+  },
 };
 
 export const CHEATS = {

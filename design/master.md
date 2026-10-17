@@ -49,8 +49,8 @@ bonus. See [movement](systems/movement.md).
 | Layer: the arcade hall (zoom out further) | decided, first slice built | [layer-arcade](systems/layer-arcade.md) | none yet |
 | Layer: the cabinet (zoom out) | decided, first slice built | [layer-cabinet](systems/layer-cabinet.md) | none yet |
 | Layer: inside the screen (zoom in) | first slice built | [layer-crt](systems/layer-crt.md) | none yet |
-| Deep layers (screen → wires), on the emulator | first slices being built | [layer-deep](systems/layer-deep.md) | none yet |
-| Emulated arcade machine (runs the maze game, feeds every layer) | goal decided, plan proposed, step 1 built | [emulator](systems/emulator.md) | none yet |
+| Deep layers (screen → wires), on the emulator | first slices built | [layer-deep](systems/layer-deep.md) | none yet |
+| Emulated arcade machine (runs the maze game, feeds every layer) | built (plan steps 1-9) | [emulator](systems/emulator.md) | none yet |
 | Mini-gurke easter egg | proposed | [layers](systems/layers.md#mini-gurke-easter-egg--proposed) | none |
 
 ## Vertical slice · decided
@@ -112,3 +112,5 @@ survives only as the movement lab bench.
   [emulator](systems/emulator.md). (Quirin)
 - 2026-10-17: Outer game loop: the game starts on the maze; winning and losing unlock the layers below and above;
   cheat buttons for testing. See [layers](systems/layers.md). (Quirin)
+- 2026-10-17: The whole emulator plan is built: the maze game runs as Z80 code, the cabinet shows the same
+  machine, a bot plays while the player is elsewhere, and seven deep layers read the machine's raw data. (Quirin asked for it; Claude)

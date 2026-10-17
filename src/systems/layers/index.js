@@ -6,5 +6,7 @@ import signals from './signals.js';
 import vram from './vram.js';
 import bus from './bus.js';
 import cpu from './cpu.js';
+import logic from './logic.js';
+import input from './input.js';
 
-export const DEEP_LAYERS = [crt, signals, vram, bus, cpu];
+export const DEEP_LAYERS = [crt, signals, vram, bus, cpu, logic, input];
