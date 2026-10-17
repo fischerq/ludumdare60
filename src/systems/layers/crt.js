@@ -3,24 +3,28 @@
 // electron beam sweeps the picture row by row: dots glow after it passes and can only be eaten while they
 // glow. The beam only fires where the picture is lit, so it's deadly on a dot that's still there (and the
 // ghosts always are); black floor is safe, and so is everything in the vertical blank, when it flies back.
+// A dark room: away from the beam the picture fades almost to black (darkFloor). The enemies are the ghost
+// sprites and the beam itself; the only sweep in the deep layers. Objectives: the four power pellets (where the
+// maze layout has them, whether or not the machine's Pac-Man ate them), eaten while lit.
 
-import { DEEP } from '../../config.js';
+import { DEEP, MAZE } from '../../config.js';
 import { CELL, tileOffset } from '../arcade/memmap.js';
 import { W, H, SPRITE } from '../arcade/video.js';
 import { css, floor, neonBlock, neonBox, dot } from './tron.js';
 
 const C = DEEP.crt;
+const PELLETS = MAZE.layout.flatMap((row, y) => [...row].map((ch, x) => (ch === 'o' ? tileOffset(x, y) : -1))).filter((i) => i >= 0);
 
 export default {
   id: 'crt',
   title: 'INSIDE THE SCREEN',
-  subtitle: 'EAT DOTS WHILE THEY GLOW. STAY IN\nTHE DARK WHEN THE BEAM COMES',
+  subtitle: 'EAT THE 4 POWER PELLETS WHILE LIT\nSTAY IN THE DARK WHEN THE BEAM COMES',
   cols: W, rows: H,
   start: { x: 9, y: 17 },
   goal: C.goal,
 
   init() {
-    return { eaten: new Set(), passed: new Float32Array(H).fill(-99) };
+    return { eaten: new Set(), got: new Set(), passed: new Float32Array(H).fill(-99) };
   },
 
   // Beam row (fractional) at time t, or null in the vertical blank.
@@ -45,14 +49,15 @@ export default {
     return dx * dx + dy * dy > R * R;
   },
 
-  // Returns 'collect', 'hit' or null for this frame.
+  // Returns 'dot', 'objective', 'hit' or null for this frame.
   update(st, env) {
     const { m, t, player } = env;
     const b = this.beam(t);
     if (b !== null) for (let y = 0; y <= Math.min(H - 1, Math.floor(b)); y++) if (t - st.passed[y] > C.beamPeriod * 0.5) st.passed[y] = t;
     const px = Math.round(player.x), py = Math.round(player.y);
     const i = tileOffset(px, py), c = m.vram[i];
-    const dotHere = (c === CELL.dot || c === CELL.power) && !st.eaten.has(i);
+    const pellet = PELLETS.includes(i) && !st.got.has(i);
+    const dotHere = pellet || ((c === CELL.dot || c === CELL.power) && !st.eaten.has(i));
     const lit = dotHere || c === CELL.wall || c === CELL.door;
     if (lit && b !== null && Math.abs(b - (py + 0.5)) < 0.5) return 'hit';
     for (const sp of m.sprites()) {
@@ -60,8 +65,9 @@ export default {
       if (Math.abs(sp.x / 16 - 0.5 - player.x) + Math.abs(sp.y / 16 - 0.5 - player.y) < 0.8) return 'hit';
     }
     if (dotHere && this.glow(st, py, t) > C.litAbove) {
+      if (pellet) { st.got.add(i); return 'objective'; }
       st.eaten.add(i);
-      return 'collect';
+      return 'dot';
     }
     return null;
   },
@@ -78,12 +84,14 @@ export default {
       const g = this.glow(st, y, t);
       for (let x = 0; x < W; x++) {
         const i = tileOffset(x, y), c = m.vram[i];
-        if (c === CELL.wall) {
-          ctx.globalAlpha = 0.3 + 0.7 * g;
+        if (PELLETS.includes(i) && !st.got.has(i)) {
+          dot(ctx, env, 'special', x, y, S, g > C.litAbove ? 1 : C.darkFloor + 0.3);
+        } else if (c === CELL.wall) {
+          ctx.globalAlpha = C.darkFloor + (1 - C.darkFloor) * g;
           neonBlock(ctx, x * S + 1, y * S + 1, S - 2, S - 2, P.line, P.glow);
           ctx.globalAlpha = 1;
         } else if ((c === CELL.dot || c === CELL.power) && !st.eaten.has(i)) {
-          dot(ctx, env, c === CELL.power ? 'special' : g > C.litAbove ? 'dot2' : 'dot', x, y, S, g > C.litAbove ? 1 : 0.35);
+          dot(ctx, env, g > C.litAbove ? 'dot2' : 'dot', x, y, S, g > C.litAbove ? 1 : C.darkFloor + 0.15);
         }
       }
     }

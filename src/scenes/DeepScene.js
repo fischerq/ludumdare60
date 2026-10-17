@@ -31,7 +31,8 @@ export default class DeepScene extends Phaser.Scene {
     this.S = world.program.symbols;
     this.st = this.L.init({ m: this.machine, S: this.S });
     this.t = 0;
-    this.got = 0;
+    this.got = 0;      // objectives done (the layer is won at L.goal, 3 to 5)
+    this.dots = 0;     // dots eaten (just counted)
     this.hits = 0;
     this.hitT = 0;
     this.leaving = false;
@@ -69,6 +70,7 @@ export default class DeepScene extends Phaser.Scene {
     text(vw / 2, 12, `LAYER -${this.index + 1}: ${this.L.title}`, css(this.P.line));
     text(vw / 2, 30, this.L.subtitle, COLORS.textDim);
     this.counter = text(vw / 2, vh - BOTTOM + 8, '');
+    this.info = text(vw / 2, vh - BOTTOM + 22, '', COLORS.textDim);
 
     const by = vh - 42;
     addLayerButton(this, 8, by, 'LAYER\nUP', () => this.go(this.index === 0 ? 'Game' : this.index - 1, 'up'));
@@ -136,12 +138,14 @@ export default class DeepScene extends Phaser.Scene {
     const open = (x, y) => this.L.open(this.st, env, x, y);
     if (this.hitT > 0) {
       this.hitT -= dt;
-      if (this.hitT <= 0) { Object.assign(this.player, createWalker(this.L.start.x, this.L.start.y)); this.trail = []; }
+      if (this.hitT <= 0) { Object.assign(this.player, createWalker(this.L.start.x, this.L.start.y)); this.trail = []; this.L.onRespawn?.(this.st, env); }
     } else {
       stepWalker(this.player, DEEP.walkSpeed * dt, open);
+      // A layer's update returns 'dot', 'objective', 'hit' or nothing for this frame.
       const r = this.L.update(this.st, env);
-      if (r === 'collect') { this.got++; sfx.dot(); if (this.got === this.L.goal) this.cleared(); }
-      if (r === 'hit') { this.hits++; this.hitT = DEEP.hitPause; sfx.death(); }
+      if (r === 'dot') { this.dots++; sfx.dot(); }
+      if (r === 'objective') { this.got++; sfx.power(); if (this.got === this.L.goal) this.cleared(); }
+      if (r === 'hit') { this.hits++; this.hitT = DEEP.hitPause; sfx.death(); this.L.onHit?.(this.st, env); }
     }
     if (this.L.drive) holdDir(this.L.drive(this.st, env));
 
@@ -157,12 +161,14 @@ export default class DeepScene extends Phaser.Scene {
       .setAngle({ right: 0, down: 90, left: 0, up: 270 }[dir]).setFlipX(dir === 'left')
       .setVisible(this.hitT <= 0 || Math.floor(this.t * 10) % 2 === 0);
     this.drawTrail();
-    this.counter.setText(`${Math.min(this.got, this.L.goal)}/${this.L.goal}${this.hits ? `   HITS ${this.hits}` : ''}`);
+    this.counter.setText(`GOALS ${Math.min(this.got, this.L.goal)}/${this.L.goal}   DOTS ${this.dots}${this.hits ? `   HITS ${this.hits}` : ''}`);
+    this.info.setText(this.L.info?.(this.st, env) ?? '');
   }
 
   // Tron light trail behind Pac-Man: the path of the last DEEP.trail seconds, fading out. Visual only.
   drawTrail() {
     const p = this.player, last = this.trail[this.trail.length - 1];
+    if (last && Math.abs(last.x - p.x) + Math.abs(last.y - p.y) > 1.5) this.trail = []; // warped: start a new trail
     if (!last || last.x !== p.x || last.y !== p.y) this.trail.push({ x: p.x, y: p.y, t: this.t });
     while (this.trail.length && this.t - this.trail[0].t > DEEP.trail) this.trail.shift();
     const g = this.trailG.clear(), c = this.cell, at = (v, o) => Math.round(o + (v + 0.5) * c);
