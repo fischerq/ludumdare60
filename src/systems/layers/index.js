@@ -4,5 +4,7 @@
 import crt from './crt.js';
 import signals from './signals.js';
 import vram from './vram.js';
+import bus from './bus.js';
+import cpu from './cpu.js';
 
-export const DEEP_LAYERS = [crt, signals, vram];
+export const DEEP_LAYERS = [crt, signals, vram, bus, cpu];
