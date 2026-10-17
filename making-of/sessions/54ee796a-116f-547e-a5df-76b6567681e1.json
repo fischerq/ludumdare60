@@ -246,7 +246,16 @@
     }
    ],
    "images": [],
-   "claude_images": [],
+   "claude_images": [
+    "media/54ee796a-3-c1.jpg",
+    "media/54ee796a-3-c2.jpg",
+    "media/54ee796a-3-c3.jpg",
+    "media/54ee796a-3-c4.jpg",
+    "media/54ee796a-3-c5.jpg",
+    "media/54ee796a-3-c6.jpg",
+    "media/54ee796a-3-c7.jpg",
+    "media/54ee796a-3-c8.jpg"
+   ],
    "reply": "Stage 5: shadow mode. The maze level gets drawn by the board's video chip, while the JS rules still decide what happens and write their state into the machine.",
    "progress_notes": [
     "Starting: logging plan usage, then reading the maze game code the port is based on.",
