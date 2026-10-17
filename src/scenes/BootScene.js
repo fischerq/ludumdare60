@@ -27,12 +27,24 @@ const FRIGHT_FACE = [
   '..##..##..##..', '.#..##..##..#.',
 ];
 
-// Generates all placeholder art in code, pixel by pixel at native size: 16x16 sprites, the 'maze' tileset of
-// 16x16 tiles (one texture per tile), and the maze built from that tileset. Real art can replace any of
-// these later under the same texture keys (tools/export_assets.py writes them to assets/).
+// Loads the art from assets/ (one PNG per texture key, listed in assets/export.json) and draws a code
+// placeholder, pixel by pixel at native size, for any key whose file is missing: 16x16 sprites, the 'maze'
+// tileset of 16x16 tiles (one texture per tile), and the maze built from that tileset.
+// tools/export_assets.py writes the placeholders to assets/ and never overwrites a file Max edited there.
+// ?codeart skips the files and shows only the code-drawn art (the export uses this).
 export default class BootScene extends Phaser.Scene {
   constructor() {
     super('Boot');
+  }
+
+  preload() {
+    if (new URLSearchParams(window.location.search).has('codeart')) return;
+    // Over plain http (a local server) always fetch fresh files, so an edited PNG shows on the next reload.
+    const bust = window.location.protocol === 'http:' ? `?t=${Date.now()}` : '';
+    this.load.json('art-manifest', `assets/export.json${bust}`);
+    this.load.once('filecomplete-json-art-manifest', (key, type, data) => {
+      for (const k of Object.keys(data?.textures ?? {})) this.load.image(k, `assets/${k}.png${bust}`);
+    });
   }
 
   create() {
@@ -53,7 +65,9 @@ export default class BootScene extends Phaser.Scene {
   }
 
   // Draw a w x h texture; paint(set) calls set(x, y, color) for each lit pixel.
+  // Skipped when the texture was loaded from assets/.
   pixels(key, w, h, paint) {
+    if (this.textures.exists(key)) return this.textures.get(key);
     const tex = this.textures.createCanvas(key, w, h);
     const ctx = tex.getContext();
     paint((x, y, color) => { ctx.fillStyle = hex(color); ctx.fillRect(x, y, 1, 1); });

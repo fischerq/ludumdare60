@@ -27,6 +27,9 @@ Then open <http://localhost:8000>. To test on your phone, open `http://<your-lap
 The lab is at `/lab/` and the making-of page at `/making-of/`. Settings live in `.vscode/settings.json` (port 5500,
 LAN access, no reload for docs or log files).
 
+**Art:** the game loads its sprites and tiles from `assets/` (one PNG per texture). Overwrite a file there, reload,
+and the game shows it (Live Server reloads by itself); `?codeart` shows the code-drawn placeholders instead.
+
 **Controls:** touch and drag (or click and hold) to move toward your finger. On a laptop, arrow keys / WASD also work.
 
 ## Deploy
@@ -56,7 +59,7 @@ src/scenes/           Boot (placeholder textures), Menu, Game, GameOver
 src/systems/          pure mechanic logic shared by the game and the lab (no Phaser)
 design/               design docs: master.md, systems/*.md
 lab/                  testing grounds: harness (lab.js) + benches/*.js
-assets/               1x PNG export of all code-drawn textures (tools/export_assets.py); from-max/ = edited art
+assets/               the game's art, one PNG per texture (edit in place; the export keeps edited files)
 making-of/            AI-use log + making-of page (index.html, sessions/*.json)
 tools/ai_log.py       exports Claude Code transcripts into making-of/sessions/
 tools/export_assets.py writes assets/*.png from BootScene (via tools/export-assets.html)
