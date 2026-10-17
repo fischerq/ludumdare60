@@ -35,7 +35,7 @@ export default class GameScene extends Phaser.Scene {
     this.oy = MAZE.top;
     this.leaving = false;
     this.ended = false;
-    this.upBtn = this.downBtn = this.soon = null;
+    this.upBtn = this.downBtn = null;
     this.cameras.main.setOrigin(0, 0).setZoom(PIXEL.zoom).setRoundPixels(true);
 
     // The playfield is the arcade machine's picture: its video chip draws VRAM and the sprites into this
@@ -168,19 +168,15 @@ export default class GameScene extends Phaser.Scene {
       this.upBtn = addLayerButton(this, upX, y, 'LAYER\nUP', () => this.leave('Cabinet'), 2);
     }
     if (progress.deeper && !this.downBtn) {
-      // Down one layer: into the screen. Not built yet.
-      this.downBtn = addLayerButton(this, upX - 116, y, 'LAYER\nDOWN', () => {
-        if (this.soon) return;
-        this.soon = showCallout(this, this.viewW / 2, this.oy + 6 * T, 'INSIDE THE SCREEN:\nCOMING SOON');
-        this.time.delayedCall(1500, () => { this.soon.destroy(); this.soon = null; });
-      }, 2);
+      // Down one layer: into the screen (the deep layers, DeepScene).
+      this.downBtn = addLayerButton(this, upX - 116, y, 'LAYER\nDOWN', () => this.leave('Deep', { layer: 0 }), 2);
     }
   }
 
-  leave(scene) {
+  leave(scene, data) {
     if (this.leaving) return;
     this.leaving = true;
-    this.scene.start(scene);
+    this.scene.start(scene, data);
   }
 
   // Cheat buttons: end the round as if the maze was cleared or the last life lost.

@@ -92,7 +92,7 @@ reference until the Z80 version matches it.
 8. **Done: layers share the machine.** Each layer is a view on `world`. The machine never pauses for a
    transition, and each layer says who controls Pac-Man (player or bot). The cabinet's screen shows the
    machine's frame.
-9. **Deep layers, one slice each, questions first:** CRT ([layer-crt](layer-crt.md)), then the others from the
+9. **Deep layers** (in progress, see [layer-deep](layer-deep.md)), one slice each: CRT ([layer-crt](layer-crt.md)), then the others from the
    table above.
 
 Token cost: steps 4 and 6 are the expensive ones; each slice of step 6 is its own push.

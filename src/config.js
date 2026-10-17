@@ -174,6 +174,21 @@ export const LAYERS = {
 
 // Cheat buttons at the bottom of the maze and cabinet layers that fire the win/lose events, for testing the
 // unlocks. Turn off for the release.
+// The deep layers below the maze (src/scenes/DeepScene.js, rules in src/systems/layers/). Every one is a view
+// of the emulated machine; times are slowed down so a human can play in them.
+export const DEEP = {
+  walkSpeed: 5,          // tiles per second
+  hitPause: 0.8,         // s of flashing after a hit, then back to the start
+  transition: 0.35,      // s of zooming between layers
+  crt: {
+    beamPeriod: 3.2,     // s for one picture (the real one takes 16.5 ms)
+    vblank: 0.22,        // share of the period with the beam off (vertical blank: safe to cross)
+    decay: 0.9,          // s for the phosphor to fade to a third
+    litAbove: 0.35,      // glow above which a dot can be eaten
+    goal: 25,
+  },
+};
+
 export const CHEATS = {
   enabled: true,
 };

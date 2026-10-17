@@ -1,6 +1,6 @@
 # Layer: inside the screen (zoom in)
 
-**Status:** proposed (ideas, not built)
+**Status:** first slice built 2026-10-17, see [layer-deep](layer-deep.md)
 **Parent:** [layers](layers.md) · [master](../master.md)
 **Lab bench:** none yet
 **Code:** none yet
@@ -71,3 +71,4 @@ To be written once the questions are answered.
 - 2026-10-17: Zoom-in layer idea: into the screen; control a Pac again (other skin); the auto-played game
   above lights the pixels; dots only edible while lit; avoid the refresh beam. Research how arcade screens
   work first. (Quirin)
+- 2026-10-17: First slice built as deep layer -1 in [layer-deep](layer-deep.md): same swipe controls, the whole maze magnified, a line beam, dots edible while they glow, the beam deadly only on lit cells. (Claude)

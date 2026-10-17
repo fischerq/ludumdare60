@@ -48,7 +48,8 @@ bonus. See [movement](systems/movement.md).
 | Art (pixel art, visual design) | proposed (Max) | [art](systems/art.md) | none |
 | Layer: the arcade hall (zoom out further) | decided, first slice built | [layer-arcade](systems/layer-arcade.md) | none yet |
 | Layer: the cabinet (zoom out) | decided, first slice built | [layer-cabinet](systems/layer-cabinet.md) | none yet |
-| Layer: inside the screen (zoom in) | proposed, questions open | [layer-crt](systems/layer-crt.md) | none yet |
+| Layer: inside the screen (zoom in) | first slice built | [layer-crt](systems/layer-crt.md) | none yet |
+| Deep layers (screen → wires), on the emulator | first slices being built | [layer-deep](systems/layer-deep.md) | none yet |
 | Emulated arcade machine (runs the maze game, feeds every layer) | goal decided, plan proposed, step 1 built | [emulator](systems/emulator.md) | none yet |
 | Mini-gurke easter egg | proposed | [layers](systems/layers.md#mini-gurke-easter-egg--proposed) | none |
 
