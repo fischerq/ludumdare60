@@ -10,6 +10,9 @@ Theme: Old Tech. Behind the [arcade maze game](arcade-maze.md), short minigames 
 the arcade machine, using the maze characters or mechanics to show how the old tech worked.
 
 ## Next layers · proposed
+- **Zoom out further: the arcade hall.** Top-down, Pokémon-like: Pac-Man walks around the arcade shop the
+  cabinet stands in. See [layer-arcade](layer-arcade.md).
+
 The two layers next to the maze game come first:
 - **Zoom out: the cabinet.** A pixel-art arcade machine with simulated depth, the same game on its screen, played
   through a 4-way joystick (built). See [layer-cabinet](layer-cabinet.md).
@@ -61,3 +64,4 @@ minigame, a counter on the layer map, no unlock.*
 - 2026-10-17: The first two layers to work out are the neighbours of the maze game: zoom out to the cabinet,
   zoom in to the screen. (Quirin)
 - 2026-10-17: Button to move a layer up or down; all layers unlocked by default for now. (Quirin)
+- 2026-10-17: Another layer above the cabinet: the arcade hall, Pokémon-like top-down. (Quirin)
