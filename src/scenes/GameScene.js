@@ -1,7 +1,8 @@
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY, LAYERS } from '../config.js';
 import { createGame, stepGame, steer, DIRS } from '../systems/maze.js';
 import { createSwipe, swipeInput } from '../systems/swipe.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
+import { addLayerButton } from '../layerButton.js';
 
 const T = PIXEL.tile;
 const ANGLE = { right: 0, down: 90, left: 180, up: 270 };
@@ -84,6 +85,12 @@ export default class GameScene extends Phaser.Scene {
     this.readyText = this.text(this.sx(MAZE.houseExit.x), this.oy + 13 * T + 2, 'READY!', COLORS.textReady)
       .setOrigin(0.5, 0);
     this.hint = this.text(this.viewW / 2, mazeBottom + 88, 'SWIPE TO TURN', COLORS.textDim).setOrigin(0.5, 0);
+    // Up one layer: zoom out to the cabinet.
+    if (LAYERS.unlocked) {
+      addLayerButton(this, this.viewW - 32 - 112, mazeBottom + 8, 'LAYER\nUP', () => {
+        if (!this.leaving) { this.leaving = true; this.scene.start('Cabinet'); }
+      }, 2);
+    }
     this.lifeIcons = [];
     for (let i = 0; i < RULES.lives - 1; i++) {
       this.lifeIcons.push(this.sprite(this.ox + 24 + i * 32, mazeBottom + 24, 'pac-2').setAngle(180));

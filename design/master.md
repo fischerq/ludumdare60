@@ -99,3 +99,4 @@ survives only as the movement lab bench.
   throughout, 3D simulated. (Quirin)
 - 2026-10-17: Max (artist) joins the team and works on the visual design, e.g. the pixel art. (Quirin)
 - 2026-10-17: Pixel art at 32x32 per sprite; the maze is built from a tileset. Details in [art](systems/art.md). (Quirin)
+- 2026-10-17: Layer up/down button in every layer, unlocked by default for now. (Quirin)

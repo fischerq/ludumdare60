@@ -156,6 +156,13 @@ export const CABINET = {
   stickDeadzone: 24,     // screen px the finger must move from where it touched before the stick clicks over
 };
 
+// Moving between layers with the layer button. For now every layer is open from the start; later a layer
+// unlocks when you clear the one before it.
+export const LAYERS = {
+  unlocked: true,
+  outroTime: 1.2,        // s of zooming back in from the cabinet to the maze level
+};
+
 export const BEST_KEY = 'ld60.best'; // localStorage key for the high score
 
 export const SOUND = {
