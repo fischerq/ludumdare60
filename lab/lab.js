@@ -29,6 +29,8 @@ async function main() {
   let playing = true;
   let speed = 1;
   let liveTarget = null;
+  // Benches with groups (e.g. one per character) get a picker; only that group's sliders show.
+  let group = bench.groups?.[0] ?? null;
 
   // Controls
   $('#scenario').innerHTML = bench.scenarios.map((s) => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
@@ -38,6 +40,31 @@ async function main() {
     restart();
   });
   $('#speed').addEventListener('change', (e) => { speed = Number(e.target.value); });
+  if (bench.groups) {
+    const sel = document.createElement('select');
+    sel.id = 'group';
+    sel.setAttribute('aria-label', bench.groupLabel || 'Group');
+    sel.innerHTML = bench.groups.map((g) => `<option value="${esc(g.id)}">${esc(g.name)}</option>`).join('');
+    sel.addEventListener('change', () => { group = bench.groups.find((g) => g.id === sel.value); showGroup(); });
+    $('.controls').prepend(sel);
+  }
+  // Settings that live in a JSON file: download it from the first editable variant, then save it over the
+  // file the bench names.
+  if (bench.exportFile) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'download primary';
+    btn.textContent = 'Download settings';
+    btn.addEventListener('click', () => {
+      const { name, text } = bench.exportFile((variants.find((v) => v.editable) ?? variants[0]).params);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+      a.download = name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    });
+    $('.controls').append(btn);
+  }
   $('#play').addEventListener('click', () => { playing = !playing; paintPlay(); });
   $('#restart').addEventListener('click', restart);
   $('#time').addEventListener('input', (e) => { seek(Number(e.target.value)); playing = false; paintPlay(); });
@@ -54,13 +81,14 @@ async function main() {
       <p class="readout"></p>
       ${v.editable ? `
         <div class="sliders">${bench.params.map((p) => `
-          <label><span>${esc(p.label)} <b data-k="${p.key}">${fmt(v.params[p.key], p.step)}</b></span>
-            <input type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${v.params[p.key]}" data-k="${p.key}">
+          <label data-k="${p.key}"><span>${esc(p.label)} <b data-k="${p.key}">${fmt(v.params[p.key], p.step)}</b></span>
+            <span class="nudge"><button type="button" data-k="${p.key}" data-d="-1" aria-label="Less">−</button>
+              <input type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${v.params[p.key]}" data-k="${p.key}">
+              <button type="button" data-k="${p.key}" data-d="1" aria-label="More">+</button></span>
           </label>`).join('')}
         </div>
         <div class="row"><button type="button" class="reset-params">Reset to current</button>
-          ${bench.configSnippet ? '<button type="button" class="copy">Copy for config.js</button>' : ''}
-          ${bench.exportFile ? '<button type="button" class="download">Download settings</button>' : ''}</div>
+          ${bench.configSnippet ? '<button type="button" class="copy">Copy for config.js</button>' : ''}</div>
         <pre class="snippet" hidden></pre>` : ''}
     </section>`).join('');
 
@@ -89,15 +117,14 @@ async function main() {
       try { await navigator.clipboard.writeText(text); el.querySelector('.copy').textContent = 'Copied'; } catch (e) { /* shown below instead */ }
       setTimeout(() => { el.querySelector('.copy').textContent = 'Copy for config.js'; }, 1500);
     });
-    // Settings that live in a JSON file: download it, then save it over the file the bench names.
-    el.querySelector('.download')?.addEventListener('click', () => {
-      const { name, text } = bench.exportFile(v.params);
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
-      a.download = name;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    });
+    // − / + step one notch for fine control.
+    el.querySelectorAll('.nudge button').forEach((btn) => btn.addEventListener('click', () => {
+      const input = el.querySelector(`input[data-k="${btn.dataset.k}"]`);
+      const step = Number(input.step);
+      const next = Math.min(Number(input.max), Math.max(Number(input.min), Number(input.value) + step * Number(btn.dataset.d)));
+      input.value = Math.round(next / step) * step;
+      input.dispatchEvent(new Event('input'));
+    }));
     bindPointer(v.canvas);
   });
 
@@ -117,6 +144,11 @@ async function main() {
     canvas.addEventListener('pointerup', up);
     canvas.addEventListener('pointercancel', up);
   }
+
+  function showGroup() {
+    grid.querySelectorAll('.sliders label').forEach((l) => { l.hidden = !!group && !group.keys.includes(l.dataset.k); });
+  }
+  showGroup();
 
   const inputAt = (time) => (scenario.live ? liveTarget : scenario.input(time));
 
@@ -170,7 +202,7 @@ async function main() {
       ctx.fillStyle = colors.bg;
       ctx.fillRect(0, 0, v.canvas.width, v.canvas.height);
       ctx.setTransform(s, 0, 0, s, 0, 0);
-      bench.draw(ctx, v.state, v.params, input, colors);
+      bench.draw(ctx, v.state, v.params, input, colors, group);
       v.readout.textContent = bench.readout ? bench.readout(v.state, v.params) : '';
     }
     $('#clock').textContent = scenario.live ? 'live' : `${t.toFixed(2)} s / ${scenario.duration} s`;
