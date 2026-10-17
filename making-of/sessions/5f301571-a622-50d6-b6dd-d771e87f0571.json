@@ -468,39 +468,50 @@
    "seq": 40,
    "date": "2026-10-17",
    "time": "12:05",
-   "duration_s": 124,
+   "duration_s": 145,
    "prompt": "make assets for the arcade box layer, so max can tweak. we should always automatically update this when we add or change graphics",
    "followups": [],
    "images": [],
    "claude_images": [],
-   "reply": "The numbers in the doc match (8 px tiles give a 168×264 picture). End-of-turn usage check, export log, commit, new PR:",
+   "reply": "The cabinet layer's art is now in `assets/` for Max to edit, and the export now runs automatically after art changes. PR #17 was already merged, so this is a new PR: https://github.com/fischerq/ludumdare60/pull/18\n\n**New assets**\n- `assets/cabinet.png` (360×640) is the whole machine and its shadow on a transparent background. I moved the floor out of the image into the game, so Max can repaint the cabinet on its own.\n- `assets/stick-n.png` and `stick-up/down/left/right.png` (24×32) are the joystick, neutral and pushed four ways.\n- `design/systems/art.md` lists both. It also gives the positions the game depends on (the screen opening at 98,67 sized 168×264, and the coin door), so Max knows to keep them or tell us the new ones.\n\nThe textures were already drawn in code; the last export just ran before the cabinet existed.\n\n**Automatic export**\n- A hook in `.claude/settings.json` runs after every edit or shell command in Claude Code sessions, including the edits I make through shell commands.\n- It re-exports `assets/` whenever `BootScene.js`, `tiles.js` or `config.js` changed since the last export. That takes about 4 s; when nothing changed it does nothing.\n- I tested it: it exported once after a change and stayed silent on the next call.\n- CLAUDE.md now says new art must be drawn in `BootScene` so the export picks it up.\n- It only covers Claude Code sessions. If someone changes the art code by hand, they still need to run `python3 tools/export_assets.py` themselves.\n\nThe cabinet still plays without errors, and the floor draws as before.\n\n**Usage:** 5-hour window 3%, weekly 17%.\n\n**On the phone:** nothing changes visually; just check the cabinet layer still looks the same.",
    "progress_notes": [
     "PR #17 is merged; restarting the branch from `main` and reading the asset exporter:",
     "The cabinet and joystick textures are drawn in BootScene but missing from `assets/`. Checking how the export page picks textures:",
     "The export page picks up every canvas texture, so the cabinet art was just never exported: the last export ran on the art branch, before the cabinet merge. Running it now, then automating it:",
     "The hook works: it exports on change and stays silent otherwise. Checking the exported cabinet:",
     "Transparent as intended. A quick run of the cabinet scene to make sure the floor still draws and nothing errors:",
-    "The floor pixel matches `0x1c1420` and there are no errors. Updating the art doc and CLAUDE.md, then committing:"
+    "The floor pixel matches `0x1c1420` and there are no errors. Updating the art doc and CLAUDE.md, then committing:",
+    "The numbers in the doc match (8 px tiles give a 168×264 picture). End-of-turn usage check, export log, commit, new PR:"
    ],
    "tools": {
     "Bash": 11,
     "mcp__claude-code-remote__list_events": 2,
-    "mcp__github__pull_request_read": 1
+    "mcp__github__pull_request_read": 1,
+    "mcp__github__create_pull_request": 1
    },
-   "api_requests": 12,
+   "api_requests": 14,
    "usage": {
     "claude-opus-5-5": {
-     "input": 24,
+     "input": 28,
      "cache_write_5m": 0,
-     "cache_write_1h": 26107,
-     "cache_read": 3958356,
-     "output": 7555,
+     "cache_write_1h": 27445,
+     "cache_read": 4634519,
+     "output": 8705,
      "thinking": 2656,
-     "cost_usd": 1.151723
+     "cost_usd": 1.320676
     }
    },
-   "cost_usd": 1.151723,
-   "commits": [],
+   "cost_usd": 1.320676,
+   "commits": [
+    {
+     "sha": "039985c8c5816c384d790bde22714b00621d9e70",
+     "subject": "Export the cabinet layer's art and re-export automatically after art changes"
+    },
+    {
+     "sha": "d9b5d1ddf866f713a6cbe39dabe6df434228dc64",
+     "subject": "Merge pull request #18 from fischerq/claude/old-tech-pacman-game-eaui1a"
+    }
+   ],
    "entrypoint": "remote_mobile",
    "branch": "claude/old-tech-pacman-game-eaui1a",
    "plan_usage": {
@@ -511,17 +522,224 @@
     },
     "seven_day": {
      "start": 0.17,
-     "end": 0.17,
+     "end": 0.18,
+     "delta": 0.01
+    }
+   }
+  },
+  {
+   "index": 8,
+   "seq": 41,
+   "date": "2026-10-17",
+   "time": "12:12",
+   "duration_s": 50,
+   "prompt": "add another layer up - a pokemon-like perspective on pacman walking around in the arcade shop",
+   "followups": [],
+   "images": [],
+   "claude_images": [],
+   "reply": "I wrote up the arcade hall layer as a proposal and haven't built anything yet, since our process is to ask questions before a new layer. It's in `design/systems/layer-arcade.md`, in a new PR: https://github.com/fischerq/ludumdare60/pull/19\n\nThe idea as written: a top-down view of the arcade shop, where Pac-Man walks around and our cabinet is one of the machines. Walking up to it goes back down into the cabinet layer.\n\n**Questions** (my suggested default after each):\n1. **What is there to do?** → Collect coins scattered around the hall to play our cabinet, and a few characters each say one line.\n2. **Who else is in the hall?** → The four ghosts as disguised visitors, each standing at another machine.\n3. **Controls:** → Hold a finger down and drag to keep walking; tap to talk or interact.\n4. **Movement:** → Strict one-tile steps in four directions, like Pokémon.\n5. **Size of the hall:** → About 1.5 screens tall, with the camera following Pac-Man.\n6. **Scale:** → 16 px tiles at 2× like the other layers, with the hall's cabinets as small 1×2-tile versions of ours. The hall gets its own tileset for Max (`assets/arcade/`).\n7. **Getting there from the cabinet:** → The cabinet zooms out again until it is its small spot in the hall.\n8. **Dialogue:** → A classic text box at the bottom in the pixel font, tap to continue.\n\nSay \"defaults\" or change any of these and I'll build it.\n\n**Usage:** 5-hour window 3%, weekly 18%.",
+   "progress_notes": [
+    "PR #18 is merged. This is a new layer, so per our process I'll write it up as a proposal with questions before building. Restarting the branch from `main`:"
+   ],
+   "tools": {
+    "mcp__claude-code-remote__list_events": 2,
+    "Bash": 2,
+    "mcp__github__pull_request_read": 1,
+    "mcp__github__create_pull_request": 1
+   },
+   "api_requests": 5,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 10,
+     "cache_write_5m": 0,
+     "cache_write_1h": 6057,
+     "cache_read": 1711098,
+     "output": 3440,
+     "thinking": 122,
+     "cost_usd": 0.459516
+    }
+   },
+   "cost_usd": 0.459516,
+   "commits": [
+    {
+     "sha": "2ef48fb4e919cb4133801d34077b4fb583d638b6",
+     "subject": "Design: arcade hall layer (Pokémon-like top-down) proposed, questions open"
+    }
+   ],
+   "entrypoint": "remote_mobile",
+   "branch": "claude/old-tech-pacman-game-eaui1a",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.03,
+     "end": 0.03,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.18,
+     "end": 0.18,
+     "delta": 0.0
+    }
+   }
+  },
+  {
+   "index": 9,
+   "seq": 42,
+   "date": "2026-10-17",
+   "time": "12:16",
+   "duration_s": 320,
+   "prompt": "defaults",
+   "followups": [],
+   "images": [],
+   "claude_images": [
+    "media/5f301571-9-c1.jpg"
+   ],
+   "reply": "I built the arcade hall layer with all eight defaults. It's pushed to the still-open PR #19: https://github.com/fischerq/ludumdare60/pull/19\n\n**How it plays**\n- **Getting there:** from the cabinet, a new **LAYER UP** button (top right) starts the hall zoomed in on our small yellow cabinet and zooms out. To go straight there, add `?scene=Hall` to the address.\n- **Walking:** hold a finger down and drag in a direction to keep walking, one tile per step. The camera follows Pac-Man through a hall about 1.5 screens tall.\n- **Tapping:** a short tap talks to or uses whatever Pac-Man faces, in an RPG text box at the bottom. Tap again, or start walking, to close it.\n- **The hall:**\n  - **Machines:** rows of cabinets in four colours, each with one line of text, plus a counter, a change machine and the door.\n  - **Ghosts:** the four ghosts stand at machines wearing caps. Each line hints at how that ghost chases you in the maze, for example \"I ALWAYS TRY TO GET AHEAD OF YOU.\"\n- **Goal:** 5 coins lie on the floor. With 3, facing our yellow cabinet and tapping zooms down into the cabinet layer. With fewer, it tells you how many you have.\n- **Leaving:** LAYER DOWN zooms back into the cabinet as well.\n\n**Art for Max:** the hall's tiles (`assets/arcade/`, 17 files), `coin` and `visitor-cap` are listed in `art.md`. The hook from last turn exported them automatically when I added the art.\n\n**Small change in all layers:** the layer buttons now have a dark backing, so they stay readable over the busy hall.\n\n**Checks:** in a phone-sized browser, dragging walked Pac-Man along the grid and stopped him at walls. I also went hall → cabinet → hall with no errors.\n\n**Usage:** this turn's check returned no new readings. The last one I saw was 3% of the 5-hour window and 18% weekly.\n\n**On the phone:**\n- Is Pac-Man big enough at one tile?\n- Does drag-to-walk feel right?\n- Should the coins you collect count as credits in the cabinet? Right now the cabinet's coin door still gives free coins.",
+   "progress_notes": [
+    "Building it. First the usage check, the state of PR #19, and the current BootScene helpers (another session reworked them):",
+    "PR #19 is still open, so I'll push there. Generating the hall map and checking it's walkable (every coin, NPC and cabinet front reachable):",
+    "The only \"unreachable\" spots are cabinets with a ghost standing in front of them, playing. That's intended. Writing the config:",
+    "Now the pure hall rules module:",
+    "Now the hall art in BootScene. Checking the existing helper signatures first:",
+    "Letting the layer button stay fixed on screen while the hall scrolls:",
+    "Now the HallScene:",
+    "Now the cabinet side: arriving from the hall skips the zoom-in, and the cabinet gets a LAYER UP button. Then registering the scene:",
+    "Testing the hall: walking by drag, a tap to talk, then hall → cabinet → hall:",
+    "Walking, layer switching and the automatic asset export all work. The tap said nothing only because Pac-Man was facing empty floor. Checking the look:",
+    "The hall looks right. The LAYER DOWN button is hard to read over the cabinets, so I'll give the button a dark backing (it's shared by all layers). Then the docs:"
+   ],
+   "tools": {
+    "Bash": 10,
+    "mcp__claude-code-remote__list_events": 2,
+    "Write": 2,
+    "mcp__github__pull_request_read": 1,
+    "Read": 1,
+    "mcp__github__update_pull_request": 1
+   },
+   "api_requests": 15,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 30,
+     "cache_write_5m": 0,
+     "cache_write_1h": 34063,
+     "cache_read": 5466241,
+     "output": 28184,
+     "thinking": 9504,
+     "cost_usd": 1.929552
+    }
+   },
+   "cost_usd": 1.929552,
+   "commits": [
+    {
+     "sha": "1603a4b77bbc47e4b7a9862431316c0fd5cf8d6f",
+     "subject": "Arcade hall layer: Pokémon-like top-down shop above the cabinet"
+    },
+    {
+     "sha": "e0aeb07482e240d6e7166a84e8272d67c81febda",
+     "subject": "Load the art from assets/ so Max can edit the PNGs in place"
+    }
+   ],
+   "entrypoint": "remote_mobile",
+   "branch": "claude/old-tech-pacman-game-eaui1a",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.03,
+     "end": 0.03,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.18,
+     "end": 0.18,
+     "delta": 0.0
+    }
+   }
+  },
+  {
+   "index": 10,
+   "seq": 43,
+   "date": "2026-10-17",
+   "time": "12:23",
+   "duration_s": 412,
+   "prompt": "the hall  needs to be smaller, with more details, we want more pokemon-like cozyness.",
+   "followups": [
+    {
+     "text": "mapping to pacman mechanics - this has same movement, but only the bonus coins to collect. additional mechanisms to talk to the people/the machine. make one of the ghost people angry when talked to, which activates all the ghost people to chase like in pacman (which can either be avoided by entering the machine, or walking out the door).",
+     "after_reply_index": 7
+    }
+   ],
+   "images": [],
+   "claude_images": [
+    "media/5f301571-10-c1.jpg"
+   ],
+   "reply": "Still working after the merge. `assets/export.json` comes from `main`'s exporter (PR #20) and the hook refreshed it, so it goes in with the final commit:",
+   "progress_notes": [
+    "A small cozy room means a different approach. Plan:\n- **Smaller room:** about 9×12 tiles of floor, so it fits one screen with no scrolling.\n- **Closer camera:** show it at 4× (Pokémon-sized characters, also fixing \"is Pac-Man big enough\").\n- **Details:** warm wooden floor, a rug, a wallpapered back wall with windows, posters and a clock, plants, a claw machine, a soda machine, a bin, a counter and a doormat.\n\nLaying out the room first:",
+    "The decorations above the cabinets are meant to be out of reach. The one real problem is the plant in the corner, which Pinky boxes in, so I'll move Pinky one tile. Updating the config:",
+    "A `%` in a comment broke the string formatting. Retrying with a plain placeholder:",
+    "Now redrawing the hall art for the cozy room:",
+    "That poster drawing line is convoluted. Rewriting it plainly:",
+    "Now updating HallScene for the room: 4× zoom, centred map, new tiles and rug pieces, interaction via `cellText`, and UI sized for 4×:",
+    "Running the hall test again, with the button position updated for 4×:",
+    "Now wiring the chase into HallScene:",
+    "The chase logic works headless: Pac-Man standing still gets caught by Blinky. A quick in-browser check of talk → chase:",
+    "Two fixes: the text box overflows with long lines, and Blinky catches Pac-Man instantly because he's standing right next to him. I'll size the box to its text and give Pac-Man a 1-second head start:",
+    "Both fixed. Updating the docs: the cozy room, the chase, and the new tile names in `art.md`.",
+    "PR #19 is open but conflicts with `main` again. I'll commit, then merge `main` in and resolve:",
+    "Only the generated `repo-stats.json` conflicts. I'll take `main`'s copy, let the exporter regenerate it, and re-run the hall test on the merged code:"
+   ],
+   "tools": {
+    "Bash": 15,
+    "Read": 2,
+    "mcp__claude-code-remote__list_events": 2,
+    "mcp__github__pull_request_read": 1
+   },
+   "api_requests": 18,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 36,
+     "cache_write_5m": 0,
+     "cache_write_1h": 41212,
+     "cache_read": 7261694,
+     "output": 33538,
+     "thinking": 9682,
+     "cost_usd": 2.452939
+    }
+   },
+   "cost_usd": 2.452939,
+   "commits": [
+    {
+     "sha": "d0f5c283ac1172181c4b1657c496b3fdbc8d476e",
+     "subject": "Merge pull request #20 from fischerq/claude/cool-carson-ovkczi"
+    },
+    {
+     "sha": "8be365957fdbf9d3ef4148dbe208a2dd980372b6",
+     "subject": "Hall: small cozy room at 4x, and Blinky's chase with the maze ghost rules"
+    },
+    {
+     "sha": "ca39b2abb33e019b5508c96ad8d4d8086eda2831",
+     "subject": "Merge main into the branch"
+    }
+   ],
+   "entrypoint": "remote_mobile",
+   "branch": "claude/old-tech-pacman-game-eaui1a",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.03,
+     "end": 0.03,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.18,
+     "end": 0.18,
      "delta": 0.0
     }
    }
   }
  ],
  "totals": {
-  "prompts": 7,
-  "cost_usd": 10.657034,
-  "output_tokens": 166612,
-  "input_tokens": 25446653
+  "prompts": 10,
+  "cost_usd": 15.667994,
+  "output_tokens": 232924,
+  "input_tokens": 40644599
  },
  "reported_by_claude_code": {
   "total_usd": 9.808707499999997,

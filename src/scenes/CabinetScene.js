@@ -17,10 +17,15 @@ export default class CabinetScene extends Phaser.Scene {
     super('Cabinet');
   }
 
+  init(data) {
+    this.fromAbove = data?.from === 'above';
+  }
+
   create() {
     const C = CABINET;
-    this.mode = 'intro';
-    this.introT = 0;
+    // Coming down from the arcade hall: start at the whole cabinet, no zoom from the maze level.
+    this.mode = this.fromAbove ? 'insert' : 'intro';
+    this.introT = this.fromAbove ? 1 : 0;
     this.t = 0;
     this.stickDir = null;
     this.keyDir = null;
@@ -60,10 +65,14 @@ export default class CabinetScene extends Phaser.Scene {
       this.layerBtn = addLayerButton(this, 8, 8, 'LAYER\nDOWN', () => {
         if (this.mode !== 'outro') { sfx.frightOff(); this.mode = 'outro'; }
       });
+      // Up one layer: the arcade hall this cabinet stands in.
+      this.layerUpBtn = addLayerButton(this, 360 - 8 - 56, 8, 'LAYER\nUP', () => {
+        if (this.mode !== 'outro' && this.mode !== 'gone') { sfx.frightOff(); this.mode = 'gone'; this.scene.start('Hall', { from: 'cabinet' }); }
+      });
     }
 
     this.cam = this.cameras.main.setOrigin(0, 0).setRoundPixels(true);
-    this.setIntro(0);
+    this.setIntro(this.introT);
     this.setupInput();
     this.setupPauseOnHide();
   }
@@ -98,7 +107,7 @@ export default class CabinetScene extends Phaser.Scene {
       unlockAudio();
       if (this.mode === 'cleared') { this.scene.start('Menu'); return; }
       if (this.mode === 'intro') { this.introT = 1; return; } // tap to skip the zoom-out
-      if (this.mode === 'outro' || (this.layerBtn && over.includes(this.layerBtn))) return;
+      if (this.mode === 'outro' || (this.layerBtn && over.includes(this.layerBtn)) || (this.layerUpBtn && over.includes(this.layerUpBtn))) return;
       const wp = this.cam.getWorldPoint(p.x, p.y);
       const cd = CABINET.coinDoor, pad = 24;
       if (this.mode === 'insert' && wp.x > cd.x - pad && wp.x < cd.x + cd.w + pad && wp.y > cd.y - pad && wp.y < cd.y + cd.h + pad) {

@@ -163,6 +163,94 @@ export const LAYERS = {
   outroTime: 1.2,        // s of zooming back in from the cabinet to the maze level
 };
 
+// Layer 3: the arcade hall (zoom out further). A small, cozy room seen top-down like a Pokémon game: Pac-Man
+// walks one tile per step. 16 px tiles shown at 4x, sprites at one tile; the room fits one screen.
+// # wall (dark trim), back wall row: | wallpaper, ^ window, * Pac-Man poster, + ghost poster, @ clock.
+// . floor, ~ rug, o coin, S start (in front of our cabinet), 1-4 ghost visitors (blinky, pinky, inky, clyde).
+// 1x2-tile machines, upper-case on top, lower-case below: cabinets R red, B blue, G green, V violet, Y yellow
+// (ours); C/c claw machine, Q/q soda machine, M/m change machine. = counter, % plant, ! bin, D door.
+export const HALL = {
+  layout: [
+    '###########',
+    '#^|^*@+^|^#',
+    '#%RB.Y.VG%#',
+    '#.rb.y.vg.#',
+    '#.1.oS..2.#',
+    '#.........#',
+    '#C.~~~~~.Q#',
+    '#c3~~~~~4q#',
+    '#..~~~~~..#',
+    '#o.......o#',
+    '#.......!.#',
+    '#====..oM.#',
+    '#..o....m.#',
+    '#.........#',
+    '#####D#####',
+  ],
+  zoom: 4,               // screen px per art px in the hall (the other layers use 2): cozier, bigger characters
+  walkSpeed: 4,          // tiles per second
+  coinsNeeded: 3,        // coins to play our cabinet (there are 5 on the floor)
+  dragDeadzone: 24,      // screen px a finger moves before it counts as walking, not a tap
+  tapTime: 350,          // ms; a touch shorter than this that didn't move is a tap (talk / use)
+  introZoom: 24,         // camera zoom at the start of the zoom-out from the cabinet (the small cabinet fills the view)
+  introTime: 1.6,        // s
+  outroTime: 0.9,        // s of zooming back into our cabinet
+  colors: {
+    floor: 0xb07a45, floorLine: 0x8a5a30, floorLight: 0xc48a52,
+    wallTop: 0x3a2418, wallpaper: 0xf0dfb4, wallStripe: 0xe2c994, baseboard: 0x7a4a2a,
+    rug: 0xb83a3a, rugBorder: 0xf2c94c, rugDark: 0x8a2a2a,
+    counter: 0x7a4a2a, counterTop: 0xc89058, change: 0x8a8a96, door: 0x6a4020, mat: 0x5a7a3a,
+    plantPot: 0xb0603a, leaf: 0x3a9a48, leafLight: 0x6ac860, coin: 0xffd23f, cap: 0x2040c0, sky: 0x8ad0ff,
+    cabinets: { r: 0xd03030, b: 0x3060d0, g: 0x30a050, v: 0x8040c0, y: 0xf2c200 },
+  },
+  ghosts: { 1: 'blinky', 2: 'pinky', 3: 'inky', 4: 'clyde' },
+  // Talking to the angry one makes all visitors chase Pac-Man with their maze rules, until he gets out the door,
+  // into our cabinet (needs the coins), gets caught, or they give up.
+  angry: 'blinky',
+  chase: {
+    speed: 3.2,          // tiles per second (Pac-Man walks 4)
+    time: 20,            // s until they give up
+    headStart: 1,        // s the ghosts wait before they start moving
+    pinkyAhead: 2,       // tiles; the maze values scaled down for a small room
+    inkyAhead: 1,
+    clydeShy: 3,
+    clydeCorner: { x: 0, y: 15 },
+    catchDistance: 0.6,  // tiles
+  },
+  // Which text a tile shows when you face it and tap (keys into `text`).
+  cellText: {
+    R: 'r', r: 'r', B: 'b', b: 'b', G: 'g', g: 'g', V: 'v', v: 'v', '=': 'counter', M: 'change', m: 'change',
+    D: 'door', '%': 'plant', '!': 'bin', C: 'claw', c: 'claw', Q: 'soda', q: 'soda', '^': 'door', '*': 'posterPac',
+    '+': 'posterGhost', '@': 'clock',
+  },
+  text: {
+    blinky: "I'M NOT A GHOST. I'M JUST... VERY PALE.",
+    angry: 'WHAT DID YOU SAY?! GET HIM, GUYS!',
+    caught: 'CAUGHT! THEY THROW YOU OUT... YOU SNEAK BACK IN.',
+    escaped: 'YOU SLIP OUT THE DOOR. WHEN YOU COME BACK, THEY HAVE CALMED DOWN.',
+    calm: 'THE GHOSTS LOST INTEREST. FOR NOW.',
+    pinky: 'I ALWAYS TRY TO GET AHEAD OF YOU.',
+    inky: 'WHERE I GO DEPENDS ON WHERE THE RED GUY GOES.',
+    clyde: 'I LIKE YOU. UNTIL YOU GET TOO CLOSE.',
+    r: 'OUT OF ORDER.',
+    b: 'HIGH SCORE: AAA 999990. NOBODY BEATS AAA.',
+    g: 'THE SCREEN IS BURNED IN. YOU CAN STILL SEE A MAZE.',
+    v: 'IT ONLY TAKES TOKENS FROM A DIFFERENT ARCADE.',
+    yNeedCoins: 'LAYERS OF PAC. INSERT COIN. YOU HAVE {n} OF {need} COINS.',
+    counter: 'THE OWNER IS ASLEEP. A SIGN SAYS: BACK IN 5 MIN.',
+    change: "CHANGE MACHINE. IT'S EMPTY. COINS MUST BE ON THE FLOOR SOMEWHERE.",
+    door: "IT'S RAINING OUTSIDE. BETTER STAY IN.",
+    plant: 'A PLANT. SOMEONE WATERS IT EVERY DAY.',
+    bin: 'FULL OF TICKETS AND GUM WRAPPERS.',
+    claw: 'THE CLAW NEVER GRABS ANYTHING. EVERYONE KNOWS.',
+    soda: 'OUT OF CHERRY COLA. AGAIN.',
+    posterPac: "A POSTER: PAC-MAN, 1980. 'EAT ALL THE DOTS!'",
+    posterGhost: 'A POSTER OF FOUR GHOSTS. THEY LOOK FAMILIAR.',
+    clock: "THE CLOCK SAYS IT'S ALMOST CLOSING TIME.",
+    coin: 'FOUND A COIN!',
+  },
+};
+
 export const BEST_KEY = 'ld60.best'; // localStorage key for the high score
 
 export const SOUND = {

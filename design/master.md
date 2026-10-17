@@ -46,6 +46,7 @@ bonus. See [movement](systems/movement.md).
 | Arcade maze game (starting point) | decided, first version built | [arcade-maze](systems/arcade-maze.md) | `/lab/bench.html?b=maze-controls` |
 | Tech layers / minigames | open | [layers](systems/layers.md) | none yet |
 | Art (pixel art, visual design) | proposed (Max) | [art](systems/art.md) | none |
+| Layer: the arcade hall (zoom out further) | decided, first slice built | [layer-arcade](systems/layer-arcade.md) | none yet |
 | Layer: the cabinet (zoom out) | decided, first slice built | [layer-cabinet](systems/layer-cabinet.md) | none yet |
 | Layer: inside the screen (zoom in) | proposed, questions open | [layer-crt](systems/layer-crt.md) | none yet |
 | Mini-gurke easter egg | proposed | [layers](systems/layers.md#mini-gurke-easter-egg--proposed) | none |
@@ -100,3 +101,4 @@ survives only as the movement lab bench.
 - 2026-10-17: Max (artist) joins the team and works on the visual design, e.g. the pixel art. (Quirin)
 - 2026-10-17: Pixel art at 32x32 per sprite; the maze is built from a tileset. Details in [art](systems/art.md). (Quirin)
 - 2026-10-17: Layer up/down button in every layer, unlocked by default for now. (Quirin)
+- 2026-10-17: Layer above the cabinet: Pac-Man walks around the arcade shop, Pokémon-like top-down view. (Quirin)
