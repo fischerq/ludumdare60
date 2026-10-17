@@ -32,3 +32,4 @@ thumb covers the danger, or snapping so hard it looks like teleporting.
 ## Decision log
 - 2026-10-10: Movement logic moved into `src/systems/movement.js` so the lab bench runs the game's own code;
   the inline `6` became `PLAYER.slowdownGain`. No behaviour change. (Claude)
+- 2026-10-17: The maze game steers by swipes (see [arcade-maze](arcade-maze.md)); touch-follow stays only as a lab bench. (Quirin)

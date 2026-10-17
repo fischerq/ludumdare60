@@ -1,4 +1,5 @@
 import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, UI } from '../config.js';
+import { unlockAudio } from '../sound.js';
 
 export default class MenuScene extends Phaser.Scene {
   constructor() {
@@ -9,20 +10,27 @@ export default class MenuScene extends Phaser.Scene {
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;
 
-    this.add.text(cx, cy - 200, GAME_TITLE, {
-      fontFamily: UI.fontFamily, fontSize: UI.titleSize, color: COLORS.text, fontStyle: 'bold',
+    this.add.text(cx, cy - 300, GAME_TITLE.toUpperCase(), {
+      fontFamily: UI.arcadeFont, fontSize: 56, color: COLORS.textReady,
     }).setOrigin(0.5);
 
-    const prompt = this.add.text(cx, cy + 120, 'Tap to start', {
-      fontFamily: UI.fontFamily, fontSize: UI.bodySize, color: COLORS.textDim,
+    // The cast, arcade attract-screen style.
+    this.add.image(cx - 180, cy - 100, 'pac-2');
+    ['blinky', 'pinky', 'inky', 'clyde'].forEach((name, i) => {
+      const x = cx - 60 + i * 80;
+      this.add.image(x, cy - 100, 'ghost-0').setTint(COLORS.ghosts[name]);
+      this.add.image(x, cy - 100, 'eyes-left');
+    });
+
+    const prompt = this.add.text(cx, cy + 120, 'TAP TO START', {
+      fontFamily: UI.arcadeFont, fontSize: 36, color: COLORS.text,
     }).setOrigin(0.5);
 
-    this.tweens.add({ targets: prompt, alpha: 0.3, duration: 700, yoyo: true, repeat: -1 });
+    this.tweens.add({ targets: prompt, alpha: 0.2, duration: 500, yoyo: true, repeat: -1 });
 
-    this.add.text(cx, GAME_HEIGHT - 230, 'Touch & drag to move · collect yellow · avoid red', {
-      fontFamily: UI.fontFamily, fontSize: 28, color: COLORS.textDim,
-      align: 'center', wordWrap: { width: GAME_WIDTH - 80 },
-    }).setOrigin(0.5);
+    this.add.text(cx, GAME_HEIGHT - 260, 'SWIPE TO TURN\nEAT ALL THE DOTS', {
+      fontFamily: UI.arcadeFont, fontSize: 24, color: COLORS.textDim, align: 'center',
+    }).setOrigin(0.5).setLineSpacing(16);
 
     // Link to the making-of page. Big padded hit area; tapping it must not start the game.
     const link = this.add.text(cx, GAME_HEIGHT - 120, 'How this game was made →', {
@@ -41,6 +49,7 @@ export default class MenuScene extends Phaser.Scene {
     const start = () => {
       if (started) return;
       started = true;
+      unlockAudio();
       this.scene.start('Game');
     };
     this.input.on('pointerdown', (pointer, over) => {
