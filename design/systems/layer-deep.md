@@ -51,7 +51,7 @@ slow down or aggregate, but everything comes from the machine's real raw data.
 - Not now: Tron mechanics (a deadly trail, light cycles), free movement, new hazards, art for the structures
   as asset files.
 
-## Layer -1: inside the screen (CRT) · built
+## Layer -1: inside the screen (CRT) · built (gameplay pass)
 The maze picture magnified to its phosphor: walls and dots from VRAM, ghosts from the sprite registers. A
 beam sweeps the picture row by row, slowed from 16.5 ms to `DEEP.crt.beamPeriod`. Rows glow after it passes
 and fade (`decay`); a dot can be eaten only while it glows (`litAbove`). The beam only fires where the
@@ -60,6 +60,10 @@ vertical blank (`vblank`), when the beam flies back switched off. Ghost sprites 
 **Area:** the whole face of the tube except its rounded corners (`cornerRadius`); the maze's walls are just
 lit phosphor, walkable, and deadly under the beam like an uneaten dot. Dots the
 machine's Pac-Man eats vanish here too. Goal: 25 dots.
+**Gameplay pass:** a dark room (Zelda dark rooms, Pokémon Flash): away from the beam the picture fades almost to
+black (`darkFloor`), so you see what the beam just lit. The beam is the only sweep in the deep layers. **Enemies:**
+the ghost sprites and the beam. **Objectives:** the 4 power pellets (where the maze layout has them, whether or not
+the machine's Pac-Man ate them), eaten while lit; the other dots are counted.
 
 ## Layer -2: the signal chips · built (gameplay pass)
 **Verb: carry and deliver.** The playfield as the video chip sees it: each tile's code from VRAM in hex, the 8
@@ -97,8 +101,8 @@ warp pad at its left edge that takes you to the line it jumps to (Pokémon warp 
 back, and `RET` pads take you back (STACK n). **Switch blocks:** the real Z and C flags raise and lower two columns
 of blocks (`zColumn`, `cColumn`, every third line) like Zelda's crystal switches; standing in one when it rises
 is a hit. **Enemy:** the program counter replays a real trace of a frame (`requestTrace`, from the vblank on, at
-`rate` per second); the line it lands on fires, a hit if you're on it. It lives in the routines that run every
-frame, so the first page is safe and warping into a routine is where it gets dangerous (`PC HERE!`). Z and C flags
+`rate` per second); the line it lands on fires, a hit if you're on it. It lives in the interrupt handler and the
+routines that run every frame; the status line says which page it's on (`PC HERE!` when it's on yours). Z and C flags
 it sets drop on their lines as dots. **Objectives:** reach 4 different routines through their `CALL` pads (an
 unvisited routine's pad shows the special).
 
@@ -112,12 +116,16 @@ s; touching it is a hit. Frightened ghosts have no vector and see nothing. **Obj
 the 4 ghosts' target tiles (they move with the mode and with Pac-Man; scatter corners are clamped into the grid).
 The pellets are dots.
 
-## Layer -7: the input wires · built
-The joystick's switches as pads on the board, wired to IN0's bits (START to IN1). Standing on a pad closes
-that switch: the bit goes low, the program polls it, and the machine's Pac-Man turns. You steer the real game,
-watching it on a small picture at the top, with IN0 and IN1 shown live. A switch chatters for
-`DEEP.input.bounce` s when it closes. The bot is off here (and so is the demo switch: deaths cost lives);
-the START pad starts a new game. Every dot Pac-Man eats counts, Pac-Man dying is a hit. Goal: 30 dots.
+## Layer -7: the input wires · built (gameplay pass)
+**Verb: pressure plates and a push block.** The joystick's switches as pads on the board, wired to IN0's bits
+(START to IN1). Standing on a pad closes that switch: the bit goes low, the program polls it, and the machine's
+Pac-Man turns. You steer the real game, watching it on a small picture at the top, with IN0 and IN1 shown live.
+A switch chatters for `bounce` s when it closes. **Push block** (Zelda, Sokoban): walk into it to push it one tile;
+on a pad it holds that switch while you walk elsewhere (your own pad wins while you stand on one). The bot is off
+here (and so is the demo switch: deaths cost lives); the START pad starts a new game. **Enemies:** a noise spark
+that crawls after you (`sparkSpeed`, after `sparkDelay` s, and again after it got you), and Pac-Man dying counts as
+a hit. **Objectives:** steer Pac-Man into each of the maze's 4 corners (within `corner` tiles; the picture marks
+the ones left). Every dot Pac-Man eats is a dot.
 
 ## Decision log
 - 2026-10-17: One scene for all deep layers with a pure module per layer; first slices of all seven layers

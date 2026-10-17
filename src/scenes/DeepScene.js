@@ -144,7 +144,7 @@ export default class DeepScene extends Phaser.Scene {
       // A layer's update returns 'dot', 'objective', 'hit' or nothing for this frame.
       const r = this.L.update(this.st, env);
       if (r === 'dot') { this.dots++; sfx.dot(); }
-      if (r === 'objective' || r === 'collect') { this.got++; sfx.power(); if (this.got === this.L.goal) this.cleared(); }
+      if (r === 'objective') { this.got++; sfx.power(); if (this.got === this.L.goal) this.cleared(); }
       if (r === 'hit') { this.hits++; this.hitT = DEEP.hitPause; sfx.death(); this.L.onHit?.(this.st, env); }
     }
     if (this.L.drive) holdDir(this.L.drive(this.st, env));

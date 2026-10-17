@@ -277,6 +277,7 @@ export const DEEP = {
   input: {               // -7 pressure plates and a push block; a noise spark crawls after you
     bounce: 0.25,        // s a switch chatters on and off after you step on it
     sparkSpeed: 1.6,     // tiles per second
+    sparkDelay: 4,       // s before the spark starts crawling (at the start and after it got you)
     block: { x: 8, y: 15 },
     corner: 4,           // tiles: how close to a maze corner the machine's Pac-Man has to get
     goal: 4,             // the four corners of the maze
