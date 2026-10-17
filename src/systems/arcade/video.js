@@ -10,35 +10,37 @@ export const W = MAZE.layout[0].length, H = MAZE.layout.length;
 
 // Directions in the program's order. Sprite angles for Pac-Man, whose art faces right.
 export const DIR_NAMES = ['up', 'left', 'down', 'right'];
-const ANGLE = { up: -Math.PI / 2, left: Math.PI, down: Math.PI / 2, right: 0 };
+export const GHOST_NAMES = ['blinky', 'pinky', 'inky', 'clyde'];
+// Pac-Man's art faces right: left is a mirror image, up and down are turned.
+const ANGLE = { up: -Math.PI / 2, left: 0, down: Math.PI / 2, right: 0 };
 
 // Palettes (our color PROM): what a palette index does to the art.
 export const PALETTE = {
   0: null,                     // black: not drawn (blinking power pellets)
   1: 'art',                    // the art's own colors
   2: COLORS.mazeFlash,         // the maze flashing white after the last dot
-  3: COLORS.ghosts.blinky, 4: COLORS.ghosts.pinky, 5: COLORS.ghosts.inky, 6: COLORS.ghosts.clyde,
   7: 0x00ffde,                 // points
 };
 
-// Sprite codes (our sprite ROM). 0 is an empty slot.
-export const SPRITE = { pac: 1, pacDie: 17, ghost: 32, fright: 40, flash: 42, eyes: 44, points: 48 };
+// Sprite codes (our sprite ROM). 0 is an empty slot. Pac-Man: pac + dir*4 + frame. Ghosts have their own art
+// per ghost and direction: ghost + ghost*8 + dir*2 + skirt.
+export const SPRITE = { pac: 1, pacDie: 17, ghost: 32, fright: 64, flash: 66, eyes: 68, points: 72 };
 const POINTS = ['200', '400', '800', '1600'];
 
-// What a sprite code shows: { key, angle, eyes?, text? }. Pure, so tests and the deeper layers can use it.
+// What a sprite code shows: { key, angle, flipX } or { text }. Pure, so tests and the deeper layers can use it.
 export function spriteArt(code) {
   if (code >= SPRITE.pac && code < SPRITE.pac + 16) {
     const d = DIR_NAMES[(code - 1) >> 2];
-    return { key: `pac-${(code - 1) & 3}`, angle: ANGLE[d] };
+    return { key: `maze/pac-${(code - 1) & 3}`, angle: ANGLE[d], flipX: d === 'left' };
   }
-  if (code >= SPRITE.pacDie && code < SPRITE.pacDie + 10) return { key: `pac-die-${code - SPRITE.pacDie}`, angle: ANGLE.up };
-  if (code >= SPRITE.ghost && code < SPRITE.ghost + 8) {
+  if (code >= SPRITE.pacDie && code < SPRITE.pacDie + 10) return { key: `maze/pac-die-${code - SPRITE.pacDie}` };
+  if (code >= SPRITE.ghost && code < SPRITE.ghost + 32) {
     const o = code - SPRITE.ghost;
-    return { key: `ghost-${o & 1}`, eyes: `eyes-${DIR_NAMES[o >> 1]}`, tinted: true };
+    return { key: `maze/ghost-${GHOST_NAMES[o >> 3]}-${DIR_NAMES[(o >> 1) & 3]}-${o & 1}` };
   }
-  if (code >= SPRITE.fright && code < SPRITE.fright + 2) return { key: `ghost-fright-${code - SPRITE.fright}` };
-  if (code >= SPRITE.flash && code < SPRITE.flash + 2) return { key: `ghost-flash-${code - SPRITE.flash}` };
-  if (code >= SPRITE.eyes && code < SPRITE.eyes + 4) return { key: `eyes-${DIR_NAMES[code - SPRITE.eyes]}` };
+  if (code >= SPRITE.fright && code < SPRITE.fright + 2) return { key: `maze/ghost-fright-${code - SPRITE.fright}` };
+  if (code >= SPRITE.flash && code < SPRITE.flash + 2) return { key: `maze/ghost-flash-${code - SPRITE.flash}` };
+  if (code >= SPRITE.eyes && code < SPRITE.eyes + 4) return { key: `maze/eyes-${DIR_NAMES[code - SPRITE.eyes]}` };
   if (code >= SPRITE.points && code < SPRITE.points + 4) return { text: POINTS[code - SPRITE.points] };
   return null;
 }
@@ -108,7 +110,7 @@ export function drawPlayfield(ctx, m, art, { T = 16, ox = 0, oy = 0 } = {}) {
       const i = tileOffset(x, y), c = m.vram[i];
       if (c !== CELL.dot && c !== CELL.power) continue;
       if (!PALETTE[m.cram[i]]) continue;
-      const src = paint(art(c === CELL.dot ? 'dot' : 'power'), m.cram[i]);
+      const src = paint(art(c === CELL.dot ? 'maze/dot' : 'maze/power'), m.cram[i]);
       const s = src.width * k;
       ctx.drawImage(src, Math.round(ox + x * T + T / 2 - s / 2), Math.round(oy + y * T + T / 2 - s / 2), s, s);
     }
@@ -129,9 +131,9 @@ export function drawPlayfield(ctx, m, art, { T = 16, ox = 0, oy = 0 } = {}) {
     ctx.save();
     ctx.translate(x, y);
     if (a.angle) ctx.rotate(a.angle);
-    ctx.drawImage(a.tinted ? paint(art(a.key), sp.palette) : art(a.key), -S / 2, -S / 2, S, S);
+    if (a.flipX) ctx.scale(-1, 1);
+    ctx.drawImage(art(a.key), -S / 2, -S / 2, S, S);
     ctx.restore();
-    if (a.eyes) ctx.drawImage(art(a.eyes), x - S / 2, y - S / 2, S, S);
   }
   ctx.restore();
 }
