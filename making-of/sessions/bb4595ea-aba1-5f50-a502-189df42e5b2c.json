@@ -1,0 +1,69 @@
+{
+ "session_id": "bb4595ea-aba1-5f50-a502-189df42e5b2c",
+ "title": "Automatic merge conflict resolution",
+ "session_url": "https://claude.ai/code/session_0156BYA4WZP7ZTCqedKfS7M6",
+ "claude_code_version": "2.1.302",
+ "first_date": "2026-10-17",
+ "last_date": "2026-10-17",
+ "turns": [
+  {
+   "index": 1,
+   "seq": 56,
+   "date": "2026-10-17",
+   "time": "15:56",
+   "duration_s": 139,
+   "prompt": "I keep having to ask for fixing merge conflicts. Tweak things so this is addressed automatically",
+   "followups": [],
+   "images": [],
+   "claude_images": [],
+   "reply": "Both cases work: generated-file conflicts resolve on their own, and a real conflict blocks the push with instructions. Now the docs and the PR.",
+   "progress_notes": [
+    "Writing a sync hook: it merges `origin/main` into the branch automatically at the start of each turn and before every `git push`, and resolves the generated files by itself.",
+    "Testing it in a throwaway clone with a simulated conflict on `main`:"
+   ],
+   "tools": {
+    "Bash": 7,
+    "ToolSearch": 2,
+    "mcp__claude-code-remote__list_events": 2,
+    "Write": 1,
+    "Edit": 1,
+    "mcp__github__list_pull_requests": 1
+   },
+   "api_requests": 11,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 22,
+     "cache_write_5m": 0,
+     "cache_write_1h": 41601,
+     "cache_read": 837191,
+     "output": 8145,
+     "thinking": 3153,
+     "cost_usd": 0.663234
+    }
+   },
+   "cost_usd": 0.663234,
+   "commits": [],
+   "entrypoint": "remote_mobile",
+   "branch": "ccr-3cf75adf-1932x0",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.04,
+     "end": 0.04,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.19,
+     "end": 0.19,
+     "delta": 0.0
+    }
+   }
+  }
+ ],
+ "totals": {
+  "prompts": 1,
+  "cost_usd": 0.663234,
+  "output_tokens": 8145,
+  "input_tokens": 878814
+ },
+ "reported_by_claude_code": null
+}
