@@ -20,14 +20,15 @@ the arcade as a place.
 - **Same movement as Pac-Man, on the grid:** one tile per step, four directions (`HALL.walkSpeed` 4 tiles/s).
   Hold a finger down and drag to keep walking; a short tap talks to or uses whatever Pac-Man faces. Arrow keys +
   Space/Enter on a laptop. Text appears in an RPG text box at the bottom, sized to the text; tap to close.
-- **Only bonus coins to collect** (like the fruit in the maze): 5 on the floor; with 3 (`HALL.coinsNeeded`)
-  you can play our cabinet, which zooms down into the cabinet layer.
+- **Only bonus coins to collect** (like the fruit in the maze): 5 on the floor. Coins go into the global wallet
+  (`src/wallet.js`, shown as COINS n) and stay picked up for the session. With at least one coin (`COINS.perGame`)
+  you can play our cabinet, which zooms down into the cabinet layer. *(proposed)*
 - **Talking:** the four ghosts in caps stand at the machines, one line each, hinting at how they hunt in the maze.
   Every machine and decoration has a line (`HALL.text`, `HALL.cellText`).
 - **The chase:** talking to Blinky (`HALL.angry`) makes him angry: after his line, all four visitors chase
   Pac-Man with their maze rules (Blinky straight at him, Pinky 2 tiles ahead, Inky mirrored around Blinky, Clyde
   backs off when close), at 3.2 tiles/s after a 1 s head start, never turning back. Ways out: walk out the
-  **door**, or enter **our cabinet** (needs the coins). Caught: thrown out, back at the start (coins kept).
+  **door**, or enter **our cabinet** (needs a coin). Caught: thrown out, back at the start (coins kept).
   After 20 s they give up. The frightened siren plays during the chase.
 - **Transitions:** from the cabinet (LAYER UP) the hall starts zoomed in on our small cabinet and zooms out; going
   down zooms back into it, then the cabinet layer starts at its full view.
@@ -35,10 +36,10 @@ the arcade as a place.
 ## Slice scope
 - Build (done): cozy room, grid walking, coins, talking, Blinky's chase with the maze rules, escapes, text box,
   layer transitions both ways.
-- Not now: more dialogue, the mini-gurke, coins becoming credits in the cabinet, footstep sounds, a street outside.
+- Not now: more dialogue, the mini-gurke, footstep sounds, a street outside.
 
 ## Open questions
-- Should entering the machine work as an escape even without the 3 coins? *Default now: no, coins needed.*
+- Should entering the machine work as an escape even without a coin? *Default now: no, a coin is needed.*
 - Does drag-to-walk feel right? Is the chase too easy or too hard (`HALL.chase`)?
 
 ## Decision log
@@ -50,3 +51,4 @@ the arcade as a place.
   (Quirin) Claude picked Blinky as the angry one, a 1 s head start, giving up after 20 s, coins kept when caught.
 - 2026-10-17: Hall characters get their own 32x32 sprites (`arcade/pac-*`, `arcade/ghost-*` with the cap drawn in),
   shown 2x2 tiles big standing on their tile, lower ones in front. See [art](art.md). (Quirin)
+- 2026-10-17: Coins are global (one wallet for all layers), spent one per game in the cabinet; the hall needs one coin, not 3. Start with 1 coin, picked-up coins don't respawn (Claude's defaults, proposed). (Quirin)

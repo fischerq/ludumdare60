@@ -1,8 +1,9 @@
-import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, CABINET, MAZE, PIXEL, UI, BEST_KEY, LAYERS } from '../config.js';
+import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, CABINET, MAZE, PIXEL, UI, BEST_KEY, LAYERS, COINS } from '../config.js';
 import { createGame, stepGame, steer } from '../systems/maze.js';
 import { drawScreen, screenSize } from '../systems/screenImage.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
+import { coins, spendCoin } from '../wallet.js';
 
 const KEYS = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
@@ -31,6 +32,7 @@ export default class CabinetScene extends Phaser.Scene {
     this.keyDir = null;
     this.g = createGame();
     this.g.phase = 'attract';
+    this.credit = 0;
     this.best = 0;
     try { this.best = Number(localStorage.getItem(BEST_KEY)) || 0; } catch (e) { /* private mode */ }
 
@@ -56,9 +58,8 @@ export default class CabinetScene extends Phaser.Scene {
     }).setOrigin(0.5, 0);
     this.stick = this.add.image(mid - 1, C.panelY - 8, 'cabinet/stick-n').setOrigin(0.5, 27 / 32);
 
-    this.prompt = this.add.text(GAME_WIDTH / C.zoom / 2, C.ground - 16, '', {
-      fontFamily: UI.arcadeFont, fontSize: 8, color: COLORS.text, resolution: 1,
-    }).setOrigin(0.5, 1);
+    this.makePrompt();
+    this.makeCounter();
     this.stickGfx = this.add.graphics();
     // Down one layer: zoom back into the screen, to the maze level.
     if (LAYERS.unlocked) {
@@ -75,6 +76,37 @@ export default class CabinetScene extends Phaser.Scene {
     this.setIntro(this.introT);
     this.setupInput();
     this.setupPauseOnHide();
+  }
+
+  // The call to action, right under the coin door: a black box in a loud color with an arrow up to the door,
+  // and a blinking frame around the door itself.
+  makePrompt() {
+    const C = CABINET, cd = C.coinDoor, cx = cd.x + cd.w / 2;
+    const col = Phaser.Display.Color.HexStringToColor(C.promptColor).color;
+    const bw = 168, bh = 44, by = cd.y + cd.h + 14;
+    this.doorFrame = this.add.graphics().lineStyle(2, col, 1).strokeRect(cd.x - 3, cd.y - 3, cd.w + 6, cd.h + 6);
+    this.promptBox = this.add.graphics()
+      .fillStyle(col, 1).fillTriangle(cx - 7, by, cx + 7, by, cx, by - 9)
+      .fillStyle(C.promptBox, 1).fillRect(cx - bw / 2, by, bw, bh)
+      .lineStyle(2, col, 1).strokeRect(cx - bw / 2 + 1, by + 1, bw - 2, bh - 2);
+    this.prompt = this.add.text(cx, by + bh / 2, '', {
+      fontFamily: UI.arcadeFont, fontSize: 16, color: C.promptColor, align: 'center', resolution: 1,
+    }).setOrigin(0.5).setLineSpacing(6);
+  }
+
+  // Coins held (shared with the hall), top center between the layer buttons.
+  makeCounter() {
+    const x = 180, y = 23;
+    this.add.graphics().fillStyle(0x000000, 1).fillRect(x - 40, y - 15, 80, 30);
+    this.counterCoin = this.add.image(x - 22, y, 'arcade/coin').setScale(2);
+    this.counter = this.add.text(x - 8, y + 1, '', {
+      fontFamily: UI.arcadeFont, fontSize: 16, color: CABINET.counterColor, resolution: 1,
+    }).setOrigin(0, 0.5);
+    this.showCoins();
+  }
+
+  showCoins() {
+    this.counter.setText(`${coins()}`);
   }
 
   // A faint diagonal light band across the glass, in hard pixel steps.
@@ -161,11 +193,33 @@ export default class CabinetScene extends Phaser.Scene {
       .fillStyle(CABINET.colors.ball, 0.45).fillCircle(Math.round(kx), Math.round(ky), Math.round(30 / z));
   }
 
+  // One coin flies from the counter into the left coin slot, then the game starts.
   insertCoin() {
-    sfx.coin();
-    this.g = createGame();
-    this.mode = 'play';
-    this.time.delayedCall(300, () => sfx.start());
+    if (!spendCoin()) { sfx.click(); this.noCoinT = this.t; return; }
+    this.mode = 'coin';
+    this.showCoins();
+    this.tweens.add({ targets: this.counter, scale: 1.4, duration: 90, yoyo: true });
+    const cd = CABINET.coinDoor, from = this.counterCoin;
+    const coin = this.add.image(from.x, from.y, 'arcade/coin').setScale(2);
+    const to = { x: cd.x + 15, y: cd.y + 18 }, ms = COINS.flyTime * 1000;
+    this.tweens.add({ targets: coin, x: to.x, duration: ms, ease: 'Sine.easeInOut' });
+    // Up a little first, then down into the slot.
+    this.tweens.add({ targets: coin, y: to.y, duration: ms, ease: 'Back.easeIn' });
+    this.tweens.add({
+      targets: coin, scaleX: 0, scaleY: 1.6, duration: 120, delay: ms - 60,
+      onComplete: () => {
+        coin.destroy();
+        sfx.coin();
+        this.credit = 1;
+        this.time.delayedCall(COINS.startDelay * 1000, () => {
+          if (this.mode !== 'coin') return;
+          this.credit = 0;
+          this.g = createGame();
+          this.mode = 'play';
+          sfx.start();
+        });
+      },
+    });
   }
 
   setupPauseOnHide() {
@@ -201,17 +255,24 @@ export default class CabinetScene extends Phaser.Scene {
     }
 
     const lines = [];
-    if (this.mode === 'insert' || this.mode === 'intro') {
-      if (this.g.phase === 'over') lines.push({ text: 'GAME OVER', color: '#ff0000', row: 13 });
+    if (this.mode === 'insert' || this.mode === 'intro' || this.mode === 'coin') {
+      if (this.mode === 'coin' && this.credit) lines.push({ text: 'PUSH START', color: '#00ffde', row: 13 });
+      else if (this.g.phase === 'over') lines.push({ text: 'GAME OVER', color: '#ff0000', row: 13 });
       else if (Math.floor(this.t * 2) % 2) lines.push({ text: 'INSERT COIN', color: '#00ffde', row: 13 });
-      lines.push({ text: 'CREDIT 0', row: 26 });
+      lines.push({ text: `CREDIT ${this.credit}`, row: 26 });
     }
     if (this.mode === 'cleared') lines.push({ text: 'MAZE CLEAR!', color: '#ffff00', row: 13 });
     drawScreen(this.screenTex.getContext(), this.g, this.art, this.t, lines, this.best);
     this.screenTex.refresh();
 
-    const blink = Math.floor(this.t * 2) % 2 === 0;
-    this.prompt.setText(this.mode === 'insert' && blink ? 'TAP THE COIN DOOR' : this.mode === 'cleared' ? 'TAP TO CONTINUE' : '');
+    const insert = this.mode === 'insert', broke = coins() < COINS.perGame;
+    this.prompt.setText(insert ? (broke ? 'NO COINS\nLAYER UP' : 'TAP THE\nCOIN DOOR') : this.mode === 'cleared' ? 'TAP TO\nCONTINUE' : '');
+    // Shake the prompt a moment when the door is tapped with no coins.
+    const shake = this.noCoinT !== undefined && this.t - this.noCoinT < 0.3;
+    this.prompt.setX((CABINET.coinDoor.x + CABINET.coinDoor.w / 2) + (shake ? Math.round(Math.sin(this.t * 60) * 3) : 0));
+    this.prompt.setVisible(insert || this.mode === 'cleared');
+    this.promptBox.setVisible(insert || this.mode === 'cleared');
+    this.doorFrame.setVisible(insert && !broke && Math.floor(this.t * 3) % 2 === 0);
   }
 
   handle(e) {
