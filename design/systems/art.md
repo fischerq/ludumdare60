@@ -30,10 +30,8 @@ code doesn't change.
   run the export again.
 
 ## Base resolution · decided
-Sprites: 32x32 base resolution for Max's art. Today's code-drawn sprites are 16x16 (a 14x14 figure with a
-1 px margin). The game shows every sprite in the same box of 2x2 tiles (`PIXEL.sprite`), whatever its native
-size, so a 32x32 file replaces a 16x16 one with no code change. Max draws the 32x32 sprites fresh, using the
-16x16 export as reference. Tiles are 16x16 (`PIXEL.tile`); the game world
+Sprites: 32x32, code-drawn placeholders included. The game shows every sprite in the same box of 2x2 tiles
+(`PIXEL.sprite`), whatever its native size. Tiles are 16x16 (`PIXEL.tile`); the game world
 is 16 px per tile, scaled up 2x (`PIXEL.zoom`).
 
 Max works on the core data: every file in `assets/` is the texture at its native resolution, never an upscaled
@@ -54,30 +52,43 @@ so changing `MAZE.layout` needs no new art. Every tile is 16x16:
 - Outside the maze counts as wall, except where a tunnel leaves it. One wall set, no double outer wall.
 - Pellets stay separate sprites on top. When the maze is cleared, the game tints it white (`COLORS.mazeFlash`).
 
+## Made for easy customizing · decided
+The art is organized so Max can change any picture on its own, cleanly:
+- **One folder per layer** (`assets/maze/`, `assets/cabinet/`, `assets/arcade/`, later the CRT layer), holding
+  that layer's tiles and characters. A layer may reuse another's art (the cabinet's screen draws the maze level's
+  sprites) instead of keeping a copy.
+- **One file per state:** every ghost, direction, frame and mood is its own picture with its colors drawn in. No
+  tinting, no overlays stacked by the game (eyes, caps). The only transforms are mirroring Pac-Man for left and
+  turning the maze Pac-Man for up and down.
+- Characters are 32x32; the game shows them in a fixed box (`PIXEL.sprite`), whatever the file's size.
+
 ## What exists (one file per row) · decided
 Sizes are in image pixels at native resolution. Transparent background.
 
 | Texture key | Size | Frames | Notes |
 |---|---|---|---|
-| `pac-0` .. `pac-3` | 16x16 | 4 | Chomper facing right, mouth closed to wide open. The game rotates it for other directions. |
-| `pac-die-0` .. `pac-die-9` | 16x16 | 10 | Death animation, played facing up. |
-| `ghost-0`, `ghost-1` | 16x16 | 2 | Ghost body in **white**; the game tints it per ghost (red, pink, cyan, orange). Two skirt frames. |
-| `eyes-left/right/up/down` | 16x16 | 4 | Eyes only, drawn on top of the body; also shown alone when a ghost was eaten. |
-| `ghost-fright-0/1` | 16x16 | 2 | Frightened ghost (blue with face), not tinted. |
-| `ghost-flash-0/1` | 16x16 | 2 | Frightened ghost flashing white near the end. |
-| `dot` | 4x4 | 1 | Pellet, at tile resolution, centered in its tile. |
-| `power` | 16x16 | 1 | Power pellet, one tile (the game blinks it). |
-| `maze/wall-1` .. `maze/wall-15`, `maze/door`, `maze/floor` | 16x16 | 17 files | Maze tileset, one file per tile in `assets/maze/`, see above. |
-| `cabinet` | 360x640 | 1 | [Cabinet layer](layer-cabinet.md): the whole arcade machine and its floor shadow on transparent, oblique view (front flat, depth up-right at 45°). Shown at 2x. Keep the screen opening (black, at x 98, y 67, 168x264 inside the bezel), the coin door (x 140, y 460, 56x76) and the control panel where they are, or tell Claude the new positions (`CABINET` in config). The marquee text and the game picture are drawn on top by the game. |
-| `stick-n`, `stick-up/down/left/right` | 24x32 | 5 | The cabinet's joystick, neutral and pushed four ways; the base sits at y 27. |
-| `arcade/floor`, `arcade/rug-tl/tc/tr/ml/mc/mr/bl/bc/br`, `arcade/wall-top`, `arcade/wall-face`, `arcade/window`, `arcade/poster-pac`, `arcade/poster-ghost`, `arcade/clock`, `arcade/counter`, `arcade/plant`, `arcade/bin`, `arcade/door` | 16x16 | 20 files | [Arcade hall](layer-arcade.md) tileset in `assets/arcade/`, top-down, cozy. The rug is a 9-slice (t/m/b row, l/c/r column). `wall-face` is the wallpaper on the back wall; window, posters and clock sit on that row. Objects (plant, bin, counter) are drawn over the floor tile with a contact shadow. |
+| **Maze level** (`assets/maze/`, also the cabinet's screen picture and the menu) | | | |
+| `maze/pac-0` .. `maze/pac-3` | 32x32 | 4 | Pac-Man facing right, mouth closed to wide open. The game mirrors it for left and turns it for up and down. |
+| `maze/pac-die-0` .. `maze/pac-die-9` | 32x32 | 10 | Death animation, drawn facing up (shown as is). |
+| `maze/life` | 32x32 | 1 | Spare-life icon under the maze (facing left). |
+| `maze/ghost-<name>-<dir>-<f>` | 32x32 | 32 files | One per ghost (blinky, pinky, inky, clyde), direction (left, right, up, down) and skirt frame (0, 1): body and eyes in one picture, colors drawn in. |
+| `maze/ghost-fright-0/1`, `maze/ghost-flash-0/1` | 32x32 | 4 | Frightened ghost (blue with face) and its white flash near the end, the same for all four. |
+| `maze/eyes-<dir>` | 32x32 | 4 | An eaten ghost: only the eyes, on their way home. |
+| `maze/dot` | 4x4 | 1 | Pellet, at tile resolution, centered in its tile. |
+| `maze/power` | 16x16 | 1 | Power pellet, one tile (the game blinks it). |
+| `maze/wall-1` .. `maze/wall-15`, `maze/door`, `maze/floor` | 16x16 | 17 files | Maze tileset, see above. |
+| **Cabinet** (`assets/cabinet/`) | | | |
+| `cabinet/machine` | 360x640 | 1 | [Cabinet layer](layer-cabinet.md): the whole arcade machine and its floor shadow on transparent, oblique view (front flat, depth up-right at 45°). Shown at 2x. Keep the screen opening (black, at x 98, y 67, 168x264 inside the bezel), the coin door (x 140, y 460, 56x76) and the control panel where they are, or tell Claude the new positions (`CABINET` in config). The marquee text and the game picture are drawn on top by the game; the picture uses the maze level's sprites. |
+| `cabinet/stick-n`, `cabinet/stick-up/down/left/right` | 24x32 | 5 | The cabinet's joystick, neutral and pushed four ways; the base sits at y 27. |
+| **Arcade hall** (`assets/arcade/`) | | | |
+| `arcade/pac-<right/up/down>-<f>` | 32x32 | 6 | Pac-Man walking, top-down, two frames each; left is `right` mirrored. Feet at the bottom of the picture: the game stands him on his tile and shows him 2x2 tiles big. |
+| `arcade/ghost-<name>-<dir>-<f>` | 32x32 | 32 files | The ghost visitors with their cap on, per ghost, direction and frame; `up` is seen from behind. |
+| `arcade/coin` | 10x10 | 1 | Coin on the hall floor. |
+| `arcade/floor`, `arcade/rug-tl/tc/tr/ml/mc/mr/bl/bc/br`, `arcade/wall-top`, `arcade/wall-face`, `arcade/window`, `arcade/poster-pac`, `arcade/poster-ghost`, `arcade/clock`, `arcade/counter`, `arcade/plant`, `arcade/bin`, `arcade/door` | 16x16 | 20 files | [Arcade hall](layer-arcade.md) tileset, top-down, cozy. The rug is a 9-slice (t/m/b row, l/c/r column). `wall-face` is the wallpaper on the back wall; window, posters and clock sit on that row. Objects (plant, bin, counter) are drawn over the floor tile with a contact shadow. |
 | `arcade/change-top/bottom`, `arcade/claw-top/bottom`, `arcade/soda-top/bottom` | 16x16 | 6 files | 1x2 machines in the hall. |
 | `arcade/cab-top-<c>`, `arcade/cab-bottom-<c>` | 16x16 | 10 files | Hall cabinets, 1x2 tiles, for c = r, b, g, v, y (y is ours, yellow, with the maze on its screen). The hall is shown at 4x. |
-| `coin` | 10x10 | 1 | Coin on the hall floor. |
-| `visitor-cap` | 16x16 | 1 | Cap the ghost visitors wear, drawn over the tinted `ghost-*` body (the hall shows sprites at 16x16). |
 
-Sprites (pac, ghosts, eyes) can be 32x32; tiles and pellets stay at tile resolution. Text uses the Press Start
-2P pixel font. The life icons and the menu reuse `pac-2`.
+Characters are 32x32; tiles and pellets stay at tile resolution. Text uses the Press Start 2P pixel font.
 
 ## Loading the art · decided
 - The game loads its art from the files: `BootScene` loads `assets/<key>.png` for every key in
@@ -109,3 +120,10 @@ Sprites (pac, ghosts, eyes) can be 32x32; tiles and pellets stay at tile resolut
 - 2026-10-17: The cabinet layer's art is exported too (`cabinet`, `stick-*`), and the export re-runs automatically after art changes in Claude Code sessions. (Quirin)
 - 2026-10-17: Max edits the files in `assets/` in place (no `from-max/` folder); the game loads the art from
   `assets/`, and the export keeps every file he edited. (Quirin)
+- 2026-10-17: Per-layer character art: a folder per layer (`maze/`, `cabinet/`, `arcade/`), reuse allowed (the
+  cabinet screen uses the maze level's sprites). Every ghost state is its own sprite (per ghost, direction and
+  frame, colors drawn in; frightened, flashing and eaten too), no tinting or overlays; dedicated spare-life icon.
+  All characters redrawn at 32x32. Pac-Man is mirrored for left instead of turned upside down; the maze Pac-Man is
+  still turned for up and down. Hall characters get their own top-down sprites (right/up/down, two walk frames,
+  ghosts with the cap drawn in), shown 2x2 tiles big and standing on their tile. Principle: optimize the art
+  layout so Max can customize the graphics easily and cleanly. (Quirin)

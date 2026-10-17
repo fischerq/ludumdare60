@@ -36,7 +36,7 @@ export default class CabinetScene extends Phaser.Scene {
 
     this.add.rectangle(0, 0, GAME_WIDTH / C.zoom, GAME_HEIGHT / C.zoom, C.colors.room).setOrigin(0);
     this.add.rectangle(0, C.ground, GAME_WIDTH / C.zoom, GAME_HEIGHT / C.zoom - C.ground, C.colors.floor).setOrigin(0);
-    this.add.image(0, 0, 'cabinet').setOrigin(0);
+    this.add.image(0, 0, 'cabinet/machine').setOrigin(0);
 
     // The game picture, redrawn into a canvas texture every frame.
     const { w, h } = screenSize(this.g);
@@ -54,7 +54,7 @@ export default class CabinetScene extends Phaser.Scene {
     this.add.text(mid, C.marqueeTop - C.marqueeDepth / 2 + 10, GAME_TITLE.toUpperCase(), {
       fontFamily: UI.arcadeFont, fontSize: 8, color: COLORS.textReady, resolution: 1,
     }).setOrigin(0.5, 0);
-    this.stick = this.add.image(mid - 1, C.panelY - 8, 'stick-n').setOrigin(0.5, 27 / 32);
+    this.stick = this.add.image(mid - 1, C.panelY - 8, 'cabinet/stick-n').setOrigin(0.5, 27 / 32);
 
     this.prompt = this.add.text(GAME_WIDTH / C.zoom / 2, C.ground - 16, '', {
       fontFamily: UI.arcadeFont, fontSize: 8, color: COLORS.text, resolution: 1,
@@ -148,7 +148,7 @@ export default class CabinetScene extends Phaser.Scene {
     if (dir === this.stickDir) return;
     if (dir) sfx.click();
     this.stickDir = dir;
-    this.stick.setTexture(`stick-${dir ?? 'n'}`);
+    this.stick.setTexture(`cabinet/stick-${dir ?? 'n'}`);
   }
 
   // Where the finger is: a faint ring around the touch point and a knob, in art pixels.

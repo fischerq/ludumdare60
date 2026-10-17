@@ -4,7 +4,7 @@
 **Parent:** [layers](layers.md) · [master](../master.md)
 **Lab bench:** none yet
 **Code:** rules `src/systems/hall.js` (no Phaser), scene `src/scenes/HallScene.js`, art `makeHall` in
-`src/scenes/BootScene.js` (tileset `assets/arcade/`, `coin`, `visitor-cap`), map and numbers in `HALL` in
+`src/scenes/BootScene.js` (tileset and characters in `assets/arcade/`), map and numbers in `HALL` in
 `src/config.js`. Playtest directly: `?scene=Hall`.
 
 ## Purpose
@@ -48,3 +48,5 @@ the arcade as a place.
 - 2026-10-17: Map it to Pac-Man: same movement, only bonus coins to collect, talking to people and machines; one
   ghost gets angry when talked to and all of them chase like in Pac-Man; escape into the machine or out the door.
   (Quirin) Claude picked Blinky as the angry one, a 1 s head start, giving up after 20 s, coins kept when caught.
+- 2026-10-17: Hall characters get their own 32x32 sprites (`arcade/pac-*`, `arcade/ghost-*` with the cap drawn in),
+  shown 2x2 tiles big standing on their tile, lower ones in front. See [art](art.md). (Quirin)

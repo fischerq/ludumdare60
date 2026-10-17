@@ -24,6 +24,10 @@ When the title changes, update `GAME_TITLE` in `src/config.js`, `<title>` in `in
   new art must be a canvas texture made in `BootScene` so the export picks it up. Max (artist) edits these files in place (or passes them in a conversation: save them
   over the file in `assets/`). The game loads its art from `assets/` (keys in `assets/export.json`), and the export
   never overwrites a file that differs from what it last wrote. See `design/systems/art.md`.
+- **Optimize the art for Max to customize easily and cleanly.** One asset folder per layer (`assets/maze/`,
+  `assets/cabinet/`, `assets/arcade/`; reuse another layer's art rather than copying it), one file per state with
+  colors drawn in (every ghost, direction, frame and mood), characters 32x32. No tinting or stacked overlays in the
+  game; mirroring Pac-Man for left is fine.
 - All tunable numbers (speeds, sizes, colors, timings) go in `src/config.js`, not inline in scenes, so "feel"
   tweaks are one-line edits.
 - One scene per file in `src/scenes/`, registered in the scene list in `src/main.js`.
