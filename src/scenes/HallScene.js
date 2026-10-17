@@ -1,9 +1,10 @@
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, HALL, PIXEL, UI, ANIM } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, HALL, PIXEL, UI, COINS, ANIM } from '../config.js';
 import { createHall, stepHall, facing, pacPos, actorPos, startChase, endChase, stepGhosts } from '../systems/hall.js';
 import { tileKey } from '../systems/tiles.js';
 import { PAC_CYCLE, charFrame, animFrame } from '../systems/anim.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
+import { coins, addCoin, coinTaken } from '../wallet.js';
 
 const T = PIXEL.tile;
 const KEYS = {
@@ -24,6 +25,8 @@ export default class HallScene extends Phaser.Scene {
 
   create() {
     this.h = createHall();
+    // Coins picked up on an earlier visit stay gone (they're in the wallet).
+    for (const k of [...this.h.coins]) if (coinTaken(k)) this.h.coins.delete(k);
     this.viewW = GAME_WIDTH / HALL.zoom;
     this.viewH = GAME_HEIGHT / HALL.zoom;
     // The room fits the screen: center it.
@@ -150,8 +153,8 @@ export default class HallScene extends Phaser.Scene {
       return;
     }
     if (f.cell.toLowerCase() === 'y') {
-      if (this.h.got >= HALL.coinsNeeded) this.goDown();
-      else this.say(tx.yNeedCoins.replace('{n}', this.h.got).replace('{need}', HALL.coinsNeeded));
+      if (coins() >= COINS.perGame) this.goDown();
+      else this.say(tx.yNeedCoins.replace('{n}', coins()).replace('{need}', COINS.perGame));
     } else if (HALL.cellText[f.cell]) this.say(tx[HALL.cellText[f.cell]]);
   }
 
@@ -246,6 +249,7 @@ export default class HallScene extends Phaser.Scene {
       for (const e of stepHall(this.h, dt, this.held ?? this.keyDir)) {
         if (e.type === 'door') { this.stopChase(HALL.text.escaped, { x: this.h.pac.x, y: this.h.pac.y }); break; }
         sfx.coin();
+        addCoin(`${e.x},${e.y}`);
         this.coinSprites.get(`${e.x},${e.y}`)?.destroy();
         this.say(HALL.text.coin);
       }
@@ -266,7 +270,7 @@ export default class HallScene extends Phaser.Scene {
       const y = Number(k.split(',')[1]);
       if (s.active) s.y = this.sy(y) + animFrame(this.t + y * ANIM.effects.coinBob / ANIM.fps, ANIM.effects.coinBob, 2);
     }
-    this.coinText.setText(`COINS ${this.h.got}/${HALL.coinsNeeded}`);
+    this.coinText.setText(`COINS ${coins()}`);
     this.updateCamera();
   }
 }

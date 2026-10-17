@@ -154,6 +154,17 @@ export const CABINET = {
   glare: 0.07,
   introTime: 2.5,        // s of zooming out from the maze level
   stickDeadzone: 24,     // screen px the finger must move from where it touched before the stick clicks over
+  promptColor: '#ff3cf0', // the "tap the coin door" call to action and the blinking frame around the door
+  promptBox: 0x000000,
+  counterColor: '#ffd23f', // the coin counter at the top
+};
+
+// Coins Pac-Man holds, shared by every layer (src/wallet.js): found in the arcade hall, one per game in the cabinet.
+export const COINS = {
+  start: 1,              // coins held when the page loads
+  perGame: 1,            // coins one game in the cabinet costs
+  flyTime: 0.6,          // s the coin takes from the counter into the cabinet's coin slot
+  startDelay: 0.5,       // s from the coin dropping in to the game starting
 };
 
 // Moving between layers with the layer buttons. Layers unlock through the outer game loop (src/progress.js).
@@ -193,7 +204,6 @@ export const HALL = {
   ],
   zoom: 4,               // screen px per art px in the hall (the other layers use 2): cozier, bigger characters
   walkSpeed: 4,          // tiles per second
-  coinsNeeded: 3,        // coins to play our cabinet (there are 5 on the floor)
   dragDeadzone: 24,      // screen px a finger moves before it counts as walking, not a tap
   tapTime: 350,          // ms; a touch shorter than this that didn't move is a tap (talk / use)
   introZoom: 24,         // camera zoom at the start of the zoom-out from the cabinet (the small cabinet fills the view)
