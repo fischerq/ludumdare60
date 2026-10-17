@@ -60,6 +60,11 @@ player who knows the game".*
   screen layer (which it clears on its own every time, so the machine state after a maze clear makes it harder);
   from 0.5 up it never clears the maze with the 1 + 5 coins there are. Easiest: the CPU (100% at every level),
   logic and video RAM. Full numbers on the lab page.
+- 2026-10-17 (after the balance round: maze ghosts 5.05, turn window 0.7, 4 lives; bus reads wait 1.3 s): maze
+  at noise 0.25 cleared 80% (was 20%), cabinet 70% (was 30%); bus 100% / 100% / 75% at noise 0 / 0.25 / 0.5 (was 0%
+  everywhere). The full playthrough now reaches the bottom: 85% with no noise, about 6 minutes (the input layer is
+  the rest). At 0.25 it still fails on time caps (logic, bus) and coins; from 0.5 up the maze bot can't clear the
+  maze with the coins there are, which is the bot's limit as much as the maze's.
 
 ## Slice scope
 - Build: the CLI, the bots, the noise model, the playthrough, the results page.

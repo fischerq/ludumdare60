@@ -74,14 +74,14 @@
    "seq": 66,
    "date": "2026-10-17",
    "time": "21:51",
-   "duration_s": 4182,
+   "duration_s": 4208,
    "prompt": "Also test the machine/arcade. Also a mode to do full playthrough, including the outer loop",
    "followups": [],
    "images": [],
    "claude_images": [
     "media/f7fff5c4-2-c1.jpg"
    ],
-   "reply": "The page renders cleanly, but the right chart's caption wraps, which pushes that chart lower than its neighbour. Shortening the caption, updating the findings, then committing.",
+   "reply": "The playtest framework is built, checked in, and has run the full sweep. It's in PR https://github.com/fischerq/ludumdare60/pull/51, and the results are charted at `/lab/playtest.html`. I took your missing answers as my suggested defaults.\n\n**What it does**\n- A bot plays each layer headless in Node on the real game code: the maze (swipes), the cabinet (joystick), the hall (collect coins, and the chase), and all 7 deep layers.\n- **Full playthrough** mode runs the whole outer loop: the starting coin, game over, out of coins → up to the hall to collect coins → play on in the cabinet, then down through all 7 deep layers. If the input layer ends in game over, the bot goes back up for a coin. Moving between layers and tapping away text boxes count as time.\n- **Noise:** late swipes (up to about 0.45 s at the top level), dropped swipes, swipes 90° off, and moments of not paying attention. Levels run from 0 (the bare bot) to 1 (sloppy). `--knob` sweeps one kind of noise alone.\n- **Rerun:** `node tools/playtest.mjs` (20 runs per level, about 35 min of computer time, no tokens) or `--quick`. Results are written to `lab/playtest/results.json`.\n\n**Results (win rate at noise 0 / 0.5 / 1)**\n\n| Layer | Wins | Notes |\n|---|---|---|\n| Maze / cabinet | 100% / 0% / 0% | The bot clears it every time with no delay, but loses almost every game once its reaction time passes about 0.2 s. |\n| Bus | 0% at every level | Each door opens only when its chip is used. Reading a chip sends a packet out through the one-tile path to its door, so you can't get in. Only writes let you in, and video RAM gets about 1% of them; ROM never does. |\n| Screen, video board, video RAM | 100% / 100% / 0–45% | A reasonable difficulty curve. |\n| Input wires | 60% / 45% / 0% | The bot sometimes loses even with no noise, partly because the machine's Pac-Man game-overs. |\n| CPU, logic | 85–100% everywhere | Probably too easy. |\n| Hall | Coins easy; chase 100% / 15% / 0% | |\n| Full playthrough | 0% | With no noise it always stops at the bus. From 0.5 up, it can't clear the maze with the 6 coins there are (1 to start, 5 in the hall). |\n\n**How far to trust this:** the bots are only an estimate of a player. The maze bot in particular is a reactive planner, so a real person may do better there. The noise levels aren't yet tied to real players; the next human playtest should tell us which level matches you and Max.\n\nI haven't changed any balance. Two candidates: let the bus doors open on reads too (or give the read packets a way around), and either slow the maze ghosts or give more coins.\n\nPlease open `/lab/playtest.html` on your phone and check the charts read well at phone width.",
    "progress_notes": [
     "Still reading the remaining layer modules (CPU, logic, input, hall) so the bots can be written against them.",
     "Emulator runs a full maze game in ~0.5 s headless, so sweeps are cheap. Now checking how config loads its JSON in Node, then writing the framework.",
@@ -94,7 +94,8 @@
     "While the sweep runs, I'm writing the design doc and the results page.",
     "Results page written; adding a link from the lab index and checking on the sweep.",
     "While the full sweep runs, I'm checking that the game still boots in a phone viewport after the config change.",
-    "Full sweep is done (34 min of compute, no extra tokens). Checking why the playthroughs end, then taking a screenshot of the results page."
+    "Full sweep is done (34 min of compute, no extra tokens). Checking why the playthroughs end, then taking a screenshot of the results page.",
+    "The page renders cleanly, but the right chart's caption wraps, which pushes that chart lower than its neighbour. Shortening the caption, updating the findings, then committing."
    ],
    "tools": {
     "Bash": 77,
@@ -102,21 +103,23 @@
     "mcp__claude-code-remote__list_events": 3,
     "Edit": 3,
     "Skill": 1,
-    "Read": 1
+    "Read": 1,
+    "ToolSearch": 1,
+    "mcp__github__update_pull_request": 1
    },
-   "api_requests": 85,
+   "api_requests": 88,
    "usage": {
     "claude-opus-5-5": {
-     "input": 170,
+     "input": 176,
      "cache_write_5m": 0,
-     "cache_write_1h": 201327,
-     "cache_read": 18791351,
-     "output": 105075,
+     "cache_write_1h": 203042,
+     "cache_read": 19673785,
+     "output": 106883,
      "thinking": 48295,
-     "cost_usd": 7.471066
+     "cost_usd": 7.697457
     }
    },
-   "cost_usd": 7.471066,
+   "cost_usd": 7.697457,
    "commits": [
     {
      "sha": "eec11369b9771216b13867618126974d4bbf49c7",
@@ -139,6 +142,14 @@
      "subject": "Merge origin/main into ccr-eeee8721-lg61tz"
     },
     {
+     "sha": "81ed5c384e8a8fdac170a8a35bab1d8745c4c505",
+     "subject": "Cabinet: only the machine and the coin door; a coin zooms into a fresh maze game"
+    },
+    {
+     "sha": "7496f31f7d743b4e74e234a91d4b6723d00bf98e",
+     "subject": "Merge origin/main into claude/plus-one-layer-coin-insertion-i3byjk"
+    },
+    {
      "sha": "cc1e7bfc1226e53799f57321effd9c869f0b47cd",
      "subject": "Playtest bots: headless runners, noise model, bots for every layer (WIP)"
     },
@@ -153,6 +164,18 @@
     {
      "sha": "574a7281986827d7d6fda5a4773dbacacd3be64e",
      "subject": "Merge remote branch"
+    },
+    {
+     "sha": "e1fa6032688b53c8c9ff05760ed014354f2eea93",
+     "subject": "Playtest bots: full sweep results, findings, results page caption"
+    },
+    {
+     "sha": "291a8cf79e1497ed661638ace350d15c598bdcf9",
+     "subject": "Merge pull request #51 from fischerq/ccr-eeee8721-lg61tz"
+    },
+    {
+     "sha": "22de12af19b404d1a87d4105101bc729baffa3f6",
+     "subject": "Merge origin/main into claude/plus-one-layer-coin-insertion-i3byjk"
     }
    ],
    "entrypoint": "remote_mobile",
@@ -169,19 +192,103 @@
      "delta": 0.0
     }
    }
+  },
+  {
+   "index": 3,
+   "seq": 68,
+   "date": "2026-10-17",
+   "time": "23:33",
+   "duration_s": 2758,
+   "prompt": "Do a round of balancing, make bus and maze easier",
+   "followups": [],
+   "images": [],
+   "claude_images": [
+    "media/f7fff5c4-3-c1.jpg"
+   ],
+   "reply": "While it runs, I'm committing the balance change and opening the PR so it can be played right away.",
+   "progress_notes": [
+    "Bus with a 1.3 s read delay: 100% / 100% / 100% won at noise 0 / 0.25 / 0.5. Now tuning the maze.",
+    "The bot hits a ceiling at noise 0.5 whatever the balance, because of dithering. I'm giving it commitment: it only reverses when going on isn't safe, like a person does.",
+    "Commitment made it worse, so I'm reverting it. I'll apply the combination that helped most: ghosts 6 → 5 tiles/s, turn window 0.4 → 0.7 tiles, lives 3 → 4. Then a full rerun.",
+    "While the sweep runs, I'm writing the balance decisions into the design docs.",
+    "5.05 keeps the two implementations in step (5 drifts from fixed-point rounding), so I'm using 5.05 and restarting the sweep so the results match the shipped config.",
+    "The old sweep is stopped. Starting the full sweep with the final numbers."
+   ],
+   "tools": {
+    "Bash": 34,
+    "mcp__claude-code-remote__list_events": 2,
+    "mcp__github__create_pull_request": 1
+   },
+   "api_requests": 35,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 70,
+     "cache_write_5m": 0,
+     "cache_write_1h": 35852,
+     "cache_read": 11112843,
+     "output": 17515,
+     "thinking": 5921,
+     "cost_usd": 2.859965
+    }
+   },
+   "cost_usd": 2.859965,
+   "commits": [
+    {
+     "sha": "f767fb09904cd657224fe3fa72112e11af45b6a1",
+     "subject": "Merge origin/main into claude/plus-one-layer-coin-insertion-i3byjk"
+    },
+    {
+     "sha": "22d8e0e36690ab1132354e5122018592c15672a8",
+     "subject": "Merge branch 'claude/plus-one-layer-coin-insertion-i3byjk' of https://github.com/fischerq/ludumdare60 into claude/plus-one-layer-coin-insertion-i3byjk"
+    },
+    {
+     "sha": "06c537f1918d4937772f55e5366033d8fa322b77",
+     "subject": "Cabinet: coin only when the machine asks; the bot plays on a running game"
+    },
+    {
+     "sha": "5bf461b061ceb51b7fb8050240eb6a3f2f4ba70c",
+     "subject": "Balance: easier maze (ghosts 5.05, turn window 0.7, 4 lives) and bus (reads leave the chip after 1.3 s); playtest --set"
+    },
+    {
+     "sha": "86a0865e233ad185162edf42a4b55f4c90ac4f67",
+     "subject": "Merge pull request #53 from fischerq/claude/plus-one-layer-coin-insertion-i3byjk"
+    },
+    {
+     "sha": "792f5bca6d90e67396eda3d295de2a395c0f8d11",
+     "subject": "Merge origin/main into ccr-eeee8721-lg61tz"
+    },
+    {
+     "sha": "893fb51f2029aa98b7a8c026de4d8326a4d47f5f",
+     "subject": "Merge pull request #54 from fischerq/ccr-eeee8721-lg61tz"
+    }
+   ],
+   "entrypoint": "remote_mobile",
+   "branch": "ccr-eeee8721-lg61tz",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0,
+     "end": 0.08,
+     "delta": 0.08
+    },
+    "seven_day": {
+     "start": 0.2,
+     "end": 0.22,
+     "delta": 0.02
+    }
+   }
   }
  ],
  "totals": {
-  "prompts": 2,
-  "cost_usd": 8.084705,
-  "output_tokens": 109094,
-  "input_tokens": 19899239
+  "prompts": 3,
+  "cost_usd": 11.171061,
+  "output_tokens": 128417,
+  "input_tokens": 31932159
  },
  "reported_by_claude_code": {
-  "total_usd": 0.6426599999999999,
+  "total_usd": 8.409600999999999,
   "by_model": {
    "claude-haiku-5-5": 0.000139,
-   "claude-opus-5-5": 0.642521
+   "claude-opus-5-5": 8.409462
   }
  }
 }
