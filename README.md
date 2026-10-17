@@ -56,7 +56,8 @@ src/scenes/           Boot (placeholder textures), Menu, Game, GameOver
 src/systems/          pure mechanic logic shared by the game and the lab (no Phaser)
 design/               design docs: master.md, systems/*.md
 lab/                  testing grounds: harness (lab.js) + benches/*.js
-assets/               real art/audio goes here later
+assets/               1x PNG export of all code-drawn textures (tools/export_assets.py); from-max/ = edited art
 making-of/            AI-use log + making-of page (index.html, sessions/*.json)
 tools/ai_log.py       exports Claude Code transcripts into making-of/sessions/
+tools/export_assets.py writes assets/*.png from BootScene (via tools/export-assets.html)
 ```
