@@ -1,6 +1,6 @@
 # Working rules
 
-Game jam project: **mini-gurke** (working title) for Ludum Dare 60, a mobile-first Phaser 3 browser game deployed
+Game jam project: **Layers of Pac** (working title; mini-gurke is now an easter egg) for Ludum Dare 60, a mobile-first Phaser 3 browser game deployed
 to Netlify as a static site. Keep branding light: who made it and where lives in one note on the making-of page
 (`about` in `making-of/meta.json`), not in the game or README.
 

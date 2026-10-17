@@ -8,6 +8,7 @@ const config = {
   type: Phaser.AUTO,
   parent: 'game',
   backgroundColor: COLORS.background,
+  pixelArt: true, // hard pixel edges when the arcade-resolution art is scaled up
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

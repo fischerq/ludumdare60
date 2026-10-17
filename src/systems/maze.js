@@ -1,7 +1,7 @@
 // Maze-chomper rules with no Phaser, so the game scene, lab benches and later layers run the same code.
 // Positions are in tiles: an actor at whole-number (x, y) sits on that tile's center.
 
-import { MAZE, SPEED, GHOSTS, RULES } from '../config.js';
+import { MAZE, SPEED, GHOSTS, RULES, CONTROL } from '../config.js';
 
 export const DIRS = {
   up: { x: 0, y: -1 }, left: { x: -1, y: 0 }, down: { x: 0, y: 1 }, right: { x: 1, y: 0 },
@@ -19,7 +19,8 @@ export function cellAt(maze, x, y) {
 const pacCanEnter = (maze) => (x, y) => !'#-G'.includes(cellAt(maze, x, y));
 const ghostCanEnter = pacCanEnter;
 
-export function createGame(layout = MAZE.layout) {
+// opts.tune overrides the control numbers (lab bench); opts.ghosts = false plays without ghosts.
+export function createGame(layout = MAZE.layout, opts = {}) {
   const maze = { rows: layout, w: layout[0].length, h: layout.length };
   // pellets[y][x]: 0 none, 1 dot, 2 power pellet
   const pellets = layout.map((r) => [...r].map((c) => (c === '.' ? 1 : c === 'o' ? 2 : 0)));
@@ -30,15 +31,18 @@ export function createGame(layout = MAZE.layout) {
     phase: 'ready', phaseTime: RULES.readyTime,
     freeze: 0, fright: 0, ghostCombo: 0,
     modeIndex: 0, modeTime: RULES.modeSchedule[0], elapsed: 0,
-    pac: null, ghosts: [],
+    pac: null, ghosts: [], withGhosts: opts.ghosts !== false,
+    tune: {
+      pacSpeed: SPEED.pac, turnWindow: CONTROL.turnWindow, bufferTime: CONTROL.bufferTime, ...opts.tune,
+    },
   };
   resetActors(g);
   return g;
 }
 
 function resetActors(g) {
-  g.pac = { ...MAZE.pacStart, dir: 'left', nextDir: null, moved: 0 };
-  g.ghosts = GHOSTS.map((d) => ({
+  g.pac = { ...MAZE.pacStart, dir: 'left', nextDir: null, bufferAge: 0, moved: 0 };
+  g.ghosts = !g.withGhosts ? [] : GHOSTS.map((d) => ({
     name: d.name, corner: d.corner, x: d.start.x, y: d.start.y, dir: 'left',
     state: d.release === 0 && d.start.y === MAZE.houseExit.y ? 'active' : 'house',
     release: d.release, frightened: false,
@@ -49,9 +53,10 @@ function resetActors(g) {
 
 export const isChase = (g) => g.modeIndex % 2 === 1;
 
-// Turn the chomper. Reversing works at once; other turns wait until they fit.
+// Turn the chomper. Reversing works at once; other turns wait until they fit (for tune.bufferTime seconds).
 export function steer(g, dir) {
   g.pac.nextDir = dir;
+  g.pac.bufferAge = 0;
 }
 
 // Advance the game by dt seconds. Returns events for sound and effects.
@@ -110,9 +115,13 @@ function reverseGhosts(g) {
 function movePac(g, dt, events) {
   const p = g.pac;
   const canEnter = pacCanEnter(g.maze);
+  const { pacSpeed, turnWindow, bufferTime } = g.tune;
+  p.bufferAge += dt;
+  if (p.nextDir && p.nextDir !== p.dir && p.bufferAge > bufferTime) p.nextDir = null;
   if (p.nextDir && p.nextDir === OPPOSITE[p.dir]) p.dir = p.nextDir;
+  else if (p.nextDir && p.nextDir !== p.dir) cornerTurn(g, p, turnWindow, canEnter);
   const before = { x: p.x, y: p.y };
-  advance(p, SPEED.pac * dt, g.maze, canEnter, (a) => {
+  advance(p, pacSpeed * dt, g.maze, canEnter, (a) => {
     if (a.nextDir && canEnter(a.x + DIRS[a.nextDir].x, a.y + DIRS[a.nextDir].y)) a.dir = a.nextDir;
     eatAt(g, a.x, a.y, events);
   });
@@ -120,6 +129,23 @@ function movePac(g, dt, events) {
   if (step < 1) p.moved += step; // skip the jump when wrapping through the tunnel
   // Eat as soon as the chomper is mostly on a tile, not only at its exact center.
   eatAt(g, Math.round(p.x), Math.round(p.y), events);
+}
+
+// Forgiving turns: a perpendicular swipe up to `window` tiles before or after a junction snaps the chomper
+// onto that junction and turns it, instead of waiting for (or missing) the exact tile center.
+function cornerTurn(g, p, window, canEnter) {
+  const d = DIRS[p.dir];
+  const along = d.x ? p.x : p.y;
+  const c = Math.round(along);
+  const off = Math.abs(along - c);
+  if (off < EPS || off > window) return;
+  const cx = d.x ? c : Math.round(p.x), cy = d.y ? c : Math.round(p.y);
+  const nd = DIRS[p.nextDir];
+  if (!canEnter(cx, cy) || !canEnter(cx + nd.x, cy + nd.y)) return;
+  p.x = cx; p.y = cy;
+  if (p.x < -0.5) p.x += g.maze.w;
+  if (p.x > g.maze.w - 0.5) p.x -= g.maze.w;
+  p.dir = p.nextDir;
 }
 
 function eatAt(g, x, y, events) {

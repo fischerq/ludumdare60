@@ -12,7 +12,8 @@ the arcade machine, using the maze characters or mechanics to show how the old t
 ## Layer ideas · open (brainstorm, nothing decided)
 Rough order from outside to inside; we pick a few, not all.
 - **Cabinet:** coins, the CRT, joystick wiring.
-- **Video hardware:** tiles and sprites, palettes, sprite limits, raster beam / vblank timing.
+- **Video hardware:** tiles and sprites, palettes, sprite limits, raster beam / vblank timing. The maze level
+  currently only imitates the look (`PIXEL` in config); emulating the real tile/sprite rendering could be this layer.
 - **Game logic:** ghost targeting rules, the famous bugs (level 256 kill screen, ghosts passing through
   each other).
 - **Code:** the program itself in its original style (Z80 assembly for the original Pac-Man), visible and

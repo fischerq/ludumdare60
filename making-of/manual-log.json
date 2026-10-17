@@ -175,6 +175,20 @@
           "url": "https://github.com/fischerq/ludumdare60/pull/9"
         }
       ]
+    },
+    {
+      "date": "2026-10-17",
+      "time": "10:06",
+      "seq": 29.5,
+      "kind": "human",
+      "title": "Reviewed and merged pull request #11",
+      "body": "Merged the Old Tech design and the first playable arcade maze game into `main`.",
+      "links": [
+        {
+          "label": "Pull request #11",
+          "url": "https://github.com/fischerq/ludumdare60/pull/11"
+        }
+      ]
     }
   ]
 }

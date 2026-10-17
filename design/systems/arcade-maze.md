@@ -2,9 +2,10 @@
 
 **Status:** decided (first version built 2026-10-17)
 **Parent:** [master](../master.md)
-**Lab bench:** none yet
+**Lab bench:** `/lab/bench.html?b=maze-controls` (swipe controls)
 **Code:** rules `src/systems/maze.js` (no Phaser), scene `src/scenes/GameScene.js`, sound `src/sound.js`,
-art `src/scenes/BootScene.js`, numbers and maze layout in `src/config.js` (`MAZE`, `SPEED`, `GHOSTS`, `RULES`)
+swipes `src/systems/swipe.js`, art `src/scenes/BootScene.js`, numbers and maze layout in `src/config.js`
+(`MAZE`, `PIXEL`, `SPEED`, `GHOSTS`, `RULES`, `INPUT`, `CONTROL`)
 
 ## Purpose
 The front door of the game: an arcade-styled maze-chomper in the spirit of Pac-Man. Everything else (the
@@ -22,12 +23,23 @@ The front door of the game: an arcade-styled maze-chomper in the spirit of Pac-M
   ghosts return to the house as eyes. Ghosts slow down in the tunnel.
 
 ## Controls · decided
-Swipe anywhere on the screen to turn; the turn is buffered until it fits, reversing is instant. Each swipe
-re-arms from where the finger is, so you can steer without lifting. Arrow keys / WASD on a laptop.
+Swipe anywhere on the screen to turn; reversing is instant. Each swipe re-arms from where the finger is, so you
+can steer without lifting. Arrow keys / WASD on a laptop.
+Tuning (2026-10-17, after the first phone test said turning felt unresponsive):
+- Forgiving turns: a sideways swipe up to `CONTROL.turnWindow` (0.4) tiles before or after a junction snaps
+  onto it and turns, instead of only exactly at the tile center.
+- A swipe waits `CONTROL.bufferTime` (0.8 s) for a junction it fits, then is dropped, so old swipes don't
+  cause surprise turns.
+- Shorter swipe (`INPUT.swipeMin` 20 px) and a bit slower (chomper 6.5, ghosts 6 tiles/s).
+- Tune all four in the lab bench `maze-controls`, against the first build's numbers.
 
 ## Look and sound · decided
-Full screen, no cabinet frame (a pure arcade screen; clearing the first level changes it). Black screen,
-blue outlined walls with a glow, pixel font (Press Start 2P, pinned on jsdelivr). WebAudio bleeps in
+Full screen, no cabinet frame (a pure arcade screen; clearing the first level changes it). Imitates the
+original's look at a similar resolution: everything is drawn at 8 art px per tile (the maze is 152x200 art px,
+the original screen is 224x288) and scaled up 4x with hard pixel edges (`PIXEL`). Pixel sprites are 14x14 like
+the arcade ones, thin blue wall lines with rounded corners and a double outer wall, pixel font (Press Start 2P,
+pinned on jsdelivr) at its native 8 px. This is a cheap imitation; emulating the real tile/sprite hardware
+rendering could come later as a layer. WebAudio bleeps in
 `src/sound.js`: start jingle, waka on dots, power pellet, frightened siren, ghost eaten, death, clear.
 
 ## Slice scope
@@ -37,7 +49,7 @@ blue outlined walls with a glow, pixel font (Press Start 2P, pinned on jsdelivr)
   sound settings.
 
 ## Open questions
-- Does swiping feel right on the phone, or is the 30 px threshold (`INPUT.swipeMin`) too twitchy/sluggish?
+- Do the new turn window and swipe numbers feel right on the phone? Tune in the bench.
 - Speeds (`SPEED`) and how hard the ghosts are: tune after playtests.
 
 ## Decision log
@@ -45,3 +57,7 @@ blue outlined walls with a glow, pixel font (Press Start 2P, pinned on jsdelivr)
 - 2026-10-17: Defaults accepted (own homage, swipe controls, ~19 wide maze, 4 simplified ghosts, 3 lives and
   one maze, pure logic in `src/systems/`), except: full screen instead of a cabinet frame, and a bit of sound
   right away. (Quirin)
+- 2026-10-17: Turning felt unresponsive on the phone: add forgiving turns, swipe expiry, shorter swipes, slower
+  speed, and a lab bench to tune them. (Quirin)
+- 2026-10-17: Look like the original: arcade resolution (8 px tiles) scaled up with hard pixel edges, pixel
+  sprites; real rendering emulation maybe later. (Quirin)

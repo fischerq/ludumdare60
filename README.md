@@ -1,4 +1,4 @@
-# mini-gurke
+# Layers of Pac
 
 *(working title)*
 

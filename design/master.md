@@ -1,6 +1,6 @@
-# mini-gurke: master design
+# Layers of Pac: master design
 
-*(working title)* · Ludum Dare 60 · jam starts Sat 17 Oct 2026, 00:00 CEST
+*(working title, was mini-gurke)* · Ludum Dare 60 · jam starts Sat 17 Oct 2026, 00:00 CEST
 
 This is the top of the design hierarchy (see [README](README.md) for how the docs work). Anything not written
 here is not decided yet: ask before adding it.
@@ -39,7 +39,7 @@ bonus. See [movement](systems/movement.md).
 | System | Status | Doc | Lab bench |
 |---|---|---|---|
 | Touch-follow movement | proposed (prototype only; the maze game probably uses swipes) | [movement](systems/movement.md) | `/lab/bench.html?b=movement` |
-| Arcade maze game (starting point) | decided, first version built | [arcade-maze](systems/arcade-maze.md) | none yet |
+| Arcade maze game (starting point) | decided, first version built | [arcade-maze](systems/arcade-maze.md) | `/lab/bench.html?b=maze-controls` |
 | Tech layers / minigames | open | [layers](systems/layers.md) | none yet |
 | Mini-gurke easter egg | proposed | [layers](systems/layers.md#mini-gurke-easter-egg--proposed) | none |
 
@@ -81,3 +81,5 @@ survives only as the movement lab bench.
   iterate on. Plan usage is tight, so sessions check limits regularly and ask before expensive work. (Quirin)
 - 2026-10-17: Maze game runs full screen (no cabinet frame); clearing the first level changes it. Sound from the
   start. Plan for the Z80 emulator layer. (Quirin)
+- 2026-10-17: The game is called "Layers of Pac". The maze level imitates the original's pixel look at a similar
+  resolution. (Quirin)
