@@ -73,6 +73,11 @@ on the same scripted input (pause, speed, scrub, live touch mode). Use one when 
   - If it was merged or closed, start the branch again from the latest `main`, rebase any commits that weren't merged
     onto it, push, and open a new PR in the same turn. Never leave pushed commits that no open PR covers.
   - Put the PR link in your reply.
+- **Never leave a PR in conflict with `main`; fix it without being asked.** `tools/sync_main.py` merges
+  `origin/main` into the branch automatically at the start of every turn (`UserPromptSubmit` hook) and before every
+  `git push` (`PreToolUse` hook), regenerating `repo-stats.json` and the sessions index instead of resolving them.
+  If a real conflict remains, the push is blocked with the merge left in the tree: resolve it (keep both sides of
+  decision logs and config blocks), commit, push again. Merge, never rebase or force-push a branch with an open PR.
 
 ## AI-use log (making-of)
 Every human prompt and its token usage/cost is published in `making-of/` as a scrollable "making of" page.
