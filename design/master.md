@@ -114,3 +114,5 @@ survives only as the movement lab bench.
   cheat buttons for testing. See [layers](systems/layers.md). (Quirin)
 - 2026-10-17: The whole emulator plan is built: the maze game runs as Z80 code, the cabinet shows the same
   machine, a bot plays while the player is elsewhere, and seven deep layers read the machine's raw data. (Quirin asked for it; Claude)
+- 2026-10-17: Outer loop tweak: layer buttons always available, cheats removed; game over halts the machine
+  until a coin goes in; deep layers run the machine 4x slower. See [layers](systems/layers.md). (Quirin)

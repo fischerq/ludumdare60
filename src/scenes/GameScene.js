@@ -1,12 +1,12 @@
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY, CHEATS } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY, COINS } from '../config.js';
 import { createSwipe, swipeInput } from '../systems/swipe.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 import { showCallout } from '../callout.js';
-import { progress } from '../progress.js';
+import { coins, spendCoin } from '../wallet.js';
 import { world, onFrame, pressDir, pressStart, setDriver, newGame } from '../systems/arcade/world.js';
 import { drawPlayfield, W, H } from '../systems/arcade/video.js';
-import { readState, pokePhase } from '../systems/arcade/state.js';
+import { readState } from '../systems/arcade/state.js';
 
 const T = PIXEL.tile;
 const KEYS = {
@@ -25,6 +25,7 @@ export default class GameScene extends Phaser.Scene {
   // The maze game runs on the emulated arcade machine (src/systems/arcade/game.asm): this scene shows its
   // picture, reads its RAM for the HUD, plays its sound commands and presses its joystick.
   // data.continue: coming back from another layer, keep playing the machine's current game.
+  // A fresh game costs a coin (src/wallet.js); with none left the machine stays halted at GAME OVER.
   create(data = {}) {
     this.machine = world.machine;
     this.S = world.program.symbols;
@@ -35,7 +36,6 @@ export default class GameScene extends Phaser.Scene {
     this.oy = MAZE.top;
     this.leaving = false;
     this.ended = false;
-    this.upBtn = this.downBtn = null;
     this.cameras.main.setOrigin(0, 0).setZoom(PIXEL.zoom).setRoundPixels(true);
 
     // The playfield is the arcade machine's picture: its video chip draws VRAM and the sprites into this
@@ -52,9 +52,12 @@ export default class GameScene extends Phaser.Scene {
     // The player steers while this layer shows; the bot takes over when it closes. Coming back from another
     // layer continues the machine's game (the bot may have played on); otherwise a fresh game.
     setDriver('player');
-    if (!data.continue) newGame();
-    else if (['attract', 'cleared', 'over'].includes(this.g.phase)) pressStart();
+    if (!data.continue) {
+      if (data.free || spendCoin()) newGame();
+      else world.halted = true;
+    } else if (['attract', 'cleared'].includes(this.g.phase)) pressStart();
     else if (this.g.fright > 0) sfx.frightOn();
+    if (world.halted) this.time.delayedCall(0, () => this.finish(false));
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setDriver('bot'));
     const off = onFrame((m, sounds) => sounds.forEach((e) => this.handle(e.name)));
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, off);
@@ -89,10 +92,6 @@ export default class GameScene extends Phaser.Scene {
     this.hint = this.text(this.viewW / 2, mazeBottom + 88, 'SWIPE TO TURN', COLORS.textDim).setOrigin(0.5, 0);
     this.mazeBottom = mazeBottom;
     this.addLayerButtons();
-    if (CHEATS.enabled) {
-      addLayerButton(this, 32, this.viewH - 38, 'CHEAT\nWIN', () => this.cheat(true));
-      addLayerButton(this, 32 + 64, this.viewH - 38, 'CHEAT\nLOSE', () => this.cheat(false));
-    }
     this.lifeIcons = [];
     for (let i = 0; i < RULES.lives - 1; i++) {
       this.lifeIcons.push(this.sprite(this.ox + 24 + i * 32, mazeBottom + 24, 'maze/life'));
@@ -160,17 +159,11 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  // The layer buttons the player has unlocked so far (they appear as soon as a layer unlocks).
+  // The layer buttons, always there: up zooms out to the cabinet, down goes into the screen (DeepScene).
   addLayerButtons() {
     const y = this.mazeBottom + 8, upX = this.viewW - 24 - 112;
-    if (progress.cabinet && !this.upBtn) {
-      // Up one layer: zoom out to the cabinet.
-      this.upBtn = addLayerButton(this, upX, y, 'LAYER\nUP', () => this.leave('Cabinet'), 2);
-    }
-    if (progress.deeper && !this.downBtn) {
-      // Down one layer: into the screen (the deep layers, DeepScene).
-      this.downBtn = addLayerButton(this, upX - 116, y, 'LAYER\nDOWN', () => this.leave('Deep', { layer: 0 }), 2);
-    }
+    addLayerButton(this, upX, y, 'LAYER\nUP', () => this.leave('Cabinet'), 2);
+    addLayerButton(this, upX - 116, y, 'LAYER\nDOWN', () => this.leave('Deep', { layer: 0 }), 2);
   }
 
   leave(scene, data) {
@@ -179,29 +172,22 @@ export default class GameScene extends Phaser.Scene {
     this.scene.start(scene, data);
   }
 
-  // Cheat buttons: end the round as if the maze was cleared or the last life lost.
-  cheat(won) {
-    if (this.ended) return;
-    sfx.frightOff();
-    pokePhase(this.machine, this.S, won ? 'cleared' : 'over');
-    this.finish(won);
-  }
-
-  // The round is over. The outer game loop: the first win unlocks the layer below, the first loss the cabinet
-  // above ("insert coin"). Either way the player stays on the maze; tap to play again.
+  // The round is over; the player stays on the maze. A clear plays on for free; after a game over the machine
+  // is halted and the next game costs a coin. Out of coins: go up to the cabinet and the hall to find more.
   finish(cleared) {
     if (this.ended) return;
     this.ended = true;
     this.saveBest();
-    let text = cleared ? 'MAZE CLEAR!' : 'GAME OVER';
-    if (cleared && !progress.deeper) { progress.deeper = true; text += '\n\nWANT TO GO\nDEEPER?'; }
-    if (!cleared && !progress.cabinet) { progress.cabinet = true; text += '\n\nINSERT COIN'; }
-    this.addLayerButtons();
-    showCallout(this, this.viewW / 2, this.oy + 12 * T, `${text}\n\nTAP TO PLAY AGAIN`);
+    const broke = !cleared && coins() < COINS.perGame;
+    const text = cleared ? 'MAZE CLEAR!\n\nWANT TO GO\nDEEPER?\n\nTAP TO PLAY AGAIN'
+      : broke ? 'GAME OVER\n\nOUT OF COINS\nGO LAYER UP'
+        : `GAME OVER\n\nCOINS ${coins()}\nTAP TO INSERT COIN`;
+    showCallout(this, this.viewW / 2, this.oy + 12 * T, text);
+    if (broke) return;
     // Short delay so the swipe that ended the round doesn't restart it at once.
     this.time.delayedCall(600, () => {
-      this.input.on('pointerdown', (p, over) => { if (!over.length && !this.leaving) this.scene.restart({}); });
-      const again = () => { if (!this.leaving) this.scene.restart({}); };
+      const again = () => { if (!this.leaving) this.scene.restart({ free: cleared }); };
+      this.input.on('pointerdown', (p, over) => { if (!over.length) again(); });
       this.input.keyboard?.once('keydown-SPACE', again);
       this.input.keyboard?.once('keydown-ENTER', again);
     });

@@ -13,6 +13,9 @@ export const world = {
   program: null,     // { rom, symbols, listing } once assembled
   ready: null,       // promise, set by startWorld()
   paused: false,
+  // Game over: the board waits for a coin and runs no frames (no attract mode) until one goes in.
+  halted: false,
+  speed: 1,          // machine time per real time; the deep layers slow it down (DEEP.machineSlowdown)
   acc: 0,            // ms not yet run
   listeners: new Set(),
   // What the player (or the bot) does with the controls: a swipe pulses a direction for a few frames, a held
@@ -34,6 +37,7 @@ export function newGame() {
   const m = world.machine;
   m.cpu.reset();
   m.irqOn = false;
+  world.halted = false;
   world.input.start = 12;
 }
 
@@ -41,7 +45,8 @@ const PULSE_FRAMES = 2;
 export const pressDir = (dir) => { world.input.pulse = dir; world.input.pulseFrames = PULSE_FRAMES; };
 export const holdDir = (dir) => { world.input.held = dir; };
 export const pressStart = () => { world.input.start = PULSE_FRAMES; };
-export const insertCoin = () => { world.input.coin = PULSE_FRAMES; };
+export const insertCoin = () => { world.halted = false; world.input.coin = PULSE_FRAMES; };
+export const setSpeed = (speed) => { world.speed = speed; };
 
 // Sets the joystick and start bits for the next frame.
 function applyInput(m) {
@@ -70,10 +75,10 @@ export function startWorld(loadProgram = async () => null) {
 // Advance by ms of real time in whole frames. Each frame's sound latch writes go to the listeners.
 export function tickWorld(ms) {
   const m = world.machine;
-  if (!m || world.paused) return;
+  if (!m || world.paused || world.halted) return;
   const frameMs = 1000 / ARCADE.frameHz;
-  world.acc = Math.min(world.acc + ms, frameMs * ARCADE.maxFramesPerTick);
-  while (world.acc >= frameMs) {
+  world.acc = Math.min(world.acc + ms * world.speed, frameMs * ARCADE.maxFramesPerTick);
+  while (world.acc >= frameMs && !world.halted) {
     world.acc -= frameMs;
     if (world.driver === 'bot') botStep(m);
     applyInput(m);
@@ -81,14 +86,16 @@ export function tickWorld(ms) {
     if (world.trace?.steps.length) { world.trace.done(world.trace.steps); world.trace = null; }
     const sounds = m.takeSounds();
     for (const fn of world.listeners) fn(m, sounds);
+    const S = world.program?.symbols;
+    if (S && PHASES[m.read(S.PHASE)] === 'over') { world.halted = true; world.acc = 0; }
   }
 }
 
-// The bot holds the joystick toward its goal, and presses START when a game is over.
+// The bot holds the joystick toward its goal, and presses START after a clear (a game over halts the board).
 function botStep(m) {
   const S = world.program.symbols;
   const phase = PHASES[m.read(S.PHASE)];
-  if ((phase === 'attract' || phase === 'over' || phase === 'cleared') && !world.input.start) pressStart();
+  if ((phase === 'attract' || phase === 'cleared') && !world.input.start) pressStart();
   world.input.held = botDirection(m, S);
 }
 
