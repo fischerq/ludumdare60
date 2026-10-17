@@ -1,32 +1,45 @@
 // Deep layer 3, video RAM. No Phaser. The 1 KB of VRAM as it sits in memory: 32 bytes per row, each cell
-// printed in hex. Bytes holding the wall code are walls; the 13 unused bytes at the end of each row are open
-// floor. The CPU's write head replays the program's real VRAM writes from the bus log (slowed down): it
-// hovers over the next address, then writes; being there when it writes is a hit. Every byte that changed
-// since this layer last looked is "dirty" and can be collected. The video chip's read sweep just passes by.
+// printed in hex; the 13 unused bytes at the end of each row are floor too. Blade trap (the enemy): the CPU's write
+// head replays the program's real VRAM writes from the bus log. It waits at the start of the row it will write
+// (telegraph), then dashes along the row to the address and writes; anything in its way is hit. Every byte that
+// changed since this layer last looked is dirty and can be eaten as a dot. Objectives: the bytes of the four
+// power pellets (where the maze layout has them).
 
-import { DEEP } from '../../config.js';
+import { DEEP, MAZE } from '../../config.js';
 import { CELL, MAP } from '../arcade/memmap.js';
 import { BUS } from '../arcade/machine.js';
 import { H } from '../arcade/video.js';
 import { tinyText, hex2 } from './font.js';
+import { css, floor, neonBox, dot, HAZARD } from './tron.js';
 
 const C = DEEP.vram;
 const COLS = 32;
+const PELLETS = MAZE.layout.flatMap((row, y) => [...row].map((ch, x) => (ch === 'o' ? y * COLS + x : -1))).filter((a) => a >= 0);
 
 export default {
   id: 'vram',
   title: 'VIDEO RAM',
-  subtitle: 'PICK UP THE BYTES THAT CHANGED\nDODGE THE CPU WRITING',
+  subtitle: 'GET THE FOUR POWER PELLET BYTES\nTHE WRITE HEAD DASHES ALONG ITS ROW',
   cols: COLS, rows: H,
   start: { x: 24, y: 12 },
   goal: C.goal,
 
   init({ m }) {
-    return { seen: m.vram.slice(), dirty: new Set(), queue: [], head: null, busFrom: m.busCount, flash: [] };
+    return { seen: m.vram.slice(), dirty: new Set(), queue: [], head: null, busFrom: m.busCount, flash: [], got: new Set() };
   },
 
   open(st, env, x, y) {
-    return x >= 0 && x < COLS && y >= 0 && y < H && env.m.vram[y * COLS + x] !== CELL.wall;
+    return x >= 0 && x < COLS && y >= 0 && y < H;
+  },
+
+  info(st) {
+    return st.head ? `CPU WRITES ${hex2(st.head.v)} TO ${(MAP.vram[0] + st.head.a).toString(16).toUpperCase()}` : 'WAITING FOR A WRITE';
+  },
+
+  // Where the head is: { x, y, dashing } (x in bytes along the row).
+  headPos(st, t) {
+    const h = st.head, y = Math.floor(h.a / COLS), k = t - h.t - C.waitTime;
+    return k < 0 ? { x: 0, y, dashing: false } : { x: Math.min(h.a % COLS, k * C.dashSpeed), y, dashing: true };
   },
 
   update(st, env) {
@@ -40,45 +53,47 @@ export default {
     st.busFrom = m.busCount;
     if (st.queue.length > C.queue) st.queue.splice(0, st.queue.length - C.queue);
     if (!st.head && st.queue.length) st.head = { ...st.queue.shift(), t };
-    let hit = false;
-    if (st.head && t - st.head.t >= C.writeTime) {
-      const { a } = st.head;
-      hit = Math.round(player.x) === a % COLS && Math.round(player.y) === Math.floor(a / COLS);
-      st.flash.push({ a, t });
-      st.head = null;
-    }
     st.flash = st.flash.filter((f) => t - f.t < 0.3);
     for (let i = 0; i < COLS * H; i++) {
       if (m.vram[i] !== st.seen[i]) { st.seen[i] = m.vram[i]; st.dirty.add(i); }
     }
-    if (hit) return 'hit';
-    if (st.dirty.delete(Math.round(player.y) * COLS + Math.round(player.x))) return 'collect';
+    if (st.head) {
+      const p = this.headPos(st, t);
+      if (p.dashing && Math.abs(player.y - p.y) < 0.6 && Math.abs(player.x - p.x) < 0.8) return 'hit';
+      if (p.x >= st.head.a % COLS) { st.flash.push({ a: st.head.a, t }); st.head = null; }
+    }
+    const a = Math.round(player.y) * COLS + Math.round(player.x);
+    if (PELLETS.includes(a) && !st.got.has(a)) { st.got.add(a); return 'objective'; }
+    if (st.dirty.delete(a)) return 'dot';
     return null;
   },
 
   draw(ctx, st, env, S) {
-    const { m, t } = env;
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, COLS * S, H * S);
-    const readRow = Math.floor(((t % C.readTime) / C.readTime) * H);
+    const { m, t, P } = env;
+    floor(ctx, P, COLS, H, S);
+    if (st.head) {
+      const p = this.headPos(st, t);
+      ctx.fillStyle = css(DEEP.hazard, p.dashing ? 0.3 : 0.12 + 0.12 * Math.sin(t * 20));
+      ctx.fillRect(0, p.y * S + 1, ((st.head.a % COLS) + 1) * S, S - 1);
+    }
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < COLS; x++) {
         const i = y * COLS + x, v = m.vram[i];
-        ctx.fillStyle = v === CELL.wall ? '#1a2a8a' : y === readRow ? '#102818' : st.dirty.has(i) ? '#503010' : '#0a0a14';
-        ctx.fillRect(x * S, y * S, S - 1, S - 1);
-        ctx.fillStyle = st.dirty.has(i) ? '#ffd040' : v === CELL.wall ? '#7080ff' : v ? '#ffb897' : x >= 19 ? '#202030' : '#383850';
+        if (PELLETS.includes(i) && !st.got.has(i)) { dot(ctx, env, 'special', x, y, S); continue; }
+        if (st.dirty.has(i)) { dot(ctx, env, 'dot', x, y, S); continue; }
+        ctx.fillStyle = css(v === CELL.wall ? P.line : v ? P.dot : P.grid, x >= 19 ? 0.5 : 1);
         tinyText(ctx, hex2(v), x * S + Math.floor((S - 8) / 2), y * S + Math.floor((S - 5) / 2));
       }
     }
     if (st.head) {
-      const { a } = st.head, x = a % COLS, y = Math.floor(a / COLS);
-      const p = (t - st.head.t) / C.writeTime;
-      ctx.strokeStyle = `rgba(255,${Math.round(255 * (1 - p))},0,1)`;
-      ctx.lineWidth = 1;
-      const r = Math.round(S * (1.5 - p));
-      ctx.strokeRect(x * S + S / 2 - r + 0.5, y * S + S / 2 - r + 0.5, 2 * r - 1, 2 * r - 1);
-      ctx.fillStyle = '#ff6040';
-      tinyText(ctx, `W${hex2(st.head.v)}`, Math.min(x * S, COLS * S - 14), Math.max(0, y * S - 7));
+      const p = this.headPos(st, t), x = Math.round(p.x * S), y = p.y * S;
+      neonBox(ctx, (st.head.a % COLS) * S, y, S, S, DEEP.hazard, DEEP.hazardGlow);
+      ctx.fillStyle = HAZARD;
+      ctx.fillRect(x - 1, y - 2, S + 2, S + 4);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x + 2, y + 1, S - 4, S - 2);
+      ctx.fillStyle = HAZARD;
+      tinyText(ctx, `W${hex2(st.head.v)}`, Math.min(x, COLS * S - 14), Math.max(0, y - 8));
     }
     for (const f of st.flash) {
       ctx.fillStyle = `rgba(255,255,255,${1 - (t - f.t) / 0.3})`;

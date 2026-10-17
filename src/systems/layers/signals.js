@@ -1,106 +1,134 @@
-// Deep layer 2, the signal hardware (tile engine, sprite line buffer, sound). No Phaser. The playfield as the
-// video chip sees it: a grid of tile codes from VRAM plus the 8 hardware sprites as boxes at their register
-// positions. The tile fetcher reads the grid row by row (slowed down); every dot or pellet tile it fetches
-// sends out a color index that waits a moment to be picked up. Sprites crush; every sound command the
-// program writes to the sound latch raises a wave along the bottom of the screen, as high as the sound is loud.
+// Deep layer 2, the signal hardware (tile engine, palette, DAC, sound). No Phaser. The playfield as the video
+// chip sees it: a grid of tile codes from VRAM plus the 8 hardware sprites as boxes at their register positions.
+// Carry and deliver: the tile fetcher hands out a color index at a dot tile; carry it to the palette chip (which
+// turns it into a color), then to the DAC, which puts it on the screen. The hardware sprites are the enemies
+// (touching one drops what you carry), and every sound command makes the sound chip's area deadly for a moment.
 
 import { DEEP } from '../../config.js';
 import { CELL, tileOffset } from '../arcade/memmap.js';
 import { W, H, SPRITE } from '../arcade/video.js';
 import { tinyText, hex2 } from './font.js';
+import { css, floor, neonBox, dot, HAZARD } from './tron.js';
 
 const C = DEEP.signals;
+const CHIPS = [
+  { name: 'PAL', ...C.palette, w: 2, h: 2 },
+  { name: 'DAC', ...C.dac, w: 2, h: 2 },
+  { name: 'SND', ...C.sound, w: 3, h: 2 },
+];
+const onChip = (c, x, y) => x >= c.x && x < c.x + c.w && y >= c.y && y < c.y + c.h;
 
 export default {
   id: 'signals',
   title: 'THE SIGNAL CHIPS',
-  subtitle: 'GRAB THE COLORS THE TILE FETCHER\nSENDS OUT. SPRITES AND SOUND HURT',
+  subtitle: 'CARRY A COLOR INDEX TO THE PALETTE\nTHEN TO THE DAC. MIND SPRITES AND SOUND',
   cols: W, rows: H,
   start: { x: 9, y: 17 },
   goal: C.goal,
 
   init() {
-    return { sparks: new Map(), waves: [], fetchRow: -1 };
+    return { sparks: new Map(), next: 0, carry: null, pulse: -99, follow: { x: 9, y: 17 }, tile: null };
   },
 
   open(st, env, x, y) {
-    if (x < 0 || x >= W || y < 0 || y >= H) return false;
-    const c = env.m.vram[tileOffset(x, y)];
-    return c !== CELL.wall && c !== CELL.door && c !== CELL.house;
+    return x >= 0 && x < W && y >= 0 && y < H;
   },
 
-  // Rows the sound waves cover at the bottom right now: each swells and fades over waveTime.
-  waveHeight(st, t) {
-    let h = 0;
-    for (const w of st.waves) h = Math.max(h, w.rows * Math.sin((Math.PI * (t - w.t)) / C.waveTime));
-    return h;
+  pulsing(st, t) {
+    return t - st.pulse < C.pulseTime;
   },
 
-  fetchRow(t) {
-    return Math.floor(t / C.rowTime) % H;
+  inPulse(x, y) {
+    const s = CHIPS[2];
+    const dx = Math.max(s.x - x, 0, x - (s.x + s.w - 1)), dy = Math.max(s.y - y, 0, y - (s.y + s.h - 1));
+    return Math.max(dx, dy) <= C.pulseRadius;
+  },
+
+  onHit(st) {
+    st.carry = null;
+  },
+
+  onRespawn(st) {
+    st.tile = null;
+  },
+
+  info(st) {
+    if (!st.carry) return 'GRAB A COLOR INDEX FROM A DOT TILE';
+    return st.carry.stage === 'index' ? `INDEX ${hex2(st.carry.pal)}: TAKE IT TO PAL` : 'COLOR READY: TAKE IT TO THE DAC';
   },
 
   update(st, env) {
     const { m, t, player, sounds } = env;
-    const row = this.fetchRow(t);
-    if (row !== st.fetchRow) {
-      st.fetchRow = row;
-      for (let x = 0; x < W; x++) {
-        const c = m.vram[tileOffset(x, row)];
-        if (c === CELL.dot || c === CELL.power) st.sparks.set(row * W + x, { t, pal: m.cram[tileOffset(x, row)] });
+    // The tile fetcher hands out a color index at a random dot tile now and then.
+    if (t >= st.next && st.sparks.size < C.maxSparks) {
+      st.next = t + C.sparkEvery;
+      const tiles = [];
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const c = m.vram[tileOffset(x, y)];
+        if ((c === CELL.dot || c === CELL.power) && !st.sparks.has(y * W + x)) tiles.push([x, y]);
+      }
+      if (tiles.length) {
+        const [x, y] = tiles[Math.floor(Math.random() * tiles.length)];
+        st.sparks.set(y * W + x, { t, pal: m.cram[tileOffset(x, y)] });
       }
     }
     for (const [k, s] of st.sparks) if (t - s.t > C.sparkLife) st.sparks.delete(k);
-    for (const e of sounds) if (C.waveRows[e.name]) st.waves.push({ t, rows: C.waveRows[e.name], name: e.name });
-    st.waves = st.waves.filter((w) => t - w.t < C.waveTime);
+    if (sounds.some((e) => e.name !== 'dot')) st.pulse = t; // dot chomps are too frequent to dodge
 
     const px = Math.round(player.x), py = Math.round(player.y);
+    if (!st.tile || st.tile.x !== px || st.tile.y !== py) { if (st.tile) st.follow = st.tile; st.tile = { x: px, y: py }; }
     for (const sp of m.sprites()) {
       if (!sp.code || sp.code >= SPRITE.points || sp.code < SPRITE.ghost) continue;
       if (Math.abs(sp.x / 16 - 0.5 - player.x) < 1 && Math.abs(sp.y / 16 - 0.5 - player.y) < 1) return 'hit';
     }
-    if (py >= H - this.waveHeight(st, t)) return 'hit';
-    if (st.sparks.delete(py * W + px)) return 'collect';
+    if (this.pulsing(st, t) && this.inPulse(px, py)) return 'hit';
+    if (st.carry?.stage === 'index' && onChip(CHIPS[0], px, py)) st.carry.stage = 'color';
+    if (st.carry?.stage === 'color' && onChip(CHIPS[1], px, py)) { st.carry = null; return 'objective'; }
+    const spark = st.sparks.get(py * W + px);
+    if (spark) {
+      st.sparks.delete(py * W + px);
+      if (!st.carry) { st.carry = { pal: spark.pal, stage: 'index' }; st.follow = { x: px, y: py }; }
+      return 'dot';
+    }
     return null;
   },
 
   draw(ctx, st, env, S) {
-    const { m, t } = env;
-    ctx.fillStyle = '#04040c';
-    ctx.fillRect(0, 0, W * S, H * S);
-    const row = this.fetchRow(t);
+    const { m, t, P } = env;
+    floor(ctx, P, W, H, S);
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
         const c = m.vram[tileOffset(x, y)];
-        ctx.fillStyle = c === CELL.wall ? '#1a2a8a' : y === row ? '#203020' : '#0c0c18';
-        ctx.fillRect(x * S + 1, y * S + 1, S - 2, S - 2);
-        ctx.fillStyle = c === CELL.wall ? '#5a6ae0' : c ? '#ffb897' : '#303048';
+        ctx.fillStyle = css(c === CELL.wall ? P.glow : c ? P.dot : P.grid, c === CELL.wall ? 1 : 0.6);
         tinyText(ctx, hex2(c), x * S + Math.floor((S - 7) / 2), y * S + Math.floor((S - 5) / 2));
       }
     }
-    for (const [k, s] of st.sparks) {
-      const a = 1 - (t - s.t) / C.sparkLife;
-      ctx.fillStyle = `rgba(255,${s.pal ? 220 : 120},80,${a})`;
-      ctx.fillRect((k % W) * S + 2, Math.floor(k / W) * S + 2, S - 4, S - 4);
+    if (this.pulsing(st, t)) {
+      const s = CHIPS[2], r = C.pulseRadius, k = 1 - (t - st.pulse) / C.pulseTime;
+      ctx.fillStyle = css(DEEP.hazard, 0.25 + 0.35 * k);
+      ctx.fillRect((s.x - r) * S, (s.y - r) * S, (s.w + 2 * r) * S, (s.h + 2 * r) * S);
     }
+    for (const c of CHIPS) {
+      const want = (c.name === 'PAL' && st.carry?.stage === 'index') || (c.name === 'DAC' && st.carry?.stage === 'color');
+      const line = c.name === 'SND' ? DEEP.hazard : want && Math.floor(t * 4) % 2 ? 0xffffff : P.line;
+      ctx.fillStyle = css(P.bg);
+      ctx.fillRect(c.x * S + 1, c.y * S + 1, c.w * S - 2, c.h * S - 2);
+      neonBox(ctx, c.x * S + 1, c.y * S + 1, c.w * S - 2, c.h * S - 2, line, c.name === 'SND' ? DEEP.hazardGlow : P.glow);
+      ctx.fillStyle = css(line);
+      tinyText(ctx, c.name, c.x * S + Math.floor((c.w * S - 11) / 2), c.y * S + Math.floor((c.h * S - 5) / 2));
+    }
+    for (const [k, s] of st.sparks) dot(ctx, env, s.pal ? 'dot2' : 'dot', k % W, Math.floor(k / W), S, Math.min(1, 2 * (1 - (t - s.t) / C.sparkLife)));
+    // What you carry follows one tile behind you: an index (small dot), then a color (the special).
+    if (st.carry) dot(ctx, env, st.carry.stage === 'index' ? 'dot2' : 'special', st.follow.x, st.follow.y, S);
     // The line buffer: the 8 hardware sprites as boxes with their codes.
     m.sprites().forEach((sp, i) => {
       if (!sp.code) return;
       const x = Math.round((sp.x / 16 - 1) * S), y = Math.round((sp.y / 16 - 1) * S);
-      ctx.strokeStyle = sp.code < SPRITE.ghost ? '#ffff00' : sp.code >= SPRITE.eyes ? '#8080ff' : '#ff4040';
-      ctx.strokeRect(x + 0.5, y + 0.5, 2 * S - 1, 2 * S - 1);
-      ctx.fillStyle = ctx.strokeStyle;
-      tinyText(ctx, `${i}${hex2(sp.code)}`, x + 2, y + 2);
+      const ghost = sp.code >= SPRITE.ghost && sp.code < SPRITE.eyes;
+      const line = ghost ? DEEP.hazard : sp.code < SPRITE.ghost ? 0xffffff : P.line;
+      neonBox(ctx, x + 1, y + 1, 2 * S - 2, 2 * S - 2, line, ghost ? DEEP.hazardGlow : P.glow);
+      ctx.fillStyle = ghost ? HAZARD : css(line);
+      tinyText(ctx, `${i}${hex2(sp.code)}`, x + 3, y + 3);
     });
-    const wh = this.waveHeight(st, t);
-    if (wh > 0) {
-      ctx.fillStyle = 'rgba(0,255,220,0.25)';
-      ctx.fillRect(0, Math.round((H - wh) * S), W * S, Math.round(wh * S));
-      ctx.fillStyle = 'rgba(0,255,220,0.9)';
-      for (let k = 0; k < W * S; k += 2) {
-        const yy = (H - wh * (0.5 + 0.5 * Math.sin(k / 5 + t * 12))) * S;
-        ctx.fillRect(k, Math.round(yy), 2, 2);
-      }
-    }
   },
 };

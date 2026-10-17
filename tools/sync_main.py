@@ -5,6 +5,12 @@
   python3 tools/sync_main.py --hook    # UserPromptSubmit hook: same, never blocks; aborts on real conflicts
   python3 tools/sync_main.py --push    # PreToolUse(Bash) hook: runs only before `git push`; blocks the push
                                        # (exit 2) and leaves the conflict to resolve if one remains
+  python3 tools/sync_main.py --ci      # GitHub Action (.github/workflows/sync-prs.yml): merge, exit 1 on a real
+                                       # conflict (merge aborted); the workflow pushes
+
+After a clean merge, --hook also pushes it when the branch has an upstream, so the open PR is out of conflict on
+GitHub right away instead of only after the next push of the turn. Between sessions, the sync-prs workflow does
+the same for every open PR whenever main changes.
 
 Generated files (repo-stats.json, the sessions index) are never resolved by hand: they are regenerated with
 tools/ai_log.py after the merge. Any other conflict is reported; with --push it stays in the tree so Claude
@@ -76,6 +82,21 @@ def sync(keep_conflicts):
     return None
 
 
+def push_merge():
+    """Pushes the branch if it tracks a remote branch (i.e. already has a PR); never blocks on failure."""
+    if git("rev-parse", "-q", "--verify", "@{u}").returncode or merging():
+        return
+    if git("rev-list", "--count", "@{u}..HEAD").stdout.strip() == "0":
+        return
+    # The remote branch is already part of main: its PR was merged, so a push would add commits no open PR covers.
+    if git("merge-base", "--is-ancestor", "@{u}", f"origin/{BASE}").returncode == 0:
+        print("sync_main: not pushing, this branch's PR is already merged; restart the branch from main")
+        return
+    branch = git("rev-parse", "--abbrev-ref", "HEAD").stdout.strip()
+    r = git("push", "-q", "origin", branch)
+    print(f"sync_main: pushed {branch}" if r.returncode == 0 else f"sync_main: push failed: {r.stderr.strip()}")
+
+
 def main():
     if "--push" in sys.argv:
         try:
@@ -92,6 +113,9 @@ def main():
     msg = sync(keep_conflicts=False)
     if msg:
         print(f"sync_main: {msg}")
+        return 1 if "--ci" in sys.argv else 0
+    if "--hook" in sys.argv:
+        push_merge()
     return 0
 
 

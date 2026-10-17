@@ -143,12 +143,12 @@
      "subject": "Design: arcade hall layer (Pokémon-like top-down) proposed, questions open"
     },
     {
-     "sha": "1603a4b77bbc47e4b7a9862431316c0fd5cf8d6f",
-     "subject": "Arcade hall layer: Pokémon-like top-down shop above the cabinet"
-    },
-    {
      "sha": "e0aeb07482e240d6e7166a84e8272d67c81febda",
      "subject": "Load the art from assets/ so Max can edit the PNGs in place"
+    },
+    {
+     "sha": "1603a4b77bbc47e4b7a9862431316c0fd5cf8d6f",
+     "subject": "Arcade hall layer: Pokémon-like top-down shop above the cabinet"
     },
     {
      "sha": "d0f5c283ac1172181c4b1657c496b3fdbc8d476e",
@@ -191,39 +191,354 @@
    "seq": 44,
    "date": "2026-10-17",
    "time": "12:34",
-   "duration_s": 95,
+   "duration_s": 110,
    "prompt": "did we put screenshots for the earlier PRs into the making of (where it makes sense)?\nif not should backfill, and make sure we do it going forward",
    "followups": [],
    "images": [],
    "claude_images": [],
-   "reply": "Exporter works. Now tightening the CLAUDE.md rule so it happens every time:",
+   "reply": "Mostly yes, but two jam turns that changed something you can see had no screenshot. I've backfilled both and changed the setup so screenshots are taken every time from now on. Pull request: https://github.com/fischerq/ludumdare60/pull/21\n\n**Backfilled.** I took each shot from a copy of the game at that turn's own commit, so it shows how things looked then:\n- The menu footer change (Making-Of · Lab · Impressum in one row).\n- The making-of credits note (Max and Quirin, Gasteig HP8, Gamerei).\n\nThe other jam turns either already have screenshots or only changed design docs, tooling or answered a question, so there was nothing to show.\n\n**Going forward:**\n- **One command:** a new script, `tools/shot.js`, takes a phone-size screenshot of any page or game scene and saves it straight into the making-of media folder. It can also shoot an older commit.\n- **Late screenshots now show up:** the exporter used to attach screenshots only to sessions run in the current container. So a screenshot added later for an older session never appeared on the page. It now attaches them for every session.\n- **Rule in `CLAUDE.md`:** every turn that changes something visible (game, lab, making-of, event or Impressum page) saves one or two screenshots. Turns that only touch docs, tooling or the log are exempt.\n\nTo test on the phone after merging: open `/making-of/` and check that both the menu footer turn and the credits turn now show a screenshot.\n\nPlan usage: 3% of the 5-hour limit, 18% of the weekly limit.",
    "progress_notes": [
     "Checking what main has now (other sessions have landed since), then I'll find turns with visible changes but no screenshot.",
     "Only a few jam turns with a visible change lack a screenshot. Finding the commits they correspond to:",
     "I'll add a small screenshot helper so this is one command from now on, then use it for the backfill on worktrees of the old commits.",
-    "Both look right. Now checking whether the exporter attaches images to sessions whose transcripts aren't in this container:"
+    "Both look right. Now checking whether the exporter attaches images to sessions whose transcripts aren't in this container:",
+    "Exporter works. Now tightening the CLAUDE.md rule so it happens every time:"
    ],
    "tools": {
     "Bash": 10,
     "mcp__claude-code-remote__list_events": 2,
     "Read": 2,
     "Write": 1,
-    "Edit": 1
+    "Edit": 1,
+    "mcp__github__create_pull_request": 1
    },
-   "api_requests": 12,
+   "api_requests": 14,
    "usage": {
     "claude-opus-5-5": {
-     "input": 24,
+     "input": 28,
      "cache_write_5m": 0,
-     "cache_write_1h": 28038,
-     "cache_read": 1683930,
-     "output": 7573,
+     "cache_write_1h": 29255,
+     "cache_read": 1986462,
+     "output": 8599,
      "thinking": 1858,
-     "cost_usd": 0.712646
+     "cost_usd": 0.803424
     }
    },
-   "cost_usd": 0.712646,
-   "commits": [],
+   "cost_usd": 0.803424,
+   "commits": [
+    {
+     "sha": "68fcb41ae39d83bc2629a1a9281d6a27e55efe43",
+     "subject": "Making-of screenshots: backfill missing ones, tools/shot.js, exporter attaches images to every session"
+    },
+    {
+     "sha": "d9874164bb4ecaa36cea99ef42cf4abdbf398d63",
+     "subject": "Log: question about ghost sprites"
+    },
+    {
+     "sha": "5de0c58b691bfde3ec15e23babf7978c6e6145d7",
+     "subject": "Merge pull request #21 from fischerq/claude/awesome-curie-yjo939"
+    },
+    {
+     "sha": "a096864add2d2cade004c1ec7a6383af95c51489",
+     "subject": "Animation speed per character in src/settings/animation.json, tuned and exported from a lab bench"
+    },
+    {
+     "sha": "f406d2aac5a45c4921a901487d34fc1b2eed86f4",
+     "subject": "Log: refresh after merging main"
+    },
+    {
+     "sha": "ce4aaf7e2c8282d76070d4c582a6a345a308c979",
+     "subject": "Log: questions for per-layer 32x32 character sprites"
+    },
+    {
+     "sha": "9bbc4f4cc4aa98dc04df93d0a03f7c9f004d8cee",
+     "subject": "Emulator prep: Pac-Man board memory map, machine with bus log and snapshot, pinned Z80 core, design doc"
+    },
+    {
+     "sha": "20c87dfdd227a7f241627a76137b0993ad9819cd",
+     "subject": "Merge main into the branch"
+    },
+    {
+     "sha": "3844386b03e892f22d09a0179bc8ca8c2349498f",
+     "subject": "Per-layer 32x32 character art, one file per state"
+    },
+    {
+     "sha": "fa64e3fef0f7ec92405109a8575b7b696d8d1f30",
+     "subject": "Log: per-layer character art turn, screenshots"
+    },
+    {
+     "sha": "d37232c8da3ac72164a5e9392552d1dfd2582742",
+     "subject": "Stop tracking Python bytecode cache"
+    },
+    {
+     "sha": "6985e71b25065141073c916bf99234d8026d535f",
+     "subject": "Make every animation tunable: effects in src/settings/animation.json and the lab bench"
+    },
+    {
+     "sha": "6feb47429e5f7a5e57a487d81ba255de6822e0b2",
+     "subject": "Merge pull request #22 from fischerq/claude/quirky-noether-8gpe2k"
+    },
+    {
+     "sha": "279a753fd7e5c8ae63e671c5c3c4533425c29f96",
+     "subject": "Merge main into the branch"
+    },
+    {
+     "sha": "f088c09de2fa52e8ca3ba3cae429e0c6745b63d4",
+     "subject": "Log: merge main (per-layer character art) into the animation-speed branch, screenshots"
+    },
+    {
+     "sha": "e17d6edf9d0d3a6b0a1d1b0f2b17d06f9ddf9493",
+     "subject": "Cabinet: prominent coin door prompt, global coin counter, animated coin insert"
+    },
+    {
+     "sha": "9c26259af311eb3eadbd539bf8c0086b42ca8341",
+     "subject": "Merge pull request #23 from fischerq/claude/sleepy-sagan-wagbm1"
+    },
+    {
+     "sha": "bb01629b68b2dde1a3b387fb6906caac4af6bb2f",
+     "subject": "Animation lab: character picker, −/+ buttons on sliders, Download settings at the top"
+    },
+    {
+     "sha": "7073cf5d2a8b13c8530bdcfc4bd4c2522e3e1ba9",
+     "subject": "Animation lab: a Frames button per animation shows all its frames, current one outlined"
+    },
+    {
+     "sha": "853de368ea61986cfaf7738748413a456121454f",
+     "subject": "Outer game loop: start on the maze, unlock layers by winning and losing, cheat buttons"
+    },
+    {
+     "sha": "0901b14810f9d26890dfff4c641a3da28e1fb9e5",
+     "subject": "Merge pull request #27 from fischerq/claude/old-tech-pacman-game-eaui1a"
+    },
+    {
+     "sha": "d3d6ae03898fcf5f5ce6ada42cafebf7e5c93258",
+     "subject": "Merge main into the branch"
+    },
+    {
+     "sha": "047bc1f39eae4270a984707cf7289e64d821f4d0",
+     "subject": "Log: merge main (outer game loop) into the animation lab branch"
+    },
+    {
+     "sha": "415ae7e96fcd102abdc15e78abd525f1b4eedd9a",
+     "subject": "Merge pull request #26 from fischerq/claude/sleepy-sagan-wagbm1"
+    },
+    {
+     "sha": "81e2771e1e12af7ce0649f85490d52f85b8eb7b0",
+     "subject": "replace assets"
+    },
+    {
+     "sha": "53833dc91854a144dd4eb049e169f3c1cf2eb71f",
+     "subject": "Merge branch 'main' of https://github.com/fischerq/ludumdare60"
+    },
+    {
+     "sha": "4236fbfaef74bf6dc6c135b966dd5f2b6b641e01",
+     "subject": "Merge main into the coin branch"
+    },
+    {
+     "sha": "4d139bddb013001b09cc24306ac671324c457f2f",
+     "subject": "Merge pull request #25 from fischerq/claude/lucid-newton-ec9af8"
+    },
+    {
+     "sha": "5b3f3adff070217bc33101ce4cfbe695a31c267b",
+     "subject": "Cabinet: being out of coins always opens the arcade hall"
+    },
+    {
+     "sha": "1b9a2eb39a41f2b79af4dc3eeac2a78373a3973b",
+     "subject": "Merge pull request #28 from fischerq/claude/old-tech-pacman-game-eaui1a"
+    },
+    {
+     "sha": "05f538f40c27dde5d7387bfb863e0c2d7f29bca2",
+     "subject": "Emulator plan: maze game runs on the machine, 9-step build plan, raw-data rule; log the Gemini chat"
+    },
+    {
+     "sha": "eb8d481ed631a7899aaf271774a19c59c9c09249",
+     "subject": "Arcade hall: characters one tile big, centered on their tile"
+    },
+    {
+     "sha": "ca750aba31e40fc3463a3825d3c993a74288b688",
+     "subject": "Log: where the exported animation settings go"
+    },
+    {
+     "sha": "73b2fd1fefb61de30a0c430678ffa4834e58a602",
+     "subject": "Merge pull request #30 from fischerq/claude/sleepy-sagan-wagbm1"
+    },
+    {
+     "sha": "9d871392c49f3b7dc366154af14d3a9f9a815945",
+     "subject": "Animation settings: hot reload every second on a local server, warn when the file is broken"
+    },
+    {
+     "sha": "c2c551ee975d06c0d4aa0fb5dad7bdcfe12fa29b",
+     "subject": "Merge main into the hall character size branch"
+    },
+    {
+     "sha": "1258a58c159d7c3c1fdf06672f4c3d2264f17173",
+     "subject": "Log: merge turn"
+    },
+    {
+     "sha": "9adba60d5f6db7be079b750305bc065b6fd056c5",
+     "subject": "Merge pull request #31 from fischerq/claude/sleepy-sagan-wagbm1"
+    },
+    {
+     "sha": "e8a9cc1deaf0f5f85b5ec7debade38d591e97f2d",
+     "subject": "Arcade step 2: global machine runtime, our board's memory map, typed bus log and frame recorder"
+    },
+    {
+     "sha": "2f8181bd19ed95b6b06f1c4d7bf17e30ed43e185",
+     "subject": "Merge main into the hall character size branch"
+    },
+    {
+     "sha": "9b9a5f1ef0ae826afc10bcf6a791ca8038fa8b38",
+     "subject": "Arcade step 3: video chip draws the playfield from VRAM, color RAM and the 8 sprites"
+    },
+    {
+     "sha": "e0296c971181dc2a03570ae65675020518a935fa",
+     "subject": "Log: merge turn"
+    },
+    {
+     "sha": "7a0158e81c9f8a078df0c55a5f8425dfe31eb0b6",
+     "subject": "Merge pull request #29 from fischerq/claude/lucid-newton-ec9af8"
+    },
+    {
+     "sha": "adc4fc0665e2c10fdc86b50db80be7d3429e4b98",
+     "subject": "Merge main into claude/keen-archimedes-hmq2uh"
+    },
+    {
+     "sha": "7beb790b04cf5e38c10407e9acc8304cd8dfbda2",
+     "subject": "Merge claude/keen-archimedes-hmq2uh (with main) into the runtime branch"
+    },
+    {
+     "sha": "99700eae74f718bb19b55d845c951c90da96f5b1",
+     "subject": "Merge branch 'claude/keen-archimedes-hmq2uh-2-runtime' into claude/keen-archimedes-hmq2uh-3-video"
+    },
+    {
+     "sha": "7b64eeab28c9ac77ba21a4224e738816b4fd1708",
+     "subject": "Arcade step 4: Z80 assembler and the first program on the board"
+    },
+    {
+     "sha": "7d2d2ac812a144eb2ac9beb493c738de39a8a9a6",
+     "subject": "Ignore agent worktrees"
+    },
+    {
+     "sha": "5a0cd8031d1c91db1f3e022a04234aeaf699cd2d",
+     "subject": "Regenerate repo stats after merging the runtime branch"
+    },
+    {
+     "sha": "1d241e3f11df74741dbb2d0c53f1e1d4beb7e4c5",
+     "subject": "Merge remote-tracking branch 'origin/claude/keen-archimedes-hmq2uh-3-video' into claude/keen-archimedes-hmq2uh-4-asm"
+    },
+    {
+     "sha": "65295777d62376f091dabeb645dab53da648cecb",
+     "subject": "Video chip: use the folder texture keys and the per-ghost art from main"
+    },
+    {
+     "sha": "74f276795c36274208f67311e529a0eddae20b44",
+     "subject": "Merge branch 'claude/keen-archimedes-hmq2uh-3-video' into claude/keen-archimedes-hmq2uh-4-asm"
+    },
+    {
+     "sha": "4ea1ab8e0c2ee5493425fddd7f9800b2de75ba4d",
+     "subject": "Arcade step 5: the maze level is the machine's picture (shadow mode)"
+    },
+    {
+     "sha": "245b0a385cc815badb72ed4f529757a648e20ec2",
+     "subject": "Merge pull request #24 from fischerq/claude/keen-archimedes-hmq2uh"
+    },
+    {
+     "sha": "1a85f277e0865478b849347b07b520e9505244ab",
+     "subject": "Arcade step 6: the maze game's rules run as a Z80 program on the machine"
+    },
+    {
+     "sha": "5ff4aba7955a45c3a1d77e7748dd9856cde36da4",
+     "subject": "Arcade step 7: a bot plays Pac-Man on the machine while the player is elsewhere"
+    },
+    {
+     "sha": "d05c7e0745fbc14d47c1146feda074f329888c87",
+     "subject": "Arcade step 8: the cabinet shows the shared machine, layers say who steers"
+    },
+    {
+     "sha": "f0b1a6c11603fc8790a6b8f425899f5dd7e6391d",
+     "subject": "Arcade step 9a: deep layers framework and layer -1, inside the screen"
+    },
+    {
+     "sha": "cf6495665c1974867c0ab5adab430d4c89bada2b",
+     "subject": "Arcade step 9b: deep layers -2 (signal chips) and -3 (video RAM)"
+    },
+    {
+     "sha": "66b407ab34eae7cca82ed2a3d022f545b3484192",
+     "subject": "Arcade step 9c: deep layers -4 (system bus) and -5 (CPU)"
+    },
+    {
+     "sha": "1afa7651b68285ec5c80dbbfd2b3708a336543c6",
+     "subject": "Merge pull request #32 from fischerq/claude/keen-archimedes-hmq2uh-2-runtime"
+    },
+    {
+     "sha": "e1351c8450d1fd622b9dedcc4fa32cad141f455c",
+     "subject": "Arcade step 9d: deep layers -6 (game logic) and -7 (input wires); AI log"
+    },
+    {
+     "sha": "9aa1c815be3fc85f915bcb793c0ec5df712e8a1d",
+     "subject": "Merge pull request #33 from fischerq/claude/keen-archimedes-hmq2uh-3-video"
+    },
+    {
+     "sha": "a8627bcfb2bc907ed5574057567ad1912a0b94da",
+     "subject": "Merge pull request #34 from fischerq/claude/keen-archimedes-hmq2uh-4-asm"
+    },
+    {
+     "sha": "4c16bc6ac3ef50043397d905fef1cdab20ec3294",
+     "subject": "Merge pull request #35 from fischerq/claude/keen-archimedes-hmq2uh-5-shadow"
+    },
+    {
+     "sha": "8ef318eae87b10d17a0d47f9a58c3f223baf847d",
+     "subject": "Merge pull request #36 from fischerq/claude/keen-archimedes-hmq2uh-6-rules"
+    },
+    {
+     "sha": "a111b621505b1e066f90f55be41efa47f4dfb705",
+     "subject": "Merge pull request #37 from fischerq/claude/keen-archimedes-hmq2uh-7-bot"
+    },
+    {
+     "sha": "0a71394b1f8aaa0543459bff55f8bac0196eb9ca",
+     "subject": "Merge pull request #38 from fischerq/claude/keen-archimedes-hmq2uh-8-layers"
+    },
+    {
+     "sha": "1cc83acaa59cc9f31a64c567102411849241d3b7",
+     "subject": "Merge pull request #39 from fischerq/claude/keen-archimedes-hmq2uh-9a-crt"
+    },
+    {
+     "sha": "38735d7fb5da05bdf33c4c5c0f01902b45c20104",
+     "subject": "Merge pull request #40 from fischerq/claude/keen-archimedes-hmq2uh-9b-vram"
+    },
+    {
+     "sha": "489959e170eb0cc87143cdc457234e4ebf1b7f81",
+     "subject": "Merge pull request #41 from fischerq/claude/keen-archimedes-hmq2uh-9c-cpu"
+    },
+    {
+     "sha": "ebf02cf18fa3407e725a0e2789c7a64fd1c3d55a",
+     "subject": "Menu: animate Pac-Man and ghosts instead of showing one still frame"
+    },
+    {
+     "sha": "169b2ccdba398cd09a3ceebcd4996e50222c53e0",
+     "subject": "Merge pull request #42 from fischerq/claude/keen-archimedes-hmq2uh-9d-input"
+    },
+    {
+     "sha": "f27867ad1bbdd4f8c97ca9f867de8146e741aa89",
+     "subject": "Merge main into claude/pacman-start-screen-frame-4wva45"
+    },
+    {
+     "sha": "7bf445289dcfa787a0e2ad04bddb5ef328d6046d",
+     "subject": "Auto-merge origin/main each turn and before every push"
+    },
+    {
+     "sha": "d052f02e2f68fe493f2ee68ef40995086fe7bd9e",
+     "subject": "Merge pull request #44 from fischerq/ccr-3cf75adf-1932x0"
+    },
+    {
+     "sha": "78512507ec908d8c77a1cf6cbdedb715696e65a2",
+     "subject": "Merge main into claude/pacman-start-screen-frame-4wva45"
+    },
+    {
+     "sha": "488d90752feed7dd6503278b01125e2a3fc627e8",
+     "subject": "Merge pull request #43 from fischerq/claude/pacman-start-screen-frame-4wva45"
+    }
+   ],
    "entrypoint": "remote",
    "branch": "pr15",
    "plan_usage": {
@@ -238,18 +553,148 @@
      "delta": 0.0
     }
    }
+  },
+  {
+   "index": 4,
+   "seq": 59,
+   "date": "2026-10-17",
+   "time": "16:03",
+   "duration_s": 270,
+   "prompt": "Do commits/prs by max show up in the making of? make it so, we should have a before/after for art updates",
+   "followups": [],
+   "images": [],
+   "claude_images": [
+    "media/3433393d-4-c1.jpg"
+   ],
+   "reply": "They didn't show up before, and now they do. Max's only commit so far, \"replace assets\" at 13:55, which he pushed straight to `main`, was missing because the making-of page only knew Claude turns and hand-written entries. Pull request: https://github.com/fischerq/ludumdare60/pull/45\n\n**What changed:**\n- **Commits on the timeline:** every commit not made by Claude (merges excluded) now appears in the timeline as \"Commit by Max\", placed at the time it happened. This includes direct pushes and commits inside PRs, and the exporter that already runs every turn picks them up automatically.\n- **Art before/after:** each image the commit changed under `assets/` is shown as a before → after pair, with sharp pixels and two pairs per row on a phone. For Max's commit that's the coin, the cabinet and 14 Pac-Man frames.\n- **Game screenshots before/after:** shown as side-by-side pairs under the art. These aren't automatic: Claude takes them with `tools/shot.js`, which can now shoot any older version of the game directly (`--at <commit>`). I did it for Max's commit (the maze and the cabinet), and `CLAUDE.md` now says to do it at the start of each turn for any new art commit that still lacks them.\n- **Names:** git names are mapped to \"Max\" and \"Quirin\" in `meta.json`; email addresses aren't published.\n\nI checked the page in a phone-size headless browser; the entry rendered correctly with no console errors.\n\nTo test on the phone after merging: open `/making-of/`, find \"replace assets\" on Saturday afternoon, open it, and check that the art pairs and the before/after screenshots look right.\n\nThe last plan usage reading I have is from the previous turn: 3% of the 5-hour limit and 18% weekly. This turn's checks returned no new numbers.",
+   "progress_notes": [
+    "Now the page side: load `commits.json` and render commit entries with a before → after art grid.",
+    "Extending `tools/shot.js` so it can shoot any revision directly (`--at <rev>`) and accepts `commit-<sha8>-before/after` names:",
+    "Shots taken. Sorting would put \"after\" first, so I'll group them into labelled before/after pairs:",
+    "Works on a phone viewport with no console errors. The art grid shows one pair per row, so I'll tighten it to fit two, then update the rules and commit.",
+    "The pairs wrap onto two lines in 120 px columns. Switching each card to a three-column grid (before, arrow, after):",
+    "Good. Dropping the `.png` from captions so they don't break mid-word, then documenting the rule:"
+   ],
+   "tools": {
+    "Bash": 15,
+    "Read": 3,
+    "mcp__claude-code-remote__list_events": 2,
+    "mcp__github__list_pull_requests": 1,
+    "mcp__github__create_pull_request": 1
+   },
+   "api_requests": 21,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 42,
+     "cache_write_5m": 0,
+     "cache_write_1h": 145797,
+     "cache_read": 3653911,
+     "output": 17357,
+     "thinking": 4114,
+     "cost_usd": 2.244466
+    }
+   },
+   "cost_usd": 2.244466,
+   "commits": [
+    {
+     "sha": "47d32da3297bdea8bf31ade3aae9958e0ffeae8c",
+     "subject": "Making-of: commits made outside Claude Code, with before/after art"
+    },
+    {
+     "sha": "e2e1acd0b0adad7cc73334d8fe44c09e8cf589d2",
+     "subject": "Merge pull request #45 from fischerq/claude/awesome-curie-yjo939"
+    },
+    {
+     "sha": "c8b632d324b302e2bef298a815c0b2fb79bacbce",
+     "subject": "Outer loop: layer buttons always on, game over halts the machine, deep layers run it 4x slower"
+    }
+   ],
+   "entrypoint": "remote",
+   "branch": "claude/awesome-curie-yjo939",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.03,
+     "end": 0.03,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.18,
+     "end": 0.18,
+     "delta": 0.0
+    }
+   }
+  },
+  {
+   "index": 5,
+   "seq": 60,
+   "date": "2026-10-17",
+   "time": "16:34",
+   "duration_s": 84,
+   "prompt": "Fix the preview on the making of page. It still says mini-gurke. Need to update the event page about gasteig today/gamerei tomorrow",
+   "followups": [],
+   "images": [],
+   "claude_images": [
+    "media/3433393d-5-c1.jpg"
+   ],
+   "reply": "The push hook runs before the whole command, so it saw the uncommitted change. Committing first, then pushing separately:",
+   "progress_notes": [
+    "Thumbnail is current. Now the event page text:",
+    "Looks good on a phone. Committing and opening the PR."
+   ],
+   "tools": {
+    "Bash": 8,
+    "Read": 3,
+    "mcp__claude-code-remote__list_events": 2
+   },
+   "api_requests": 10,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 20,
+     "cache_write_5m": 0,
+     "cache_write_1h": 22464,
+     "cache_read": 2100136,
+     "output": 5367,
+     "thinking": 1142,
+     "cost_usd": 0.707159
+    }
+   },
+   "cost_usd": 0.707159,
+   "commits": [
+    {
+     "sha": "0b7b78fd230d20f6a7906fb6eb46211d6379ff55",
+     "subject": "Merge origin/main into claude/awesome-curie-yjo939"
+    },
+    {
+     "sha": "1175da3af53d0f8b76febf659f3ffc34ad4b281e",
+     "subject": "Merge pull request #47 from fischerq/claude/game-loop-tweaks-timing-9lbcmb"
+    }
+   ],
+   "entrypoint": "remote",
+   "branch": "claude/awesome-curie-yjo939",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.05,
+     "end": 0.05,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.19,
+     "end": 0.19,
+     "delta": 0.0
+    }
+   }
   }
  ],
  "totals": {
-  "prompts": 3,
-  "cost_usd": 2.326684,
-  "output_tokens": 24594,
-  "input_tokens": 5189357
+  "prompts": 5,
+  "cost_usd": 5.369087,
+  "output_tokens": 48344,
+  "input_tokens": 11415480
  },
  "reported_by_claude_code": {
-  "total_usd": 1.6679320000000004,
+  "total_usd": 4.798562199999999,
   "by_model": {
-   "claude-opus-5-5": 1.667932
+   "claude-opus-5-5": 4.798562
   }
  }
 }

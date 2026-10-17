@@ -104,7 +104,7 @@ const planCounted = (t, w) => {
   return u && u.delta != null && !u.concurrent ? Math.max(0, u.delta) : 0;
 };
 
-const MANUAL_KINDS = { human: 'By hand', 'claude-chat': 'Separate Claude chat', other: 'Outside Claude Code' };
+const MANUAL_KINDS = { human: 'By hand', 'claude-chat': 'Separate Claude chat', commit: 'Commit', other: 'Outside Claude Code' };
 const sign = (f) => (f > 0 ? '+' : '') + fmtPct(f);
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 
@@ -235,6 +235,22 @@ function wireChat(root) {
 
 // ---- Timeline -------------------------------------------------------------------------------
 
+// Game screenshots before and after a commit, side by side.
+const shotPairs = (list) => (list?.length
+  ? list.map((p) => `<div class="shot-pair">${['before', 'after'].map((k) => `<figure>${p[k]
+    ? `<a href="${esc(p[k])}" target="_blank" rel="noopener"><img src="${esc(p[k])}" alt="Screenshot ${k}" loading="lazy"></a>`
+    : '<span class="none">none</span>'}<figcaption>${k === 'before' ? 'Before' : 'After'}</figcaption></figure>`).join('')}</div>`).join('')
+  : '');
+// Art files a commit changed: each one before → after, at native resolution scaled up with hard pixels.
+const artImg = (src, name) => (src
+  ? `<a href="${esc(src)}" target="_blank" rel="noopener"><img src="${esc(src)}" alt="${esc(name)}" loading="lazy"></a>`
+  : '<span class="none">none</span>');
+const artGrid = (list) => (list?.length
+  ? `<div class="art-diff">${list.map((a) => `
+      <figure>${artImg(a.before, `${a.name}, before`)}<span class="arrow">→</span>${artImg(a.after, `${a.name}, after`)}
+        <figcaption>${esc(a.name.replace(/\.\w+$/, ''))}</figcaption></figure>`).join('')}</div>`
+  : '');
+
 function timelineItem(item, ctx) {
   const li = document.createElement('li');
   const d = document.createElement('details');
@@ -243,11 +259,13 @@ function timelineItem(item, ctx) {
     const e = item.entry;
     li.className = 'item manual';
     d.innerHTML = `
-      <summary><span class="kicker">${esc(MANUAL_KINDS[e.kind] || MANUAL_KINDS.other)}${e.time ? ` · ${esc(e.time)}` : ''}</span>
+      <summary><span class="kicker">${esc(MANUAL_KINDS[e.kind] || MANUAL_KINDS.other)}${e.author ? ` by ${esc(e.author)}` : ''}${e.time ? ` · ${esc(e.time)}` : ''}</span>
         <span class="line">${esc(e.title)}</span></summary>
       <div class="body">
         ${e.body ? `<div class="md">${md(e.body)}</div>` : ''}
         ${e.conversation?.length ? `<div class="chat">${chatPairs(e.conversation)}</div>` : ''}
+        ${artGrid(e.art)}
+        ${shotPairs(e.shots)}
         ${e.links?.length ? `<ul class="commits">${e.links.map((l) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label || l.url)}</a></li>`).join('')}</ul>` : ''}
       </div>`;
     wireChat(d);
@@ -390,11 +408,12 @@ async function main() {
   const { sessions: files } = await getJSON('./sessions/index.json');
   const sessions = (await Promise.all(files.map((f) => getJSON(`./sessions/${f}`).catch(() => null)))).filter(Boolean);
   const manual = (await getJSON('./manual-log.json').catch(() => ({ entries: [] }))).entries || [];
+  const commits = (await getJSON('./commits.json').catch(() => ({ entries: [] }))).entries || [];
 
   const turns = sessions.flatMap((s) => s.turns);
   filterPlanUsage(turns);
   const repo = await getJSON('./repo-stats.json').catch(() => null);
-  renderStats(turns, meta, repo, manual.length, sessions.length);
+  renderStats(turns, meta, repo, manual.length + commits.length, sessions.length);
 
   // Number Claude Code prompts across the whole project, in order.
   const numbering = new Map();
@@ -409,7 +428,7 @@ async function main() {
 
   const items = [
     ...sessions.flatMap((s) => s.turns.map((turn) => ({ seq: turn.seq, date: turn.date, turn, session: s, n: numbering.get(turn) }))),
-    ...manual.map((entry) => ({ seq: entry.seq, date: entry.date, entry })),
+    ...[...manual, ...commits].map((entry) => ({ seq: entry.seq, date: entry.date, entry })),
   ].sort((x, y) => x.seq - y.seq);
   renderTimeline(items, ctx);
 

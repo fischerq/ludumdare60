@@ -78,6 +78,9 @@ on the same scripted input (pause, speed, scrub, live touch mode). Use one when 
   `git push` (`PreToolUse` hook), regenerating `repo-stats.json` and the sessions index instead of resolving them.
   If a real conflict remains, the push is blocked with the merge left in the tree: resolve it (keep both sides of
   decision logs and config blocks), commit, push again. Merge, never rebase or force-push a branch with an open PR.
+  A clean merge at turn start is pushed right away when the branch has an upstream. Between sessions, the
+  `sync-prs` GitHub Action (`.github/workflows/sync-prs.yml`) merges `main` into every open PR whenever `main`
+  changes; on a real conflict it comments on the PR instead, and the next session resolves it.
 
 ## AI-use log (making-of)
 Every human prompt and its token usage/cost is published in `making-of/` as a scrollable "making of" page.
@@ -111,6 +114,13 @@ Every human prompt and its token usage/cost is published in `making-of/` as a sc
   images, also for sessions whose transcript is gone.
 - The headline has six equal tiles: prompts, merged PRs (lines of code, commits), subscription share, tokens, Claude
   time, API list price. PR count and lines of code come from git via `making-of/repo-stats.json` (written by the exporter).
+- **Commits made outside Claude Code** (Max's art, anyone's direct pushes) show up automatically: the exporter turns
+  every non-merge commit not authored by Claude into a timeline entry in `making-of/commits.json` (generated, never
+  edit it), with a before/after pair for each changed file under `assets/` (copied to `making-of/media/art/<sha8>/`).
+  Display names come from `people` in `meta.json`. When such a commit changes art, also save before/after game
+  screenshots of where that art shows, with matching numbers:
+  `node tools/shot.js commit-<sha8>-before-<n> --at <sha>^ --scene Key` and `... commit-<sha8>-after-<n> --at <sha>`.
+  Check `making-of/commits.json` at the start of each turn for new art commits that still lack them.
 - If a new model shows up, add its prices to `PRICES` in `tools/ai_log.py` (models are read from the transcript).
 - **Work outside Claude Code** goes in `making-of/manual-log.json` (format in its `_readme`): separate claude.ai
   chats, repo or Netlify setup, merges, playtests, art made by hand. When the user mentions such work, or you notice it
@@ -118,8 +128,8 @@ Every human prompt and its token usage/cost is published in `making-of/` as a sc
   and say the time wasn't recorded. Never invent details the user didn't give.
 
 ## Event page
-`event/index.html` is a shareable page for the in-person Ludum Dare 60 site in Munich (Die Gamerei, hosted by
-Munich eSports). It only states facts with a source. The official start (Sat 17 Oct 00:00 CEST) is from the ldjam.com countdown.
+`event/index.html` is a shareable page for the in-person Ludum Dare 60 site in Munich (Saturday at Gasteig HP8,
+Sunday at Die Gamerei, hosted by Munich eSports). It only states facts with a source. The official start (Sat 17 Oct 00:00 CEST) is from the ldjam.com countdown.
 Venue hours (Sat 9:00 to Sun 17:00) are the user's current plan, and coordination happens on the Gamedev/Muc Discord
 (https://discord.gg/FeZ96Z89A). Update the page when the plan changes.
 The Games card shows one tile per game (thumbnail in `event/games/`, title, author, Play and Making-of
