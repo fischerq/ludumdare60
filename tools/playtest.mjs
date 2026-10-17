@@ -11,11 +11,13 @@
 //   node tools/playtest.mjs --runs 50 --seed 7    run count and base seed (run i uses seed + i at every level)
 //   node tools/playtest.mjs --out FILE            results file (default lab/playtest/results.json); --no-save
 //   node tools/playtest.mjs --verbose             one line per run
+//   node tools/playtest.mjs --set SPEED.ghost=5   try config values (comma-separated) without editing config.js
 // Needs network once for the pinned Z80 core (like tools/arcade_test.mjs).
 
 import './playtest/env.mjs';
 import { writeFile } from 'node:fs/promises';
-import { PLAYTEST } from '../src/config.js';
+import * as CONFIG from '../src/config.js';
+const { PLAYTEST } = CONFIG;
 import { boot, session, runLayer, LAYERS } from './playtest/sim.mjs';
 import { noiseAt } from './playtest/noise.mjs';
 
@@ -41,9 +43,18 @@ const quantile = (xs, q) => {
 const round = (v, d = 1) => (v === null || v === undefined ? null : +v.toFixed(d));
 const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 
+// --set SPEED.ghost=5,DEEP.bus.cycleTime=1.4: try config values without editing src/config.js (before the
+// program is assembled, so maze numbers count too).
+const sets = opt('set', '') ? opt('set', '').split(',') : [];
+for (const kv of sets) {
+  const [path, v] = kv.split('='), keys = path.split('.'), last = keys.pop();
+  const obj = keys.reduce((o, k) => o?.[k], CONFIG);
+  if (!obj || !(last in obj)) { console.error(`--set: no config value ${path}`); process.exit(1); }
+  obj[last] = Number(v);
+}
 await boot();
 const started = Date.now();
-const report = { generated: new Date().toISOString().slice(0, 10), knob, runs, seed, levels, layers: {} };
+const report = { generated: new Date().toISOString().slice(0, 10), knob, runs, seed, levels, set: sets, layers: {} };
 
 for (const layer of layers) {
   const rows = [];

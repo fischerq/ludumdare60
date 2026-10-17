@@ -88,7 +88,7 @@ export const PIXEL = {
 // Speeds in tiles per second.
 export const SPEED = {
   pac: 6.5,
-  ghost: 6,
+  ghost: 5.05,
   ghostTunnel: 3,
   ghostFright: 3.5,
   ghostEyes: 15,
@@ -104,7 +104,7 @@ export const GHOSTS = [
 ];
 
 export const RULES = {
-  lives: 3,
+  lives: 4,
   dotPoints: 10,
   powerPoints: 50,
   ghostPoints: [200, 400, 800, 1600],
@@ -127,7 +127,7 @@ export const INPUT = {
 
 // How forgiving turning is. Tune in the lab: /lab/bench.html?b=maze-controls
 export const CONTROL = {
-  turnWindow: 0.4,     // tiles before or after a junction where a sideways swipe still takes the turn
+  turnWindow: 0.7,     // tiles before or after a junction where a sideways swipe still takes the turn
   bufferTime: 0.8,     // s a swipe waits for a junction it fits; after that it's dropped
 };
 
@@ -256,6 +256,7 @@ export const DEEP = {
   bus: {                 // -4 the spatial bus: chip rooms behind decoder doors, packets on the lanes
     cycleTime: 1.1,      // s between bus cycles shown
     packetSpeed: 7,      // tiles per second along the lanes
+    readDelay: 1.3,      // s a read's packet waits in the chip before it heads out through the door
     // # wall, . floor, = bus lane (packets run here), C the CPU; chip rooms: interior r a v i, door R A V I
     // (open while the decoder selects that chip): ROM, RAM, VRAM, I/O.
     layout: [

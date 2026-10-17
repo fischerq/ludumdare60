@@ -90,7 +90,8 @@ real frame's bus log (first a chip at random among those the frame touched, then
 RAM count as VRAM, sprite registers as RAM / I/O). The **address decoder** opens only that chip's door (Zelda
 keys and locked doors, keyed by the address); a door that closes on you is a hit, and inside a room you wait for
 its chip to be addressed again. **Enemy:** each cycle sends a packet along the lanes (`packetSpeed`): a write
-from the CPU into the chip, a read from the chip back to the CPU; touching one is a hit. A read drops up to 3 of
+from the CPU into the chip, a read from the chip back to the CPU, leaving the chip only after `readDelay` (its access
+time, so the door can be slipped through before the read comes out); touching one is a hit. A read drops up to 3 of
 its 1 bits on its lane as dots. **Objectives:** the data byte in each of the 4 chip rooms.
 
 ## Layer -5: the CPU · built (gameplay pass)
@@ -143,3 +144,7 @@ the ones left). Every dot Pac-Man eats is a dot.
   the enemies. Bus becomes spatial (chip rooms behind decoder doors). (Quirin, from the survey defaults)
 - 2026-10-17: Screen and signals looked too much like the maze: the screen becomes phosphor triads painted by a
   one-pixel raster beam (deadly only at its spot, on lit triads), signals becomes a circuit board of video chips. (Quirin)
+- 2026-10-17: Bus easier: a read's packet waits `DEEP.bus.readDelay` (1.3 s) in the chip before heading out. Before,
+  it came out through the one-tile approach the moment the door opened, so ROM (never written) and VRAM (about 1%
+  writes) were nearly impossible to enter; playtest bots won 0% at every noise level. (Quirin asked to make the bus
+  easier; Claude picked the fix from the [playtest](playtest.md) runs)
