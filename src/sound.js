@@ -71,6 +71,14 @@ export const sfx = {
   clear() {
     melody([[523, 1], [659, 1], [784, 1], [1047, 2], [784, 1], [1047, 3]], 0.09, { vol: 0.35 });
   },
+  coin() {
+    tone(1400, 0.06, { vol: 0.4 });
+    tone(1900, 0.25, { at: 0.07, vol: 0.4 });
+  },
+  // The joystick's microswitch clicking over.
+  click() {
+    tone(2400, 0.015, { type: 'square', vol: 0.25 });
+  },
   // A wobbling tone while ghosts are frightened.
   frightOn() {
     if (!ctx || siren) return;

@@ -46,6 +46,8 @@ bonus. See [movement](systems/movement.md).
 | Arcade maze game (starting point) | decided, first version built | [arcade-maze](systems/arcade-maze.md) | `/lab/bench.html?b=maze-controls` |
 | Tech layers / minigames | open | [layers](systems/layers.md) | none yet |
 | Art (pixel art, visual design) | proposed (Max) | [art](systems/art.md) | none |
+| Layer: the cabinet (zoom out) | decided, first slice built | [layer-cabinet](systems/layer-cabinet.md) | none yet |
+| Layer: inside the screen (zoom in) | proposed, questions open | [layer-crt](systems/layer-crt.md) | none yet |
 | Mini-gurke easter egg | proposed | [layers](systems/layers.md#mini-gurke-easter-egg--proposed) | none |
 
 ## Vertical slice · decided
@@ -57,7 +59,9 @@ The smallest playable version that tests the core assumption.
 ## Art and audio direction · proposed
 Arcade look: black background, neon maze lines, chunky pixel sprites, pixel font, CRT-ish touches (scanlines)
 if cheap. Max makes the pixel art; the list of sprites and how they get into the game is in
-[art](systems/art.md). The maze game runs full screen with no cabinet frame; clearing the first level changes that. Deeper layers can change look to match the tech they show (schematics, hex dumps, assembly listings).
+[art](systems/art.md). The maze game runs full screen with no cabinet frame; clearing the first level changes that.
+**Pixel art throughout, no real 3D:** depth is simulated in pixel art (oblique views). Zooming between layers
+changes the pixel size by whole factors so every layer stays crisp. Deeper layers can change look to match the tech they show (schematics, hex dumps, assembly listings).
 
 ## Current prototype
 The arcade maze game: menu, one maze, 4 ghosts, swipe to turn, sound. Clearing the maze shows a placeholder
@@ -89,5 +93,9 @@ survives only as the movement lab bench.
   start. Plan for the Z80 emulator layer. (Quirin)
 - 2026-10-17: The game is called "Layers of Pac". The maze level imitates the original's pixel look at a similar
   resolution. (Quirin)
+- 2026-10-17: Menu footer: Making-Of, Lab and Impressum links in one row. Next layers to design: zoom out to the
+  cabinet and zoom in to the screen. (Quirin)
+- 2026-10-17: Layer order maze → cabinet (zoom out) → screen (zoom in). No real 3D anywhere: pixel art
+  throughout, 3D simulated. (Quirin)
 - 2026-10-17: Max (artist) joins the team and works on the visual design, e.g. the pixel art. (Quirin)
 - 2026-10-17: Pixel art at 32x32 per sprite; the maze is built from a tileset. Details in [art](systems/art.md). (Quirin)

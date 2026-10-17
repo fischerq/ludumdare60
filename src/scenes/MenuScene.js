@@ -34,18 +34,15 @@ export default class MenuScene extends Phaser.Scene {
       fontFamily: UI.arcadeFont, fontSize: 24, color: COLORS.textDim, align: 'center',
     }).setOrigin(0.5).setLineSpacing(16);
 
-    // Link to the making-of page. Big padded hit area; tapping it must not start the game.
-    const link = this.add.text(cx, GAME_HEIGHT - 120, 'How this game was made →', {
-      fontFamily: UI.fontFamily, fontSize: UI.linkSize, color: COLORS.link,
-      padding: { x: 40, y: 28 },
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    link.on('pointerup', () => { window.location.href = './making-of/'; });
-
-    const legal = this.add.text(cx, GAME_HEIGHT - 40, 'Impressum', {
-      fontFamily: UI.fontFamily, fontSize: UI.legalSize, color: COLORS.textDim,
-      padding: { x: 30, y: 14 },
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    legal.on('pointerup', () => { window.location.href = './impressum/'; });
+    // Footer links in one row. Big padded hit areas; tapping one must not start the game.
+    const links = [['Making-Of', './making-of/'], ['Lab', './lab/'], ['Impressum', './impressum/']].map(([label, url], i) => {
+      const link = this.add.text(cx + (i - 1) * 230, GAME_HEIGHT - 70, label, {
+        fontFamily: UI.fontFamily, fontSize: UI.linkSize, color: i === 0 ? COLORS.link : COLORS.textDim,
+        padding: { x: 30, y: 30 },
+      }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      link.on('pointerup', () => { window.location.href = url; });
+      return link;
+    });
 
     let started = false;
     const start = () => {
@@ -55,7 +52,7 @@ export default class MenuScene extends Phaser.Scene {
       this.scene.start('Game');
     };
     this.input.on('pointerdown', (pointer, over) => {
-      if (!over.includes(link) && !over.includes(legal)) start();
+      if (!links.some((l) => over.includes(l))) start();
     });
     this.input.keyboard?.once('keydown-SPACE', start);
     this.input.keyboard?.once('keydown-ENTER', start);
