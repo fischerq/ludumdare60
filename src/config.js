@@ -198,25 +198,54 @@ export const DEEP = {
   },
   machineSlowdown: 4,    // the machine runs this many times slower in the deep layers than on the maze
   // Each layer: its own verb and enemy, and goal = the number of objectives (3 to 5) that win it.
-  crt: {                 // -1 dark room: eat the power pellets while the beam has lit them; the ghosts hunt
-    beamPeriod: 3.2,     // s for one picture (the real one takes 16.5 ms)
-    vblank: 0.22,        // share of the period with the beam off (vertical blank: safe to cross)
-    decay: 0.9,          // s for the phosphor to fade to a third
+  crt: {                 // -1 inside the tube: phosphor triads lit by a raster beam, one pixel at a time
+    beamPeriod: 10,      // s for one picture, cell by cell, row by row (the real one takes 16.5 ms)
+    vblank: 0.12,        // share of the period with the beam off (vertical blank: it flies back)
+    decay: 1.6,          // s for the phosphor to fade to a third
     litAbove: 0.35,      // glow above which a dot or pellet can be eaten
-    darkFloor: 0.08,     // how much of the unlit picture still shows (dark room)
-    pacColor: 0xfff23a,  // the machine's Pac-Man sprite on the phosphor
+    darkFloor: 0.06,     // how much of an unlit triad still shows
+    lookAhead: 6,        // cells of the beam's path ahead drawn as a warning
+    // Each triad's red, green and blue phosphor (0..1) for what the picture shows there.
+    rgb: { wall: [0.15, 0.15, 1], door: [1, 0.7, 0.85], dot: [1, 0.72, 0.6], pac: [1, 1, 0], ghost: [1, 0.1, 0.1], scared: [0.2, 0.3, 1] },
     cornerRadius: 2,     // tiles: the tube's rounded corners can't be walked on
     goal: 4,             // the four power pellets
   },
-  signals: {             // -2 carry and deliver: color index -> palette chip -> DAC
-    sparkEvery: 1.2,     // s between color indices the tile fetcher hands out at dot tiles
-    sparkLife: 6,        // s one waits to be picked up
+  signals: {             // -2 the video board: carry a color index from the tile fetcher via the palette to the DAC
+    sparkEvery: 1.2,     // s between color indices the tile fetcher sends out (one per dot tile it fetches)
+    sparkLife: 6,        // s one waits on a fetcher pin to be picked up
     maxSparks: 4,
     pulseTime: 0.6,      // s the sound chip's area is deadly after a sound command
     pulseRadius: 2,      // tiles around the sound chip
-    palette: { x: 0, y: 12 },  // 2x2 chips (top-left tile); the tunnel row's ends
-    dac: { x: 17, y: 12 },
-    sound: { x: 8, y: 23 },    // 3x2 sound chip at the bottom
+    // . board, - | + traces (walkable); chips (solid): V video RAM, T tile fetcher, L sprite line buffer,
+    // P palette PROM, D DAC, S sound chip. Pins (walkable): f fetcher outputs, p palette inputs, d DAC inputs,
+    // o video out. The hardware sprites move over the board at their register positions (scaled to it).
+    layout: [
+      '...................',
+      '.VVVVV.....TTTTTT..',
+      '.VVVVV-----TTTTTT..',
+      '.VVVVV.....TTTTTT..',
+      '...........ffffff..',
+      '...........|....|..',
+      '...........|....|..',
+      '.LLLL......|....|..',
+      '.LLLL------+....|..',
+      '.LLLL......|....|..',
+      '...........|....|..',
+      '...........|....|..',
+      '...........+-pp-+..',
+      '.........PPPPPPP...',
+      '.........PPPPPPP...',
+      '...........|.|.....',
+      '...........dd......',
+      '..........DDDD.....',
+      '..........DDDD.....',
+      '...........||......',
+      '...........||......',
+      '.SSS.......oo......',
+      '.SSS...............',
+      '...................',
+      '...................',
+    ],
     goal: 4,             // colors delivered
   },
   vram: {                // -3 blade trap: the write head dashes along a row to the address it writes
