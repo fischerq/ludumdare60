@@ -1,0 +1,17 @@
+{
+  "liveServer.settings.root": "/",
+  "liveServer.settings.port": 5500,
+  "liveServer.settings.host": "0.0.0.0",
+  "liveServer.settings.useLocalIp": true,
+  "liveServer.settings.CustomBrowser": "default",
+  "liveServer.settings.ignoreFiles": [
+    ".vscode/**",
+    ".claude/**",
+    "design/**",
+    "tools/**",
+    "making-of/sessions/**",
+    "making-of/media/**",
+    "making-of/repo-stats.json",
+    "**/*.md"
+  ]
+}
