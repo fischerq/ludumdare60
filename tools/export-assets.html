@@ -21,6 +21,9 @@
   <script type="module">
     import BootScene from '../src/scenes/BootScene.js';
 
+    // Built from other textures, not art to edit.
+    const DERIVED = new Set(['maze']);
+
     // BootScene starts 'Menu' when it's done; this stand-in collects the textures instead.
     class Collect extends Phaser.Scene {
       constructor() { super('Menu'); }
@@ -28,7 +31,7 @@
         const out = {};
         for (const key of this.textures.getTextureKeys().sort()) {
           const img = this.textures.get(key).getSourceImage();
-          if (key.startsWith('__') || !(img instanceof HTMLCanvasElement)) continue;
+          if (key.startsWith('__') || DERIVED.has(key) || !(img instanceof HTMLCanvasElement)) continue;
           out[key] = img.toDataURL('image/png');
           const fig = document.createElement('figure');
           fig.innerHTML = `<img src="${out[key]}" width="${img.width * 4}" height="${img.height * 4}">` +

@@ -46,6 +46,10 @@ def main():
         sys.exit('Export page produced no textures (is the Phaser CDN reachable?)')
     textures = json.loads(html.unescape(m.group(1)))
     OUT.mkdir(exist_ok=True)
+    # Drop exports of textures that no longer exist (Max's folder and other files are left alone).
+    for old in OUT.glob('*.png'):
+        if old.stem not in textures:
+            old.unlink()
     for key, data in textures.items():
         (OUT / f'{key}.png').write_bytes(base64.b64decode(data.split(',', 1)[1]))
     print(f'{len(textures)} textures -> {OUT.relative_to(ROOT)}/')

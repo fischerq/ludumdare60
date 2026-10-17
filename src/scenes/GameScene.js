@@ -10,8 +10,9 @@ const KEYS = {
   KeyA: 'left', KeyD: 'right', KeyW: 'up', KeyS: 'down',
 };
 
-// The scene works in art pixels (8 per tile, 180 across) and the camera scales it up by PIXEL.zoom with
-// hard edges, so it looks like an arcade screen. Positions are rounded to whole art pixels.
+// The scene works in tile pixels (16 per tile, 360 across) and the camera scales it up by PIXEL.zoom with
+// hard edges, so it looks like an arcade screen. Positions are rounded to whole tile pixels. Sprites are
+// scaled to a PIXEL.sprite box whatever their native size.
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super('Game');
@@ -29,10 +30,10 @@ export default class GameScene extends Phaser.Scene {
     this.mazeImage = this.add.image(this.ox, this.oy, 'maze').setOrigin(0);
     this.makePellets();
 
-    this.pac = this.add.image(0, 0, 'pac-0');
+    this.pac = this.sprite(0, 0, 'pac-0');
     this.ghostSprites = this.g.ghosts.map((gh) => ({
-      body: this.add.image(0, 0, 'ghost-0').setTint(COLORS.ghosts[gh.name]),
-      eyes: this.add.image(0, 0, 'eyes-left'),
+      body: this.sprite(0, 0, 'ghost-0').setTint(COLORS.ghosts[gh.name]),
+      eyes: this.sprite(0, 0, 'eyes-left'),
     }));
     // Black side borders hide actors while they pass through the tunnel, like the arcade screen.
     const mazeW = this.g.maze.w * T;
@@ -51,8 +52,13 @@ export default class GameScene extends Phaser.Scene {
   sx(x) { return Math.round(this.ox + x * T + T / 2); }
   sy(y) { return Math.round(this.oy + y * T + T / 2); }
 
+  sprite(x, y, key) {
+    return this.add.image(x, y, key).setScale(PIXEL.sprite / this.textures.get(key).getSourceImage().width);
+  }
+
+  // The pixel font at twice its native 8 px, so one font pixel is one sprite pixel of today's 16x16 art.
   text(x, y, str, color) {
-    return this.add.text(x, y, str, { fontFamily: UI.arcadeFont, fontSize: 8, color, resolution: 1 });
+    return this.add.text(x, y, str, { fontFamily: UI.arcadeFont, fontSize: 16, color, resolution: 1 });
   }
 
   makePellets() {
@@ -66,21 +72,21 @@ export default class GameScene extends Phaser.Scene {
   }
 
   makeHud() {
-    this.text(16, 12, '1UP', COLORS.text);
-    this.scoreText = this.text(16, 22, '00', COLORS.text);
+    this.text(32, 24, '1UP', COLORS.text);
+    this.scoreText = this.text(32, 44, '00', COLORS.text);
     let best = 0;
     try { best = Number(localStorage.getItem(BEST_KEY)) || 0; } catch (e) { /* private mode */ }
     this.best = best;
-    this.text(this.viewW - 16, 12, 'HIGH SCORE', COLORS.text).setOrigin(1, 0);
-    this.bestText = this.text(this.viewW - 16, 22, String(best || '00'), COLORS.text).setOrigin(1, 0);
+    this.text(this.viewW - 32, 24, 'HIGH SCORE', COLORS.text).setOrigin(1, 0);
+    this.bestText = this.text(this.viewW - 32, 44, String(best || '00'), COLORS.text).setOrigin(1, 0);
 
     const mazeBottom = this.oy + this.g.maze.h * T;
-    this.readyText = this.text(this.sx(MAZE.houseExit.x), this.oy + 13 * T + 1, 'READY!', COLORS.textReady)
+    this.readyText = this.text(this.sx(MAZE.houseExit.x), this.oy + 13 * T + 2, 'READY!', COLORS.textReady)
       .setOrigin(0.5, 0);
-    this.hint = this.text(this.viewW / 2, mazeBottom + 44, 'SWIPE TO TURN', COLORS.textDim).setOrigin(0.5, 0);
+    this.hint = this.text(this.viewW / 2, mazeBottom + 88, 'SWIPE TO TURN', COLORS.textDim).setOrigin(0.5, 0);
     this.lifeIcons = [];
     for (let i = 0; i < RULES.lives - 1; i++) {
-      this.lifeIcons.push(this.add.image(this.ox + 12 + i * 16, mazeBottom + 12, 'pac-2').setAngle(180));
+      this.lifeIcons.push(this.sprite(this.ox + 24 + i * 32, mazeBottom + 24, 'pac-2').setAngle(180));
     }
   }
 
@@ -142,7 +148,7 @@ export default class GameScene extends Phaser.Scene {
       case 'frightEnd': sfx.frightOff(); break;
       case 'ghost': {
         sfx.ghost();
-        const t = this.text(this.sx(e.x), this.sy(e.y) - 4, String(e.points), '#00ffde').setOrigin(0.5, 0);
+        const t = this.text(this.sx(e.x), this.sy(e.y) - 8, String(e.points), '#00ffde').setOrigin(0.5, 0);
         this.time.delayedCall(RULES.ghostEatPause * 1000, () => t.destroy());
         break;
       }
@@ -194,6 +200,8 @@ export default class GameScene extends Phaser.Scene {
       else body.setTexture(`ghost-${skirt}`).setTint(COLORS.ghosts[gh.name]);
     });
 
-    if (g.phase === 'clearing') this.mazeImage.setTexture(Math.floor(time * 5) % 2 ? 'maze-white' : 'maze');
+    if (g.phase === 'clearing') {
+      if (Math.floor(time * 5) % 2) this.mazeImage.setTintFill(COLORS.mazeFlash); else this.mazeImage.clearTint();
+    }
   }
 }
