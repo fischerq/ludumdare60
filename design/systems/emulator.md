@@ -68,7 +68,7 @@ reference until the Z80 version matches it.
    hidden). The bus log moves to typed arrays: a frame has about 25 000 bus accesses, and one object per access
    is too much garbage on a phone. A frame recorder keeps the raw data of the last few frames (bus
    accesses, register snapshots, input), so slowed-down layers replay real frames instead of inventing them.
-3. **Video chip.** A JS renderer (pure module) that draws a frame from VRAM, color RAM, the 8 sprites and a
+3. **Done: video chip** (`video.js`). A JS renderer (pure module) that draws a frame from VRAM, color RAM, the 8 sprites and a
    palette into a canvas. Its "graphics ROM" is built at load time from the textures in `assets/`, so Max's art
    pipeline stays unchanged.
 4. **Assembler and the first program.** A small Z80 assembler in plain JS (`src/systems/arcade/asm.js`) that

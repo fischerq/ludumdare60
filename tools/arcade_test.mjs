@@ -1,6 +1,9 @@
 // Tests for src/systems/arcade (no browser): node tools/arcade_test.mjs  (needs network for the pinned Z80 core)
 import { loadZ80 } from '../src/systems/arcade/z80.js';
 import { createMachine } from '../src/systems/arcade/machine.js';
+import { spriteArt, layoutFromVram, SPRITE } from '../src/systems/arcade/video.js';
+import { CELL, tileOffset } from '../src/systems/arcade/memmap.js';
+import { MAZE } from '../src/config.js';
 
 let failed = 0;
 const check = (name, ok, info = '') => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${name} ${info}`); if (!ok) failed++; };
@@ -20,6 +23,15 @@ const Z80 = await loadZ80();
   check('halt skips the idle frame', m.halted && m.frameRange(0).to - m.frameRange(0).from < 100);
   check('sound latch', m.takeSounds().length === 10);
   check('dirty bits', m.dirty[0] === 1 && m.dirty[1] === 0);
+}
+
+{ // Video chip decoding
+  check('sprite codes', spriteArt(SPRITE.pac + 1 * 4 + 2).key === 'pac-2' && spriteArt(SPRITE.ghost + 7).eyes === 'eyes-right'
+    && spriteArt(SPRITE.points + 3).text === '1600' && spriteArt(0) === null);
+  const vram = new Uint8Array(0x400);
+  const code = { '#': CELL.wall, '-': CELL.door, T: CELL.tunnel, G: CELL.house, '.': CELL.dot, o: CELL.power };
+  MAZE.layout.forEach((r, y) => [...r].forEach((c, x) => { vram[tileOffset(x, y)] = code[c] ?? CELL.empty; }));
+  check('walls read back from VRAM', layoutFromVram(vram).join() === MAZE.layout.join().replace(/o/g, '.'));
 }
 
 if (failed) { console.error(`${failed} failed`); process.exit(1); }
