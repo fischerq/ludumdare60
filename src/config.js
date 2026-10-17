@@ -196,6 +196,7 @@ export const DEEP = {
     logic:   { bg: 0x0c0418, grid: 0x220e40, line: 0xa45aff, glow: 0x2a1250, dot: 0xd0b0ff, dot2: 0xffffff, special: 0xffffff },
     input:   { bg: 0x140602, grid: 0x34140a, line: 0xff6a2a, glow: 0x4a1a08, dot: 0xffb08a, dot2: 0xffffff, special: 0xffffff },
   },
+  machineSlowdown: 4,    // the machine runs this many times slower in the deep layers than on the maze
   crt: {
     beamPeriod: 3.2,     // s for one picture (the real one takes 16.5 ms)
     vblank: 0.22,        // share of the period with the beam off (vertical blank: safe to cross)
@@ -236,10 +237,6 @@ export const DEEP = {
     bounce: 0.25,        // s a switch chatters on and off after you step on it
     goal: 30,            // dots Pac-Man eats while you steer
   },
-};
-
-export const CHEATS = {
-  enabled: true,
 };
 
 // Layer 3: the arcade hall (zoom out further). A small, cozy room seen top-down like a Pokémon game: Pac-Man
