@@ -202,6 +202,7 @@ export const DEEP = {
     decay: 0.9,          // s for the phosphor to fade to a third
     litAbove: 0.35,      // glow above which a dot can be eaten
     pacColor: 0xfff23a,  // the machine's Pac-Man sprite on the phosphor
+    cornerRadius: 2,     // tiles: the tube's rounded corners can't be walked on
     goal: 25,
   },
   signals: {

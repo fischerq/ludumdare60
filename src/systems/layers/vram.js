@@ -9,7 +9,7 @@ import { CELL, MAP } from '../arcade/memmap.js';
 import { BUS } from '../arcade/machine.js';
 import { H } from '../arcade/video.js';
 import { tinyText, hex2 } from './font.js';
-import { css, floor, neonBlock, neonBox, dot, HAZARD } from './tron.js';
+import { css, floor, neonBox, dot, HAZARD } from './tron.js';
 
 const C = DEEP.vram;
 const COLS = 32;
@@ -27,7 +27,7 @@ export default {
   },
 
   open(st, env, x, y) {
-    return x >= 0 && x < COLS && y >= 0 && y < H && env.m.vram[y * COLS + x] !== CELL.wall;
+    return x >= 0 && x < COLS && y >= 0 && y < H;
   },
 
   update(st, env) {
@@ -66,7 +66,6 @@ export default {
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < COLS; x++) {
         const i = y * COLS + x, v = m.vram[i];
-        if (v === CELL.wall) neonBlock(ctx, x * S + 1, y * S + 1, S - 1, S - 1, P.line, P.glow);
         if (st.dirty.has(i)) { dot(ctx, env, 'dot', x, y, S); continue; }
         ctx.fillStyle = css(v === CELL.wall ? P.line : v ? P.dot : P.grid, x >= 19 ? 0.5 : 1);
         tinyText(ctx, hex2(v), x * S + Math.floor((S - 8) / 2), y * S + Math.floor((S - 5) / 2));

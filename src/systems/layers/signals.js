@@ -8,7 +8,7 @@ import { DEEP } from '../../config.js';
 import { CELL, tileOffset } from '../arcade/memmap.js';
 import { W, H, SPRITE } from '../arcade/video.js';
 import { tinyText, hex2 } from './font.js';
-import { css, floor, neonBlock, neonBox, dot, HAZARD } from './tron.js';
+import { css, floor, neonBox, dot, HAZARD } from './tron.js';
 
 const C = DEEP.signals;
 
@@ -25,9 +25,7 @@ export default {
   },
 
   open(st, env, x, y) {
-    if (x < 0 || x >= W || y < 0 || y >= H) return false;
-    const c = env.m.vram[tileOffset(x, y)];
-    return c !== CELL.wall && c !== CELL.door && c !== CELL.house;
+    return x >= 0 && x < W && y >= 0 && y < H;
   },
 
   // Rows the sound waves cover at the bottom right now: each swells and fades over waveTime.
@@ -74,7 +72,6 @@ export default {
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
         const c = m.vram[tileOffset(x, y)];
-        if (c === CELL.wall) neonBlock(ctx, x * S + 1, y * S + 1, S - 1, S - 1, P.glow, P.bg);
         ctx.fillStyle = css(c === CELL.wall ? P.line : c ? P.dot : P.grid);
         tinyText(ctx, hex2(c), x * S + Math.floor((S - 7) / 2), y * S + Math.floor((S - 5) / 2));
       }

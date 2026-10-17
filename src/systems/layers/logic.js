@@ -34,9 +34,7 @@ export default {
   },
 
   open(st, env, x, y) {
-    if (x < 0 || x >= W || y < 0 || y >= H) return false;
-    const c = env.m.vram[tileOffset(x, y)];
-    return c !== CELL.wall && c !== CELL.door && c !== CELL.house;
+    return x >= 0 && x < W && y >= 0 && y < H;
   },
 
   update(st, env) {
@@ -60,7 +58,7 @@ export default {
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
         const i = tileOffset(x, y), c = m.vram[i];
-        if (c === CELL.wall) neonBox(ctx, x * S + 3, y * S + 3, S - 5, S - 5, P.line, P.glow);
+        if (c === CELL.wall) neonBox(ctx, x * S + 3, y * S + 3, S - 5, S - 5, P.glow, P.grid);
         else if ((c === CELL.dot || c === CELL.power) && !st.eaten.has(i)) dot(ctx, env, c === CELL.power ? 'special' : 'dot', x, y, S);
       }
     }

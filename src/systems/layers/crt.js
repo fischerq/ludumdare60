@@ -14,7 +14,7 @@ const C = DEEP.crt;
 export default {
   id: 'crt',
   title: 'INSIDE THE SCREEN',
-  subtitle: 'EAT DOTS WHILE THEY GLOW\nDON\'T BE ON ONE WHEN THE BEAM COMES',
+  subtitle: 'EAT DOTS WHILE THEY GLOW. STAY IN\nTHE DARK WHEN THE BEAM COMES',
   cols: W, rows: H,
   start: { x: 9, y: 17 },
   goal: C.goal,
@@ -33,10 +33,16 @@ export default {
     return Math.pow(1 / 3, (t - st.passed[y]) / C.decay);
   },
 
+  // The whole face of the tube, except its rounded corners: the maze is only light on the phosphor.
   open(st, env, x, y) {
-    if (x < 0 || x >= W || y < 0 || y >= H) return false;
-    const c = env.m.vram[tileOffset(x, y)];
-    return c !== CELL.wall && c !== CELL.door && c !== CELL.house;
+    return x >= 0 && x < W && y >= 0 && y < H && !this.corner(x, y);
+  },
+
+  corner(x, y) {
+    const R = C.cornerRadius;
+    const dx = x < R ? R - x : x > W - 1 - R ? x - (W - 1 - R) : 0;
+    const dy = y < R ? R - y : y > H - 1 - R ? y - (H - 1 - R) : 0;
+    return dx * dx + dy * dy > R * R;
   },
 
   // Returns 'collect', 'hit' or null for this frame.
@@ -46,13 +52,14 @@ export default {
     if (b !== null) for (let y = 0; y <= Math.min(H - 1, Math.floor(b)); y++) if (t - st.passed[y] > C.beamPeriod * 0.5) st.passed[y] = t;
     const px = Math.round(player.x), py = Math.round(player.y);
     const i = tileOffset(px, py), c = m.vram[i];
-    const lit = (c === CELL.dot || c === CELL.power) && !st.eaten.has(i);
+    const dotHere = (c === CELL.dot || c === CELL.power) && !st.eaten.has(i);
+    const lit = dotHere || c === CELL.wall || c === CELL.door;
     if (lit && b !== null && Math.abs(b - (py + 0.5)) < 0.5) return 'hit';
     for (const sp of m.sprites()) {
       if (sp.code < SPRITE.ghost || sp.code >= SPRITE.eyes) continue; // ghost bodies only
       if (Math.abs(sp.x / 16 - 0.5 - player.x) + Math.abs(sp.y / 16 - 0.5 - player.y) < 0.8) return 'hit';
     }
-    if (lit && this.glow(st, py, t) > C.litAbove) {
+    if (dotHere && this.glow(st, py, t) > C.litAbove) {
       st.eaten.add(i);
       return 'collect';
     }
@@ -62,6 +69,8 @@ export default {
   draw(ctx, st, env, S) {
     const { m, t, P } = env;
     floor(ctx, P, W, H, S);
+    ctx.fillStyle = css(DEEP.style.crt.bg);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (this.corner(x, y)) ctx.fillRect(x * S, y * S, S, S);
     // The tube is mounted on its side, so the scanlines run vertically: faint stripes, three per tile.
     ctx.fillStyle = css(P.grid);
     for (let x = 0; x < W * 3; x++) if (x % 3) ctx.fillRect(Math.round((x * S) / 3), 0, 1, H * S);
