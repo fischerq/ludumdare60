@@ -70,31 +70,37 @@
    "seq": 45,
    "date": "2026-10-17",
    "time": "12:54",
-   "duration_s": 50,
+   "duration_s": 69,
    "prompt": "switch to separate tile sheets for the ghosts. rework all the character sheets to be 32x32. horizontal movement of the pacman seems weird (is the tile being rotated? it should just flip horizontally). should have separate sprites for each layer",
    "followups": [],
    "images": [],
    "claude_images": [],
-   "reply": "I'm writing up the questions now; first I'm committing the making-of log.",
-   "progress_notes": [],
+   "reply": "I haven't changed any code yet. This reworks the art system, so the repo rules say to ask first. Here's what I found and what I need to know.\n\n**Pac-Man moving left:** yes, the sprite is rotated, not flipped. Moving left turns it 180°, so it's upside down. You can't see that on today's plain yellow circle, but it will show on any art with an eye or shading. The same happens in all three places that draw Pac-Man: the maze, the hall and the game picture on the cabinet screen. The spare-life icons are also drawn turned 180°.\n\n**Where characters appear now:** the maze, the menu and the cabinet screen all draw the same sprites. The hall reuses them too: the ghost visitors are the white tinted body plus an eyes overlay and a cap overlay. Max hasn't edited any character files yet, so changing them won't overwrite his work.\n\n**Questions** (the default I'd use is in brackets):\n\n1. **What \"layers\" get their own sprites?** [Two sets now. The maze set is also used by the menu and the cabinet screen. The hall gets its own set. They live in per-layer folders like the tilesets: `assets/maze/pac-0.png`, `assets/arcade/pac-0.png`. The CRT layer gets a set once it's designed.]\n2. **Ghost files:** one file per frame, like everything else now, or one strip image per character with frames side by side? [One file per frame: `maze/ghost-blinky-0`, `maze/ghost-blinky-1`, and so on, with the colours drawn into the file and no tinting.]\n3. **Ghost eyes in the maze:** keep the separate eyes overlay, or draw the eyes into each ghost's own frames? [Keep the overlay, shared by all ghosts, because it's also shown on its own after a ghost is eaten. Frightened and flashing ghosts stay one shared set too.]\n4. **32x32 placeholders:** the rules forbid upscaling, so I'd redraw all the code-drawn character art natively at 32x32. That covers Pac-Man, the 10 death frames, ghosts, eyes and frightened ghosts. [Yes. Pellets, the coin and the joystick stay as they are.]\n5. **Pac-Man up and down in the maze:** [moving left is a flip of the right-facing frames. Up and down keep rotating the right-facing frames by 90°, with no separate up/down art.]\n6. **Hall character size:** the hall is zoomed 4x and shows characters one tile big. At that size, 32x32 art would be shrunk to half its resolution and look finer-grained than the room. [Show hall characters two tiles big (2x2), so a 32x32 sprite is shown at full resolution. The alternative is 16x16 art just for the hall.]\n7. **Hall frames:** the hall is top-down, like a Pokémon game. [Pac-Man and each ghost visitor get frames per direction: right and left by flipping, separate up and down drawings, 2 walk frames each. The cap is drawn into the visitor sprites, and the `visitor-cap` overlay goes.]\n8. **Spare-life icons and menu:** [Use `maze/pac-2` facing left by flipping, as above.]\n\nIf the defaults are fine, just say \"defaults\". I'll write the scope into `design/systems/art.md` and build it as a few small commits: flip fix first, then the per-ghost files, then the 32x32 redraw, then the hall set.\n\nThe making-of log is pushed, and I merged the latest `main` into the branch. It's all in [fischerq/ludumdare60#22](https://github.com/fischerq/ludumdare60/pull/22). Plan usage is at 4% of the 5-hour limit and 18% of the weekly one.",
+   "progress_notes": [
+    "I'm writing up the questions now; first I'm committing the making-of log."
+   ],
    "tools": {
-    "Bash": 5,
+    "Bash": 6,
     "mcp__claude-code-remote__list_events": 2
    },
-   "api_requests": 6,
+   "api_requests": 8,
    "usage": {
     "claude-opus-5-5": {
-     "input": 12,
+     "input": 16,
      "cache_write_5m": 0,
-     "cache_write_1h": 16226,
-     "cache_read": 527300,
-     "output": 4026,
-     "thinking": 2408,
-     "cost_usd": 0.315836
+     "cache_write_1h": 17580,
+     "cache_read": 722880,
+     "output": 5558,
+     "thinking": 2529,
+     "cost_usd": 0.39644
     }
    },
-   "cost_usd": 0.315836,
+   "cost_usd": 0.39644,
    "commits": [
+    {
+     "sha": "f406d2aac5a45c4921a901487d34fc1b2eed86f4",
+     "subject": "Log: refresh after merging main"
+    },
     {
      "sha": "ce4aaf7e2c8282d76070d4c582a6a345a308c979",
      "subject": "Log: questions for per-layer 32x32 character sprites"
@@ -114,13 +120,78 @@
      "delta": 0.0
     }
    }
+  },
+  {
+   "index": 3,
+   "seq": 46,
+   "date": "2026-10-17",
+   "time": "13:05",
+   "duration_s": 344,
+   "prompt": "defaults are good. for 1 -  should have a set for each layer (so the machine has its own directory), but we can reuse. e.g. the machine should use the maze level sprites for drawing the screen.\nMake dedicated sprites for each state of the ghosts, no overlaying. yes, redraw them. use dedicated spirtes for the spare life icons.\nwe are optimizing so max can customize the graphics easily and cleanly (remember for the future)",
+   "followups": [],
+   "images": [],
+   "claude_images": [
+    "media/8ce6a4b3-3-c1.jpg",
+    "media/8ce6a4b3-3-c2.jpg"
+   ],
+   "reply": "Code is committed; now doing the end-of-turn log and push.",
+   "progress_notes": [
+    "I'm rewriting the character art in `BootScene` now: 32x32, one file per state, in per-layer folders.",
+    "Scenes are switched over; now the hall (2x2-tile characters, flip for left, depth sorting).",
+    "No real errors (only headless WebGL warnings). Checking the screenshots now.",
+    "Everything renders: Pac-Man faces left by mirroring, the spare-life icons have their own sprite, and the hall characters are 2x2 tiles. Updating the docs and CLAUDE.md next."
+   ],
+   "tools": {
+    "Bash": 24,
+    "mcp__claude-code-remote__list_events": 2,
+    "Read": 2,
+    "mcp__github__list_pull_requests": 1
+   },
+   "api_requests": 27,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 54,
+     "cache_write_5m": 0,
+     "cache_write_1h": 66612,
+     "cache_read": 3922661,
+     "output": 28856,
+     "thinking": 10396,
+     "cost_usd": 1.894764
+    }
+   },
+   "cost_usd": 1.894764,
+   "commits": [
+    {
+     "sha": "3844386b03e892f22d09a0179bc8ca8c2349498f",
+     "subject": "Per-layer 32x32 character art, one file per state"
+    }
+   ],
+   "entrypoint": "remote",
+   "branch": "claude/quirky-noether-8gpe2k",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.04,
+     "end": 0.01,
+     "delta": null
+    },
+    "seven_day": {
+     "start": 0.18,
+     "end": 0.18,
+     "delta": 0.0
+    }
+   }
   }
  ],
  "totals": {
-  "prompts": 2,
-  "cost_usd": 0.750348,
-  "output_tokens": 6909,
-  "input_tokens": 1163466
+  "prompts": 3,
+  "cost_usd": 2.725716,
+  "output_tokens": 37297,
+  "input_tokens": 5349731
  },
- "reported_by_claude_code": null
+ "reported_by_claude_code": {
+  "total_usd": 0.8884882000000002,
+  "by_model": {
+   "claude-opus-5-5": 0.888488
+  }
+ }
 }
