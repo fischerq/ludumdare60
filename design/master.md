@@ -51,6 +51,7 @@ bonus. See [movement](systems/movement.md).
 | Layer: inside the screen (zoom in) | first slice built | [layer-crt](systems/layer-crt.md) | none yet |
 | Deep layers (screen → wires), on the emulator | first slices built | [layer-deep](systems/layer-deep.md) | none yet |
 | Emulated arcade machine (runs the maze game, feeds every layer) | built (plan steps 1-9) | [emulator](systems/emulator.md) | none yet |
+| Playtest bots (difficulty per layer, full playthrough) | built | [playtest](systems/playtest.md) | `/lab/playtest.html` |
 | Mini-gurke easter egg | proposed | [layers](systems/layers.md#mini-gurke-easter-egg--proposed) | none |
 
 ## Vertical slice · decided
@@ -116,3 +117,5 @@ survives only as the movement lab bench.
   machine, a bot plays while the player is elsewhere, and seven deep layers read the machine's raw data. (Quirin asked for it; Claude)
 - 2026-10-17: Outer loop tweak: layer buttons always available, cheats removed; game over halts the machine
   until a coin goes in; deep layers run the machine 4x slower. See [layers](systems/layers.md). (Quirin)
+- 2026-10-17: Playtest bots: a bot plays every layer (and the whole outer loop) with structured human noise;
+  `node tools/playtest.mjs` measures win rate and time to solve per noise level. See [playtest](systems/playtest.md). (Quirin)

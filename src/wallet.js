@@ -18,4 +18,10 @@ export function spendCoin() {
   return true;
 }
 
+// Back to a fresh page load (the playtest bots run many games in one process).
+export function resetWallet() {
+  wallet.coins = COINS.start;
+  wallet.taken.clear();
+}
+
 export const coinTaken = (key) => wallet.taken.has(key);

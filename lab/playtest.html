@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Playtest Bots</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="data:,">
+  <script src="../making-of/theme.js"></script>
+  <link rel="stylesheet" href="../making-of/style.css">
+  <link rel="stylesheet" href="./lab.css">
+  <style>
+    .pt-meta { color: var(--muted); font-size: 14px; margin: 16px 0 0; }
+    .pt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 12px; margin-top: 16px; }
+    .pt-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; box-shadow: var(--shadow); min-width: 0; }
+    .pt-card h2 { font-size: 17px; margin: 0 0 2px; }
+    .pt-card p { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
+    .pt-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .pt-charts figure { margin: 0; min-width: 0; }
+    .pt-charts figcaption { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+    .pt-charts svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .pt-charts .axis { stroke: var(--line); stroke-width: 1; }
+    .pt-charts text { fill: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; }
+    .pt-charts .mark { stroke: var(--accent); fill: none; stroke-width: 2; }
+    .pt-charts .dot { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+    .pt-charts .band { stroke: var(--accent); stroke-width: 2; stroke-linecap: round; opacity: .45; }
+    .pt-charts .hit { fill: transparent; }
+    details { margin-top: 8px; font-size: 13px; }
+    details table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; margin-top: 6px; }
+    details th, details td { text-align: right; padding: 3px 4px; border-bottom: 1px solid var(--line); }
+    details th:first-child, details td:first-child { text-align: left; }
+    .pt-empty { color: var(--muted); margin-top: 24px; }
+    code { background: var(--code-bg); padding: 1px 5px; border-radius: 5px; }
+  </style>
+</head>
+<body class="bench-page">
+  <header class="hero wrap">
+    <p class="eyebrow"><a href="./">Lab</a></p>
+    <h1>Playtest bots</h1>
+    <div class="lede"><p>A bot plays every layer, then plays it again with more and more human sloppiness: late
+      swipes, missed or wrong swipes, moments of not paying attention. Win rate and time to solve per noise level
+      show how hard each layer is. Rerun with <code>node tools/playtest.mjs</code>.</p></div>
+  </header>
+  <main class="wrap">
+    <p class="pt-meta" id="meta"></p>
+    <div class="pt-grid" id="grid"></div>
+  </main>
+  <footer class="foot wrap"><a href="../">Game</a> · <a href="./">Lab</a> · <a href="../making-of/">Making-of</a> · <a href="../impressum/">Impressum</a></footer>
+  <script type="module">
+    const NAMES = {
+      maze: ['Maze', 'The arcade game, swipes'], cabinet: ['Cabinet', 'The same game on the joystick'],
+      hall: ['Arcade hall: coins', 'Pick up every coin, tap our cabinet'], 'hall-chase': ['Arcade hall: chase', 'Talk to the angry ghost, get out the door'],
+      crt: ['-1 Inside the screen', 'Eat glowing pellets, dodge the beam'], signals: ['-2 Video board', 'Carry colors to the DAC'],
+      vram: ['-3 Video RAM', 'Pellet bytes, dodge the write head'], bus: ['-4 System bus', 'Into every chip room'],
+      cpu: ['-5 The CPU', 'CALL warps into routines'], logic: ['-6 Game logic', 'Stand on each ghost target'],
+      input: ['-7 Input wires', 'Steer Pac-Man into the corners'], playthrough: ['Full playthrough', 'Menu to the bottom layer, with coins and the hall'],
+    };
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const W = 160, H = 100, L = 26, R = 6, T = 6, B = 18;
+    const x = (v) => L + v * (W - L - R);
+
+    function chart(rows, value, max, fmt, ticks) {
+      const y = (v) => T + (1 - v / max) * (H - T - B);
+      let s = `<svg viewBox="0 0 ${W} ${H}" role="img">`;
+      for (const t of ticks) s += `<line class="axis" x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/><text x="${L - 3}" y="${y(t) + 3}" text-anchor="end">${fmt(t)}</text>`;
+      for (const r of rows) s += `<text x="${x(r.level)}" y="${H - 4}" text-anchor="middle">${r.level}</text>`;
+      return { s, y };
+    }
+
+    function winChart(rows) {
+      const { s, y } = chart(rows, null, 1, (v) => `${Math.round(v * 100)}%`, [0, 0.5, 1]);
+      const pts = rows.map((r) => `${x(r.level)},${y(r.winRate)}`).join(' ');
+      return `${s}<polyline class="mark" points="${pts}"/>${rows.map((r) => `<circle class="dot" cx="${x(r.level)}" cy="${y(r.winRate)}" r="4"/>
+        <circle class="hit" cx="${x(r.level)}" cy="${y(r.winRate)}" r="12"><title>noise ${r.level}: ${Math.round(r.winRate * 100)}% won</title></circle>`).join('')}</svg>`;
+    }
+
+    function timeChart(rows, cap) {
+      const max = Math.max(10, ...rows.map((r) => r.time.p75 ?? 0)) * 1.1;
+      const top = Math.ceil(max / 30) * 30;
+      const { s, y } = chart(rows, null, top, (v) => `${v}s`, [0, top / 2, top]);
+      return `${s}${rows.filter((r) => r.time.median !== null).map((r) => `
+        <line class="band" x1="${x(r.level)}" x2="${x(r.level)}" y1="${y(r.time.p25)}" y2="${y(r.time.p75)}"/>
+        <circle class="dot" cx="${x(r.level)}" cy="${y(r.time.median)}" r="4"/>
+        <circle class="hit" cx="${x(r.level)}" cy="${y(r.time.median)}" r="12"><title>noise ${r.level}: median ${r.time.median} s (middle half ${r.time.p25} to ${r.time.p75} s), wins only</title></circle>`).join('')}</svg>`;
+    }
+
+    function table(rows, extra) {
+      const head = ['noise', 'won', 'median s', 'hits', 'swipes/s', 'outcomes', ...extra.map((e) => e[0])];
+      return `<details><summary>Table</summary><table><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr>${rows.map((r) => `<tr>
+        <td>${r.level}</td><td>${Math.round(r.winRate * 100)}%</td><td>${r.time.median ?? '–'}</td><td>${r.hits}</td><td>${r.swipesPerSec}</td>
+        <td>${esc(Object.entries(r.results).map(([k, v]) => `${k} ${v}`).join(', '))}</td>${extra.map((e) => `<td>${esc(e[1](r))}</td>`).join('')}</tr>`).join('')}</table></details>`;
+    }
+
+    try {
+      const res = await fetch('./playtest/results.json', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      document.getElementById('meta').textContent = `${data.runs} runs per noise level, knob "${data.knob}", seed ${data.seed}, run on ${data.generated} (${data.seconds} s). Noise 0 is the bare bot, 1 a sloppy player.`;
+      document.getElementById('grid').innerHTML = Object.entries(data.layers).map(([id, rows]) => {
+        const [title, note] = NAMES[id] ?? [id, ''];
+        const extra = id === 'playthrough' ? [['coins found', (r) => r.coinsFound], ['games', (r) => r.mazeGames], ['hall visits', (r) => r.hallVisits]] : [];
+        return `<section class="pt-card"><h2>${esc(title)}</h2><p>${esc(note)}</p>
+          <div class="pt-charts"><figure><figcaption>Won</figcaption>${winChart(rows)}</figure>
+          <figure><figcaption>Time to solve</figcaption>${timeChart(rows)}</figure></div>
+          ${table(rows, extra)}</section>`;
+      }).join('');
+    } catch (e) {
+      document.getElementById('grid').innerHTML = `<p class="pt-empty">No results yet (${esc(e.message)}). Run <code>node tools/playtest.mjs</code> and commit <code>lab/playtest/results.json</code>.</p>`;
+    }
+  </script>
+</body>
+</html>

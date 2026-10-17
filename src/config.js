@@ -474,3 +474,22 @@ export async function reloadAnim() {
   Object.assign(ANIM.effects, f.effects);
   if (JSON.stringify(ANIM) !== before) console.info('animation.json reloaded', ANIM);
 }
+
+// Playtest bots (tools/playtest.mjs, design/systems/playtest.md): a bot plays each layer, a noise model makes it play
+// like a sloppy human thumb, and a sweep measures win rate and time to solve per noise level.
+export const PLAYTEST = {
+  levels: [0, 0.25, 0.5, 0.75, 1], // noise levels swept; 0 is the bare bot, 1 is a sloppy player
+  runs: 20,              // seeded runs per layer and level (--quick: quickRuns)
+  quickRuns: 5,
+  // Noise at level 1; every knob scales linearly with the level.
+  noise: {
+    reaction: 0.45,      // s from deciding on a direction to the swipe landing (jittered +-50%)
+    drop: 0.2,           // share of swipes that don't register
+    wrong: 0.12,         // share of swipes that go 90 degrees off
+    lapseRate: 0.15,     // attention lapses per second: the bot stops reacting for a moment
+    lapseTime: 0.7,      // s one lapse lasts
+  },
+  readTime: 0.6,         // s to read a text box before tapping it away (hall), added at every level
+  timeCap: { maze: 240, deep: 180, hall: 90, playthrough: 2400 }, // s of game time before a run counts as lost
+  warmup: 20,            // s at most the machine plays before a deep-layer run starts (seeded), so runs differ
+};
