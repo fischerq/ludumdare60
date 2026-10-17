@@ -163,6 +163,98 @@ export const LAYERS = {
   outroTime: 1.2,        // s of zooming back in from the cabinet to the maze level
 };
 
+// Layer 3: the arcade hall (zoom out further). Top-down like a Pokémon game: Pac-Man walks the arcade shop
+// one tile per step. 16 px tiles at 2x, sprites shown at one tile.
+// # wall, . floor, o coin, S start (in front of our cabinet), 1-4 ghost visitors (blinky, pinky, inky, clyde),
+// cabinets are 1x2 tiles: upper-case letter on top, lower-case below (R red, B blue, G green, V violet,
+// Y yellow = ours), = counter, M/m change machine, D door.
+export const HALL = {
+  layout: [
+    '######################',
+    '######################',
+    '#.R.B.G.V....R.B.G.V.#',
+    '#.r.b.g.v....r.b.g.v.#',
+    '#....................#',
+    '#....................#',
+    '#.o..................#',
+    '#....................#',
+    '#....................#',
+    '#...RBG........VRB...#',
+    '#...rbg........vrb...#',
+    '#...1...........2....#',
+    '#....................#',
+    '#....................#',
+    '#..................o.#',
+    '#....................#',
+    '#....................#',
+    '#..RBGVR......GVRBG..#',
+    '#..rbgvr......gvrbg..#',
+    '#....3...............#',
+    '#....................#',
+    '#..........o.........#',
+    '#....................#',
+    '#....................#',
+    '#....................#',
+    '#....................#',
+    '#.....R.V.Y.G.B......#',
+    '#.....r.v.y.g.b......#',
+    '#.........S..........#',
+    '#....................#',
+    '#..o.................#',
+    '#....................#',
+    '#.................o..#',
+    '#....................#',
+    '#....................#',
+    '#..BGVR........VRBG..#',
+    '#..bgvr........vrbg..#',
+    '#................4...#',
+    '#....................#',
+    '#....................#',
+    '#....................#',
+    '#....................#',
+    '#....................#',
+    '#..................M.#',
+    '#.=======..........m.#',
+    '#....................#',
+    '#....................#',
+    '#....................#',
+    '#....................#',
+    '#....................#',
+    '##########DD##########',
+    '######################',
+  ],
+  walkSpeed: 5,          // tiles per second
+  coinsNeeded: 3,        // coins to play our cabinet (there are 5 on the floor)
+  dragDeadzone: 24,      // screen px a finger moves before it counts as walking, not a tap
+  tapTime: 350,          // ms; a touch shorter than this that didn't move is a tap (talk / use)
+  introZoom: 12,         // camera zoom at the start of the zoom-out from the cabinet (the small cabinet fills the view)
+  introTime: 1.6,        // s
+  outroTime: 0.9,        // s of zooming back into our cabinet
+  colors: {
+    floor: 0x241a3a, confetti: [0xff4fa0, 0x3fd0ff, 0xffe14f, 0x6cff6c], wallTop: 0x15101f, wallFace: 0x3a2d55,
+    wallStripe: 0xff4fa0, counter: 0x7a4a2a, counterTop: 0xb07a48, change: 0x8a8a96, door: 0x5a3a20, coin: 0xffd23f,
+    cap: 0x2040c0,
+    cabinets: { r: 0xd03030, b: 0x3060d0, g: 0x30a050, v: 0x8040c0, y: 0xf2c200 },
+  },
+  ghosts: { 1: 'blinky', 2: 'pinky', 3: 'inky', 4: 'clyde' },
+  // What things say when you face them and tap.
+  text: {
+    blinky: "I'M NOT A GHOST. I'M JUST... VERY PALE.",
+    pinky: 'I ALWAYS TRY TO GET AHEAD OF YOU.',
+    inky: 'WHERE I GO DEPENDS ON WHERE THE RED GUY GOES.',
+    clyde: 'I LIKE YOU. UNTIL YOU GET TOO CLOSE.',
+    r: 'OUT OF ORDER.',
+    b: 'HIGH SCORE: AAA 999990. NOBODY BEATS AAA.',
+    g: 'THE SCREEN IS BURNED IN. YOU CAN STILL SEE A MAZE.',
+    v: 'IT ONLY TAKES TOKENS FROM A DIFFERENT ARCADE.',
+    yNeedCoins: 'LAYERS OF PAC. INSERT COIN. YOU HAVE {n} OF {need} COINS.',
+    counter: 'THE OWNER IS ASLEEP.',
+    change: "CHANGE MACHINE. IT'S EMPTY. COINS MUST BE ON THE FLOOR SOMEWHERE.",
+    door: "IT'S RAINING OUTSIDE. BETTER STAY IN.",
+    coin: 'FOUND A COIN!',
+  },
+};
+
 export const BEST_KEY = 'ld60.best'; // localStorage key for the high score
 
 export const SOUND = {

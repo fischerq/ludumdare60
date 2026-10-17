@@ -46,7 +46,7 @@ bonus. See [movement](systems/movement.md).
 | Arcade maze game (starting point) | decided, first version built | [arcade-maze](systems/arcade-maze.md) | `/lab/bench.html?b=maze-controls` |
 | Tech layers / minigames | open | [layers](systems/layers.md) | none yet |
 | Art (pixel art, visual design) | proposed (Max) | [art](systems/art.md) | none |
-| Layer: the arcade hall (zoom out further) | proposed, questions open | [layer-arcade](systems/layer-arcade.md) | none yet |
+| Layer: the arcade hall (zoom out further) | decided, first slice built | [layer-arcade](systems/layer-arcade.md) | none yet |
 | Layer: the cabinet (zoom out) | decided, first slice built | [layer-cabinet](systems/layer-cabinet.md) | none yet |
 | Layer: inside the screen (zoom in) | proposed, questions open | [layer-crt](systems/layer-crt.md) | none yet |
 | Mini-gurke easter egg | proposed | [layers](systems/layers.md#mini-gurke-easter-egg--proposed) | none |

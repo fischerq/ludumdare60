@@ -68,6 +68,10 @@ Sizes are in image pixels at native resolution. Transparent background.
 | `maze/wall-1` .. `maze/wall-15`, `maze/door`, `maze/floor` | 16x16 | 17 files | Maze tileset, one file per tile in `assets/maze/`, see above. |
 | `cabinet` | 360x640 | 1 | [Cabinet layer](layer-cabinet.md): the whole arcade machine and its floor shadow on transparent, oblique view (front flat, depth up-right at 45°). Shown at 2x. Keep the screen opening (black, at x 98, y 67, 168x264 inside the bezel), the coin door (x 140, y 460, 56x76) and the control panel where they are, or tell Claude the new positions (`CABINET` in config). The marquee text and the game picture are drawn on top by the game. |
 | `stick-n`, `stick-up/down/left/right` | 24x32 | 5 | The cabinet's joystick, neutral and pushed four ways; the base sits at y 27. |
+| `arcade/floor`, `arcade/wall-top`, `arcade/wall-front`, `arcade/counter`, `arcade/change-top/bottom`, `arcade/door` | 16x16 | 7 files | [Arcade hall](layer-arcade.md) tileset in `assets/arcade/`, top-down. `wall-front` is used where a wall has floor below it. |
+| `arcade/cab-top-<c>`, `arcade/cab-bottom-<c>` | 16x16 | 10 files | Hall cabinets, 1x2 tiles, for c = r, b, g, v, y (y is ours, yellow, with the maze on its screen). |
+| `coin` | 10x10 | 1 | Coin on the hall floor. |
+| `visitor-cap` | 16x16 | 1 | Cap the ghost visitors wear, drawn over the tinted `ghost-*` body (the hall shows sprites at 16x16). |
 
 Sprites (pac, ghosts, eyes) can be 32x32; tiles and pellets stay at tile resolution. Text uses the Press Start
 2P pixel font. The life icons and the menu reuse `pac-2`.

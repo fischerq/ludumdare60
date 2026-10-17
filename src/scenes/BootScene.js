@@ -1,4 +1,4 @@
-import { COLORS, MAZE, PIXEL, UI, CABINET } from '../config.js';
+import { COLORS, MAZE, PIXEL, UI, CABINET, HALL } from '../config.js';
 import { mazeTiles, tileKey } from '../systems/tiles.js';
 
 const hex = (c) => `#${c.toString(16).padStart(6, '0')}`;
@@ -43,6 +43,7 @@ export default class BootScene extends Phaser.Scene {
     this.buildMaze();
     this.makeCabinet();
     this.makeSticks();
+    this.makeHall();
     // Wait for the arcade font so text doesn't render in the fallback first (give up after 2 s).
     const font = document.fonts?.load(`8px ${UI.arcadeFont}`) ?? Promise.resolve();
     const timeout = new Promise((r) => setTimeout(r, 2000));
@@ -90,6 +91,76 @@ export default class BootScene extends Phaser.Scene {
         if (dx * dx + dy * dy <= r * r) set(x, y, color);
       }
     }
+  }
+
+  // The arcade hall (layer 3): tileset assets/arcade/ (16x16 each, top-down), plus the coin and the cap the
+  // ghost visitors wear. Cabinets are two tiles, top (marquee and screen) and bottom (control panel), per color.
+  makeHall() {
+    const T = PIXEL.tile, K = HALL.colors;
+    const rect = (set, x, y, w, h, c) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) set(i, j, c); };
+    // Arcade carpet: dark with a fixed scatter of bright confetti.
+    this.pixels(tileKey('arcade', 'floor'), T, T, (set) => {
+      rect(set, 0, 0, T, T, K.floor);
+      [[2, 3, 0], [9, 1, 1], [13, 7, 2], [5, 10, 3], [11, 13, 0], [1, 14, 2], [7, 6, 1]].forEach(([x, y, c]) => set(x, y, K.confetti[c]));
+    });
+    this.pixels(tileKey('arcade', 'wall-top'), T, T, (set) => rect(set, 0, 0, T, T, K.wallTop));
+    // Wall seen from the front (a wall tile with floor below it): face with a neon stripe.
+    this.pixels(tileKey('arcade', 'wall-front'), T, T, (set) => {
+      rect(set, 0, 0, T, 4, K.wallTop);
+      rect(set, 0, 4, T, 12, K.wallFace);
+      rect(set, 0, 9, T, 2, K.wallStripe);
+    });
+    this.pixels(tileKey('arcade', 'counter'), T, T, (set) => {
+      rect(set, 0, 2, T, 6, K.counterTop);
+      rect(set, 0, 8, T, 8, K.counter);
+      rect(set, 0, 8, T, 1, 0x000000);
+    });
+    this.pixels(tileKey('arcade', 'change-top'), T, T, (set) => {
+      rect(set, 2, 2, 12, 14, K.change);
+      rect(set, 4, 4, 8, 3, 0x30ff60);
+    });
+    this.pixels(tileKey('arcade', 'change-bottom'), T, T, (set) => {
+      rect(set, 2, 0, 12, 13, K.change);
+      rect(set, 6, 4, 4, 4, 0x202020);
+      rect(set, 2, 13, 12, 2, 0x000000);
+    });
+    this.pixels(tileKey('arcade', 'door'), T, T, (set) => {
+      rect(set, 0, 0, T, T, K.door);
+      rect(set, 1, 1, T - 2, 6, 0x6fa0c0);
+      set(T - 3, 10, 0xffd23f);
+    });
+    for (const [c, col] of Object.entries(K.cabinets)) {
+      // Top: side panels in the cabinet color, black marquee band and a lit screen.
+      this.pixels(tileKey('arcade', `cab-top-${c}`), T, T, (set) => {
+        rect(set, 1, 1, 14, 15, col);
+        rect(set, 3, 2, 10, 3, 0x000000);
+        rect(set, 4, 3, 8, 1, 0xffffff);
+        rect(set, 3, 6, 10, 9, 0x101018);
+        rect(set, 4, 7, 8, 7, c === 'y' ? 0x2121de : 0x183048);
+        if (c === 'y') { set(6, 10, 0xffff00); set(7, 10, 0xffff00); set(9, 9, 0xffb897); set(11, 9, 0xffb897); }
+      });
+      // Bottom: control panel with a joystick, then the front with the coin door.
+      this.pixels(tileKey('arcade', `cab-bottom-${c}`), T, T, (set) => {
+        rect(set, 1, 0, 14, 14, col);
+        rect(set, 2, 0, 12, 4, 0x262626);
+        set(6, 1, 0xd81818); set(6, 2, 0x888888);
+        rect(set, 6, 7, 4, 5, 0x2c2c2c);
+        set(7, 8, 0xff3030); set(8, 8, 0xff3030);
+        rect(set, 1, 14, 14, 2, 0x000000);
+      });
+    }
+    this.pixels('coin', 10, 10, (set) => {
+      this.disc(set, 10, 4.6, 0xa07010);
+      this.disc(set, 10, 3.6, K.coin);
+      set(4, 3, 0xffffff); set(3, 4, 0xffffff);
+    });
+    // A cap for the ghost visitors, drawn over the (tinted) ghost body, 16x16 like the ghost.
+    this.pixels('visitor-cap', 16, 16, (set) => {
+      rect(set, 4, 0, 8, 1, K.cap);
+      rect(set, 3, 1, 10, 3, K.cap);
+      rect(set, 8, 3, 7, 1, K.cap);
+      set(7, 1, 0xffffff);
+    });
   }
 
   // Pellets at tile resolution: a 4x4 dot, a 16x16 power pellet.
