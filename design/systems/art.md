@@ -26,7 +26,12 @@ code doesn't change.
 
 ## Base resolution · decided
 Pixel art moves to a 32x32 base resolution per sprite (the current code-drawn sprites are 14x14, like the
-original). How the maze, tile size and zoom follow is open (see below); until then the export is still 14x14.
+original). 16x16 tiles are supported next to the 32x32 sprites; each texture keeps its own native size and the
+game scales it on screen.
+
+Max works on the core data: every file in `assets/` is the texture at its native resolution, never an upscaled
+copy. So the 14x14 placeholders are not pixel-doubled into 32x32 files; until real 32x32 art exists, the export
+stays at the placeholder's own size.
 
 ## Maze from a tileset · decided (details open)
 The maze is built from a tileset that Max draws, instead of one baked maze image. The game picks each cell's tile
@@ -64,7 +69,10 @@ Text uses the Press Start 2P pixel font. The life icons and the menu reuse `pac-
 - What does Max draw for the deeper layers (cabinet, hardware, code)? Waits for the [layers](layers.md) design.
 
 ### Tileset questions (open)
-- Tile size: 16x16 art px, so a 32x32 sprite covers 2x2 tiles like the original? *Default: 16x16.*
+- Where do 32x32 sprites start: Max draws them fresh with the 14x14 export as reference, or Claude first draws
+  native 32x32 placeholders in code? *Default: Max draws them fresh; the game shows each texture at its own size.*
+- Maze tiles 16x16, so a 32x32 sprite covers 2x2 tiles like the original (the game scales 2x instead of 4x)?
+  *Default: yes.*
 - How many wall tiles: a 16-piece set by the 4 neighbours (straights, corners, T, cross, ends), or a 47-piece set
   that also knows diagonals (needed for clean rounded inner corners like the original)? *Default: 16-piece; the
   game picks the piece automatically.*
@@ -82,3 +90,5 @@ Text uses the Press Start 2P pixel font. The life icons and the menu reuse `pac-
   folder (`assets/from-max/`) or into a conversation. (Quirin)
 - 2026-10-17: Base resolution for the pixel art becomes 32x32 per sprite. (Quirin)
 - 2026-10-17: The maze is built from a tileset. (Quirin)
+- 2026-10-17: 16x16 tiles are supported next to 32x32 sprites. Max works on the core data at native resolution,
+  never an upscaled version, so placeholders are not pixel-doubled. (Quirin)
