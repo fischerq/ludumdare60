@@ -2,7 +2,6 @@ import { GAME_WIDTH, GAME_HEIGHT, COLORS, reloadAnim } from './config.js';
 import BootScene from './scenes/BootScene.js';
 import MenuScene from './scenes/MenuScene.js';
 import GameScene from './scenes/GameScene.js';
-import GameOverScene from './scenes/GameOverScene.js';
 import CabinetScene from './scenes/CabinetScene.js';
 import HallScene from './scenes/HallScene.js';
 
@@ -20,7 +19,7 @@ const config = {
   input: {
     activePointers: 2,
   },
-  scene: [BootScene, MenuScene, GameScene, GameOverScene, CabinetScene, HallScene],
+  scene: [BootScene, MenuScene, GameScene, CabinetScene, HallScene],
 };
 
 window.game = new Phaser.Game(config);

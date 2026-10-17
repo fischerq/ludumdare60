@@ -1,9 +1,11 @@
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY, LAYERS, SPEED } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY, SPEED, CHEATS } from '../config.js';
 import { PAC_CYCLE, charFrame, fxOn, fxOnce } from '../systems/anim.js';
 import { createGame, stepGame, steer, DIRS } from '../systems/maze.js';
 import { createSwipe, swipeInput } from '../systems/swipe.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
+import { showCallout } from '../callout.js';
+import { progress } from '../progress.js';
 
 const T = PIXEL.tile;
 // Pac-Man's art faces right: left is a mirror image, up and down are turned.
@@ -28,6 +30,8 @@ export default class GameScene extends Phaser.Scene {
     this.ox = Math.floor((this.viewW - this.g.maze.w * T) / 2);
     this.oy = MAZE.top;
     this.leaving = false;
+    this.ended = false;
+    this.upBtn = this.downBtn = this.soon = null;
     this.cameras.main.setOrigin(0, 0).setZoom(PIXEL.zoom).setRoundPixels(true);
 
     this.mazeImage = this.add.image(this.ox, this.oy, 'maze').setOrigin(0);
@@ -83,11 +87,11 @@ export default class GameScene extends Phaser.Scene {
     this.readyText = this.text(this.sx(MAZE.houseExit.x), this.oy + 13 * T + 2, 'READY!', COLORS.textReady)
       .setOrigin(0.5, 0);
     this.hint = this.text(this.viewW / 2, mazeBottom + 88, 'SWIPE TO TURN', COLORS.textDim).setOrigin(0.5, 0);
-    // Up one layer: zoom out to the cabinet.
-    if (LAYERS.unlocked) {
-      addLayerButton(this, this.viewW - 32 - 112, mazeBottom + 8, 'LAYER\nUP', () => {
-        if (!this.leaving) { this.leaving = true; this.scene.start('Cabinet'); }
-      }, 2);
+    this.mazeBottom = mazeBottom;
+    this.addLayerButtons();
+    if (CHEATS.enabled) {
+      addLayerButton(this, 32, this.viewH - 38, 'CHEAT\nWIN', () => this.cheat(true));
+      addLayerButton(this, 32 + 64, this.viewH - 38, 'CHEAT\nLOSE', () => this.cheat(false));
     }
     this.lifeIcons = [];
     for (let i = 0; i < RULES.lives - 1; i++) {
@@ -165,13 +169,54 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  finish(cleared) {
+  // The layer buttons the player has unlocked so far (they appear as soon as a layer unlocks).
+  addLayerButtons() {
+    const y = this.mazeBottom + 8, upX = this.viewW - 24 - 112;
+    if (progress.cabinet && !this.upBtn) {
+      // Up one layer: zoom out to the cabinet.
+      this.upBtn = addLayerButton(this, upX, y, 'LAYER\nUP', () => this.leave('Cabinet'), 2);
+    }
+    if (progress.deeper && !this.downBtn) {
+      // Down one layer: into the screen. Not built yet.
+      this.downBtn = addLayerButton(this, upX - 116, y, 'LAYER\nDOWN', () => {
+        if (this.soon) return;
+        this.soon = showCallout(this, this.viewW / 2, this.oy + 6 * T, 'INSIDE THE SCREEN:\nCOMING SOON');
+        this.time.delayedCall(1500, () => { this.soon.destroy(); this.soon = null; });
+      }, 2);
+    }
+  }
+
+  leave(scene) {
     if (this.leaving) return;
     this.leaving = true;
-    // Clearing the maze zooms out to the next layer, the cabinet; losing ends the run.
-    this.time.delayedCall(cleared ? 300 : 1200, () => {
-      if (cleared) this.saveBest();
-      this.scene.start(cleared ? 'Cabinet' : 'GameOver', { score: this.g.score, cleared });
+    this.scene.start(scene);
+  }
+
+  // Cheat buttons: end the round as if the maze was cleared or the last life lost.
+  cheat(won) {
+    if (this.ended) return;
+    sfx.frightOff();
+    this.g.phase = won ? 'cleared' : 'over';
+    this.finish(won);
+  }
+
+  // The round is over. The outer game loop: the first win unlocks the layer below, the first loss the cabinet
+  // above ("insert coin"). Either way the player stays on the maze; tap to play again.
+  finish(cleared) {
+    if (this.ended) return;
+    this.ended = true;
+    this.saveBest();
+    let text = cleared ? 'MAZE CLEAR!' : 'GAME OVER';
+    if (cleared && !progress.deeper) { progress.deeper = true; text += '\n\nWANT TO GO\nDEEPER?'; }
+    if (!cleared && !progress.cabinet) { progress.cabinet = true; text += '\n\nINSERT COIN'; }
+    this.addLayerButtons();
+    showCallout(this, this.viewW / 2, this.oy + 12 * T, `${text}\n\nTAP TO PLAY AGAIN`);
+    // Short delay so the swipe that ended the round doesn't restart it at once.
+    this.time.delayedCall(600, () => {
+      this.input.on('pointerdown', (p, over) => { if (!over.length && !this.leaving) this.scene.restart(); });
+      const again = () => { if (!this.leaving) this.scene.restart(); };
+      this.input.keyboard?.once('keydown-SPACE', again);
+      this.input.keyboard?.once('keydown-ENTER', again);
     });
   }
 

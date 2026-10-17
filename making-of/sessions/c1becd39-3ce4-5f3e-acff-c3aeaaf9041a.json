@@ -168,7 +168,7 @@
    "seq": 47,
    "date": "2026-10-17",
    "time": "13:22",
-   "duration_s": 126,
+   "duration_s": 136,
    "prompt": "fix the merge conflicts",
    "followups": [],
    "images": [],
@@ -176,11 +176,12 @@
     "media/c1becd39-3-c1.jpg",
     "media/c1becd39-3-c2.jpg"
    ],
-   "reply": "New art shows in the bench. Committing and pushing.",
+   "reply": "I merged the latest `main` into the branch and fixed the conflicts; it's pushed to the open PR: https://github.com/fischerq/ludumdare60/pull/23\n\n- **What clashed:** `main` brought in the new per-layer 32x32 character art (one file per ghost, direction and frame, under `assets/maze/` and `assets/arcade/`). That collided with the animation timing in the maze, the cabinet screen picture and the hall.\n- **How I resolved it:** I kept `main`'s new art, file names and left-facing mirroring, and put the tunable timing from the settings file back on top. The lab bench now loads the new art files too.\n- **Smaller files:** the generated log files (`repo-stats.json`, `sessions/index.json`) were taken from `main`, and the Python cache file stays deleted as `main` has it.\n\nI checked it in a headless phone-size browser: the menu, maze, cabinet and hall load with no errors or missing files. The death animation runs through its frames and then hides Pac.\n\nOne thing to check by eye: the hall's new walk animation has only 2 frames and now uses Pac's number from the settings file (2). He flaps his mouth about twice as fast there as on `main` (30 vs 16 changes a second). If that's too fast, raise Pac's number in the lab, or I can give the hall its own Pac setting.\n\n**On the phone:** walk around the hall and check Pac's walk speed, then play the maze and check the ghosts' direction sprites still wobble and the power pellets blink.\n\nPlan usage: 1% of the 5-hour window, 18% weekly.",
    "progress_notes": [
     "Code conflicts resolved; now pointing the lab bench at the new per-layer art paths.",
     "Death animation plays and hides as expected. Quick look at the bench shot, then push.",
-    "Not showing the sprites; retaking with `--full`."
+    "Not showing the sprites; retaking with `--full`.",
+    "New art shows in the bench. Committing and pushing."
    ],
    "tools": {
     "Bash": 11,
@@ -188,23 +189,31 @@
     "Read": 2,
     "mcp__github__list_pull_requests": 1
    },
-   "api_requests": 14,
+   "api_requests": 15,
    "usage": {
     "claude-opus-5-5": {
-     "input": 28,
+     "input": 30,
      "cache_write_5m": 0,
-     "cache_write_1h": 27772,
-     "cache_read": 2285886,
-     "output": 6466,
+     "cache_write_1h": 28161,
+     "cache_read": 2458377,
+     "output": 6992,
      "thinking": 459,
-     "cost_usd": 0.808785
+     "cost_usd": 0.856923
     }
    },
-   "cost_usd": 0.808785,
+   "cost_usd": 0.856923,
    "commits": [
     {
      "sha": "279a753fd7e5c8ae63e671c5c3c4533425c29f96",
      "subject": "Merge main into the branch"
+    },
+    {
+     "sha": "f088c09de2fa52e8ca3ba3cae429e0c6745b63d4",
+     "subject": "Log: merge main (per-layer character art) into the animation-speed branch, screenshots"
+    },
+    {
+     "sha": "9c26259af311eb3eadbd539bf8c0086b42ca8341",
+     "subject": "Merge pull request #23 from fischerq/claude/sleepy-sagan-wagbm1"
     }
    ],
    "entrypoint": "remote",
@@ -221,18 +230,194 @@
      "delta": 0.0
     }
    }
+  },
+  {
+   "index": 4,
+   "seq": 48,
+   "date": "2026-10-17",
+   "time": "13:31",
+   "duration_s": 159,
+   "prompt": "tweak the lab page. a dropdown to select the character, show all animations for that character and only the sliders for those. add a plus/minus button to the sliders for fine grained controls. move the export button to the top.",
+   "followups": [],
+   "images": [],
+   "claude_images": [
+    "media/c1becd39-4-c1.jpg",
+    "media/c1becd39-4-c2.jpg"
+   ],
+   "reply": "The lab page is updated, in a new PR (#23 was already merged, so I started the branch again from `main`): https://github.com/fischerq/ludumdare60/pull/26\n\n- **Character dropdown:** a new menu at the top picks Pac, Blinky, Pinky, Inky, Clyde, or one of three effect sets (maze, hall, text blinks). It shows every animation for that choice and only its sliders:\n  - **Pac:** the maze chomp in all four directions, Pac moving at his maze speed, the hall walk and the death animation.\n  - **Each ghost:** its maze and hall sprites in four directions, plus frightened and flashing.\n  - The fright flash setting is shared by all four ghosts, so its slider shows under each one.\n- **Plus/minus buttons:** every slider has a − and a + button on either side that moves it one step. They're big enough to tap easily.\n- **Export button:** \"Download settings\" is now at the top, next to Restart.\n\nI tested it in a headless phone-size browser. The dropdown shows the right sliders, the −/+ buttons change the values, the download contains the new numbers, and there were no console errors.\n\n**On the phone:** open the lab's Animation speed page, switch characters in the top menu, tap − and + a few times, then press Download settings.\n\nPlan usage: the last check reported no change since 1% of the 5-hour window, 18% weekly.",
+   "progress_notes": [
+    "PR #23 is merged, so I'll restart the branch from `main` first.",
+    "Works on a phone viewport. Publishing screenshots, committing, opening a new PR."
+   ],
+   "tools": {
+    "Bash": 7,
+    "mcp__claude-code-remote__list_events": 2,
+    "Read": 1,
+    "mcp__github__create_pull_request": 1
+   },
+   "api_requests": 10,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 20,
+     "cache_write_5m": 0,
+     "cache_write_1h": 14003,
+     "cache_read": 1799253,
+     "output": 10911,
+     "thinking": 1472,
+     "cost_usd": 0.690175
+    }
+   },
+   "cost_usd": 0.690175,
+   "commits": [
+    {
+     "sha": "bb01629b68b2dde1a3b387fb6906caac4af6bb2f",
+     "subject": "Animation lab: character picker, −/+ buttons on sliders, Download settings at the top"
+    }
+   ],
+   "entrypoint": "remote",
+   "branch": "claude/sleepy-sagan-wagbm1",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.01,
+     "end": 0.01,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.18,
+     "end": 0.18,
+     "delta": 0.0
+    }
+   }
+  },
+  {
+   "index": 5,
+   "seq": 49,
+   "date": "2026-10-17",
+   "time": "13:38",
+   "duration_s": 129,
+   "prompt": "for each animation in the lab, add a button to show all the frames",
+   "followups": [],
+   "images": [],
+   "claude_images": [
+    "media/c1becd39-5-c1.jpg",
+    "media/c1becd39-5-c2.jpg"
+   ],
+   "reply": "Every animation in the lab now has a \"Frames\" button that shows all of its frames. It's pushed to the open PR: https://github.com/fischerq/ludumdare60/pull/26\n\n- **How it works:** the buttons sit above the preview, one per animation for the character or effect set you picked. Tapping one opens a strip of every frame under that animation, with the frame showing right now outlined. The buttons toggle, so you can open several at once.\n- **Pac:** the chomp cycle (6 steps), the hall walk (right, up, down, 2 frames each) and the 10 death frames.\n- **Each ghost:** maze and hall sprites (4 directions, 2 frames each) and frightened/flashing (4 frames).\n- **Effects:** the power pellet on/off, the maze-clear flash colours, the hall coin bob, the \"INSERT COIN\" blink and the tap prompt's two fade end points.\n- **One exception:** \"Moving at his maze speed\" has no button, because it uses the same frames as the chomp.\n\nI tested it in a headless phone-size browser for every character and effect set: each button opens and closes its strip, and there were no console errors.\n\n**On the phone:** pick a ghost, tap the Frames buttons and check the outline follows the animation, then do the same with Pac's death.\n\nPlan usage: the last check showed no change since 1% of the 5-hour window, 18% weekly.",
+   "progress_notes": [
+    "PR #26 is still open, so I'll push there. Adding a per-animation \"Frames\" toggle to the harness and bench.",
+    "Expected: buttons re-render on each tap. Fixing the test to tap by id.",
+    "Works: the strips show every frame with the current one outlined. Publishing screenshots and pushing to PR #26."
+   ],
+   "tools": {
+    "Bash": 7,
+    "mcp__claude-code-remote__list_events": 2,
+    "mcp__github__list_pull_requests": 1,
+    "Read": 1
+   },
+   "api_requests": 10,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 20,
+     "cache_write_5m": 0,
+     "cache_write_1h": 13304,
+     "cache_read": 1943717,
+     "output": 11543,
+     "thinking": 1688,
+     "cost_usd": 0.726115
+    }
+   },
+   "cost_usd": 0.726115,
+   "commits": [
+    {
+     "sha": "7073cf5d2a8b13c8530bdcfc4bd4c2522e3e1ba9",
+     "subject": "Animation lab: a Frames button per animation shows all its frames, current one outlined"
+    },
+    {
+     "sha": "853de368ea61986cfaf7738748413a456121454f",
+     "subject": "Outer game loop: start on the maze, unlock layers by winning and losing, cheat buttons"
+    },
+    {
+     "sha": "0901b14810f9d26890dfff4c641a3da28e1fb9e5",
+     "subject": "Merge pull request #27 from fischerq/claude/old-tech-pacman-game-eaui1a"
+    }
+   ],
+   "entrypoint": "remote",
+   "branch": "claude/sleepy-sagan-wagbm1",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.01,
+     "end": 0.01,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.18,
+     "end": 0.18,
+     "delta": 0.0
+    }
+   }
+  },
+  {
+   "index": 6,
+   "seq": 50,
+   "date": "2026-10-17",
+   "time": "13:50",
+   "duration_s": 50,
+   "prompt": "fix the merge conflicts",
+   "followups": [],
+   "images": [],
+   "claude_images": [],
+   "reply": "Only the generated stats file conflicts. Taking main's copy (the exporter rewrites it), then a quick smoke test.",
+   "progress_notes": [],
+   "tools": {
+    "Bash": 4,
+    "mcp__claude-code-remote__list_events": 2,
+    "mcp__github__list_pull_requests": 1
+   },
+   "api_requests": 5,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 10,
+     "cache_write_5m": 0,
+     "cache_write_1h": 12311,
+     "cache_read": 1052205,
+     "output": 1397,
+     "thinking": 0,
+     "cost_usd": 0.336909
+    }
+   },
+   "cost_usd": 0.336909,
+   "commits": [
+    {
+     "sha": "d3d6ae03898fcf5f5ce6ada42cafebf7e5c93258",
+     "subject": "Merge main into the branch"
+    }
+   ],
+   "entrypoint": "remote",
+   "branch": "claude/sleepy-sagan-wagbm1",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.02,
+     "end": 0.02,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.18,
+     "end": 0.18,
+     "delta": 0.0
+    }
+   }
   }
  ],
  "totals": {
-  "prompts": 3,
-  "cost_usd": 2.94885,
-  "output_tokens": 35122,
-  "input_tokens": 6418332
+  "prompts": 6,
+  "cost_usd": 4.750187,
+  "output_tokens": 59499,
+  "input_tokens": 11426057
  },
  "reported_by_claude_code": {
-  "total_usd": 2.2074298000000008,
+  "total_usd": 4.611215200000001,
   "by_model": {
-   "claude-opus-5-5": 2.20743
+   "claude-opus-5-5": 4.611215
   }
  }
 }

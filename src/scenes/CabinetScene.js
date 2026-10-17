@@ -1,8 +1,10 @@
-import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, CABINET, MAZE, PIXEL, UI, BEST_KEY, LAYERS } from '../config.js';
+import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, CABINET, MAZE, PIXEL, UI, BEST_KEY, LAYERS, CHEATS } from '../config.js';
 import { createGame, stepGame, steer } from '../systems/maze.js';
 import { drawScreen, screenSize } from '../systems/screenImage.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
+import { showCallout } from '../callout.js';
+import { progress } from '../progress.js';
 import { fxOn } from '../systems/anim.js';
 
 const KEYS = {
@@ -61,15 +63,16 @@ export default class CabinetScene extends Phaser.Scene {
       fontFamily: UI.arcadeFont, fontSize: 8, color: COLORS.text, resolution: 1,
     }).setOrigin(0.5, 1);
     this.stickGfx = this.add.graphics();
-    // Down one layer: zoom back into the screen, to the maze level.
-    if (LAYERS.unlocked) {
-      this.layerBtn = addLayerButton(this, 8, 8, 'LAYER\nDOWN', () => {
-        if (this.mode !== 'outro') { sfx.frightOff(); this.mode = 'outro'; }
-      });
-      // Up one layer: the arcade hall this cabinet stands in.
-      this.layerUpBtn = addLayerButton(this, 360 - 8 - 56, 8, 'LAYER\nUP', () => {
-        if (this.mode !== 'outro' && this.mode !== 'gone') { sfx.frightOff(); this.mode = 'gone'; this.scene.start('Hall', { from: 'cabinet' }); }
-      });
+    // Down one layer: zoom back into the screen, to the maze level (always open: that's where we came from).
+    this.layerBtn = addLayerButton(this, 8, 8, 'LAYER\nDOWN', () => {
+      if (this.mode !== 'outro') { sfx.frightOff(); this.mode = 'outro'; }
+    });
+    this.addUpButton();
+    if (CHEATS.enabled) {
+      this.cheatBtns = [
+        addLayerButton(this, 4, C.ground - 38, 'CHEAT\nWIN', () => this.cheat(true)),
+        addLayerButton(this, 360 - 4 - 56, C.ground - 38, 'CHEAT\nLOSE', () => this.cheat(false)),
+      ];
     }
 
     this.cam = this.cameras.main.setOrigin(0, 0).setRoundPixels(true);
@@ -108,7 +111,7 @@ export default class CabinetScene extends Phaser.Scene {
       unlockAudio();
       if (this.mode === 'cleared') { this.scene.start('Menu'); return; }
       if (this.mode === 'intro') { this.introT = 1; return; } // tap to skip the zoom-out
-      if (this.mode === 'outro' || (this.layerBtn && over.includes(this.layerBtn)) || (this.layerUpBtn && over.includes(this.layerUpBtn))) return;
+      if (this.mode === 'outro' || over.length) return; // a button, not the joystick
       const wp = this.cam.getWorldPoint(p.x, p.y);
       const cd = CABINET.coinDoor, pad = 24;
       if (this.mode === 'insert' && wp.x > cd.x - pad && wp.x < cd.x + cd.w + pad && wp.y > cd.y - pad && wp.y < cd.y + cd.h + pad) {
@@ -162,7 +165,34 @@ export default class CabinetScene extends Phaser.Scene {
       .fillStyle(CABINET.colors.ball, 0.45).fillCircle(Math.round(kx), Math.round(ky), Math.round(30 / z));
   }
 
+  // Up one layer: the arcade hall this cabinet stands in. Opens after the first game over here ("need coins?").
+  addUpButton() {
+    if (!progress.hall || this.layerUpBtn) return;
+    this.layerUpBtn = addLayerButton(this, 360 - 8 - 56, 8, 'LAYER\nUP', () => {
+      if (this.mode !== 'outro' && this.mode !== 'gone') { sfx.frightOff(); this.mode = 'gone'; this.scene.start('Hall', { from: 'cabinet' }); }
+    });
+  }
+
+  // Cheat buttons: end the game on the cabinet's screen as if it was won or lost.
+  cheat(won) {
+    if (this.mode !== 'play') return;
+    sfx.frightOff();
+    this.g.phase = won ? 'cleared' : 'over';
+    this.handle({ type: won ? 'cleared' : 'over' });
+  }
+
+  // Game over on the cabinet: back to INSERT COIN; the first time, point the player at the hall to find coins.
+  gameOver() {
+    this.mode = 'insert';
+    if (progress.hall) return;
+    progress.hall = true;
+    this.addUpButton();
+    this.callout = showCallout(this, this.screenPos.x + 84, this.screenPos.y + 100, 'NEED COINS?', 1);
+  }
+
   insertCoin() {
+    this.callout?.destroy();
+    this.callout = null;
     sfx.coin();
     this.g = createGame();
     this.mode = 'play';
@@ -223,7 +253,7 @@ export default class CabinetScene extends Phaser.Scene {
       case 'ghost': sfx.ghost(); break;
       case 'death': sfx.frightOff(); sfx.death(); break;
       case 'clear': sfx.frightOff(); sfx.clear(); break;
-      case 'over': this.mode = 'insert'; break;
+      case 'over': this.gameOver(); break;
       case 'cleared': this.mode = 'cleared'; break;
       default: break;
     }
