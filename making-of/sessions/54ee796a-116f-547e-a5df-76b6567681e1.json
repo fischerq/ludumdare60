@@ -123,13 +123,75 @@
      "delta": 0.0
     }
    }
+  },
+  {
+   "index": 3,
+   "seq": 47,
+   "date": "2026-10-17",
+   "time": "14:32",
+   "duration_s": 556,
+   "prompt": "suggested answers sound good. each layer will have a bit different mechanics/feel, we will tune that.  build out  the entine plan, sending separate PRs per stage.",
+   "followups": [],
+   "images": [],
+   "claude_images": [],
+   "reply": "Fixing two parser holes before testing: condition codes as operands, and the `'` in `af'`.",
+   "progress_notes": [
+    "Starting: logging plan usage, then reading the maze game code the port is based on.",
+    "Big job, so I'll build it as stacked branches with one PR each. First I'm checking the CPU core's halt behaviour and the cabinet/lab code that later stages hook into.",
+    "Writing a small headless check (console errors + machine frame count) to reuse at each stage.",
+    "Stage 2 runs in the browser (machine at ~60 fps, no errors). Committing and opening its PR.",
+    "Stage 3: the video chip. Checking how BootScene composes the maze picture so the renderer matches it.",
+    "Usage is at 3% (5-hour) / 19% (week). Now stage 4: the Z80 assembler."
+   ],
+   "tools": {
+    "Bash": 14,
+    "mcp__claude-code-remote__list_events": 2,
+    "mcp__github__create_pull_request": 2
+   },
+   "api_requests": 16,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 32,
+     "cache_write_5m": 0,
+     "cache_write_1h": 66870,
+     "cache_read": 2834567,
+     "output": 51463,
+     "thinking": 26192,
+     "cost_usd": 2.131261
+    }
+   },
+   "cost_usd": 2.131261,
+   "commits": [
+    {
+     "sha": "e8a9cc1deaf0f5f85b5ec7debade38d591e97f2d",
+     "subject": "Arcade step 2: global machine runtime, our board's memory map, typed bus log and frame recorder"
+    },
+    {
+     "sha": "9b9a5f1ef0ae826afc10bcf6a791ca8038fa8b38",
+     "subject": "Arcade step 3: video chip draws the playfield from VRAM, color RAM and the 8 sprites"
+    }
+   ],
+   "entrypoint": "remote",
+   "branch": "claude/keen-archimedes-hmq2uh",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.02,
+     "end": 0.03,
+     "delta": 0.01
+    },
+    "seven_day": {
+     "start": 0.18,
+     "end": 0.19,
+     "delta": 0.01
+    }
+   }
   }
  ],
  "totals": {
-  "prompts": 2,
-  "cost_usd": 2.350745,
-  "output_tokens": 28607,
-  "input_tokens": 3103389
+  "prompts": 3,
+  "cost_usd": 4.482006,
+  "output_tokens": 80070,
+  "input_tokens": 6004858
  },
  "reported_by_claude_code": {
   "total_usd": 1.1509024,

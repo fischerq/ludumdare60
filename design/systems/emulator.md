@@ -4,8 +4,9 @@
 **Parent:** [layers](layers.md) · [master](../master.md)
 **Lab bench:** none yet
 **Code:** `src/systems/arcade/` (no Phaser): `memmap.js` (our board's memory map), `machine.js` (memory, I/O,
-vblank IRQ, bus log, dirty bits, sound latch, `snapshot()`), `world.js` (the one running machine), `z80.js`
-(loads the CPU core).
+vblank IRQ, bus log, dirty bits, sound latch, `snapshot()`), `world.js` (the one running machine), `video.js` (video chip),
+`asm.js` (Z80 assembler), `program.js` (assembles `game.asm` with constants from config), `z80.js` (loads the
+CPU core).
 Numbers in `ARCADE` in `src/config.js`. Tests: `node tools/arcade_test.mjs`.
 
 ## Purpose
@@ -71,7 +72,7 @@ reference until the Z80 version matches it.
 3. **Done: video chip** (`video.js`). A JS renderer (pure module) that draws a frame from VRAM, color RAM, the 8 sprites and a
    palette into a canvas. Its "graphics ROM" is built at load time from the textures in `assets/`, so Max's art
    pipeline stays unchanged.
-4. **Assembler and the first program.** A small Z80 assembler in plain JS (`src/systems/arcade/asm.js`) that
+4. **Done: assembler and the first program** (`asm.js`, `program.js`, `game.asm`). A small Z80 assembler in plain JS (`src/systems/arcade/asm.js`) that
    runs in the browser too, so the CPU layer can show the real source listing with addresses. Constants come
    from `src/config.js`, so tuning stays a one-line edit. First program: boot, vblank interrupt, draw the maze
    from a ROM table into VRAM.

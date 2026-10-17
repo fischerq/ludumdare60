@@ -6,6 +6,7 @@ import GameOverScene from './scenes/GameOverScene.js';
 import CabinetScene from './scenes/CabinetScene.js';
 import HallScene from './scenes/HallScene.js';
 import { world, startWorld, tickWorld, pauseWorld } from './systems/arcade/world.js';
+import { loadProgram } from './systems/arcade/program.js';
 
 const config = {
   type: Phaser.AUTO,
@@ -28,7 +29,7 @@ window.game = new Phaser.Game(config);
 
 // The emulated arcade machine runs in the background whatever scene is showing, and pauses with the tab.
 window.__world = world; // for debugging in the console
-startWorld().catch((e) => console.warn('arcade machine unavailable', e));
+startWorld(loadProgram).catch((e) => console.warn('arcade machine unavailable', e));
 window.game.events.on(Phaser.Core.Events.STEP, (time, delta) => tickWorld(delta));
 window.game.events.on(Phaser.Core.Events.HIDDEN, () => pauseWorld(true));
 window.game.events.on(Phaser.Core.Events.VISIBLE, () => pauseWorld(false));
