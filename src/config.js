@@ -294,12 +294,17 @@ const ANIM_FALLBACK = {
 };
 const ANIM_URL = new URL('./settings/animation.json', import.meta.url);
 
+// A broken file (e.g. a trailing comma) is reported in the console instead of silently using the defaults.
+let animWarned = '';
+const animWarn = (msg) => { if (msg !== animWarned) console.warn(msg); animWarned = msg; };
 async function fetchAnim() {
-  try {
-    const res = await fetch(ANIM_URL, { cache: 'no-store' });
-    if (res.ok) return await res.json();
-  } catch (e) { /* offline or file:// */ }
-  return null;
+  let res;
+  try { res = await fetch(ANIM_URL, { cache: 'no-store' }); } catch (e) { return null; } // offline or file://
+  if (!res.ok) { animWarn(`animation.json: HTTP ${res.status}, ignoring it`); return null; }
+  try { const f = JSON.parse(await res.text()); animWarned = ''; return f; } catch (e) {
+    animWarn(`animation.json is not valid JSON (${e.message}), ignoring it`);
+    return null;
+  }
 }
 
 const animFile = await fetchAnim();
@@ -308,12 +313,15 @@ export const ANIM = {
   characters: { ...ANIM_FALLBACK.characters, ...animFile?.characters },
   effects: { ...ANIM_FALLBACK.effects, ...animFile?.effects },
 };
+console.info(animFile ? 'animation.json loaded' : 'animation.json not loaded, using the defaults', ANIM);
 
 // Hot reload: fetch the file again and swap the numbers in place (the game calls this when the tab comes back).
 export async function reloadAnim() {
   const f = await fetchAnim();
   if (!f) return;
+  const before = JSON.stringify(ANIM);
   if (f.fps) ANIM.fps = f.fps;
   Object.assign(ANIM.characters, f.characters);
   Object.assign(ANIM.effects, f.effects);
+  if (JSON.stringify(ANIM) !== before) console.info('animation.json reloaded', ANIM);
 }

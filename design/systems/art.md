@@ -104,7 +104,8 @@ Characters are 32x32; tiles and pellets stay at tile resolution. Text uses the P
   frame is held. Lives in `src/settings/animation.json`, not `config.js`, so the lab can export it.
 - Tune it in the lab bench ([`/lab/bench.html?b=animation`](../../lab/bench.html?b=animation)), press
   **Download settings**, save the file over `src/settings/animation.json` and commit it. The game fetches the file
-  at start and again whenever the tab comes back (hot reload).
+  at start and again whenever the tab comes back; on a local server (plain http) it also checks every second, so a
+  saved file shows within a second (hot reload). A file that isn't valid JSON is ignored with a warning in the console.
 - Pac only animates while moving (his clock is distance moved / his speed), ghosts animate all the time. The
   same numbers apply in the maze, the cabinet picture and the hall. Shared code: `src/systems/anim.js`.
 - Effects are tuned the same way (`effects` in the file): `pacDeath` (one-shot, 10 frames), `powerPellet`,
