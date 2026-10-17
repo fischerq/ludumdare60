@@ -1,6 +1,7 @@
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, HALL, PIXEL, UI } from '../config.js';
 import { createHall, stepHall, facing, pacPos, actorPos, startChase, endChase, stepGhosts } from '../systems/hall.js';
 import { tileKey } from '../systems/tiles.js';
+import { PAC_CYCLE, charFrame } from '../systems/anim.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 
@@ -253,14 +254,13 @@ export default class HallScene extends Phaser.Scene {
     }
 
     const p = this.h.pac, pp = pacPos(this.h);
-    const cycle = [0, 1, 2, 3, 2, 1];
-    const frame = p.moving ? cycle[Math.floor((p.steps + p.t) * 6) % cycle.length] : 1;
+    const frame = p.moving ? PAC_CYCLE[charFrame('pac', (p.steps + p.t) / HALL.walkSpeed, PAC_CYCLE.length)] : 1;
     this.pac.setPosition(Math.round(this.sx(pp.x)), Math.round(this.sy(pp.y))).setTexture(`pac-${frame}`)
       .setDisplaySize(T, T).setAngle(ANGLE[p.dir]);
-    const skirt = Math.floor(this.t * 4) % 2;
     this.h.npcs.forEach((n, i) => {
       const s = this.npcSprites[i], np = actorPos(n);
       const x = Math.round(this.sx(np.x)), y = Math.round(this.sy(np.y));
+      const skirt = charFrame(n.name, this.t, 2);
       s.body.setTexture(`ghost-${skirt}`).setDisplaySize(T, T).setPosition(x, y);
       s.eyes.setTexture(`eyes-${n.dir}`).setDisplaySize(T, T).setPosition(x, y);
       s.cap.setPosition(x, y);

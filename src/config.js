@@ -267,3 +267,31 @@ export const UI = {
   linkSize: 32,
   legalSize: 22,
 };
+
+// Animation speed per character, in game frames per animation frame. Lives in a JSON file so the lab can
+// export it: tune at /lab/bench.html?b=animation, download, save over src/settings/animation.json.
+// These defaults are only used if the file can't be loaded.
+const ANIM_FALLBACK = { fps: 60, characters: { pac: 2, blinky: 10, pinky: 10, inky: 10, clyde: 10 } };
+const ANIM_URL = new URL('./settings/animation.json', import.meta.url);
+
+async function fetchAnim() {
+  try {
+    const res = await fetch(ANIM_URL, { cache: 'no-store' });
+    if (res.ok) return await res.json();
+  } catch (e) { /* offline or file:// */ }
+  return null;
+}
+
+const animFile = await fetchAnim();
+export const ANIM = {
+  fps: animFile?.fps ?? ANIM_FALLBACK.fps,
+  characters: { ...ANIM_FALLBACK.characters, ...animFile?.characters },
+};
+
+// Hot reload: fetch the file again and swap the numbers in place (the game calls this when the tab comes back).
+export async function reloadAnim() {
+  const f = await fetchAnim();
+  if (!f) return;
+  if (f.fps) ANIM.fps = f.fps;
+  Object.assign(ANIM.characters, f.characters);
+}

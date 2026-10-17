@@ -88,6 +88,16 @@ Sprites (pac, ghosts, eyes) can be 32x32; tiles and pellets stay at tile resolut
 - `?codeart` in the URL shows only the code-drawn art (the export uses this to get the placeholders).
 - Keep the arcade palette in `COLORS` as the starting point; Max can change it.
 
+## Animation speed · decided
+- Per character (`pac`, `blinky`, `pinky`, `inky`, `clyde`): how many game frames (60 per second) each animation
+  frame is held. Lives in `src/settings/animation.json`, not `config.js`, so the lab can export it.
+- Tune it in the lab bench ([`/lab/bench.html?b=animation`](../../lab/bench.html?b=animation)), press
+  **Download settings**, save the file over `src/settings/animation.json` and commit it. The game fetches the file
+  at start and again whenever the tab comes back (hot reload).
+- Pac only animates while moving (his clock is distance moved / his speed), ghosts animate all the time. The
+  same numbers apply in the maze, the cabinet picture and the hall. Shared code: `src/systems/anim.js`.
+- Not yet: per-scene or per-state speeds (fright, eyes, dying), frame lists in the JSON.
+
 ## Open questions
 - Does Max redraw the tileset too, or only the characters? *Default: characters first.*
 - What does Max draw for the deeper layers (cabinet, hardware, code)? Waits for the [layers](layers.md) design.
@@ -109,3 +119,4 @@ Sprites (pac, ghosts, eyes) can be 32x32; tiles and pellets stay at tile resolut
 - 2026-10-17: The cabinet layer's art is exported too (`cabinet`, `stick-*`), and the export re-runs automatically after art changes in Claude Code sessions. (Quirin)
 - 2026-10-17: Max edits the files in `assets/` in place (no `from-max/` folder); the game loads the art from
   `assets/`, and the export keeps every file he edited. (Quirin)
+- 2026-10-17: Animation speed is set per character in game frames per animation frame, in `src/settings/animation.json`, tuned and exported from the lab. (Quirin)

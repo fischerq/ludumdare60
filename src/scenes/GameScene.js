@@ -1,4 +1,5 @@
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY, LAYERS } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY, LAYERS, SPEED } from '../config.js';
+import { PAC_CYCLE, charFrame } from '../systems/anim.js';
 import { createGame, stepGame, steer, DIRS } from '../systems/maze.js';
 import { createSwipe, swipeInput } from '../systems/swipe.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
@@ -196,12 +197,11 @@ export default class GameScene extends Phaser.Scene {
       const k = 1 - Math.max(0, g.phaseTime) / RULES.dyingTime;
       this.pac.setTexture(`pac-die-${Math.min(9, Math.floor(k * 12))}`).setVisible(k < 0.85).setAngle(270);
     } else {
-      const cycle = [0, 1, 2, 3, 2, 1];
-      const frame = g.phase === 'ready' ? 0 : cycle[Math.floor(p.moved * 4) % cycle.length];
+      // Pac only animates while moving: tiles moved / speed = seconds of movement.
+      const frame = g.phase === 'ready' ? 0 : PAC_CYCLE[charFrame('pac', p.moved / SPEED.pac, PAC_CYCLE.length)];
       this.pac.setTexture(`pac-${frame}`).setVisible(true).setAngle(ANGLE[p.dir] ?? 0);
     }
 
-    const skirt = Math.floor(time * 6) % 2;
     const flashing = g.fright > 0 && g.fright < RULES.frightFlashTime && Math.floor(time * 6) % 2 === 0;
     const hideGhosts = g.phase === 'dying' || g.phase === 'clearing' || g.phase === 'cleared';
     g.ghosts.forEach((gh, i) => {
@@ -211,6 +211,7 @@ export default class GameScene extends Phaser.Scene {
       body.setPosition(x, y).setVisible(!hideGhosts && !eyesOnly);
       eyes.setPosition(x, y).setVisible(!hideGhosts && !gh.frightened)
         .setTexture(`eyes-${DIRS[gh.dir] ? gh.dir : 'left'}`);
+      const skirt = charFrame(gh.name, time, 2);
       if (gh.frightened) body.setTexture(`ghost-${flashing ? 'flash' : 'fright'}-${skirt}`).clearTint();
       else body.setTexture(`ghost-${skirt}`).setTint(COLORS.ghosts[gh.name]);
     });

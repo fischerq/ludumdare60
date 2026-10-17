@@ -25,7 +25,8 @@ When the title changes, update `GAME_TITLE` in `src/config.js`, `<title>` in `in
   over the file in `assets/`). The game loads its art from `assets/` (keys in `assets/export.json`), and the export
   never overwrites a file that differs from what it last wrote. See `design/systems/art.md`.
 - All tunable numbers (speeds, sizes, colors, timings) go in `src/config.js`, not inline in scenes, so "feel"
-  tweaks are one-line edits.
+  tweaks are one-line edits. Exception: settings the lab exports as a file live in JSON under `src/settings/` (today
+  `animation.json`); `config.js` loads them.
 - One scene per file in `src/scenes/`, registered in the scene list in `src/main.js`.
 - Don't use localStorage for anything important. A best score is fine; game state isn't.
 - Keep the mobile pitfalls handled: no pull-to-refresh, no pinch or double-tap zoom, multi-touch works, and the game

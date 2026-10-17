@@ -3,7 +3,8 @@
 // No Phaser: the cabinet layer puts this picture on its 3D screen, and the CRT layer can read its pixels.
 // `art(key)` returns the source canvas of a texture made in BootScene.
 
-import { CABINET, COLORS, MAZE, PIXEL, RULES } from '../config.js';
+import { CABINET, COLORS, MAZE, PIXEL, RULES, SPEED } from '../config.js';
+import { PAC_CYCLE, charFrame } from './anim.js';
 import { DIRS } from './maze.js';
 
 const T = CABINET.screenTile;
@@ -70,16 +71,15 @@ export function drawScreen(ctx, g, art, time, lines = [], best = 0) {
     const k = 1 - Math.max(0, g.phaseTime) / RULES.dyingTime;
     if (k < 0.85) sprite(art(`pac-die-${Math.min(9, Math.floor(k * 12))}`), cx(p.x), cy(p.y), ANGLE.up);
   } else {
-    const cycle = [0, 1, 2, 3, 2, 1];
-    const frame = g.phase === 'ready' ? 0 : cycle[Math.floor(p.moved * 4) % cycle.length];
+    const frame = g.phase === 'ready' ? 0 : PAC_CYCLE[charFrame('pac', p.moved / SPEED.pac, PAC_CYCLE.length)];
     sprite(art(`pac-${frame}`), cx(p.x), cy(p.y), ANGLE[p.dir] ?? 0);
   }
 
   if (!['dying', 'clearing', 'cleared'].includes(g.phase)) {
-    const skirt = Math.floor(time * 6) % 2;
     const flashing = g.fright > 0 && g.fright < RULES.frightFlashTime && Math.floor(time * 6) % 2 === 0;
     for (const gh of g.ghosts) {
       const x = cx(gh.x), y = cy(gh.y);
+      const skirt = charFrame(gh.name, time, 2);
       if (gh.state !== 'eyes' && gh.state !== 'enter') {
         const body = gh.frightened
           ? art(`ghost-${flashing ? 'flash' : 'fright'}-${skirt}`)

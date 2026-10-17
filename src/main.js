@@ -1,4 +1,4 @@
-import { GAME_WIDTH, GAME_HEIGHT, COLORS } from './config.js';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, reloadAnim } from './config.js';
 import BootScene from './scenes/BootScene.js';
 import MenuScene from './scenes/MenuScene.js';
 import GameScene from './scenes/GameScene.js';
@@ -24,3 +24,6 @@ const config = {
 };
 
 window.game = new Phaser.Game(config);
+
+// Hot reload the animation settings when the tab comes back, so a new src/settings/animation.json shows without a restart.
+document.addEventListener('visibilitychange', () => { if (!document.hidden) reloadAnim(); });

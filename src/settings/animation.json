@@ -1,0 +1,11 @@
+{
+  "_readme": "Animation speed per character: how many game frames (at 60 per second) each animation frame is shown. Higher is slower. Tune in the lab (/lab/bench.html?b=animation), press Download, and save the file over this one.",
+  "fps": 60,
+  "characters": {
+    "pac": 2,
+    "blinky": 10,
+    "pinky": 10,
+    "inky": 10,
+    "clyde": 10
+  }
+}
