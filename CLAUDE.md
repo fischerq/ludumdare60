@@ -111,6 +111,13 @@ Every human prompt and its token usage/cost is published in `making-of/` as a sc
   images, also for sessions whose transcript is gone.
 - The headline has six equal tiles: prompts, merged PRs (lines of code, commits), subscription share, tokens, Claude
   time, API list price. PR count and lines of code come from git via `making-of/repo-stats.json` (written by the exporter).
+- **Commits made outside Claude Code** (Max's art, anyone's direct pushes) show up automatically: the exporter turns
+  every non-merge commit not authored by Claude into a timeline entry in `making-of/commits.json` (generated, never
+  edit it), with a before/after pair for each changed file under `assets/` (copied to `making-of/media/art/<sha8>/`).
+  Display names come from `people` in `meta.json`. When such a commit changes art, also save before/after game
+  screenshots of where that art shows, with matching numbers:
+  `node tools/shot.js commit-<sha8>-before-<n> --at <sha>^ --scene Key` and `... commit-<sha8>-after-<n> --at <sha>`.
+  Check `making-of/commits.json` at the start of each turn for new art commits that still lack them.
 - If a new model shows up, add its prices to `PRICES` in `tools/ai_log.py` (models are read from the transcript).
 - **Work outside Claude Code** goes in `making-of/manual-log.json` (format in its `_readme`): separate claude.ai
   chats, repo or Netlify setup, merges, playtests, art made by hand. When the user mentions such work, or you notice it

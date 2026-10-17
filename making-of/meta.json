@@ -10,5 +10,9 @@
     "2026-10-19T22:00:00Z"
   ],
   "plan_price_month": 214.2,
-  "plan_currency": "EUR"
+  "plan_currency": "EUR",
+  "people": {
+    "Maximilian Konrad": "Max",
+    "Quirin Niedernhuber": "Quirin"
+  }
 }
