@@ -1,7 +1,7 @@
 # Design docs
 
 The design docs are the source of truth for what the game is. Claude reads them before building anything and
-keeps them current; Quirin makes the creative calls.
+keeps them current; Quirin makes the creative calls, and Max (artist) works on the visual design, e.g. the pixel art.
 
 ## Hierarchy
 

@@ -5,11 +5,15 @@
 This is the top of the design hierarchy (see [README](README.md) for how the docs work). Anything not written
 here is not decided yet: ask before adding it.
 
+## Team · decided
+Quirin (design, creative calls), Max (artist: visual design, e.g. the pixel art), Claude Code (code, design help).
+
 ## Fixed constraints · decided
 - Browser game, phone first: portrait 720x1280 logical resolution, touch is the primary control, keyboard is a
   bonus and never required.
 - Phaser 3 from a CDN, no build step, deployed to Netlify on every push.
-- Placeholder art drawn in code until real art exists. Test the fun before spending time on art.
+- Placeholder art drawn in code until Max's art lands in `assets/` under the same texture keys (see
+  [art](systems/art.md)).
 - Portrait orientation, whatever the theme: phone in one hand.
 - A run lasts 1 to 3 minutes, so a round (and a playtest) is quick.
 - The game has to fit the jam's theme, which is announced at the start. Everything below waits for it.
@@ -41,6 +45,7 @@ bonus. See [movement](systems/movement.md).
 | Touch-follow movement | proposed (prototype only; the maze game probably uses swipes) | [movement](systems/movement.md) | `/lab/bench.html?b=movement` |
 | Arcade maze game (starting point) | decided, first version built | [arcade-maze](systems/arcade-maze.md) | `/lab/bench.html?b=maze-controls` |
 | Tech layers / minigames | open | [layers](systems/layers.md) | none yet |
+| Art (pixel art, visual design) | proposed (Max) | [art](systems/art.md) | none |
 | Layer: the cabinet (zoom out) | decided, first slice built | [layer-cabinet](systems/layer-cabinet.md) | none yet |
 | Layer: inside the screen (zoom in) | proposed, questions open | [layer-crt](systems/layer-crt.md) | none yet |
 | Mini-gurke easter egg | proposed | [layers](systems/layers.md#mini-gurke-easter-egg--proposed) | none |
@@ -53,7 +58,8 @@ The smallest playable version that tests the core assumption.
 
 ## Art and audio direction · proposed
 Arcade look: black background, neon maze lines, chunky pixel sprites, pixel font, CRT-ish touches (scanlines)
-if cheap. The maze game runs full screen with no cabinet frame; clearing the first level changes that.
+if cheap. Max makes the pixel art; the list of sprites and how they get into the game is in
+[art](systems/art.md). The maze game runs full screen with no cabinet frame; clearing the first level changes that.
 **Pixel art throughout, no real 3D:** depth is simulated in pixel art (oblique views). Zooming between layers
 changes the pixel size by whole factors so every layer stays crisp. Deeper layers can change look to match the tech they show (schematics, hex dumps, assembly listings).
 
@@ -70,7 +76,7 @@ survives only as the movement lab bench.
 
 ## Open questions
 - Which jam do we enter: the 48-hour Compo (solo, everything made during the jam) or the 72-hour Jam?
-  To be decided on Saturday 17 Oct.
+  To be decided on Saturday 17 Oct. Teaming up with Max rules out the Compo, which is solo only.
 - Pac-Man is a Bandai Namco trademark and its ROM/sprites are copyrighted. Do we make our own
   homage (own name, own sprites, own maze) rather than "Pac-Man" itself? *Default: yes, an homage.*
 
@@ -91,3 +97,5 @@ survives only as the movement lab bench.
   cabinet and zoom in to the screen. (Quirin)
 - 2026-10-17: Layer order maze → cabinet (zoom out) → screen (zoom in). No real 3D anywhere: pixel art
   throughout, 3D simulated. (Quirin)
+- 2026-10-17: Max (artist) joins the team and works on the visual design, e.g. the pixel art. (Quirin)
+- 2026-10-17: Pixel art at 32x32 per sprite; the maze is built from a tileset. Details in [art](systems/art.md). (Quirin)

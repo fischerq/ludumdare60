@@ -73,9 +73,11 @@ export default class CabinetScene extends Phaser.Scene {
   setIntro(k) {
     const e = 1 - (1 - k) ** 3;
     // At the maze level's zoom, put the picture's maze where the maze level drew its maze.
-    const mazeLeft = Math.floor((GAME_WIDTH / PIXEL.zoom - 19 * PIXEL.tile) / 2);
-    const startX = this.screenPos.x + 8 - mazeLeft, startY = this.screenPos.y + 40 - MAZE.top;
-    const startW = GAME_WIDTH / PIXEL.zoom, endW = GAME_WIDTH / CABINET.zoom;
+    // The picture is drawn at CABINET.screenTile px per tile, the maze level at PIXEL.tile, so r converts.
+    const r = CABINET.screenTile / PIXEL.tile;
+    const startW = GAME_WIDTH / PIXEL.zoom * r, endW = GAME_WIDTH / CABINET.zoom;
+    const mazeLeft = Math.floor((startW - 19 * CABINET.screenTile) / 2);
+    const startX = this.screenPos.x + 8 - mazeLeft, startY = this.screenPos.y + 40 - MAZE.top * r;
     const viewW = startW + (endW - startW) * e;
     this.cam.setZoom(GAME_WIDTH / viewW);
     this.cam.setScroll(startX * (1 - e), startY * (1 - e));

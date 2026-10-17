@@ -15,11 +15,13 @@ export default class MenuScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // The cast, arcade attract-screen style.
-    this.add.image(cx - 180, cy - 100, 'pac-2').setScale(PIXEL.zoom);
+    const sprite = (x, key) => this.add.image(x, cy - 100, key)
+      .setScale(PIXEL.sprite * PIXEL.zoom / this.textures.get(key).getSourceImage().width);
+    sprite(cx - 180, 'pac-2');
     ['blinky', 'pinky', 'inky', 'clyde'].forEach((name, i) => {
       const x = cx - 60 + i * 80;
-      this.add.image(x, cy - 100, 'ghost-0').setTint(COLORS.ghosts[name]).setScale(PIXEL.zoom);
-      this.add.image(x, cy - 100, 'eyes-left').setScale(PIXEL.zoom);
+      sprite(x, 'ghost-0').setTint(COLORS.ghosts[name]);
+      sprite(x, 'eyes-left');
     });
 
     const prompt = this.add.text(cx, cy + 120, 'TAP TO START', {

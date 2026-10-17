@@ -35,10 +35,10 @@ Tuning (2026-10-17, after the first phone test said turning felt unresponsive):
 
 ## Look and sound · decided
 Full screen, no cabinet frame (a pure arcade screen; clearing the first level changes it). Imitates the
-original's look at a similar resolution: everything is drawn at 8 art px per tile (the maze is 152x200 art px,
-the original screen is 224x288) and scaled up 4x with hard pixel edges (`PIXEL`). Pixel sprites are 14x14 like
-the arcade ones, thin blue wall lines with rounded corners and a double outer wall, pixel font (Press Start 2P,
-pinned on jsdelivr) at its native 8 px. This is a cheap imitation; emulating the real tile/sprite hardware
+original's look: the maze is built from a 16x16 tileset (304x400 px for 19x25 tiles), scaled up 2x with hard
+pixel edges (`PIXEL`); sprites show in a 2x2-tile box (16x16 placeholders, Max's art 32x32), blue wall lines
+with rounded corners, pixel font (Press Start 2P, pinned on jsdelivr) at 16 px. Art details:
+[art](art.md). This is a cheap imitation; emulating the real tile/sprite hardware
 rendering could come later as a layer. WebAudio bleeps in
 `src/sound.js`: start jingle, waka on dots, power pellet, frightened siren, ghost eaten, death, clear.
 
@@ -61,3 +61,5 @@ rendering could come later as a layer. WebAudio bleeps in
   speed, and a lab bench to tune them. (Quirin)
 - 2026-10-17: Look like the original: arcade resolution (8 px tiles) scaled up with hard pixel edges, pixel
   sprites; real rendering emulation maybe later. (Quirin)
+- 2026-10-17: Art moves to 16x16 tiles and sprites in a 2x2-tile box; the maze is built from a tileset, without the
+  double outer wall. See [art](art.md). (Quirin)

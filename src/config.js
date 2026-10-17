@@ -11,6 +11,7 @@ export const COLORS = {
   // Arcade palette, close to the original's.
   wall: 0x2121de,
   door: 0xffb8de,
+  mazeFlash: 0xdedede,  // the maze blinks this color when it's cleared
   dot: 0xffb897,
   pac: 0xffff00,
   ghosts: { blinky: 0xff0000, pinky: 0xffb8de, inky: 0x00ffde, clyde: 0xffb847 },
@@ -68,17 +69,20 @@ export const MAZE = {
     '#.................#',
     '###################',
   ],
-  top: 40,             // art px from the top of the screen to the maze (room for the score)
+  top: 80,             // world px from the top of the screen to the maze (room for the score)
   pacStart: { x: 9, y: 17 },
   houseExit: { x: 9, y: 9 },   // tile just above the ghost door
   houseInside: { x: 9, y: 11 },
 };
 
-// The maze is drawn at arcade resolution: 8 art px per tile, like the original, scaled up with hard
-// pixel edges. 720 / 4 = 180 art px across, so the 19-tile maze (152 px) fits with a border.
+// The game world is in tile pixels: 16 per tile, scaled up with hard pixel edges. 720 / 2 = 360 world px
+// across, so the 19-tile maze (304 px) fits with a border. Sprites are shown in a box of 2x2 tiles whatever
+// their native size (today's art is 16x16, Max's will be 32x32), like the original's 16 px sprites on 8 px tiles.
 export const PIXEL = {
-  tile: 8,
-  zoom: 4,             // screen px per art px; keep it a whole number so every art pixel is the same size
+  tile: 16,
+  zoom: 2,             // screen px per world px; keep it a whole number so every tile pixel is the same size
+  sprite: 32,          // world px a sprite is shown at
+  wallLine: [6, 8],    // placeholder wall line: tile pixels at this distance from the floor are lit
 };
 
 // Speeds in tiles per second.
@@ -128,8 +132,8 @@ export const CONTROL = {
 };
 
 // Layer 2: the cabinet (zoom out). Pixel art like the maze level, faked 3D (oblique view: depth goes up and
-// to the right at 45°). Drawn at 2 screen px per art px, half the maze level's 4, so the game picture on the
-// cabinet's screen is the maze level shrunk by exactly 2: zooming out is seamless.
+// to the right at 45°). Drawn at 2 screen px per art px; the game picture on the cabinet's screen uses 8 px
+// tiles (the maze level's are 16), so it is the maze level shrunk by exactly 2: zooming out is seamless.
 export const CABINET = {
   zoom: 2,               // screen px per art px; the view is 360x640 art px
   left: 72, right: 264,  // front face of the cabinet, art px
@@ -141,6 +145,7 @@ export const CABINET = {
   marqueeTop: 40,
   marqueeDepth: 16,
   bezel: { x: 12, y: 13 },
+  screenTile: 8,          // art px per maze tile in the picture on the cabinet's screen (arcade resolution)
   coinDoor: { x: 140, y: 460, w: 56, h: 76 },
   colors: {
     front: 0xf2c200, side: 0xa88600, top: 0xffe36a, trim: 0x111111, panel: 0x262626,

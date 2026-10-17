@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Asset export</title>
+  <style>
+    body { background: #111; color: #ddd; font: 14px system-ui, sans-serif; margin: 16px; }
+    .grid { display: flex; flex-wrap: wrap; gap: 16px; }
+    figure { margin: 0; text-align: center; }
+    img { image-rendering: pixelated; background: #000; border: 1px solid #333; }
+    a { color: #ffb38a; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
+</head>
+<body>
+  <p>Every texture the game draws in code, at 1x. <code>tools/export_assets.py</code> saves them to
+    <code>assets/</code>; click a name to download one by hand.</p>
+  <div class="grid" id="grid"></div>
+  <pre id="out" hidden></pre>
+  <script type="module">
+    import BootScene from '../src/scenes/BootScene.js';
+
+    // Built from other textures, not art to edit.
+    const DERIVED = new Set(['maze']);
+
+    // BootScene starts 'Menu' when it's done; this stand-in collects the textures instead.
+    class Collect extends Phaser.Scene {
+      constructor() { super('Menu'); }
+      create() {
+        const out = {};
+        for (const key of this.textures.getTextureKeys().sort()) {
+          const img = this.textures.get(key).getSourceImage();
+          if (key.startsWith('__') || DERIVED.has(key) || !(img instanceof HTMLCanvasElement)) continue;
+          out[key] = img.toDataURL('image/png');
+          const fig = document.createElement('figure');
+          fig.innerHTML = `<img src="${out[key]}" width="${img.width * 4}" height="${img.height * 4}">` +
+            `<figcaption><a download="${key.replace('/', '-')}.png" href="${out[key]}">${key}</a> ${img.width}x${img.height}</figcaption>`;
+          document.getElementById('grid').append(fig);
+        }
+        document.getElementById('out').textContent = JSON.stringify(out);
+      }
+    }
+
+    new Phaser.Game({ type: Phaser.CANVAS, width: 16, height: 16, parent: null, scene: [BootScene, Collect] });
+  </script>
+</body>
+</html>

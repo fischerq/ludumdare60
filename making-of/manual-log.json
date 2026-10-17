@@ -206,6 +206,13 @@
     },
     {
       "date": "2026-10-17",
+      "seq": 31.5,
+      "kind": "human",
+      "title": "Teamed up with Max, an artist",
+      "body": "Max joins the team and works on the visual design, e.g. the pixel art. Time not recorded."
+    },
+    {
+      "date": "2026-10-17",
       "time": "11:18",
       "seq": 32.3,
       "kind": "human",

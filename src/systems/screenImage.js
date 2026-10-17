@@ -1,11 +1,14 @@
-// Draws the arcade picture of a maze game state into a 2D canvas, at art resolution (8 px per tile).
+// Draws the arcade picture of a maze game state into a 2D canvas, at arcade resolution (CABINET.screenTile px
+// per tile, half the maze level's PIXEL.tile), so the art is drawn scaled down.
 // No Phaser: the cabinet layer puts this picture on its 3D screen, and the CRT layer can read its pixels.
 // `art(key)` returns the source canvas of a texture made in BootScene.
 
-import { COLORS, MAZE, PIXEL, RULES } from '../config.js';
+import { CABINET, COLORS, MAZE, PIXEL, RULES } from '../config.js';
 import { DIRS } from './maze.js';
 
-const T = PIXEL.tile;
+const T = CABINET.screenTile;
+const K = T / PIXEL.tile;  // picture px per maze-level px
+const SPRITE = PIXEL.sprite * K;
 const ANGLE = { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2 };
 const MARGIN = 8;          // art px left and right of the maze
 const HUD = 40;            // art px above the maze (MAZE.top in the game)
@@ -44,17 +47,22 @@ export function drawScreen(ctx, g, art, time, lines = [], best = 0) {
     ctx.save();
     ctx.translate(x, y);
     if (angle) ctx.rotate(angle);
-    ctx.drawImage(src, -src.width / 2, -src.height / 2);
+    ctx.drawImage(src, -SPRITE / 2, -SPRITE / 2, SPRITE, SPRITE);
     ctx.restore();
   };
 
   const clearing = g.phase === 'clearing' && Math.floor(time * 5) % 2;
-  ctx.drawImage(art(clearing ? 'maze-white' : 'maze'), ox, oy);
+  const maze = clearing ? tint(art('maze'), COLORS.mazeFlash) : art('maze');
+  ctx.drawImage(maze, ox, oy, maze.width * K, maze.height * K);
+  const pellet = (src, x, y) => {
+    const s = src.width * K;
+    ctx.drawImage(src, Math.round(x - s / 2), Math.round(y - s / 2), s, s);
+  };
 
   const blink = Math.floor(time * 5) % 2 === 0;
   g.pellets.forEach((row, y) => row.forEach((k, x) => {
-    if (k === 1) ctx.drawImage(art('dot'), cx(x) - 1, cy(y) - 1);
-    else if (k === 2 && blink) ctx.drawImage(art('power'), cx(x) - 4, cy(y) - 4);
+    if (k === 1) pellet(art('dot'), cx(x), cy(y));
+    else if (k === 2 && blink) pellet(art('power'), cx(x), cy(y));
   }));
 
   const p = g.pac;
