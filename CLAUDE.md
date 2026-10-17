@@ -37,7 +37,7 @@ When the title changes, update `GAME_TITLE` in `src/config.js`, `<title>` in `in
 ## Design docs (source of truth)
 `design/` holds the design hierarchy: `design/master.md` for the whole game, `design/systems/<name>.md` per system
 or mechanic (start from `design/systems/_template.md`). `design/README.md` explains the process. Quirin makes the
-creative calls; Claude handles the code and helps with design.
+creative calls, Max (artist) works on the visual design (pixel art, see `design/systems/art.md`); Claude handles the code and helps with design.
 - Read `design/master.md` (and the relevant system doc) before working on gameplay.
 - If something isn't in the docs, ask before adding it. Don't fill gaps with generic defaults.
 - **Questions first** for any new feature or mechanic: before writing code, ask up to 8 questions whose answers

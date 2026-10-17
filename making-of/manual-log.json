@@ -189,6 +189,27 @@
           "url": "https://github.com/fischerq/ludumdare60/pull/11"
         }
       ]
+    },
+    {
+      "date": "2026-10-17",
+      "time": "11:18",
+      "seq": 31.3,
+      "kind": "human",
+      "title": "Reviewed and merged pull request #14",
+      "body": "Merged the VS Code Live Server setup for running the game locally on Windows into `main`.",
+      "links": [
+        {
+          "label": "Pull request #14",
+          "url": "https://github.com/fischerq/ludumdare60/pull/14"
+        }
+      ]
+    },
+    {
+      "date": "2026-10-17",
+      "seq": 31.5,
+      "kind": "human",
+      "title": "Teamed up with Max, an artist",
+      "body": "Max joins the team and works on the visual design, e.g. the pixel art. Time not recorded."
     }
   ]
 }
