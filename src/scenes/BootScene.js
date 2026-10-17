@@ -93,45 +93,126 @@ export default class BootScene extends Phaser.Scene {
     }
   }
 
-  // The arcade hall (layer 3): tileset assets/arcade/ (16x16 each, top-down), plus the coin and the cap the
-  // ghost visitors wear. Cabinets are two tiles, top (marquee and screen) and bottom (control panel), per color.
+  // The arcade hall (layer 3), a cozy top-down room: tileset assets/arcade/ (16x16 each), plus the coin and the
+  // cap the ghost visitors wear. 1x2 machines are two tiles, top and bottom.
   makeHall() {
     const T = PIXEL.tile, K = HALL.colors;
     const rect = (set, x, y, w, h, c) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) set(i, j, c); };
-    // Arcade carpet: dark with a fixed scatter of bright confetti.
-    this.pixels(tileKey('arcade', 'floor'), T, T, (set) => {
+    const tile = (name, paint) => this.pixels(tileKey('arcade', name), T, T, (set) => paint(set));
+    const shadow = (set) => rect(set, 1, 14, 14, 2, 0x5a3a20); // contact shadow on the wooden floor
+
+    // Wooden floor: planks 4 px high with staggered joints and a light edge.
+    tile('floor', (set) => {
       rect(set, 0, 0, T, T, K.floor);
-      [[2, 3, 0], [9, 1, 1], [13, 7, 2], [5, 10, 3], [11, 13, 0], [1, 14, 2], [7, 6, 1]].forEach(([x, y, c]) => set(x, y, K.confetti[c]));
+      for (let y = 0; y < T; y += 4) {
+        rect(set, 0, y + 3, T, 1, K.floorLine);
+        rect(set, 0, y, T, 1, K.floorLight);
+        set((y * 5 + 3) % T, y + 1, K.floorLine); set((y * 5 + 3) % T, y + 2, K.floorLine);
+      }
     });
-    this.pixels(tileKey('arcade', 'wall-top'), T, T, (set) => rect(set, 0, 0, T, T, K.wallTop));
-    // Wall seen from the front (a wall tile with floor below it): face with a neon stripe.
-    this.pixels(tileKey('arcade', 'wall-front'), T, T, (set) => {
-      rect(set, 0, 0, T, 4, K.wallTop);
-      rect(set, 0, 4, T, 12, K.wallFace);
-      rect(set, 0, 9, T, 2, K.wallStripe);
+    // Rug, 9-slice: red with a yellow border; the game picks the piece from the neighbours.
+    for (const [v, top, bottom] of [['t', true, false], ['m', false, false], ['b', false, true]]) {
+      for (const [h, left, right] of [['l', true, false], ['c', false, false], ['r', false, true]]) {
+        tile(`rug-${v}${h}`, (set) => {
+          rect(set, 0, 0, T, T, K.rug);
+          for (let y = 0; y < T; y += 4) for (let x = (y / 2) % 4; x < T; x += 4) set(x, y + 1, K.rugDark);
+          if (top) { rect(set, 0, 1, T, 2, K.rugBorder); rect(set, 0, 0, T, 1, K.rugDark); }
+          if (bottom) { rect(set, 0, 13, T, 2, K.rugBorder); rect(set, 0, 15, T, 1, K.rugDark); }
+          if (left) { rect(set, 1, 0, 2, T, K.rugBorder); rect(set, 0, 0, 1, T, K.rugDark); }
+          if (right) { rect(set, 13, 0, 2, T, K.rugBorder); rect(set, 15, 0, 1, T, K.rugDark); }
+        });
+      }
+    }
+    tile('wall-top', (set) => rect(set, 0, 0, T, T, K.wallTop));
+    // Back wall: striped wallpaper with a baseboard; windows, posters and a clock sit on it.
+    const wallpaper = (set) => {
+      rect(set, 0, 0, T, T, K.wallpaper);
+      for (let x = 2; x < T; x += 6) rect(set, x, 0, 2, 13, K.wallStripe);
+      rect(set, 0, 13, T, 3, K.baseboard);
+    };
+    tile('wall-face', wallpaper);
+    tile('window', (set) => {
+      wallpaper(set);
+      rect(set, 2, 1, 12, 10, 0xffffff);
+      rect(set, 3, 2, 10, 8, K.sky);
+      rect(set, 3, 5, 10, 1, 0xffffff); rect(set, 7, 2, 1, 8, 0xffffff);
+      [[4, 3], [10, 6], [5, 8], [11, 2]].forEach(([x, y]) => set(x, y, 0xc8ecff)); // rain
+      rect(set, 1, 11, 14, 1, K.baseboard);
     });
-    this.pixels(tileKey('arcade', 'counter'), T, T, (set) => {
-      rect(set, 0, 2, T, 6, K.counterTop);
-      rect(set, 0, 8, T, 8, K.counter);
-      rect(set, 0, 8, T, 1, 0x000000);
+    tile('poster-pac', (set) => {
+      wallpaper(set);
+      rect(set, 3, 1, 10, 11, 0x101030);
+      // A small chomper with its mouth open to the right.
+      for (let y = 3; y < 10; y++) {
+        for (let x = 5; x < 12; x++) {
+          const dx = x + 0.5 - 8, dy = y + 0.5 - 6.5;
+          if (dx * dx + dy * dy <= 12.5 && !(dx > 0 && Math.abs(dy) < dx)) set(x, y, 0xffff00);
+        }
+      }
+      rect(set, 4, 10, 8, 1, 0xffb897);
     });
-    this.pixels(tileKey('arcade', 'change-top'), T, T, (set) => {
-      rect(set, 2, 2, 12, 14, K.change);
-      rect(set, 4, 4, 8, 3, 0x30ff60);
+    tile('poster-ghost', (set) => {
+      wallpaper(set);
+      rect(set, 3, 1, 10, 11, 0x101030);
+      rect(set, 5, 4, 6, 6, 0xff0000); rect(set, 6, 3, 4, 1, 0xff0000);
+      set(5, 10, 0xff0000); set(8, 10, 0xff0000); set(10, 10, 0xff0000);
+      rect(set, 6, 5, 2, 2, 0xffffff); rect(set, 9, 5, 1, 2, 0xffffff);
     });
-    this.pixels(tileKey('arcade', 'change-bottom'), T, T, (set) => {
-      rect(set, 2, 0, 12, 13, K.change);
-      rect(set, 6, 4, 4, 4, 0x202020);
-      rect(set, 2, 13, 12, 2, 0x000000);
+    tile('clock', (set) => {
+      wallpaper(set);
+      this.disc((x, y, c) => set(x + 1, y, c), 14, 5.5, K.baseboard);
+      this.disc((x, y, c) => set(x + 1, y, c), 14, 4.5, 0xffffff);
+      rect(set, 8, 3, 1, 4, 0x000000); rect(set, 8, 7, 3, 1, 0x000000);
     });
-    this.pixels(tileKey('arcade', 'door'), T, T, (set) => {
-      rect(set, 0, 0, T, T, K.door);
-      rect(set, 1, 1, T - 2, 6, 0x6fa0c0);
-      set(T - 3, 10, 0xffd23f);
+    tile('counter', (set) => {
+      rect(set, 0, 1, T, 7, K.counterTop);
+      rect(set, 0, 2, T, 1, 0xe0b080);
+      rect(set, 0, 8, T, 6, K.counter);
+      for (let x = 3; x < T; x += 8) rect(set, x, 9, 1, 4, 0x5a3418);
+      shadow(set);
+    });
+    tile('plant', (set) => {
+      rect(set, 5, 10, 6, 4, K.plantPot); rect(set, 4, 9, 8, 2, 0xd07a4a);
+      [[8, 2], [5, 4], [11, 4], [7, 6], [9, 6], [4, 7], [12, 7]].forEach(([x, y]) => {
+        rect(set, x - 1, y - 1, 3, 3, K.leaf); set(x, y - 1, K.leafLight);
+      });
+      shadow(set);
+    });
+    tile('bin', (set) => {
+      rect(set, 4, 4, 8, 10, 0x707a80); rect(set, 3, 3, 10, 2, 0x9aa4aa);
+      rect(set, 6, 2, 2, 2, 0xffe0e0); set(9, 2, 0xffd23f); // tickets sticking out
+      shadow(set);
+    });
+    tile('change-top', (set) => { rect(set, 2, 2, 12, 14, K.change); rect(set, 4, 4, 8, 3, 0x30ff60); });
+    tile('change-bottom', (set) => { rect(set, 2, 0, 12, 13, K.change); rect(set, 6, 4, 4, 4, 0x202020); shadow(set); });
+    tile('claw-top', (set) => {
+      rect(set, 1, 1, 14, 15, 0xff7ac0); rect(set, 2, 2, 12, 13, 0xd8f4ff);
+      rect(set, 7, 2, 2, 4, 0x888888); set(6, 6, 0x888888); set(9, 6, 0x888888);
+      [[4, 12, 0xffd23f], [7, 13, 0x6cff6c], [10, 12, 0x3fd0ff], [12, 13, 0xff4fa0]].forEach(([x, y, c]) => rect(set, x, y, 2, 2, c));
+    });
+    tile('claw-bottom', (set) => {
+      rect(set, 1, 0, 14, 14, 0xff7ac0); rect(set, 2, 0, 12, 3, 0x262626);
+      set(5, 1, 0xd81818); rect(set, 9, 1, 2, 1, 0x30ff60);
+      rect(set, 6, 7, 4, 4, 0x2c2c2c); shadow(set);
+    });
+    tile('soda-top', (set) => {
+      rect(set, 1, 1, 14, 15, 0xd02828); rect(set, 3, 3, 10, 5, 0xffffff);
+      rect(set, 4, 5, 8, 1, 0xd02828);
+      for (let x = 3; x < 13; x += 3) rect(set, x, 10, 2, 4, 0x8a1010);
+    });
+    tile('soda-bottom', (set) => {
+      rect(set, 1, 0, 14, 14, 0xd02828); rect(set, 3, 2, 10, 4, 0x200808);
+      rect(set, 11, 8, 2, 3, 0xffd23f); shadow(set);
+    });
+    tile('door', (set) => {
+      rect(set, 0, 0, T, T, K.wallTop);
+      rect(set, 2, 0, 12, T, K.door);
+      rect(set, 4, 2, 8, 5, K.sky);
+      set(11, 10, 0xffd23f);
     });
     for (const [c, col] of Object.entries(K.cabinets)) {
       // Top: side panels in the cabinet color, black marquee band and a lit screen.
-      this.pixels(tileKey('arcade', `cab-top-${c}`), T, T, (set) => {
+      tile(`cab-top-${c}`, (set) => {
         rect(set, 1, 1, 14, 15, col);
         rect(set, 3, 2, 10, 3, 0x000000);
         rect(set, 4, 3, 8, 1, 0xffffff);
@@ -140,13 +221,13 @@ export default class BootScene extends Phaser.Scene {
         if (c === 'y') { set(6, 10, 0xffff00); set(7, 10, 0xffff00); set(9, 9, 0xffb897); set(11, 9, 0xffb897); }
       });
       // Bottom: control panel with a joystick, then the front with the coin door.
-      this.pixels(tileKey('arcade', `cab-bottom-${c}`), T, T, (set) => {
+      tile(`cab-bottom-${c}`, (set) => {
         rect(set, 1, 0, 14, 14, col);
         rect(set, 2, 0, 12, 4, 0x262626);
         set(6, 1, 0xd81818); set(6, 2, 0x888888);
         rect(set, 6, 7, 4, 5, 0x2c2c2c);
         set(7, 8, 0xff3030); set(8, 8, 0xff3030);
-        rect(set, 1, 14, 14, 2, 0x000000);
+        shadow(set);
       });
     }
     this.pixels('coin', 10, 10, (set) => {
