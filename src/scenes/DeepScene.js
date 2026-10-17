@@ -2,7 +2,7 @@ import { GAME_WIDTH, GAME_HEIGHT, COLORS, UI, INPUT, DEEP, CHEATS } from '../con
 import { DEEP_LAYERS } from '../systems/layers/index.js';
 import { createWalker, steerWalker, stepWalker } from '../systems/layers/walker.js';
 import { createSwipe, swipeInput } from '../systems/swipe.js';
-import { world, setDriver, holdDir } from '../systems/arcade/world.js';
+import { world, setDriver, holdDir, onFrame } from '../systems/arcade/world.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 import { showCallout } from '../callout.js';
@@ -38,7 +38,9 @@ export default class DeepScene extends Phaser.Scene {
     // The bot plays the maze game while we're down here, unless this layer steers the machine itself.
     setDriver('bot');
     if (this.L.drive) setDriver('player');
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setDriver('bot'));
+    this.sounds = [];   // the machine's sound commands since the last update
+    const off = onFrame((m, sounds) => this.sounds.push(...sounds));
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { off(); setDriver('bot'); });
 
     const vw = GAME_WIDTH / ZOOM, vh = GAME_HEIGHT / ZOOM;
     this.cameras.main.setZoom(ZOOM).setOrigin(0, 0).setRoundPixels(true);
@@ -122,7 +124,7 @@ export default class DeepScene extends Phaser.Scene {
   update(time, delta) {
     const dt = Math.min(delta / 1000, 0.05);
     this.t += dt;
-    const env = { m: this.machine, S: this.S, t: this.t, dt, player: this.player };
+    const env = { m: this.machine, S: this.S, t: this.t, dt, player: this.player, sounds: this.sounds.splice(0) };
     const open = (x, y) => this.L.open(this.st, env, x, y);
     if (this.hitT > 0) {
       this.hitT -= dt;

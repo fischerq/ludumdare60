@@ -187,6 +187,19 @@ export const DEEP = {
     litAbove: 0.35,      // glow above which a dot can be eaten
     goal: 25,
   },
+  signals: {
+    rowTime: 0.12,       // s for the tile fetcher to read one row of tiles
+    sparkLife: 1.6,      // s a fetched color index waits to be picked up
+    waveTime: 1.4,       // s a sound wave takes to roll up the screen
+    waveRows: { power: 3, ghost: 2, death: 4, frightEnd: 2, clear: 4, start: 2 }, // how thick each sound's wave is
+    goal: 30,
+  },
+  vram: {
+    writeTime: 0.5,      // s the CPU's write head hovers over the next address before it writes
+    queue: 3,            // writes waiting at most; older ones are skipped
+    readTime: 2.5,       // s for the video chip's read sweep over all rows
+    goal: 20,
+  },
 };
 
 export const CHEATS = {
