@@ -80,12 +80,15 @@ address and writes; anything in its way is hit. No read sweep any more. Every by
 looked is dirty and can be eaten as a dot (in practice, the dots the bot's Pac-Man eats). **Objectives:** the 4
 power pellet bytes (where the maze layout has its `o`s).
 
-## Layer -4: the system bus · built
-16 address lanes, 8 data lanes and a control column (R/W, I/O in/out); each row is one bus cycle of a real
-frame, scrolling down at `DEEP.bus.rate` per second, its background colored by the memory region it targets.
-Instruction fetches from ROM are filtered out (most of the traffic). A 1 on an address lane is live: a hit.
-On a read the data lanes carry the payload in: grab the 1s. On a write the CPU drives them: they're live too.
-Start in the gap between data and control lanes, which is never live. Goal: 40 data bits.
+## Layer -4: the system bus · built (gameplay pass, spatial)
+**Verb: rooms behind decoder doors.** A spatial bus (`DEEP.bus.layout`): the Z80 on the left, bus lanes from its
+port to four chip rooms (ROM, RAM, VRAM, I/O), each behind a door. Every `cycleTime` s a bus cycle is picked from a
+real frame's bus log (first a chip at random among those the frame touched, then one of its cycles; video and color
+RAM count as VRAM, sprite registers as RAM / I/O). The **address decoder** opens only that chip's door (Zelda
+keys and locked doors, keyed by the address); a door that closes on you is a hit, and inside a room you wait for
+its chip to be addressed again. **Enemy:** each cycle sends a packet along the lanes (`packetSpeed`): a write
+from the CPU into the chip, a read from the chip back to the CPU; touching one is a hit. A read drops up to 3 of
+its 1 bits on its lane as dots. **Objectives:** the data byte in each of the 4 chip rooms.
 
 ## Layer -5: the CPU · built (gameplay pass)
 **Verb: warps and switch blocks.** The program's own source listing (`game.asm` as the browser assembled it), one
