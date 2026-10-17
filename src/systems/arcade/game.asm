@@ -63,6 +63,7 @@ MOVE_TX         equ RAM+0x2b        ; word: move_straight target x px
 MOVE_TY         equ RAM+0x2d        ; word
 NO_REVERSE      equ RAM+0x2f        ; 1 while choosing without the reverse direction
 WALL_PAL        equ RAM+0x30        ; palette the walls have now
+COIN_LAST       equ RAM+0x31        ; the coin switch last frame
 
 ; Actors: Pac-Man, then the four ghosts (blinky, pinky, inky, clyde), 32 bytes each.
 ACTORS          equ RAM+0x40
@@ -122,7 +123,17 @@ frame:  ld hl, (FRAME)
         call blink
         call tick_flash
         call read_input
-        ld a, (PHASE)
+        ld a, (IN0_PORT)            ; a coin dropping in starts a fresh game, whatever is going on
+        cpl
+        and IN_COIN
+        ld hl, COIN_LAST
+        ld b, (hl)
+        ld (hl), a
+        cp b
+        jr z, .phase
+        or a
+        call nz, new_game
+.phase: ld a, (PHASE)
         cp PH_READY
         jp z, ph_ready
         cp PH_PLAY

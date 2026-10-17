@@ -89,7 +89,7 @@ reference until the Z80 version matches it.
    After slice c, the maze layer runs on the machine alone.
 7. **Done: bot** (`bot.js`). An autopilot in JS that reads machine RAM and presses the joystick through `setInput()`, the same
    input path as the player. It plays whenever the player isn't steering Pac-Man.
-8. **Layer framework and smooth switching.** Each layer is a view on `world`. The machine never pauses for a
+8. **Done: layers share the machine.** Each layer is a view on `world`. The machine never pauses for a
    transition, and each layer says who controls Pac-Man (player or bot). The cabinet's screen shows the
    machine's frame.
 9. **Deep layers, one slice each, questions first:** CRT ([layer-crt](layer-crt.md)), then the others from the
@@ -149,3 +149,8 @@ All eight defaults accepted by Quirin on 2026-10-17.
   ghost, keeping 3 tiles from hunting ghosts, and holds the joystick. It drives whenever the maze layer isn't
   showing (also behind the menu), with the demo dip switch on, and presses START after a game ends. A new game
   from the menu power-cycles the machine; coming back from the cabinet continues the running game. (Claude)
+- 2026-10-17: Step 8: every layer looks at the one machine through `world` and says who steers (`setDriver`):
+  the maze layer and a cabinet game with a coin in are the player's, everything else the bot's. The cabinet's
+  screen is the machine's picture: before a coin it shows the bot's demo game (attract mode), the coin pulses
+  the board's COIN line and the program starts a fresh game on it, the stick is held on the joystick lines.
+  Going down from the cabinet continues that game in the maze layer. (Claude)

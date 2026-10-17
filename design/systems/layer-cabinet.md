@@ -46,3 +46,4 @@ its screen, but now played through the machine's physical controls. Theme: Old T
   coins as the start, order maze → cabinet → screen). (Quirin)
 - 2026-10-17: Real 3D was asked for, then corrected: no real 3D, pixel art throughout, simulate the 3D. (Quirin)
 - 2026-10-17: The coin door prompt was hard to see: now big, magenta, under the door with a blinking frame. Coins held are shown and kept globally; one coin starts a game, with the coin animated into the slot. (Quirin)
+- 2026-10-17: The cabinet's screen shows the emulated machine: the bot's demo game until a coin goes in, then the player's game through the stick; see [emulator](emulator.md). (Claude)
