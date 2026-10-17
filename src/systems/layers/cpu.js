@@ -7,6 +7,7 @@
 import { DEEP } from '../../config.js';
 import { world, requestTrace } from '../arcade/world.js';
 import { tinyText } from './font.js';
+import { css, floor, neonLine, neonBlock, dot } from './tron.js';
 
 const C = DEEP.cpu;
 const COLS = 22, ROWS = 30, TEXT_ROWS = ROWS - 3;
@@ -73,22 +74,23 @@ export default {
   },
 
   draw(ctx, st, env, S) {
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, COLS * S, ROWS * S);
+    const { P } = env;
+    floor(ctx, P, COLS, ROWS, S);
     for (let y = 0; y < TEXT_ROWS; y++) {
       const i = st.page + y, l = st.lines[i];
       if (!l) continue;
-      if (i === st.line) { ctx.fillStyle = '#803010'; ctx.fillRect(0, y * S, COLS * S, S - 1); }
-      ctx.fillStyle = i === st.line ? '#ffffff' : '#8890b0';
+      if (i === st.line) neonBlock(ctx, 0, y * S, COLS * S, S, DEEP.hazard, DEEP.hazardGlow);
+      ctx.fillStyle = css(i === st.line ? 0xffffff : P.line);
       tinyText(ctx, l.text.slice(0, Math.floor((COLS - 3) * S / 8)), 2, y * S + Math.floor((S - 10) / 2), 2);
       for (const f of ['Z', 'C']) {
-        if (!st.flags.has(`${i}:${f}`)) continue;
-        ctx.fillStyle = f === 'Z' ? '#40ff80' : '#40c0ff';
-        tinyText(ctx, f, (f === 'Z' ? COLS - 3 : COLS - 1) * S + Math.floor((S - 6) / 2), y * S + Math.floor((S - 10) / 2), 2);
+        if (st.flags.has(`${i}:${f}`)) dot(ctx, env, f === 'Z' ? 'dot' : 'dot2', f === 'Z' ? COLS - 3 : COLS - 1, y, S);
       }
     }
+    ctx.fillStyle = css(P.grid);
+    ctx.fillRect(0, TEXT_ROWS * S, COLS * S, ROWS * S - TEXT_ROWS * S);
+    neonLine(ctx, 0, TEXT_ROWS * S, COLS * S - 1, TEXT_ROWS * S, P.line, P.glow);
     const r = st.regs;
-    ctx.fillStyle = '#ffe600';
+    ctx.fillStyle = css(P.dot);
     const yy = TEXT_ROWS * S + 4;
     if (!r) { tinyText(ctx, 'WAITING FOR VBLANK', 2, yy, 2); return; }
     tinyText(ctx, `PC ${hex(r.pc, 4)} SP ${hex(r.sp, 4)} A ${hex(r.a, 2)}`, 2, yy, 2);

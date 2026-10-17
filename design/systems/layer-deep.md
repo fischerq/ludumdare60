@@ -20,6 +20,30 @@ slow down or aggregate, but everything comes from the machine's real raw data.
 - While the player is down here, the bot plays the maze game on the machine, so the data keeps moving.
 - Moving between layers zooms and fades (`DEEP.transition`).
 
+## Look: Tron · decided (Quirin, 2026-10-17)
+- Inspired by Tron, still pixel art throughout (whole-factor zoom, no blur shaders): a dark background with a faint
+  floor grid, the layer's structures as thin neon lines or blocks with a 1 px halo, a neon edge around the arena.
+- **Every layer has its own colors** (`DEEP.style` in config): a dark background (also behind the whole screen),
+  one neon accent for its structures, and up to two dot accents. Going down: -1 screen magenta, -2 signals cyan,
+  -3 video RAM blue, -4 bus amber, -5 CPU green, -6 logic violet, -7 wires orange. White and one red for
+  everything deadly (`DEEP.hazard`) are shared.
+- **Collectibles are dots** in the layer's dot accents (`dot`, `dot2`); only special collectibles get more
+  detail (`special`, e.g. the power pellets). Pac-Man is a neon outline in the layer's colors.
+- **Light trail:** Pac-Man leaves a light-cycle trail that fades over `DEEP.trail` s. Visual only, never deadly.
+- Art: one folder per layer, `assets/deep/<layer>/` (`pac-0..3`, `dot`, `dot2`, `special`), drawn in
+  `makeDeep` in `BootScene`. The layers' structures (grids, walls, lanes) are still drawn in code each frame.
+
+## Areas · decided (Quirin, 2026-10-17)
+- Movement stays as it is: swipe, one tile at a time on the layer's grid.
+- No maze walls to restrict movement: each layer's area follows that layer's own layout (see each layer below).
+  The top-down view and collecting dots are what stays the same across layers.
+
+## Slice scope (style revision)
+- Build: per-layer colors, neon look, dots as sprites, neon Pac-Man, light trail; then the areas without maze
+  walls (screen, signals, video RAM, logic; bus, CPU and wires already had their own layouts).
+- Not now: Tron mechanics (a deadly trail, light cycles), free movement, new hazards, art for the structures
+  as asset files.
+
 ## Layer -1: inside the screen (CRT) · built
 The maze picture magnified to its phosphor: walls and dots from VRAM, ghosts from the sprite registers. A
 beam sweeps the picture row by row, slowed from 16.5 ms to `DEEP.crt.beamPeriod`. Rows glow after it passes
@@ -77,3 +101,5 @@ the START pad starts a new game. Every dot Pac-Man eats counts, Pac-Man dying is
 - 2026-10-17: CRT: the beam is only deadly where the picture is lit, otherwise no spot would be safe. (Claude)
 - 2026-10-17: Signals: sound waves stay at the bottom and swell (a wave rolling over the whole screen could
   not be dodged). (Claude)
+- 2026-10-17: Style revision: Tron-inspired neon look in pixel art, a background color and accents per layer,
+  collectibles as dots (details only for special ones), a visual-only light trail; grid walking stays. (Quirin)

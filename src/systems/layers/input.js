@@ -9,6 +9,7 @@ import { pressStart } from '../arcade/world.js';
 import { drawPlayfield, W as MW, H as MH } from '../arcade/video.js';
 import { readState } from '../arcade/state.js';
 import { tinyText } from './font.js';
+import { css, floor, neonLine, neonBox, HAZARD } from './tron.js';
 
 const C = DEEP.input;
 const COLS = 12, ROWS = 17, TOP = 10;   // the picture of the machine takes the rows above TOP
@@ -58,9 +59,10 @@ export default {
   },
 
   draw(ctx, st, env, S) {
-    const { m, S: syms, t } = env;
-    ctx.fillStyle = '#0a1a0c';
-    ctx.fillRect(0, 0, COLS * S, ROWS * S);
+    const { m, S: syms, t, P } = env;
+    floor(ctx, P, COLS, ROWS, S);
+    ctx.fillStyle = css(P.bg);
+    ctx.fillRect(0, 0, COLS * S, TOP * S);
     // The machine's picture, small, at the top.
     const T = Math.floor(((TOP - 1) * S) / MH);
     drawPlayfield(ctx, m, env.art, { T, ox: Math.floor((COLS * S - MW * T) / 2), oy: 2 });
@@ -68,21 +70,18 @@ export default {
     const live = this.drive(st, env);
     for (const p of PADS) {
       const on = st.pad === p && (p.name === 'start' || live === p.name);
-      ctx.fillStyle = on ? '#30ff60' : '#c08020';
-      ctx.fillRect(p.x * S + S - 1, TOP * S - 6, 2, (p.y - TOP) * S + 6);
-      ctx.fillStyle = on ? '#205030' : '#3a2a10';
-      ctx.fillRect(p.x * S + 2, p.y * S + 2, 2 * S - 4, 2 * S - 4);
-      ctx.strokeStyle = on ? '#30ff60' : '#c08020';
-      ctx.strokeRect(p.x * S + 2.5, p.y * S + 2.5, 2 * S - 5, 2 * S - 5);
-      ctx.fillStyle = on ? '#30ff60' : '#ffd080';
+      const line = on ? 0xffffff : P.line, glow = on ? P.line : P.glow;
+      neonLine(ctx, p.x * S + S - 1, TOP * S - 6, p.x * S + S - 1, p.y * S + 2, line, glow);
+      neonBox(ctx, p.x * S + 2, p.y * S + 2, 2 * S - 4, 2 * S - 4, line, glow);
+      ctx.fillStyle = css(line);
       tinyText(ctx, LABEL[p.name], p.x * S + 5, p.y * S + S - 3);
     }
     // The input latch: IN0's bits as the CPU reads them (1 = open, pulled up to 5 V).
     const bits = m.in0.toString(2).padStart(8, '0');
-    ctx.fillStyle = '#ffe600';
+    ctx.fillStyle = css(P.dot);
     tinyText(ctx, `IN0 ${bits} IN1 ${m.in1.toString(2).padStart(8, '0')}`, 4, TOP * S - 14);
     const g = readState(m, syms);
-    ctx.fillStyle = g.phase === 'over' || g.phase === 'attract' || g.phase === 'cleared' ? (Math.floor(t * 2) % 2 ? '#ff4040' : '#000') : '#9aa4bf';
+    ctx.fillStyle = g.phase === 'over' || g.phase === 'attract' || g.phase === 'cleared' ? (Math.floor(t * 2) % 2 ? HAZARD : css(P.bg)) : css(P.line);
     const status = g.phase === 'play' ? `SCORE ${g.score}` : g.phase === 'over' ? 'GAME OVER: START' : g.phase.toUpperCase();
     tinyText(ctx, status, COLS * S - 4 - status.length * 4, TOP * S - 14);
   },

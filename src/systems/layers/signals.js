@@ -8,6 +8,7 @@ import { DEEP } from '../../config.js';
 import { CELL, tileOffset } from '../arcade/memmap.js';
 import { W, H, SPRITE } from '../arcade/video.js';
 import { tinyText, hex2 } from './font.js';
+import { css, floor, neonBlock, neonBox, dot, HAZARD } from './tron.js';
 
 const C = DEEP.signals;
 
@@ -65,38 +66,35 @@ export default {
   },
 
   draw(ctx, st, env, S) {
-    const { m, t } = env;
-    ctx.fillStyle = '#04040c';
-    ctx.fillRect(0, 0, W * S, H * S);
+    const { m, t, P } = env;
+    floor(ctx, P, W, H, S);
     const row = this.fetchRow(t);
+    ctx.fillStyle = css(P.glow);
+    ctx.fillRect(0, row * S + 1, W * S, S - 1);
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
         const c = m.vram[tileOffset(x, y)];
-        ctx.fillStyle = c === CELL.wall ? '#1a2a8a' : y === row ? '#203020' : '#0c0c18';
-        ctx.fillRect(x * S + 1, y * S + 1, S - 2, S - 2);
-        ctx.fillStyle = c === CELL.wall ? '#5a6ae0' : c ? '#ffb897' : '#303048';
+        if (c === CELL.wall) neonBlock(ctx, x * S + 1, y * S + 1, S - 1, S - 1, P.glow, P.bg);
+        ctx.fillStyle = css(c === CELL.wall ? P.line : c ? P.dot : P.grid);
         tinyText(ctx, hex2(c), x * S + Math.floor((S - 7) / 2), y * S + Math.floor((S - 5) / 2));
       }
     }
-    for (const [k, s] of st.sparks) {
-      const a = 1 - (t - s.t) / C.sparkLife;
-      ctx.fillStyle = `rgba(255,${s.pal ? 220 : 120},80,${a})`;
-      ctx.fillRect((k % W) * S + 2, Math.floor(k / W) * S + 2, S - 4, S - 4);
-    }
+    for (const [k, s] of st.sparks) dot(ctx, env, s.pal ? 'dot2' : 'dot', k % W, Math.floor(k / W), S, 1 - (t - s.t) / C.sparkLife);
     // The line buffer: the 8 hardware sprites as boxes with their codes.
     m.sprites().forEach((sp, i) => {
       if (!sp.code) return;
       const x = Math.round((sp.x / 16 - 1) * S), y = Math.round((sp.y / 16 - 1) * S);
-      ctx.strokeStyle = sp.code < SPRITE.ghost ? '#ffff00' : sp.code >= SPRITE.eyes ? '#8080ff' : '#ff4040';
-      ctx.strokeRect(x + 0.5, y + 0.5, 2 * S - 1, 2 * S - 1);
-      ctx.fillStyle = ctx.strokeStyle;
-      tinyText(ctx, `${i}${hex2(sp.code)}`, x + 2, y + 2);
+      const ghost = sp.code >= SPRITE.ghost && sp.code < SPRITE.eyes;
+      const line = ghost ? DEEP.hazard : sp.code < SPRITE.ghost ? 0xffffff : P.line;
+      neonBox(ctx, x + 1, y + 1, 2 * S - 2, 2 * S - 2, line, ghost ? DEEP.hazardGlow : P.glow);
+      ctx.fillStyle = css(line);
+      tinyText(ctx, `${i}${hex2(sp.code)}`, x + 3, y + 3);
     });
     const wh = this.waveHeight(st, t);
     if (wh > 0) {
-      ctx.fillStyle = 'rgba(0,255,220,0.25)';
+      ctx.fillStyle = css(DEEP.hazard, 0.25);
       ctx.fillRect(0, Math.round((H - wh) * S), W * S, Math.round(wh * S));
-      ctx.fillStyle = 'rgba(0,255,220,0.9)';
+      ctx.fillStyle = HAZARD;
       for (let k = 0; k < W * S; k += 2) {
         const yy = (H - wh * (0.5 + 0.5 * Math.sin(k / 5 + t * 12))) * S;
         ctx.fillRect(k, Math.round(yy), 2, 2);

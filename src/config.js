@@ -180,11 +180,28 @@ export const DEEP = {
   walkSpeed: 5,          // tiles per second
   hitPause: 0.8,         // s of flashing after a hit, then back to the start
   transition: 0.35,      // s of zooming between layers
+  trail: 1.2,            // s the light trail behind Pac-Man takes to fade (visual only)
+  trailWidth: 2,         // art px
+  // The Tron look: each layer has its own dark background and neon accent; white and one red are shared.
+  // bg: background, grid: the floor grid, line: neon lines of the layer's structures, glow: their dim halo,
+  // dot / dot2: the collectibles' two accents, special: the special collectible (power pellet, ...).
+  hazard: 0xff2a3a,
+  hazardGlow: 0x5a0a14,
+  style: {
+    crt:     { bg: 0x12040e, grid: 0x2a0c22, line: 0xff3cc8, glow: 0x4a0e3a, dot: 0xff8ae0, dot2: 0xffd0f4, special: 0xffffff },
+    signals: { bg: 0x02100f, grid: 0x07302c, line: 0x2af0e0, glow: 0x0a3a36, dot: 0x8afff4, dot2: 0xffe08a, special: 0xffffff },
+    vram:    { bg: 0x050620, grid: 0x10144a, line: 0x4a6aff, glow: 0x141c5a, dot: 0x9ab0ff, dot2: 0xffffff, special: 0xffffff },
+    bus:     { bg: 0x140c02, grid: 0x34220a, line: 0xffa82a, glow: 0x4a2e08, dot: 0xffd88a, dot2: 0xffffff, special: 0xffffff },
+    cpu:     { bg: 0x02120a, grid: 0x08321a, line: 0x2aff7a, glow: 0x0a3a1c, dot: 0x9affc0, dot2: 0x8ad8ff, special: 0xffffff },
+    logic:   { bg: 0x0c0418, grid: 0x220e40, line: 0xa45aff, glow: 0x2a1250, dot: 0xd0b0ff, dot2: 0xffffff, special: 0xffffff },
+    input:   { bg: 0x140602, grid: 0x34140a, line: 0xff6a2a, glow: 0x4a1a08, dot: 0xffb08a, dot2: 0xffffff, special: 0xffffff },
+  },
   crt: {
     beamPeriod: 3.2,     // s for one picture (the real one takes 16.5 ms)
     vblank: 0.22,        // share of the period with the beam off (vertical blank: safe to cross)
     decay: 0.9,          // s for the phosphor to fade to a third
     litAbove: 0.35,      // glow above which a dot can be eaten
+    pacColor: 0xfff23a,  // the machine's Pac-Man sprite on the phosphor
     goal: 25,
   },
   signals: {
@@ -211,6 +228,7 @@ export const DEEP = {
   },
   logic: {
     vectorWidth: 0.45,   // tiles: how close to a target vector line counts as touching it
+    vectorColors: { blinky: 0xff2a3a, pinky: 0xff6a8a, inky: 0xff8a5a, clyde: 0xffb0a0 }, // deadly: all reds
     goal: 30,
   },
   input: {

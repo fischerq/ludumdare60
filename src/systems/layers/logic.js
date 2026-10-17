@@ -10,9 +10,10 @@ import { W, H } from '../arcade/video.js';
 import { readState } from '../arcade/state.js';
 import { ghostTarget } from '../maze.js';
 import { tinyText } from './font.js';
+import { css, floor, neonBox, dot } from './tron.js';
 
 const C = DEEP.logic;
-const COLORS = { blinky: '#ff3030', pinky: '#ffb8de', inky: '#00ffde', clyde: '#ffb847' };
+const COLORS = C.vectorColors;
 
 function segDist(px, py, ax, ay, bx, by) {
   const dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy;
@@ -54,39 +55,34 @@ export default {
   },
 
   draw(ctx, st, env, S) {
-    const { m } = env;
-    ctx.fillStyle = '#05050a';
-    ctx.fillRect(0, 0, W * S, H * S);
-    ctx.strokeStyle = '#141428';
-    for (let x = 0; x <= W; x++) { ctx.beginPath(); ctx.moveTo(x * S + 0.5, 0); ctx.lineTo(x * S + 0.5, H * S); ctx.stroke(); }
-    for (let y = 0; y <= H; y++) { ctx.beginPath(); ctx.moveTo(0, y * S + 0.5); ctx.lineTo(W * S, y * S + 0.5); ctx.stroke(); }
+    const { m, P } = env;
+    floor(ctx, P, W, H, S);
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
         const i = tileOffset(x, y), c = m.vram[i];
-        if (c === CELL.wall) { ctx.strokeStyle = '#2a3a9a'; ctx.strokeRect(x * S + 2.5, y * S + 2.5, S - 5, S - 5); }
-        else if ((c === CELL.dot || c === CELL.power) && !st.eaten.has(i)) {
-          ctx.fillStyle = '#c0c0ff';
-          ctx.beginPath(); ctx.arc(x * S + S / 2, y * S + S / 2, c === CELL.power ? 3 : 1.5, 0, 7); ctx.fill();
-        }
+        if (c === CELL.wall) neonBox(ctx, x * S + 3, y * S + 3, S - 5, S - 5, P.line, P.glow);
+        else if ((c === CELL.dot || c === CELL.power) && !st.eaten.has(i)) dot(ctx, env, c === CELL.power ? 'special' : 'dot', x, y, S);
       }
     }
     const c = (v) => (v + 0.5) * S;
-    ctx.lineWidth = 2;
-    for (const v of st.vectors) {
-      ctx.strokeStyle = COLORS[v.name];
-      ctx.beginPath(); ctx.moveTo(c(v.from.x), c(v.from.y)); ctx.lineTo(c(v.to.x), c(v.to.y)); ctx.stroke();
-      ctx.strokeRect(c(v.to.x) - 4, c(v.to.y) - 4, 8, 8);
+    for (const [width, alpha] of [[4, 0.35], [2, 1]]) {
+      ctx.lineWidth = width;
+      for (const v of st.vectors) {
+        ctx.strokeStyle = css(COLORS[v.name], alpha);
+        ctx.beginPath(); ctx.moveTo(c(v.from.x), c(v.from.y)); ctx.lineTo(c(v.to.x), c(v.to.y)); ctx.stroke();
+        ctx.strokeRect(c(v.to.x) - 4, c(v.to.y) - 4, 8, 8);
+      }
     }
     ctx.lineWidth = 1;
     const g = st.g;
     if (!g) return;
     for (const gh of g.ghosts) {
-      ctx.fillStyle = gh.frightened ? '#4060ff' : COLORS[gh.name];
+      ctx.fillStyle = css(gh.frightened ? P.line : COLORS[gh.name]);
       ctx.fillRect(c(gh.x) - 3, c(gh.y) - 3, 6, 6);
     }
-    ctx.fillStyle = '#ffff00';
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(c(g.pac.x) - 3, c(g.pac.y) - 3, 6, 6);
-    ctx.fillStyle = '#9aa4bf';
+    ctx.fillStyle = css(P.line);
     tinyText(ctx, `MODE ${g.chase ? 'CHASE' : 'SCATTER'}${g.fright ? ' FRIGHT' : ''}`, 2, 2);
   },
 };

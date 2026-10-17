@@ -2,6 +2,7 @@ import { GAME_WIDTH, GAME_HEIGHT, COLORS, UI, INPUT, DEEP, CHEATS } from '../con
 import { DEEP_LAYERS } from '../systems/layers/index.js';
 import { createWalker, steerWalker, stepWalker } from '../systems/layers/walker.js';
 import { createSwipe, swipeInput } from '../systems/swipe.js';
+import { css } from '../systems/layers/tron.js';
 import { world, setDriver, holdDir, onFrame } from '../systems/arcade/world.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
@@ -26,6 +27,7 @@ export default class DeepScene extends Phaser.Scene {
   create(data = {}) {
     this.index = Phaser.Math.Clamp(data.layer ?? 0, 0, DEEP_LAYERS.length - 1);
     this.L = DEEP_LAYERS[this.index];
+    this.P = DEEP.style[this.L.id];
     this.machine = world.machine;
     this.S = world.program.symbols;
     this.st = this.L.init({ m: this.machine, S: this.S });
@@ -35,6 +37,7 @@ export default class DeepScene extends Phaser.Scene {
     this.hitT = 0;
     this.leaving = false;
     this.player = createWalker(this.L.start.x, this.L.start.y);
+    this.trail = [];   // light trail: { x, y, t } in tiles, visual only
     this.art = (key) => this.textures.get(key).getSourceImage();
     // The bot plays the maze game while we're down here, unless this layer steers the machine itself.
     setDriver('bot');
@@ -44,7 +47,7 @@ export default class DeepScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { off(); setDriver('bot'); });
 
     const vw = GAME_WIDTH / ZOOM, vh = GAME_HEIGHT / ZOOM;
-    this.cameras.main.setZoom(ZOOM).setOrigin(0, 0).setRoundPixels(true);
+    this.cameras.main.setZoom(ZOOM).setOrigin(0, 0).setRoundPixels(true).setBackgroundColor(this.P.bg);
     this.cell = Math.floor(Math.min((vw - 16) / this.L.cols, (vh - TOP - BOTTOM) / this.L.rows));
     const w = this.L.cols * this.cell, h = this.L.rows * this.cell;
     this.ox = Math.floor((vw - w) / 2);
@@ -52,12 +55,17 @@ export default class DeepScene extends Phaser.Scene {
     const key = `deep-${this.L.id}`;
     this.canvas = this.textures.exists(key) ? this.textures.get(key) : this.textures.createCanvas(key, w, h);
     this.add.image(this.ox, this.oy, key).setOrigin(0);
-    this.pac = this.add.image(0, 0, 'maze/pac-0').setScale((this.cell * 1.4) / this.textures.get('maze/pac-0').getSourceImage().width);
+    // The arena's neon edge, and the light trail above the layer, under Pac-Man.
+    this.add.graphics().lineStyle(3, this.P.glow).strokeRect(this.ox - 2.5, this.oy - 2.5, w + 5, h + 5)
+      .lineStyle(1, this.P.line).strokeRect(this.ox - 2.5, this.oy - 2.5, w + 5, h + 5);
+    this.trailG = this.add.graphics();
+    this.pacKey = (i) => `deep/${this.L.id}/pac-${i}`;
+    this.pac = this.add.image(0, 0, this.pacKey(0)).setScale((this.cell * 1.4) / this.textures.get(this.pacKey(0)).getSourceImage().width);
 
     const text = (x, y, s, color = COLORS.text, size = 8) => this.add.text(x, y, s, {
       fontFamily: UI.arcadeFont, fontSize: size, color, align: 'center', resolution: 1,
     }).setOrigin(0.5, 0).setLineSpacing(4);
-    text(vw / 2, 12, `LAYER -${this.index + 1}: ${this.L.title}`, COLORS.textReady);
+    text(vw / 2, 12, `LAYER -${this.index + 1}: ${this.L.title}`, css(this.P.line));
     text(vw / 2, 30, this.L.subtitle, COLORS.textDim);
     this.counter = text(vw / 2, vh - BOTTOM + 8, '');
 
@@ -125,11 +133,11 @@ export default class DeepScene extends Phaser.Scene {
   update(time, delta) {
     const dt = Math.min(delta / 1000, 0.05);
     this.t += dt;
-    const env = { m: this.machine, S: this.S, t: this.t, dt, player: this.player, sounds: this.sounds.splice(0), art: this.art };
+    const env = { id: this.L.id, P: this.P, m: this.machine, S: this.S, t: this.t, dt, player: this.player, sounds: this.sounds.splice(0), art: this.art };
     const open = (x, y) => this.L.open(this.st, env, x, y);
     if (this.hitT > 0) {
       this.hitT -= dt;
-      if (this.hitT <= 0) Object.assign(this.player, createWalker(this.L.start.x, this.L.start.y));
+      if (this.hitT <= 0) { Object.assign(this.player, createWalker(this.L.start.x, this.L.start.y)); this.trail = []; }
     } else {
       stepWalker(this.player, DEEP.walkSpeed * dt, open);
       const r = this.L.update(this.st, env);
@@ -146,10 +154,26 @@ export default class DeepScene extends Phaser.Scene {
     const p = this.player, c = this.cell;
     const dir = p.dir ?? 'right';
     this.pac.setPosition(Math.round(this.ox + (p.x + 0.5) * c), Math.round(this.oy + (p.y + 0.5) * c))
-      .setTexture(`maze/pac-${[0, 1, 2, 3, 2, 1][Math.floor(this.t * 12) % 6]}`)
+      .setTexture(this.pacKey([0, 1, 2, 3, 2, 1][Math.floor(this.t * 12) % 6]))
       .setAngle({ right: 0, down: 90, left: 0, up: 270 }[dir]).setFlipX(dir === 'left')
       .setVisible(this.hitT <= 0 || Math.floor(this.t * 10) % 2 === 0);
+    this.drawTrail();
     this.counter.setText(`${Math.min(this.got, this.L.goal)}/${this.L.goal}${this.hits ? `   HITS ${this.hits}` : ''}`);
+  }
+
+  // Tron light trail behind Pac-Man: the path of the last DEEP.trail seconds, fading out. Visual only.
+  drawTrail() {
+    const p = this.player, last = this.trail[this.trail.length - 1];
+    if (!last || last.x !== p.x || last.y !== p.y) this.trail.push({ x: p.x, y: p.y, t: this.t });
+    while (this.trail.length && this.t - this.trail[0].t > DEEP.trail) this.trail.shift();
+    const g = this.trailG.clear(), c = this.cell, at = (v, o) => Math.round(o + (v + 0.5) * c);
+    for (const [width, color] of [[DEEP.trailWidth + 2, this.P.glow], [DEEP.trailWidth, this.P.line]]) {
+      for (let i = 1; i < this.trail.length; i++) {
+        const a = this.trail[i - 1], b = this.trail[i];
+        g.lineStyle(width, color, 1 - (this.t - b.t) / DEEP.trail);
+        g.lineBetween(at(a.x, this.ox), at(a.y, this.oy), at(b.x, this.ox), at(b.y, this.oy));
+      }
+    }
   }
 
   // Goal reached: the next layer down opens.
