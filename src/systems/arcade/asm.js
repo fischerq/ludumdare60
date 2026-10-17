@@ -289,6 +289,7 @@ export function assemble(source, predefined = {}) {
 
   for (pass = 1; pass <= 2; pass++) {
     pc = 0; out = new Uint8Array(0x10000); listing = []; errors = []; global = '';
+    const labels = new Set();
     lines.forEach((line, n) => {
       const start = pc;
       let bytes = [];
@@ -307,12 +308,16 @@ export function assemble(source, predefined = {}) {
         if (m) {
           const name = m[1].startsWith('.') ? global + m[1] : m[1];
           if (!m[1].startsWith('.')) global = m[1];
-          if (pass === 1 && name in symbols && !(name in predefined)) throw new Error(`duplicate label ${name}`);
+          if (labels.has(name) || name in predefined) throw new Error(`duplicate label ${name}`);
+          labels.add(name);
           symbols[name] = pc;
           text = text.slice(m[0].length);
         }
         m = /^([a-z_][a-z0-9_]*)\s+(?:equ\b|=)\s*(.+)$/i.exec(text);
-        if (m) { symbols[m[1]] = evaluate(m[2]); }
+        if (m) {
+          if (m[1] in predefined) throw new Error(`${m[1]} is already defined`);
+          symbols[m[1]] = evaluate(m[2]);
+        }
         else if (text) {
           const sp = /^(\S+)\s*(.*)$/.exec(text);
           const mn = sp[1].toLowerCase().replace(/^\./, ''), args = splitArgs(sp[2]);

@@ -3,7 +3,7 @@
 **Status:** decided (first version built 2026-10-17)
 **Parent:** [master](../master.md)
 **Lab bench:** `/lab/bench.html?b=maze-controls` (swipe controls)
-**Code:** rules `src/systems/maze.js` (no Phaser), scene `src/scenes/GameScene.js`, sound `src/sound.js`,
+**Code:** rules in Z80 code `src/systems/arcade/game.asm` (reference: `src/systems/maze.js`, no Phaser), scene `src/scenes/GameScene.js`, sound `src/sound.js`,
 swipes `src/systems/swipe.js`, art `src/scenes/BootScene.js`, numbers and maze layout in `src/config.js`
 (`MAZE`, `PIXEL`, `SPEED`, `GHOSTS`, `RULES`, `INPUT`, `CONTROL`)
 
@@ -63,3 +63,4 @@ rendering could come later as a layer. WebAudio bleeps in
   sprites; real rendering emulation maybe later. (Quirin)
 - 2026-10-17: Art moves to 16x16 tiles and sprites in a 2x2-tile box; the maze is built from a tileset, without the
   double outer wall. See [art](art.md). (Quirin)
+- 2026-10-17: The maze game now runs as a Z80 program on the emulated arcade machine (`src/systems/arcade/game.asm`), same rules as `maze.js`; see [emulator](emulator.md). (Claude)

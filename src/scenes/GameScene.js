@@ -1,13 +1,12 @@
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY, CHEATS } from '../config.js';
-import { createGame, stepGame, steer } from '../systems/maze.js';
 import { createSwipe, swipeInput } from '../systems/swipe.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 import { showCallout } from '../callout.js';
 import { progress } from '../progress.js';
-import { world } from '../systems/arcade/world.js';
-import { drawPlayfield } from '../systems/arcade/video.js';
-import { writeShadow } from '../systems/arcade/shadow.js';
+import { world, onFrame, pressDir, pressStart } from '../systems/arcade/world.js';
+import { drawPlayfield, W, H } from '../systems/arcade/video.js';
+import { readState, pokePhase } from '../systems/arcade/state.js';
 
 const T = PIXEL.tile;
 const KEYS = {
@@ -23,11 +22,15 @@ export default class GameScene extends Phaser.Scene {
     super('Game');
   }
 
+  // The maze game runs on the emulated arcade machine (src/systems/arcade/game.asm): this scene shows its
+  // picture, reads its RAM for the HUD, plays its sound commands and presses its joystick.
   create() {
-    this.g = createGame();
+    this.machine = world.machine;
+    this.S = world.program.symbols;
+    this.g = readState(this.machine, this.S);
     this.viewW = GAME_WIDTH / PIXEL.zoom;
     this.viewH = GAME_HEIGHT / PIXEL.zoom;
-    this.ox = Math.floor((this.viewW - this.g.maze.w * T) / 2);
+    this.ox = Math.floor((this.viewW - W * T) / 2);
     this.oy = MAZE.top;
     this.leaving = false;
     this.ended = false;
@@ -36,9 +39,8 @@ export default class GameScene extends Phaser.Scene {
 
     // The playfield is the arcade machine's picture: its video chip draws VRAM and the sprites into this
     // canvas every frame (and clips the tunnel like the arcade screen).
-    this.machine = world.machine;
     this.screen = this.textures.exists('arcade-screen') ? this.textures.get('arcade-screen')
-      : this.textures.createCanvas('arcade-screen', this.g.maze.w * T, this.g.maze.h * T);
+      : this.textures.createCanvas('arcade-screen', W * T, H * T);
     this.add.image(this.ox, this.oy, 'arcade-screen').setOrigin(0);
     this.art = (key) => this.textures.get(key).getSourceImage();
 
@@ -46,7 +48,11 @@ export default class GameScene extends Phaser.Scene {
     this.setupInput();
     this.setupPauseOnHide();
 
-    sfx.start();
+    // Coming back mid-game (from another layer) continues it; otherwise press START for a new game.
+    if (['attract', 'cleared', 'over'].includes(this.g.phase)) pressStart();
+    else if (this.g.fright > 0) sfx.frightOn();
+    const off = onFrame((m, sounds) => sounds.forEach((e) => this.handle(e.name)));
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, off);
     this.render(0);
   }
 
@@ -72,7 +78,7 @@ export default class GameScene extends Phaser.Scene {
     this.text(this.viewW - 32, 24, 'HIGH SCORE', COLORS.text).setOrigin(1, 0);
     this.bestText = this.text(this.viewW - 32, 44, String(best || '00'), COLORS.text).setOrigin(1, 0);
 
-    const mazeBottom = this.oy + this.g.maze.h * T;
+    const mazeBottom = this.oy + H * T;
     this.readyText = this.text(this.sx(MAZE.houseExit.x), this.oy + 13 * T + 2, 'READY!', COLORS.textReady)
       .setOrigin(0.5, 0);
     this.hint = this.text(this.viewW / 2, mazeBottom + 88, 'SWIPE TO TURN', COLORS.textDim).setOrigin(0.5, 0);
@@ -113,7 +119,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   turn(dir) {
-    steer(this.g, dir);
+    pressDir(dir);
     this.hint.setVisible(false);
   }
 
@@ -129,25 +135,18 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
-  update(time, delta) {
-    const dt = Math.min(delta / 1000, 0.05); // don't jump through walls after a hitch
-    for (const e of stepGame(this.g, dt)) this.handle(e);
+  update(time) {
     this.render(time / 1000);
   }
 
-  handle(e) {
-    switch (e.type) {
-      case 'dot':
-      case 'power':
-        if (e.type === 'dot') sfx.dot(); else { sfx.power(); sfx.frightOn(); }
-        break;
+  // Sound commands the program wrote to the sound latch this frame.
+  handle(name) {
+    switch (name) {
+      case 'start': sfx.start(); break;
+      case 'dot': sfx.dot(); break;
+      case 'power': sfx.power(); sfx.frightOn(); break;
       case 'frightEnd': sfx.frightOff(); break;
-      case 'ghost': {
-        sfx.ghost();
-        const t = this.text(this.sx(e.x), this.sy(e.y) - 8, String(e.points), '#00ffde').setOrigin(0.5, 0);
-        this.time.delayedCall(RULES.ghostEatPause * 1000, () => t.destroy());
-        break;
-      }
+      case 'ghost': sfx.ghost(); break;
       case 'death': sfx.frightOff(); sfx.death(); break;
       case 'clear': sfx.frightOff(); sfx.clear(); break;
       case 'over': this.finish(false); break;
@@ -183,7 +182,7 @@ export default class GameScene extends Phaser.Scene {
   cheat(won) {
     if (this.ended) return;
     sfx.frightOff();
-    this.g.phase = won ? 'cleared' : 'over';
+    pokePhase(this.machine, this.S, won ? 'cleared' : 'over');
     this.finish(won);
   }
 
@@ -214,14 +213,12 @@ export default class GameScene extends Phaser.Scene {
   }
 
   render(time) {
-    const g = this.g;
+    const g = this.g = readState(this.machine, this.S);
     this.scoreText.setText(String(g.score || '00'));
     if (g.score > this.best) this.bestText.setText(String(g.score));
     this.readyText.setVisible(g.phase === 'ready');
     this.lifeIcons.forEach((icon, i) => icon.setVisible(i < g.lives - 1));
 
-    // Shadow mode: the JS rules write their state into the machine, the machine's video chip draws it.
-    writeShadow(this.machine, g, time);
     drawPlayfield(this.screen.getContext(), this.machine, this.art);
     this.screen.refresh();
   }
