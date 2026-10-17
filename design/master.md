@@ -41,6 +41,8 @@ bonus. See [movement](systems/movement.md).
 | Touch-follow movement | proposed (prototype only; the maze game probably uses swipes) | [movement](systems/movement.md) | `/lab/bench.html?b=movement` |
 | Arcade maze game (starting point) | decided, first version built | [arcade-maze](systems/arcade-maze.md) | `/lab/bench.html?b=maze-controls` |
 | Tech layers / minigames | open | [layers](systems/layers.md) | none yet |
+| Layer: the cabinet (zoom out) | proposed, questions open | [layer-cabinet](systems/layer-cabinet.md) | none yet |
+| Layer: inside the screen (zoom in) | proposed, questions open | [layer-crt](systems/layer-crt.md) | none yet |
 | Mini-gurke easter egg | proposed | [layers](systems/layers.md#mini-gurke-easter-egg--proposed) | none |
 
 ## Vertical slice · decided
@@ -83,3 +85,5 @@ survives only as the movement lab bench.
   start. Plan for the Z80 emulator layer. (Quirin)
 - 2026-10-17: The game is called "Layers of Pac". The maze level imitates the original's pixel look at a similar
   resolution. (Quirin)
+- 2026-10-17: Menu footer: Making-Of, Lab and Impressum links in one row. Next layers to design: zoom out to the
+  cabinet and zoom in to the screen. (Quirin)

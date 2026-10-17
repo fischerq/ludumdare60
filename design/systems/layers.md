@@ -9,6 +9,13 @@
 Theme: Old Tech. Behind the [arcade maze game](arcade-maze.md), short minigames go down through the layers of
 the arcade machine, using the maze characters or mechanics to show how the old tech worked.
 
+## Next layers · proposed
+The two layers next to the maze game come first:
+- **Zoom out: the cabinet.** A 3D-looking arcade machine, the same game on its screen, played through a 4-way
+  joystick. See [layer-cabinet](layer-cabinet.md).
+- **Zoom in: the screen.** Inside the CRT: the game above plays itself and lights up the pixels; we eat dots
+  only while they glow and dodge the refresh beam. See [layer-crt](layer-crt.md).
+
 ## Layer ideas · open (brainstorm, nothing decided)
 Rough order from outside to inside; we pick a few, not all.
 - **Cabinet:** coins, the CRT, joystick wiring.
@@ -46,3 +53,5 @@ minigame, a counter on the layer map, no unlock.*
   the original language; mini-gurke is an easter egg collectible. All ideas to iterate on. (Quirin)
 - 2026-10-17: The Z80 assembly layer is likely, so plan for the emulator; how (wasm vs. plain JS) is still
   open. (Quirin)
+- 2026-10-17: The first two layers to work out are the neighbours of the maze game: zoom out to the cabinet,
+  zoom in to the screen. (Quirin)

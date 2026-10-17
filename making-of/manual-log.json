@@ -189,6 +189,20 @@
           "url": "https://github.com/fischerq/ludumdare60/pull/11"
         }
       ]
+    },
+    {
+      "date": "2026-10-17",
+      "time": "10:30",
+      "seq": 30.5,
+      "kind": "human",
+      "title": "Reviewed and merged pull request #12",
+      "body": "Merged the forgiving swipe turns, the maze controls lab bench, the arcade pixel look and the rename to Layers of Pac into `main`.",
+      "links": [
+        {
+          "label": "Pull request #12",
+          "url": "https://github.com/fischerq/ludumdare60/pull/12"
+        }
+      ]
     }
   ]
 }
