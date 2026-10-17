@@ -29,6 +29,10 @@ When the title changes, update `GAME_TITLE` in `src/config.js`, `<title>` in `in
 ## Working style
 - Make small, focused changes and commit each one with a clear message, so the user can playtest after every push.
 - After each change, tell the user in one or two sentences what to test on the phone.
+- **Token budget is tight during the jam** (plan usage refills only after the event). Check the limit state
+  (the `list_events` call below) regularly, not only at turn start and end, especially before token-heavy work
+  (large rewrites, subagents, headless-browser loops). When in doubt, ask before doing something expensive, and
+  mention the current 5-hour/weekly utilization in that question.
 
 ## Design docs (source of truth)
 `design/` holds the design hierarchy: `design/master.md` for the whole game, `design/systems/<name>.md` per system
