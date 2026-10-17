@@ -5,8 +5,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/tools/ai_log.py\" --hook",
-            "timeout": 30
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/tools/sync_main.py\" --hook; python3 \"$CLAUDE_PROJECT_DIR/tools/ai_log.py\" --hook",
+            "timeout": 90
           }
         ]
       }
@@ -19,6 +19,18 @@
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/tools/export_assets.py\" --hook",
             "timeout": 120
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/tools/sync_main.py\" --push",
+            "timeout": 90
           }
         ]
       }
