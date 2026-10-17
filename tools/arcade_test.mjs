@@ -1,0 +1,26 @@
+// Tests for src/systems/arcade (no browser): node tools/arcade_test.mjs  (needs network for the pinned Z80 core)
+import { loadZ80 } from '../src/systems/arcade/z80.js';
+import { createMachine } from '../src/systems/arcade/machine.js';
+
+let failed = 0;
+const check = (name, ok, info = '') => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${name} ${info}`); if (!ok) failed++; };
+const Z80 = await loadZ80();
+
+{ // Hand-assembled: IM 2 vblank interrupt, a counter in the ISR, a VRAM write and a sound command, then HALT.
+  const rom = new Uint8Array(0x4000);
+  rom.set([0xf3, 0x31, 0xf0, 0x4f, 0x3e, 0x30, 0xed, 0x47, 0xed, 0x5e, 0xaf, 0xd3, 0x00, // DI, SP, I=0x30, IM 2, OUT (0),0
+    0x3e, 0x01, 0x32, 0x00, 0x50, 0xfb,                                                  // enable vblank IRQ, EI
+    0x21, 0x00, 0x40, 0x34, 0x3e, 0x01, 0x32, 0x40, 0x50, 0x76, 0x18, 0xf4]);            // loop: INC (0x4000), sound 1, HALT
+  rom.set([0x00, 0x31], 0x3000);                                                         // IM 2 vector -> 0x3100
+  rom.set([0xf5, 0x3a, 0x00, 0x4c, 0x3c, 0x32, 0x00, 0x4c, 0xf1, 0xfb, 0xed, 0x4d], 0x3100); // ISR: (0x4c00)++
+  const m = createMachine(Z80, { rom });
+  for (let i = 0; i < 10; i++) m.runFrame();
+  check('vblank interrupt every frame', m.ram[0] === 9, `isr=${m.ram[0]}`); // frame 1 has no IRQ yet
+  check('main loop once per frame', m.vram[0] === 10, `vram0=${m.vram[0]}`);
+  check('halt skips the idle frame', m.halted && m.frameRange(0).to - m.frameRange(0).from < 100);
+  check('sound latch', m.takeSounds().length === 10);
+  check('dirty bits', m.dirty[0] === 1 && m.dirty[1] === 0);
+}
+
+if (failed) { console.error(`${failed} failed`); process.exit(1); }
+console.log('all ok');
