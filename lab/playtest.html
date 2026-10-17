@@ -101,7 +101,7 @@
         const extra = id === 'playthrough' ? [['coins found', (r) => r.coinsFound], ['games', (r) => r.mazeGames], ['hall visits', (r) => r.hallVisits]] : [];
         return `<section class="pt-card"><h2>${esc(title)}</h2><p>${esc(note)}</p>
           <div class="pt-charts"><figure><figcaption>Won</figcaption>${winChart(rows)}</figure>
-          <figure><figcaption>Time to solve (median, middle half)</figcaption>${timeChart(rows)}</figure></div>
+          <figure><figcaption>Time to solve</figcaption>${timeChart(rows)}</figure></div>
           ${table(rows, extra)}</section>`;
       }).join('');
     } catch (e) {

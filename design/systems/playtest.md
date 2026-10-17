@@ -55,7 +55,11 @@ player who knows the game".*
   delay, but loses almost every game once its reaction passes about 0.2 s. The bus layer's VRAM room is
   nearly locked: its door only opens on VRAM cycles, a read cycle sends its packet out through the one-tile
   approach (head-on, can't be passed), and VRAM write cycles are about 1% of all cycles (ROM is never written,
-  so the ROM room needs a lucky read). Full numbers on the lab page.
+  so the ROM room needs a lucky read). No bot run finishes the bus layer in 180 s, so the full playthrough never
+  reaches the bottom: with no noise it always stops at the bus; at 0.25 it runs out of coins or gets stuck in the
+  screen layer (which it clears on its own every time, so the machine state after a maze clear makes it harder);
+  from 0.5 up it never clears the maze with the 1 + 5 coins there are. Easiest: the CPU (100% at every level),
+  logic and video RAM. Full numbers on the lab page.
 
 ## Slice scope
 - Build: the CLI, the bots, the noise model, the playthrough, the results page.
