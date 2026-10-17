@@ -1,6 +1,6 @@
 # Emulated arcade machine (the source of truth for the lower layers)
 
-**Status:** proposed (prep built 2026-10-17, no layer uses it yet)
+**Status:** goal decided, plan proposed (step 1 built 2026-10-17)
 **Parent:** [layers](layers.md) · [master](../master.md)
 **Lab bench:** none yet
 **Code:** `src/systems/arcade/` (no Phaser): `memmap.js` (Pac-Man board memory map, VRAM tile layout),
@@ -45,29 +45,88 @@ view of the same running machine, so what happens in one layer is visible in all
 - Pinky's "4 ahead, and 4 left when facing up" bug is real in the original; it only exists in our program if we
   write it in.
 
+## Goal · decided
+The maze layer's core loop (input polling, movement, dot eating, ghosts, modes, deaths) and its rendering run
+**on the emulated machine** as a Z80 program. The maze level the player sees is the machine's video output.
+Every other layer is a view of that same running machine, so all layers stay in sync with one global state.
+The player can switch layers smoothly mid-game. While the player is in another layer, a bot steers Pac-Man on
+the machine.
+
+## Layer gameplay rule · decided
+A layer's gameplay may stylize, retime (slow down, stretch, loop a window), filter or aggregate what happens in
+other layers. Everything it shows must come from the real raw data of the machine running the main game:
+memory, registers, bus accesses, inputs. Nothing is invented or scripted on top. Example: the bus layer can show
+one frame's traffic slowed down, or a per-region heat map, but only of accesses that actually happened.
+
+## Build plan · proposed
+Each step is a playable push. The game never breaks: the JS maze game (`src/systems/maze.js`) stays the
+reference until the Z80 version matches it.
+1. **Done: prep.** Memory map, machine, pinned CPU core, smoke test.
+2. **Global machine runtime.** `src/systems/arcade/world.js` owns the one machine and steps it at a fixed
+   60.606 Hz, independent of which scene is showing (ticked from the Phaser game loop, paused while the tab is
+   hidden). The bus log moves to typed arrays: a frame has about 25 000 bus accesses, and one object per access
+   is too much garbage on a phone. A frame recorder keeps the raw data of the last few frames (bus
+   accesses, register snapshots, input), so slowed-down layers replay real frames instead of inventing them.
+3. **Video chip.** A JS renderer (pure module) that draws a frame from VRAM, color RAM, the 8 sprites and a
+   palette into a canvas. Its "graphics ROM" is built at load time from the textures in `assets/`, so Max's art
+   pipeline stays unchanged.
+4. **Assembler and the first program.** A small Z80 assembler in plain JS (`src/systems/arcade/asm.js`) that
+   runs in the browser too, so the CPU layer can show the real source listing with addresses. Constants come
+   from `src/config.js`, so tuning stays a one-line edit. First program: boot, vblank interrupt, draw the maze
+   from a ROM table into VRAM.
+5. **Shadow mode.** The maze layer renders from the machine. The JS game still decides what happens and
+   writes positions, dots and score into machine RAM and sprite registers each frame. From here every lower
+   layer can be built against real memory contents.
+6. **Port the rules to Z80, slice by slice.** Each slice replaces a JS piece and must pass a side-by-side test
+   against `maze.js` on the same scripted input (a lab bench: machine vs. JS):
+   a. input polling, Pac-Man movement, dot eating, score;
+   b. ghost movement, targeting, scatter/chase modes;
+   c. fright, ghost eating, deaths, lives, level clear, READY.
+   After slice c, the maze layer runs on the machine alone.
+7. **Bot.** An autopilot in JS that reads machine RAM and presses the joystick through `setInput()`, the same
+   input path as the player. It plays whenever the player isn't steering Pac-Man.
+8. **Layer framework and smooth switching.** Each layer is a view on `world`. The machine never pauses for a
+   transition, and each layer says who controls Pac-Man (player or bot). The cabinet's screen shows the
+   machine's frame.
+9. **Deep layers, one slice each, questions first:** CRT ([layer-crt](layer-crt.md)), then the others from the
+   table above.
+
+Token cost: steps 4 and 6 are the expensive ones; each slice of step 6 is its own push.
+
 ## Slice scope
-- Build (done): memory map, machine with bus log / dirty bits / snapshot, pinned CPU core, smoke test.
-- Not now: our Z80 program, a renderer, any layer using the machine, sound, a lab bench.
+- Build (done): step 1.
+- Next: step 2, once the questions are answered.
+- Not now: steps 3-9.
 
 ## Open questions
-1. What runs on the machine? (a) our own small maze game in Z80 assembly, (b) a JS "shadow" that writes the
-   existing JS maze game's state into the memory map (layers 3/6/7 work, the CPU layer shows fake code), or
-   (c) the player loads their own Pac-Man ROM file (never shipped). *Default: (a), kept small, written so its RAM
-   layout mirrors the original's.*
-2. If (a): assemble how? A tiny Z80 assembler in JS under `tools/` that outputs a committed `.bin`, or
-   hand-written bytes, or a pinned CDN assembler. *Default: a small JS assembler in `tools/`, output committed.*
-3. Does the emulated machine drive the visible maze game (the top layers show the emulator's output), or does it
-   run alongside it? *Default: alongside for now; switching later is a big change.*
-4. Which layers do we actually build, and in what order? *Default: 1 CRT (already designed), 5 CPU, 7 input.*
-5. Real time or slowed down in the deep layers? A frame is ~16 000 instructions. *Default: real time in layers
-   1-3, the CPU/bus layers run at a slowed speed or show a short window per frame.*
-6. Does input in a lower layer feed back into the machine (e.g. grounding an input track presses the joystick)?
-   *Default: yes for layer 7, read-only elsewhere.*
-7. Is a non-cycle-exact core fine (scanline timing is estimated from instruction cycles)? *Default: yes.*
-8. Sound from the WSG registers, or keep `src/sound.js`? *Default: keep `sound.js`, show WSG only visually.*
+1. **Board size:** an "in the style of" board sized to our 19x25 maze (16 px tiles, 32 px sprites, Max's art
+   as graphics ROM), or the exact Namco layout (28x36 tiles of 8 px, 16 px sprites, which means redoing the maze
+   and the art)? Our maze is 304 px wide, more than the original's 224, so it doesn't fit as is.
+   *Default: our own board in the Namco style. Same address-space idea and I/O, sized to our game; `memmap.js`
+   gets adjusted.*
+2. **How faithful the port is:** same rules and numbers as `maze.js`, stepped per frame in fixed point
+   (positions in 1/256 tile). *Default: yes. Small feel differences from frame stepping are OK.*
+3. **Assembler:** our own in-browser JS assembler (the source listing becomes level material), or assembled
+   bytes committed? *Default: our own; the browser assembles at load and a test checks the output.*
+4. **When the maze layer switches to the machine:** at step 5 (shadow mode: same logic, machine rendering) or
+   only after step 6? *Default: step 5.*
+5. **Lives while away:** if the bot dies while the player is in another layer, what happens? *Default: the
+   bot plays an endless attract-style game that doesn't cost the player's lives. Back in the maze layer, the
+   player continues the machine's game as it is.*
+6. **Bot skill:** *Default: simple and readable: head for the nearest dot, avoid ghosts closer than a few
+   tiles, chase frightened ghosts.*
+7. **Who controls Pac-Man in a deep layer:** *Default: the bot. In the input layer (7) the player's own
+   movement presses the joystick bits instead.*
+8. **Sound:** play the WSG registers, or keep `src/sound.js` triggered by machine events? *Default: keep
+   `sound.js`.*
 
 ## Decision log
 - 2026-10-17: Lower layers read the state of one emulated Z80 machine instead of scripted behavior; seven
   layers sketched (CRT, signals, VRAM, bus, CPU, game logic, input). (Quirin)
 - 2026-10-17: Prep built: memory map, machine, pinned MIT Z80.js core from jsdelivr, smoke test. Program and
   layers still open. (Claude)
+- 2026-10-17: Goal: the maze game's core loop and rendering run on the machine; all layers are views of one
+  global machine state, switched smoothly mid-game; a bot steers Pac-Man while the player is elsewhere. Layer
+  ideas come from a Gemini chat (see the making-of). (Quirin) Build plan in 9 steps proposed. (Claude)
+- 2026-10-17: Layers may stylize, retime or aggregate events, but always from the real raw data driving the
+  main game. (Quirin)
