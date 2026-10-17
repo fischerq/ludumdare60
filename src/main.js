@@ -14,10 +14,6 @@ const config = {
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
   },
-  physics: {
-    default: 'arcade',
-    arcade: { debug: false },
-  },
   input: {
     activePointers: 2,
   },

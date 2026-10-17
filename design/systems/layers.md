@@ -20,7 +20,8 @@ Rough order from outside to inside; we pick a few, not all.
 - **CPU / memory:** registers, RAM, ROM chips, a byte-level view.
 - **Electronics:** logic gates, clock signal.
 
-## Emulation sidecar · open
+## Emulation sidecar · decided to plan for it (design open)
+The Z80 assembly layer will probably be one we want, so we plan for an emulator.
 Idea: simulate the old tech for real, running code in the original language (e.g. Z80 assembly) in a wasm
 sidecar, and use that code's visibility for a level.
 Things to settle before building:
@@ -42,3 +43,5 @@ minigame, a counter on the layer map, no unlock.*
 ## Decision log
 - 2026-10-17: Minigames explore the layers of tech behind the arcade machine; possible wasm sidecar that runs
   the original language; mini-gurke is an easter egg collectible. All ideas to iterate on. (Quirin)
+- 2026-10-17: The Z80 assembly layer is likely, so plan for the emulator; how (wasm vs. plain JS) is still
+  open. (Quirin)

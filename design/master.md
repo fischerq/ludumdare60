@@ -39,23 +39,24 @@ bonus. See [movement](systems/movement.md).
 | System | Status | Doc | Lab bench |
 |---|---|---|---|
 | Touch-follow movement | proposed (prototype only; the maze game probably uses swipes) | [movement](systems/movement.md) | `/lab/bench.html?b=movement` |
-| Arcade maze game (starting point) | open, questions asked | [arcade-maze](systems/arcade-maze.md) | none yet |
+| Arcade maze game (starting point) | decided, first version built | [arcade-maze](systems/arcade-maze.md) | none yet |
 | Tech layers / minigames | open | [layers](systems/layers.md) | none yet |
 | Mini-gurke easter egg | proposed | [layers](systems/layers.md#mini-gurke-easter-egg--proposed) | none |
 
-## Vertical slice · proposed
+## Vertical slice · decided
 The smallest playable version that tests the core assumption.
-- Build: one arcade-styled maze-chomper screen, playable on a phone (see [arcade-maze](systems/arcade-maze.md)).
+- Build: one arcade-styled maze-chomper screen, full screen, with sound, playable on a phone (see
+  [arcade-maze](systems/arcade-maze.md)). Built 2026-10-17.
 - Not now: minigames, the emulator sidecar, the mini-gurke egg, menus beyond start/game over.
 
 ## Art and audio direction · proposed
 Arcade look: black background, neon maze lines, chunky pixel sprites, pixel font, CRT-ish touches (scanlines)
-if cheap. Deeper layers can change look to match the tech they show (schematics, hex dumps, assembly listings).
+if cheap. The maze game runs full screen with no cabinet frame; clearing the first level changes that. Deeper layers can change look to match the tech they show (schematics, hex dumps, assembly listings).
 
 ## Current prototype
-The repo currently holds a pipeline test, not the game: drag to move, collect yellow coins, dodge red hazards
-falling from the top. It exists to check deploys, touch handling and the phone setup. Nothing in it is decided
-for the real game.
+The arcade maze game: menu, one maze, 4 ghosts, swipe to turn, sound. Clearing the maze shows a placeholder
+"something is behind the glass" screen where the first tech layer will go. The old touch-follow pipeline test
+survives only as the movement lab bench.
 
 ## How we work during the jam · decided
 - Many separate Claude sessions; each one reads this doc and the relevant system doc first.
@@ -78,3 +79,5 @@ for the real game.
   minigames that explore the layers of tech behind the arcade machine; maybe emulate the original language in a
   wasm sidecar and use the visible code in a level; mini-gurke becomes a collectible easter egg. All ideas to
   iterate on. Plan usage is tight, so sessions check limits regularly and ask before expensive work. (Quirin)
+- 2026-10-17: Maze game runs full screen (no cabinet frame); clearing the first level changes it. Sound from the
+  start. Plan for the Z80 emulator layer. (Quirin)
