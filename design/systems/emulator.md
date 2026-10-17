@@ -3,9 +3,10 @@
 **Status:** goal decided, plan proposed (step 1 built 2026-10-17)
 **Parent:** [layers](layers.md) · [master](../master.md)
 **Lab bench:** none yet
-**Code:** `src/systems/arcade/` (no Phaser): `memmap.js` (Pac-Man board memory map, VRAM tile layout),
-`machine.js` (memory, I/O, vblank IRQ, bus log, dirty bits, `snapshot()`), `z80.js` (loads the CPU core).
-Numbers in `ARCADE` in `src/config.js`. Smoke test: `node tools/arcade_smoke.mjs`.
+**Code:** `src/systems/arcade/` (no Phaser): `memmap.js` (our board's memory map), `machine.js` (memory, I/O,
+vblank IRQ, bus log, dirty bits, sound latch, `snapshot()`), `world.js` (the one running machine), `z80.js`
+(loads the CPU core).
+Numbers in `ARCADE` in `src/config.js`. Tests: `node tools/arcade_test.mjs`.
 
 ## Purpose
 The deeper layers (screen, video hardware, VRAM, bus, CPU, game logic, input) aren't scripted: they all read the
@@ -62,7 +63,7 @@ one frame's traffic slowed down, or a per-region heat map, but only of accesses 
 Each step is a playable push. The game never breaks: the JS maze game (`src/systems/maze.js`) stays the
 reference until the Z80 version matches it.
 1. **Done: prep.** Memory map, machine, pinned CPU core, smoke test.
-2. **Global machine runtime.** `src/systems/arcade/world.js` owns the one machine and steps it at a fixed
+2. **Done: global machine runtime.** `src/systems/arcade/world.js` owns the one machine and steps it at a fixed
    60.606 Hz, independent of which scene is showing (ticked from the Phaser game loop, paused while the tab is
    hidden). The bus log moves to typed arrays: a frame has about 25 000 bus accesses, and one object per access
    is too much garbage on a phone. A frame recorder keeps the raw data of the last few frames (bus
@@ -94,11 +95,12 @@ reference until the Z80 version matches it.
 Token cost: steps 4 and 6 are the expensive ones; each slice of step 6 is its own push.
 
 ## Slice scope
-- Build (done): step 1.
-- Next: step 2, once the questions are answered.
-- Not now: steps 3-9.
+- Build: all nine steps, one pull request per step (Quirin, 2026-10-17). Step 9 builds a first slice of each
+  deep layer; their mechanics and feel get tuned afterwards.
+- Not now: WSG sound emulation, cycle-exact timing, the original Namco ROM.
 
-## Open questions
+## Answered questions
+All eight defaults accepted by Quirin on 2026-10-17.
 1. **Board size:** an "in the style of" board sized to our 19x25 maze (16 px tiles, 32 px sprites, Max's art
    as graphics ROM), or the exact Namco layout (28x36 tiles of 8 px, 16 px sprites, which means redoing the maze
    and the art)? Our maze is 304 px wide, more than the original's 224, so it doesn't fit as is.
@@ -130,3 +132,8 @@ Token cost: steps 4 and 6 are the expensive ones; each slice of step 6 is its ow
   ideas come from a Gemini chat (see the making-of). (Quirin) Build plan in 9 steps proposed. (Claude)
 - 2026-10-17: Layers may stylize, retime or aggregate events, but always from the real raw data driving the
   main game. (Quirin)
+- 2026-10-17: All eight suggested answers accepted; build the whole plan, one PR per step; each layer's mechanics
+  and feel get tuned later. (Quirin)
+- 2026-10-17: Our board: Namco-style map, VRAM is 32 bytes per row with one cell code per maze tile, sprite
+  positions are 16-bit world px, sound is a command latch at `0x5040`, a dip switch marks demo play. The
+  machine runs whatever scene is showing; a HALTed CPU skips to the end of the frame. (Claude)

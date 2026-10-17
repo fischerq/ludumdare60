@@ -290,7 +290,9 @@ export const ARCADE = {
   z80Url: 'https://cdn.jsdelivr.net/gh/DrGoldfire/Z80.js@2207d7c6a8b42246ea12efbf9dba8b2adf010437/Z80.js',
   clockHz: 3072000,     // Z80 clock
   frameHz: 60.606,      // vblank rate; one interrupt per frame
-  busLogSize: 4096,     // last N bus accesses kept for the bus layer
+  busLogSize: 1 << 17,  // bus accesses kept for the lower layers (a power of two; a frame has ~10 000)
+  framesKept: 8,        // frames the recorder can replay
+  maxFramesPerTick: 4,  // after a hitch, catch up at most this many frames at once
 };
 
 // Animation speeds (characters and effects), in game frames per animation frame. Lives in a JSON file so the lab can
