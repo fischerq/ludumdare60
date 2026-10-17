@@ -388,6 +388,10 @@ export const UI = {
   bodySize: 44,
   linkSize: 32,
   legalSize: 22,
+  // Start screen cast: game frames (at 60 per second) each animation frame is shown. Slower than in the maze,
+  // where Pac-Man's chomp runs at animation.json speed only while he moves.
+  menuPacAnim: 6,
+  menuGhostAnim: 15,
 };
 
 // Emulated arcade machine (Pac-Man-style hardware) that the lower layers read from. See design/systems/emulator.md.
