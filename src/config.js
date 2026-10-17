@@ -200,6 +200,15 @@ export const DEEP = {
     readTime: 2.5,       // s for the video chip's read sweep over all rows
     goal: 20,
   },
+  bus: {
+    rate: 5,             // bus cycles shown per second (the real bus does about a million)
+    goal: 40,
+  },
+  cpu: {
+    rate: 4,             // instructions per second (the real CPU does about 800 000)
+    trace: 400,          // instructions recorded from the start of a frame
+    goal: 25,
+  },
 };
 
 export const CHEATS = {

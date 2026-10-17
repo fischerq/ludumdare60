@@ -43,6 +43,20 @@ most `queue` writes wait, older ones are skipped. Every byte that changed since 
 and can be collected; in practice those are the dots the bot's Pac-Man eats. The video chip's read sweep is
 shown but harmless. Goal: 20 dirty bytes.
 
+## Layer -4: the system bus · built
+16 address lanes, 8 data lanes and a control column (R/W, I/O in/out); each row is one bus cycle of a real
+frame, scrolling down at `DEEP.bus.rate` per second, its background colored by the memory region it targets.
+Instruction fetches from ROM are filtered out (most of the traffic). A 1 on an address lane is live: a hit.
+On a read the data lanes carry the payload in: grab the 1s. On a write the CPU drives them: they're live too.
+Start in the gap between data and control lanes, which is never live. Goal: 40 data bits.
+
+## Layer -5: the CPU · built
+The program's own source listing (`game.asm` as the browser assembled it), with the program counter
+replaying a real trace: `requestTrace` records the first `DEEP.cpu.trace` instructions of a frame (from the
+vblank interrupt on), replayed at `rate` per second. The line the PC jumps to is a hit if you're on it. Every
+instruction that leaves Zero or Carry set drops a Z or C on its line (right edge) to collect. The registers
+and flags after the current instruction are shown below. Goal: 25 flags.
+
 ## Decision log
 - 2026-10-17: One scene for all deep layers with a pure module per layer; first slices of all seven layers
   from the Gemini chat's mapping, adapted so each is playable on a phone. (Claude)

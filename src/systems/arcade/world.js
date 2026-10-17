@@ -77,7 +77,8 @@ export function tickWorld(ms) {
     world.acc -= frameMs;
     if (world.driver === 'bot') botStep(m);
     applyInput(m);
-    m.runFrame();
+    m.runFrame(world.trace ? traceStep : undefined);
+    if (world.trace?.steps.length) { world.trace.done(world.trace.steps); world.trace = null; }
     const sounds = m.takeSounds();
     for (const fn of world.listeners) fn(m, sounds);
   }
@@ -89,6 +90,18 @@ function botStep(m) {
   const phase = PHASES[m.read(S.PHASE)];
   if ((phase === 'attract' || phase === 'over' || phase === 'cleared') && !world.input.start) pressStart();
   world.input.held = botDirection(m, S);
+}
+
+// Records the first n instructions of the next frame (PC, registers, flags) and hands them to done(steps).
+// Only for the CPU layer: reading the registers after every instruction is too slow to do all the time.
+export function requestTrace(n, done) {
+  world.trace = { n, steps: [], done };
+}
+function traceStep(m) {
+  const tr = world.trace;
+  if (!tr || tr.steps.length >= tr.n) return;
+  const c = m.cpu.getState();
+  tr.steps.push({ pc: c.pc, sp: c.sp, a: c.a, f: c.flags, b: c.b, c: c.c, d: c.d, e: c.e, h: c.h, l: c.l });
 }
 
 // fn(machine, sounds) after every frame; returns an unsubscribe function.
