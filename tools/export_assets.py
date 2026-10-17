@@ -4,10 +4,14 @@
 Runs tools/export-assets.html in headless Chromium, so the PNGs come from the game's own drawing code.
 Run it after any change to the code-drawn art:  python3 tools/export_assets.py [--chrome PATH]
 
+The game loads its art from these files (keys listed in assets/export.json). Max edits them in place, so a file
+that differs from what the last export wrote (hash in assets/export.json) is his and is never overwritten or
+deleted. To go back to the code-drawn version of one, delete the file and export again.
+
 --hook: for the Claude Code PostToolUse hook (.claude/settings.json). Exports only when an art source file
 changed since the last export (stamp in .git/), so the export stays current after every edit, whatever tool made it.
 """
-import argparse, base64, functools, html, http.server, json, re, shutil, subprocess, sys, threading
+import argparse, base64, hashlib, functools, html, http.server, json, re, shutil, subprocess, sys, threading
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -28,6 +32,7 @@ def find_chrome(given):
 # Files whose changes can change the code-drawn art.
 ART_SOURCES = ['src/scenes/BootScene.js', 'src/systems/tiles.js', 'src/config.js']
 STAMP = ROOT / '.git' / 'export-assets.stamp'
+MANIFEST = OUT / 'export.json'
 
 
 def art_changed():
@@ -53,7 +58,7 @@ def main():
     handler = functools.partial(Quiet, directory=str(ROOT))
     server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    url = f'http://127.0.0.1:{server.server_address[1]}/tools/export-assets.html'
+    url = f'http://127.0.0.1:{server.server_address[1]}/tools/export-assets.html?codeart'
     try:
         dom = subprocess.run([chrome, '--headless', '--disable-gpu', '--no-sandbox', '--virtual-time-budget=10000',
                               '--dump-dom', url], capture_output=True, text=True, timeout=120).stdout
@@ -65,19 +70,41 @@ def main():
         sys.exit('Export page produced no textures (is the Phaser CDN reachable?)')
     textures = json.loads(html.unescape(m.group(1)))
     OUT.mkdir(exist_ok=True)
-    # Drop exports of textures that no longer exist (Max's folder and other files are left alone).
+    sha = lambda b: hashlib.sha256(b).hexdigest()
+    try:
+        exported = json.loads(MANIFEST.read_text())['textures']
+    except (OSError, ValueError, KeyError):
+        exported = {}
+    edited = []
     # Keys with a slash are tiles: '<tileset>/<tile>' goes to assets/<tileset>/<tile>.png.
+    # Drop exports of textures that no longer exist, unless Max edited the file.
     for old in OUT.rglob('*.png'):
-        rel = old.relative_to(OUT)
-        if rel.parts[0] != 'from-max' and rel.with_suffix('').as_posix() not in textures:
-            old.unlink()
-    for key, data in textures.items():
+        key = old.relative_to(OUT).with_suffix('').as_posix()
+        if key not in textures:
+            if sha(old.read_bytes()) == exported.get(key):
+                old.unlink()
+            else:
+                edited.append(key)
+    manifest = {}
+    for key, data in sorted(textures.items()):
+        png = base64.b64decode(data.split(',', 1)[1])
         dest = OUT / f'{key}.png'
+        if dest.exists() and sha(dest.read_bytes()) not in (sha(png), exported.get(key)):
+            edited.append(key)  # Max's file: keep it and remember what the export last wrote
+            manifest[key] = exported.get(key, sha(png))
+            continue
         dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_bytes(base64.b64decode(data.split(',', 1)[1]))
+        dest.write_bytes(png)
+        manifest[key] = sha(png)
+    MANIFEST.write_text(json.dumps({
+        '_readme': 'Written by tools/export_assets.py. The game loads assets/<key>.png for every key here; the hash '
+                   'is what the export last wrote, so a file that differs was edited by hand and is kept.',
+        'textures': manifest}, indent=1) + '\n')
     if STAMP.parent.is_dir():
         STAMP.touch()
     print(f'{len(textures)} textures -> {OUT.relative_to(ROOT)}/' + (' (art changed: commit the PNGs with it)' if args.hook else ''))
+    if edited:
+        print(f'Kept {len(edited)} edited file(s), not overwritten: ' + ', '.join(sorted(edited)))
 
 
 if __name__ == '__main__':
