@@ -1,7 +1,8 @@
-import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, CABINET, MAZE, PIXEL, UI, BEST_KEY } from '../config.js';
+import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, CABINET, MAZE, PIXEL, UI, BEST_KEY, LAYERS } from '../config.js';
 import { createGame, stepGame, steer } from '../systems/maze.js';
 import { drawScreen, screenSize } from '../systems/screenImage.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
+import { addLayerButton } from '../layerButton.js';
 
 const KEYS = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
@@ -53,6 +54,12 @@ export default class CabinetScene extends Phaser.Scene {
       fontFamily: UI.arcadeFont, fontSize: 8, color: COLORS.text, resolution: 1,
     }).setOrigin(0.5, 1);
     this.stickGfx = this.add.graphics();
+    // Down one layer: zoom back into the screen, to the maze level.
+    if (LAYERS.unlocked) {
+      this.layerBtn = addLayerButton(this, 8, 8, 'LAYER\nDOWN', () => {
+        if (this.mode !== 'outro') { sfx.frightOff(); this.mode = 'outro'; }
+      });
+    }
 
     this.cam = this.cameras.main.setOrigin(0, 0).setRoundPixels(true);
     this.setIntro(0);
@@ -86,10 +93,11 @@ export default class CabinetScene extends Phaser.Scene {
   setupInput() {
     // Joystick: put a finger down anywhere and push; it clicks into one of four directions.
     this.anchor = null;
-    this.input.on('pointerdown', (p) => {
+    this.input.on('pointerdown', (p, over) => {
       unlockAudio();
       if (this.mode === 'cleared') { this.scene.start('Menu'); return; }
       if (this.mode === 'intro') { this.introT = 1; return; } // tap to skip the zoom-out
+      if (this.mode === 'outro' || (this.layerBtn && over.includes(this.layerBtn))) return;
       const wp = this.cam.getWorldPoint(p.x, p.y);
       const cd = CABINET.coinDoor, pad = 24;
       if (this.mode === 'insert' && wp.x > cd.x - pad && wp.x < cd.x + cd.w + pad && wp.y > cd.y - pad && wp.y < cd.y + cd.h + pad) {
@@ -170,6 +178,11 @@ export default class CabinetScene extends Phaser.Scene {
       this.introT += dt / CABINET.introTime;
       this.setIntro(Math.min(1, this.introT));
       if (this.introT >= 1) this.mode = 'insert';
+    }
+    if (this.mode === 'outro') {
+      this.introT -= dt / LAYERS.outroTime;
+      this.setIntro(Math.max(0, this.introT));
+      if (this.introT <= 0) { this.mode = 'gone'; this.scene.start('Game'); }
     }
     if (this.mode === 'play') {
       // A joystick is held, not swiped: keep steering while it's pushed.

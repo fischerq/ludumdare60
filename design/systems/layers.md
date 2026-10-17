@@ -16,6 +16,11 @@ The two layers next to the maze game come first:
 - **Zoom in: the screen.** Inside the CRT: the game above plays itself and lights up the pixels; we eat dots
   only while they glow and dodge the refresh beam. See [layer-crt](layer-crt.md).
 
+## Moving between layers · decided
+A LAYER UP / LAYER DOWN button in each layer (`src/layerButton.js`): the maze level has LAYER UP (zoom out to
+the cabinet), the cabinet has LAYER DOWN (zoom back in to the maze level). For now every layer is unlocked from
+the start (`LAYERS.unlocked` in config); later a layer unlocks when you clear the one before it.
+
 ## Layer ideas · open (brainstorm, nothing decided)
 Rough order from outside to inside; we pick a few, not all.
 - **Cabinet:** coins, the CRT, joystick wiring.
@@ -55,3 +60,4 @@ minigame, a counter on the layer map, no unlock.*
   open. (Quirin)
 - 2026-10-17: The first two layers to work out are the neighbours of the maze game: zoom out to the cabinet,
   zoom in to the screen. (Quirin)
+- 2026-10-17: Button to move a layer up or down; all layers unlocked by default for now. (Quirin)

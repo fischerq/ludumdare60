@@ -46,7 +46,10 @@ export default class BootScene extends Phaser.Scene {
     // Wait for the arcade font so text doesn't render in the fallback first (give up after 2 s).
     const font = document.fonts?.load(`8px ${UI.arcadeFont}`) ?? Promise.resolve();
     const timeout = new Promise((r) => setTimeout(r, 2000));
-    Promise.race([font, timeout]).catch(() => {}).finally(() => this.scene.start('Menu'));
+    // ?scene=Cabinet (or any scene key) jumps straight to that layer, for playtesting.
+    const start = new URLSearchParams(window.location.search).get('scene');
+    const target = start && this.scene.get(start) ? start : 'Menu';
+    Promise.race([font, timeout]).catch(() => {}).finally(() => this.scene.start(target));
   }
 
   // Draw a w x h texture; paint(set) calls set(x, y, color) for each lit pixel.
