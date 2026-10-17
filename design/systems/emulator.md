@@ -87,7 +87,7 @@ reference until the Z80 version matches it.
    b. ghost movement, targeting, scatter/chase modes;
    c. fright, ghost eating, deaths, lives, level clear, READY.
    After slice c, the maze layer runs on the machine alone.
-7. **Bot.** An autopilot in JS that reads machine RAM and presses the joystick through `setInput()`, the same
+7. **Done: bot** (`bot.js`). An autopilot in JS that reads machine RAM and presses the joystick through `setInput()`, the same
    input path as the player. It plays whenever the player isn't steering Pac-Man.
 8. **Layer framework and smooth switching.** Each layer is a view on `world`. The machine never pauses for a
    transition, and each layer says who controls Pac-Man (player or bot). The cabinet's screen shows the
@@ -145,3 +145,7 @@ All eight defaults accepted by Quirin on 2026-10-17.
   blink through a table of their color RAM addresses, and the cheat buttons poke the phase into RAM. Same
   tiles and score as `maze.js` on scripted input; frightened ghosts use an 8-bit LFSR instead of
   `Math.random`. (Claude)
+- 2026-10-17: Step 7: the bot searches the maze (breadth-first, from VRAM) for the nearest pellet or frightened
+  ghost, keeping 3 tiles from hunting ghosts, and holds the joystick. It drives whenever the maze layer isn't
+  showing (also behind the menu), with the demo dip switch on, and presses START after a game ends. A new game
+  from the menu power-cycles the machine; coming back from the cabinet continues the running game. (Claude)

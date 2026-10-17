@@ -4,7 +4,9 @@
 import { ARCADE } from '../../config.js';
 import { loadZ80 } from './z80.js';
 import { createMachine } from './machine.js';
-import { IN0, IN1 } from './memmap.js';
+import { IN0, IN1, DSW } from './memmap.js';
+import { botDirection } from './bot.js';
+import { PHASES } from './state.js';
 
 export const world = {
   machine: null,
@@ -16,7 +18,24 @@ export const world = {
   // What the player (or the bot) does with the controls: a swipe pulses a direction for a few frames, a held
   // stick holds one, START is pressed for a few frames.
   input: { held: null, pulse: null, pulseFrames: 0, start: 0 },
+  // Who steers Pac-Man: 'player' while the maze layer (or the cabinet) is showing, otherwise the 'bot'.
+  driver: 'bot',
 };
+
+// The bot plays with the demo dip switch on, so its deaths don't cost the player's lives.
+export function setDriver(driver) {
+  world.driver = driver;
+  world.input.held = null;
+  world.machine?.setDip(DSW.demo, driver === 'bot');
+}
+
+// Power-cycles the machine and starts a fresh game (the program needs a few frames to boot).
+export function newGame() {
+  const m = world.machine;
+  m.cpu.reset();
+  m.irqOn = false;
+  world.input.start = 12;
+}
 
 const PULSE_FRAMES = 2;
 export const pressDir = (dir) => { world.input.pulse = dir; world.input.pulseFrames = PULSE_FRAMES; };
@@ -39,6 +58,7 @@ export function startWorld(loadProgram = async () => null) {
     const [Z80, program] = await Promise.all([loadZ80(), loadProgram()]);
     world.program = program;
     world.machine = createMachine(Z80, { rom: program?.rom });
+    setDriver(world.driver);
     return world;
   })();
   return world.ready;
@@ -52,11 +72,20 @@ export function tickWorld(ms) {
   world.acc = Math.min(world.acc + ms, frameMs * ARCADE.maxFramesPerTick);
   while (world.acc >= frameMs) {
     world.acc -= frameMs;
+    if (world.driver === 'bot') botStep(m);
     applyInput(m);
     m.runFrame();
     const sounds = m.takeSounds();
     for (const fn of world.listeners) fn(m, sounds);
   }
+}
+
+// The bot holds the joystick toward its goal, and presses START when a game is over.
+function botStep(m) {
+  const S = world.program.symbols;
+  const phase = PHASES[m.read(S.PHASE)];
+  if ((phase === 'attract' || phase === 'over' || phase === 'cleared') && !world.input.start) pressStart();
+  world.input.held = botDirection(m, S);
 }
 
 // fn(machine, sounds) after every frame; returns an unsubscribe function.

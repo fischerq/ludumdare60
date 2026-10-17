@@ -286,7 +286,7 @@ export default class CabinetScene extends Phaser.Scene {
     if (this.mode === 'outro') {
       this.introT -= dt / LAYERS.outroTime;
       this.setIntro(Math.max(0, this.introT));
-      if (this.introT <= 0) { this.mode = 'gone'; this.scene.start('Game'); }
+      if (this.introT <= 0) { this.mode = 'gone'; this.scene.start('Game', { continue: true }); }
     }
     if (this.mode === 'play') {
       // A joystick is held, not swiped: keep steering while it's pushed.

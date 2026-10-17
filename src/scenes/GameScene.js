@@ -4,7 +4,7 @@ import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 import { showCallout } from '../callout.js';
 import { progress } from '../progress.js';
-import { world, onFrame, pressDir, pressStart } from '../systems/arcade/world.js';
+import { world, onFrame, pressDir, pressStart, setDriver, newGame } from '../systems/arcade/world.js';
 import { drawPlayfield, W, H } from '../systems/arcade/video.js';
 import { readState, pokePhase } from '../systems/arcade/state.js';
 
@@ -24,7 +24,8 @@ export default class GameScene extends Phaser.Scene {
 
   // The maze game runs on the emulated arcade machine (src/systems/arcade/game.asm): this scene shows its
   // picture, reads its RAM for the HUD, plays its sound commands and presses its joystick.
-  create() {
+  // data.continue: coming back from another layer, keep playing the machine's current game.
+  create(data = {}) {
     this.machine = world.machine;
     this.S = world.program.symbols;
     this.g = readState(this.machine, this.S);
@@ -48,9 +49,13 @@ export default class GameScene extends Phaser.Scene {
     this.setupInput();
     this.setupPauseOnHide();
 
-    // Coming back mid-game (from another layer) continues it; otherwise press START for a new game.
-    if (['attract', 'cleared', 'over'].includes(this.g.phase)) pressStart();
+    // The player steers while this layer shows; the bot takes over when it closes. Coming back from another
+    // layer continues the machine's game (the bot may have played on); otherwise a fresh game.
+    setDriver('player');
+    if (!data.continue) newGame();
+    else if (['attract', 'cleared', 'over'].includes(this.g.phase)) pressStart();
     else if (this.g.fright > 0) sfx.frightOn();
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setDriver('bot'));
     const off = onFrame((m, sounds) => sounds.forEach((e) => this.handle(e.name)));
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, off);
     this.render(0);
@@ -199,8 +204,8 @@ export default class GameScene extends Phaser.Scene {
     showCallout(this, this.viewW / 2, this.oy + 12 * T, `${text}\n\nTAP TO PLAY AGAIN`);
     // Short delay so the swipe that ended the round doesn't restart it at once.
     this.time.delayedCall(600, () => {
-      this.input.on('pointerdown', (p, over) => { if (!over.length && !this.leaving) this.scene.restart(); });
-      const again = () => { if (!this.leaving) this.scene.restart(); };
+      this.input.on('pointerdown', (p, over) => { if (!over.length && !this.leaving) this.scene.restart({}); });
+      const again = () => { if (!this.leaving) this.scene.restart({}); };
       this.input.keyboard?.once('keydown-SPACE', again);
       this.input.keyboard?.once('keydown-ENTER', again);
     });
