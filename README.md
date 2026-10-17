@@ -16,6 +16,17 @@ python3 -m http.server 8000
 
 Then open <http://localhost:8000>. To test on your phone, open `http://<your-laptop-ip>:8000` on the same Wi-Fi.
 
+### Windows: VS Code + Live Server
+
+1. Open the repo folder in VS Code and install the recommended **Live Server** extension (ritwickdey.LiveServer;
+   VS Code offers it from `.vscode/extensions.json`).
+2. Open `index.html` and click **Go Live** in the status bar (or right-click → *Open with Live Server*).
+3. The game opens at `http://<your-pc-ip>:5500/` and reloads on every save. The same URL works on your phone on
+   the same Wi-Fi; allow Windows Firewall access for *Code* on private networks when asked.
+
+The lab is at `/lab/` and the making-of page at `/making-of/`. Settings live in `.vscode/settings.json` (port 5500,
+LAN access, no reload for docs or log files).
+
 **Controls:** touch and drag (or click and hold) to move toward your finger. On a laptop, arrow keys / WASD also work.
 
 ## Deploy
