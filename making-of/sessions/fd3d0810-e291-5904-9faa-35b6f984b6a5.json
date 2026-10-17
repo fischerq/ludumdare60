@@ -126,7 +126,7 @@
    "seq": 33,
    "date": "2026-10-17",
    "time": "11:29",
-   "duration_s": 104,
+   "duration_s": 114,
    "prompt": "we should always keep  an export of all the assets in the assets folder. max will take them from there, edit, and pass back in a separate folder/into a conversation",
    "followups": [
     {
@@ -138,10 +138,11 @@
    "claude_images": [
     "media/fd3d0810-3-c1.jpg"
    ],
-   "reply": "Noted the 32x32 change. It also affects tile size and zoom, so I'm recording it in the docs now and will ask before changing code. Committing what's built.",
+   "reply": "`assets/` now holds a PNG of every sprite and the maze, 28 files at 1x with transparent backgrounds, named after the game's internal name for each sprite (e.g. `pac-0.png`). Max can take them from there now. This is in PR [fischerq/ludumdare60#15](https://github.com/fischerq/ludumdare60/pull/15).\n\n- **Export:** `python3 tools/export_assets.py` regenerates the files using the game's own drawing code, so they always match the game. I ran it here and checked the sizes and a screenshot. On Windows I haven't tried it; it needs Python and Chrome or Edge. `tools/export-assets.html` shows all of them in a browser with a download link each, which also works on Windows through Live Server.\n- **Rule:** `CLAUDE.md` now says to rerun the export after any change to the code-drawn art and commit the PNGs with it.\n- **From Max:** edited files come back in `assets/from-max/`, with the same names and sizes. If Max sends them in a conversation instead, I'll save them there. The export never touches that folder. The game doesn't load files from it yet; I'll add that when the first file arrives.\n- **Nothing to test on the phone:** the game itself is unchanged.\n\n**32x32:** I recorded it in `design/systems/art.md`, but haven't changed any code yet. The current sprites are 14x14, so the export is still at that size. Two questions before I change it:\n1. Should the maze tile go from 8 to 16 pixels, so a sprite covers 2x2 tiles like the original? Then the game scales everything up 2x instead of 4x, and the maze ends up a bit narrower on screen. *Default: yes.*\n2. Should I first enlarge today's sprites to 32x32, so Max starts editing at the right size? I'd double every pixel (28x28) and center it in 32x32, then re-export. *Default: yes.*\n\nPlan usage is at 2% of the 5-hour limit and 17% of the weekly limit.",
    "progress_notes": [
     "PR #15 is still open, so I'll add to it. Building an exporter: a small page that runs the game's own `BootScene` and a Python script that saves every texture as a PNG in `assets/`.",
-    "This is turn 3. Now updating the docs and rules, then committing."
+    "This is turn 3. Now updating the docs and rules, then committing.",
+    "Noted the 32x32 change. It also affects tile size and zoom, so I'm recording it in the docs now and will ask before changing code. Committing what's built."
    ],
    "tools": {
     "Bash": 9,
@@ -150,20 +151,25 @@
     "mcp__github__list_pull_requests": 1,
     "Read": 1
    },
-   "api_requests": 10,
+   "api_requests": 11,
    "usage": {
     "claude-opus-5-5": {
-     "input": 20,
+     "input": 22,
      "cache_write_5m": 0,
-     "cache_write_1h": 15228,
-     "cache_read": 1153635,
-     "output": 9593,
-     "thinking": 2476,
-     "cost_usd": 0.544491
+     "cache_write_1h": 17189,
+     "cache_read": 1277094,
+     "output": 10270,
+     "thinking": 2490,
+     "cost_usd": 0.598419
     }
    },
-   "cost_usd": 0.544491,
-   "commits": [],
+   "cost_usd": 0.598419,
+   "commits": [
+    {
+     "sha": "128678770b7e1512f8656e90360f0bb7e848da0f",
+     "subject": "Export all code-drawn textures to assets/ for Max; 32x32 base resolution decided"
+    }
+   ],
    "entrypoint": "remote",
    "branch": "claude/affectionate-allen-g8i4y8",
    "plan_usage": {
@@ -178,13 +184,59 @@
      "delta": 0.0
     }
    }
+  },
+  {
+   "index": 4,
+   "seq": 34,
+   "date": "2026-10-17",
+   "time": "11:31",
+   "duration_s": 28,
+   "prompt": "the maze should be built from a tileset",
+   "followups": [],
+   "images": [],
+   "claude_images": [],
+   "reply": "This is a new mechanic for the art pipeline, so questions first. I'm recording the decision and the open questions in the art doc.",
+   "progress_notes": [],
+   "tools": {
+    "mcp__claude-code-remote__list_events": 2,
+    "Bash": 2,
+    "mcp__github__list_pull_requests": 1
+   },
+   "api_requests": 3,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 6,
+     "cache_write_5m": 0,
+     "cache_write_1h": 3172,
+     "cache_read": 379871,
+     "output": 2285,
+     "thinking": 542,
+     "cost_usd": 0.147074
+    }
+   },
+   "cost_usd": 0.147074,
+   "commits": [],
+   "entrypoint": "remote",
+   "branch": "claude/affectionate-allen-g8i4y8",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.02,
+     "end": 0.02,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.17,
+     "end": 0.17,
+     "delta": 0.0
+    }
+   }
   }
  ],
  "totals": {
-  "prompts": 3,
-  "cost_usd": 1.637352,
-  "output_tokens": 20936,
-  "input_tokens": 3184844
+  "prompts": 4,
+  "cost_usd": 1.838354,
+  "output_tokens": 23898,
+  "input_tokens": 3693315
  },
  "reported_by_claude_code": {
   "total_usd": 0.4483256,

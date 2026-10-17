@@ -28,6 +28,10 @@ code doesn't change.
 Pixel art moves to a 32x32 base resolution per sprite (the current code-drawn sprites are 14x14, like the
 original). How the maze, tile size and zoom follow is open (see below); until then the export is still 14x14.
 
+## Maze from a tileset · decided (details open)
+The maze is built from a tileset that Max draws, instead of one baked maze image. The game picks each cell's tile
+from the layout in `MAZE.layout`, so changing the layout needs no new art. Not built yet; see the open questions.
+
 ## What exists (one file per row) · decided
 Sizes are in art pixels (1 art px = 1 image px; the game scales it up 4x). Transparent background.
 
@@ -59,8 +63,22 @@ Text uses the Press Start 2P pixel font. The life icons and the menu reuse `pac-
 - Does Max redesign the maze walls too, or only the characters? *Default: characters first.*
 - What does Max draw for the deeper layers (cabinet, hardware, code)? Waits for the [layers](layers.md) design.
 
+### Tileset questions (open)
+- Tile size: 16x16 art px, so a 32x32 sprite covers 2x2 tiles like the original? *Default: 16x16.*
+- How many wall tiles: a 16-piece set by the 4 neighbours (straights, corners, T, cross, ends), or a 47-piece set
+  that also knows diagonals (needed for clean rounded inner corners like the original)? *Default: 16-piece; the
+  game picks the piece automatically.*
+- The original's double outer wall: a second set for walls connected to the border? *Default: no, one set.*
+- One tileset image (a grid of tiles) or one PNG per tile? *Default: one sheet, with a labelled template Claude
+  exports to `assets/` as the starting point.*
+- Ghost door and tunnel ends: tiles in the same sheet? *Default: door yes, tunnel uses floor.*
+- Floor: transparent, or a floor tile Max can draw? *Default: a floor tile, transparent in the placeholder.*
+- Pellets: stay separate sprites on top of the maze? *Default: yes.*
+- Clear flash (maze blinks white): tint the tiles white, or a second white tileset? *Default: tint.*
+
 ## Decision log
 - 2026-10-17: Max (artist) joins the team and works on the visual design, e.g. the pixel art. (Quirin)
 - 2026-10-17: `assets/` always holds an export of all textures; Max edits them and passes them back in a separate
   folder (`assets/from-max/`) or into a conversation. (Quirin)
 - 2026-10-17: Base resolution for the pixel art becomes 32x32 per sprite. (Quirin)
+- 2026-10-17: The maze is built from a tileset. (Quirin)

@@ -90,3 +90,4 @@ survives only as the movement lab bench.
 - 2026-10-17: The game is called "Layers of Pac". The maze level imitates the original's pixel look at a similar
   resolution. (Quirin)
 - 2026-10-17: Max (artist) joins the team and works on the visual design, e.g. the pixel art. (Quirin)
+- 2026-10-17: Pixel art at 32x32 per sprite; the maze is built from a tileset. Details in [art](systems/art.md). (Quirin)
