@@ -1,0 +1,64 @@
+{
+ "session_id": "8ce6a4b3-5314-5e13-8b61-1e4e42c0c4e3",
+ "title": null,
+ "session_url": "https://claude.ai/code/session_01XvNUh6pD4KxgdFyjs1HdHh",
+ "claude_code_version": "2.1.302",
+ "first_date": "2026-10-17",
+ "last_date": "2026-10-17",
+ "turns": [
+  {
+   "index": 1,
+   "seq": 44,
+   "date": "2026-10-17",
+   "time": "12:40",
+   "duration_s": 36,
+   "prompt": "how do the ghost sprites work? looks like its a single whitetile for them all",
+   "followups": [],
+   "images": [],
+   "claude_images": [],
+   "reply": "Got what I need. Now the end-of-turn log commit that the repo rules require, even when no code changes.",
+   "progress_notes": [],
+   "tools": {
+    "Bash": 5,
+    "mcp__claude-code-remote__list_events": 2,
+    "ToolSearch": 1,
+    "mcp__github__list_pull_requests": 1
+   },
+   "api_requests": 6,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 12,
+     "cache_write_5m": 0,
+     "cache_write_1h": 31459,
+     "cache_read": 428450,
+     "output": 1712,
+     "thinking": 172,
+     "cost_usd": 0.37165
+    }
+   },
+   "cost_usd": 0.37165,
+   "commits": [],
+   "entrypoint": "remote",
+   "branch": "claude/quirky-noether-8gpe2k",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.04,
+     "end": 0.04,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.18,
+     "end": 0.18,
+     "delta": 0.0
+    }
+   }
+  }
+ ],
+ "totals": {
+  "prompts": 1,
+  "cost_usd": 0.37165,
+  "output_tokens": 1712,
+  "input_tokens": 459921
+ },
+ "reported_by_claude_code": null
+}
