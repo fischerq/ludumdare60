@@ -1,0 +1,69 @@
+{
+ "session_id": "54ee796a-116f-547e-a5df-76b6567681e1",
+ "title": null,
+ "session_url": "https://claude.ai/code/session_01SYUGTau461vwSYRvZWwXQs",
+ "claude_code_version": "2.1.302",
+ "first_date": "2026-10-17",
+ "last_date": "2026-10-17",
+ "turns": [
+  {
+   "index": 1,
+   "seq": 45,
+   "date": "2026-10-17",
+   "time": "12:56",
+   "duration_s": 195,
+   "prompt": "in 4min my claud session limit timer resets. until then, do prep work to set up emulating/simulating the arcade machine. we will want to access the state for lower layers. this is some current thinking how: Connecting the game world directly to a running Z80 emulator means the environment doesn't need scripted behavior—it is driven deterministically by the actual hardware state of the emulated machine.\n\nHere is the mapping of each hardware layer into a playable, spatial grid mechanic:\n\nLayer 1: Analog Output Display (Cathode Ray Tube)\n\n* Grid Topology: A 224x288 array of RGB phosphor triads (rotated 90 degrees to match the vertical monitor orientation of the cabinet).\n\n* Collectibles (Dots): Decaying phosphor nodes. Because phosphor luminescence decays exponentially after excitation, a node is only collectible for a brief window after the electron beam passes over it.\n\n* Environmental Hazard: The Raster Beam. A continuous, high-velocity hazard sweeping horizontally (H-sync) and stepping down vertically. Contact during an active scanline is fatal.\n\n* Safe Windows: During Horizontal Blanking (H-blank) and Vertical Blanking (V-blank) intervals, the electron gun's voltage is suppressed to 0V while the magnetic deflection coils reset the beam's position. The player must time major vertical movements during the 60.6 Hz V-blank window when the beam retraces diagonally to the top-left without emitting lethal electrons.\n\n* Emulator Coupling: Phosphor excitation intensity is mapped directly to the emulated video hardware's instantaneous RGB output pins.\n\nLayer 2: Hardware Signal Generation (Video/Audio Subsystems)\n\n* Grid Topology: Two overlapping planes operating in parallel: the Static Tile Grid (28x36 cells of 8x8 pixels) and the Line Buffer Plane (which holds the 8 hardware sprites).\n\n* Collectibles (Dots): Valid pixel color indices fetched from the Color PROM lookup tables before they are sent to the DAC.\n\n* Environmental Hazard: Hardware Sprite Overlays & The WSG Audio Wave.\n\n   1. Up to 8 sprites per scanline materialize dynamically at the exact X/Y coordinates dictated by the emulator's Sprite RAM (`0x4FF0–0x4FFF`). They act as moving crush hazards stamped onto the grid by the hardware compositor.\n\n   2. The Namco WSG (Waveform Sound Generator) reads frequency and volume registers (`0x5040–0x505F`) to project a physical, oscillating waveform across the bottom of the grid. High-amplitude audio (e.g., the siren or death sound) expands the wave's bounding box, restricting player movement.\n\n* Emulator Coupling: As the emulated Pac-Man eats dots in the base game, the corresponding background tiles in this layer change from dot bitmaps to empty space, physically altering the terrain geometry the player can traverse.\n\nLayer 3: Memory-Mapped State Representation (VRAM & PROMs)\n\n* Grid Topology: The linear address space from `0x4000` to `0x47FF` (1 KB of Video RAM and 1 KB of Color RAM), structured as a physical 2D memory array of 8-bit registers.\n\n* Collectibles (Dots): Dirty bits—specific memory addresses that have been mutated since the last frame refresh.\n\n* Environmental Hazard: Dual-Port Contention (Read/Write Collisions). The memory cells are constantly accessed by two independent entities:\n\n   1. The Video Hardware Reader: A deterministic, rhythmic sweep across the entire array that reads values to build the frame (non-lethal, pushes the player along).\n\n   2. The CPU Write Head: A localized, erratic hazard that teleports to specific addresses during the V-blank window and overwrites the byte values (lethal if the player occupies the target address during a write cycle).\n\n* Emulator Coupling: The values written by the CPU Write Head are the actual hex values of the emulated game's VRAM updates. Changing a byte in Color RAM (`0x4400–0x47FF`) immediately alters the collision properties and color of that room on the grid.\n\nLayer 4: Data Interconnect (System Bus)\n\n* Grid Topology: A high-speed routing network consisting of 16 parallel Address Lanes (unidirectional) intersecting with 8 parallel Data Lanes (bidirectional), gated by Control Lines (`/RD`, `/WR`, `/MREQ`, `/IORQ`).\n\n* Collectibles (Dots): Floating payload bits (`1`s) transmitted across the 8 data lanes.\n\n* Environmental Hazard: High-Voltage Logic Transients & Tri-State Isolation.\n\n   * When the CPU asserts an address on the 16-bit bus, those specific lanes energize at 3.072 MHz. The player must read the active address binary pattern to predict which memory block (ROM, RAM, or I/O) is being targeted.\n\n   * When a device is not selected, its bus buffers enter a High-Impedance (Hi-Z) state, disconnecting bridges and isolating sections of the grid.\n\n* Emulator Coupling: Every memory read or write executed by the Z80 emulator generates a corresponding physical packet wave on these lanes. During the game's attract mode vs. active gameplay, the traffic density and routing destinations shift noticeably.\n\nLayer 5: Execution and Timing Control (Z80 CPU & Interrupts)\n\n* Grid Topology: The internal microarchitecture of the Zilog Z80: the Register File (`A`, `F`, `B`, `C`, `D`, `E`, `H`, `L`, and their shadow registers), the Program Counter (PC), the Stack Pointer (SP), and the Arithmetic Logic Unit (ALU).\n\n* Collectibles (Dots): Status flags in the `F` register (Zero `Z`, Carry `C`, Sign `S`, Parity/Overflow `P/V`) that spawn whenever the ALU completes an operation.\n\n* Environmental Hazard: The Program Counter & The NMI Shockwave.\n\n   * The `PC` steps sequentially through instruction pipelines, acting as a relentless tracking entity.\n\n   * The NMI Reset: Every 16.5 milliseconds (60.6 Hz), the external video hardware asserts the Non-Maskable Interrupt pin. This triggers a system-wide event: current register states are violently pushed onto the Stack Pointer (SP) (creating falling block hazards in the Stack region), and the `PC` instantly warps to memory address `0x0066`, resetting the local loop topology.\n\n* Emulator Coupling: The player experiences the exact instruction cycle (M-cycles and T-states) of the emulated Z80. Conditional jumps (`JP Z`, `JR NZ`) cause the pathways in front of the Program Counter to switch tracks in real time based on register values.\n\nLayer 6: Application Logic (Software State Machines)\n\n* Grid Topology: The abstract 28x36 Logical Tile Map stored in Work RAM (`0x4C00–0x4FEF`). Unlike Layer 1 or 2, there are no pixels or sprites here—only raw coordinate vectors, bounding boxes, and mathematical target vectors.\n\n* Collectibles (Dots): Unclaimed state variables and collision checks in the main game loop.\n\n* Environmental Hazard: Deterministic Target-Tile Vectors. The four ghosts exist here not as graphic sprites, but as distinct mathematical targeting algorithms executing on the grid:\n\n   * Blinky (`0x4920`): Projects a direct Euclidean vector toward the emulated Pac-Man's current tile.\n\n   * Pinky: Projects a vector 4 tiles ahead of Pac-Man's orientation (including the famous overflow bug when facing Up, which shifts the vector 4 tiles Up and 4 tiles Left).\n\n   * Inky: Calculates a complex vector by doubling the distance line between Blinky's coordinates and 2 tiles ahead of Pac-Man.\n\n   * Clyde: Projects a direct vector until within an 8-tile Euclidean radius, at which point his vector snaps to the bottom-left corner (Scatter tile).\n\n* Emulator Coupling: The player navigates inside the mathematical visualization of the ghost AI. When the global state timer transitions from Scatter to Chase, or when a Power Pellet sets the Frightened PRNG state, the vector beams sweeping the grid instantly recalculate their geometry.\n\nLayer 7: Physical Input Polling (Electromechanical Interfaces)\n\n* Grid Topology: The memory-mapped input register `IN0` (`0x5000`) and `IN1` (`0x5040`), represented as a massive mechanical circuit board with 8 distinct tracks corresponding to the 8 bits of the input byte (Up, Down, Left, Right, Coin 1, Coin 2, Rack Advance, Service).\n\n* Collectibles (Dots): Completed polling cycles—collecting the signal at the exact moment the Z80 CPU reads address `0x5000` during its V-blank input subroutine.\n\n* Environmental Hazard: Active-Low Voltage Pulls & Contact Bounce.\n\n   * By default, pull-up resistors hold all 8 tracks at a lethal +5V (Logic High / `1`).\n\n   * When the external player (or an automated input script) actuates a physical microswitch on the arcade cabinet, that specific track is connected to ground, dropping its voltage to 0V (Logic Low / `0`) and creating a safe corridor to traverse.\n\n   * Contact Bounce: Because physical leaf switches vibrate for a few milliseconds upon closing, the track flickers rapidly between +5V and 0V before stabilizing, requiring precise timing to enter.\n\n* Emulator Coupling: This layer bridges the player's physical controller to the emulator. Pressing \"Left\" on your physical controller grounds Bit 5 of `0x5000`, physically opening the \"Left\" corridor in Layer 7, which gets polled by the CPU in Layer 5, mutates the trajectory vector in Layer 6, travels across the bus in Layer 4, updates Sprite RAM in Layer 3, renders in Layer 2, and illuminates the CRT in Layer 1.",
+   "followups": [],
+   "images": [],
+   "claude_images": [],
+   "reply": "Docs written. Checking PR state, then logging and committing.",
+   "progress_notes": [
+    "Found a usable MIT Z80 core on jsdelivr; checking its API and pinning a commit, then writing the prep (memory map module + design doc).",
+    "Now writing the config block and the machine modules.",
+    "ISR count of 9 after 10 frames is correct (the 10th IRQ is serviced next frame). Fixing the test expectation.",
+    "Pipeline works. Now the design doc with the layer→state mapping and open questions."
+   ],
+   "tools": {
+    "Bash": 14,
+    "ToolSearch": 2,
+    "mcp__claude-code-remote__list_events": 2,
+    "mcp__github__list_pull_requests": 1
+   },
+   "api_requests": 16,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 32,
+     "cache_write_5m": 0,
+     "cache_write_1h": 56092,
+     "cache_read": 1412897,
+     "output": 14489,
+     "thinking": 3811,
+     "cost_usd": 1.021223
+    }
+   },
+   "cost_usd": 1.021223,
+   "commits": [],
+   "entrypoint": "remote",
+   "branch": "claude/keen-archimedes-hmq2uh",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.04,
+     "end": 0.04,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.18,
+     "end": 0.18,
+     "delta": 0.0
+    }
+   }
+  }
+ ],
+ "totals": {
+  "prompts": 1,
+  "cost_usd": 1.021223,
+  "output_tokens": 14489,
+  "input_tokens": 1469021
+ },
+ "reported_by_claude_code": null
+}

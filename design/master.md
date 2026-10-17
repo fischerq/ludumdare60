@@ -49,6 +49,7 @@ bonus. See [movement](systems/movement.md).
 | Layer: the arcade hall (zoom out further) | decided, first slice built | [layer-arcade](systems/layer-arcade.md) | none yet |
 | Layer: the cabinet (zoom out) | decided, first slice built | [layer-cabinet](systems/layer-cabinet.md) | none yet |
 | Layer: inside the screen (zoom in) | proposed, questions open | [layer-crt](systems/layer-crt.md) | none yet |
+| Emulated arcade machine (feeds the lower layers) | proposed, prep built | [emulator](systems/emulator.md) | none yet |
 | Mini-gurke easter egg | proposed | [layers](systems/layers.md#mini-gurke-easter-egg--proposed) | none |
 
 ## Vertical slice · decided
@@ -102,3 +103,5 @@ survives only as the movement lab bench.
 - 2026-10-17: Pixel art at 32x32 per sprite; the maze is built from a tileset. Details in [art](systems/art.md). (Quirin)
 - 2026-10-17: Layer up/down button in every layer, unlocked by default for now. (Quirin)
 - 2026-10-17: Layer above the cabinet: Pac-Man walks around the arcade shop, Pokémon-like top-down view. (Quirin)
+- 2026-10-17: Lower layers are driven by an emulated Z80 machine, not scripted; prep built, questions open in
+  [emulator](systems/emulator.md). (Quirin)
