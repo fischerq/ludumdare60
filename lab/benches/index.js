@@ -12,4 +12,10 @@ export const BENCHES = [
     summary: 'Swipe to steer through the real maze. Tune speed, swipe distance, the turn window and how long a swipe is kept.',
     doc: 'https://github.com/fischerq/ludumdare60/blob/main/design/systems/arcade-maze.md',
   },
+  {
+    id: 'animation',
+    title: 'Animation speed',
+    summary: 'Game frames per animation frame, per character. Tune, download the settings file and save it over src/settings/animation.json.',
+    doc: 'https://github.com/fischerq/ludumdare60/blob/main/design/systems/art.md',
+  },
 ];

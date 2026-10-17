@@ -48,6 +48,94 @@
     {
      "sha": "9bbc4f4cc4aa98dc04df93d0a03f7c9f004d8cee",
      "subject": "Emulator prep: Pac-Man board memory map, machine with bus log and snapshot, pinned Z80 core, design doc"
+    },
+    {
+     "sha": "20c87dfdd227a7f241627a76137b0993ad9819cd",
+     "subject": "Merge main into the branch"
+    },
+    {
+     "sha": "3844386b03e892f22d09a0179bc8ca8c2349498f",
+     "subject": "Per-layer 32x32 character art, one file per state"
+    },
+    {
+     "sha": "fa64e3fef0f7ec92405109a8575b7b696d8d1f30",
+     "subject": "Log: per-layer character art turn, screenshots"
+    },
+    {
+     "sha": "d37232c8da3ac72164a5e9392552d1dfd2582742",
+     "subject": "Stop tracking Python bytecode cache"
+    },
+    {
+     "sha": "6985e71b25065141073c916bf99234d8026d535f",
+     "subject": "Make every animation tunable: effects in src/settings/animation.json and the lab bench"
+    },
+    {
+     "sha": "6feb47429e5f7a5e57a487d81ba255de6822e0b2",
+     "subject": "Merge pull request #22 from fischerq/claude/quirky-noether-8gpe2k"
+    },
+    {
+     "sha": "279a753fd7e5c8ae63e671c5c3c4533425c29f96",
+     "subject": "Merge main into the branch"
+    },
+    {
+     "sha": "f088c09de2fa52e8ca3ba3cae429e0c6745b63d4",
+     "subject": "Log: merge main (per-layer character art) into the animation-speed branch, screenshots"
+    },
+    {
+     "sha": "e17d6edf9d0d3a6b0a1d1b0f2b17d06f9ddf9493",
+     "subject": "Cabinet: prominent coin door prompt, global coin counter, animated coin insert"
+    },
+    {
+     "sha": "9c26259af311eb3eadbd539bf8c0086b42ca8341",
+     "subject": "Merge pull request #23 from fischerq/claude/sleepy-sagan-wagbm1"
+    },
+    {
+     "sha": "bb01629b68b2dde1a3b387fb6906caac4af6bb2f",
+     "subject": "Animation lab: character picker, −/+ buttons on sliders, Download settings at the top"
+    },
+    {
+     "sha": "7073cf5d2a8b13c8530bdcfc4bd4c2522e3e1ba9",
+     "subject": "Animation lab: a Frames button per animation shows all its frames, current one outlined"
+    },
+    {
+     "sha": "853de368ea61986cfaf7738748413a456121454f",
+     "subject": "Outer game loop: start on the maze, unlock layers by winning and losing, cheat buttons"
+    },
+    {
+     "sha": "0901b14810f9d26890dfff4c641a3da28e1fb9e5",
+     "subject": "Merge pull request #27 from fischerq/claude/old-tech-pacman-game-eaui1a"
+    },
+    {
+     "sha": "d3d6ae03898fcf5f5ce6ada42cafebf7e5c93258",
+     "subject": "Merge main into the branch"
+    },
+    {
+     "sha": "047bc1f39eae4270a984707cf7289e64d821f4d0",
+     "subject": "Log: merge main (outer game loop) into the animation lab branch"
+    },
+    {
+     "sha": "415ae7e96fcd102abdc15e78abd525f1b4eedd9a",
+     "subject": "Merge pull request #26 from fischerq/claude/sleepy-sagan-wagbm1"
+    },
+    {
+     "sha": "81e2771e1e12af7ce0649f85490d52f85b8eb7b0",
+     "subject": "replace assets"
+    },
+    {
+     "sha": "53833dc91854a144dd4eb049e169f3c1cf2eb71f",
+     "subject": "Merge branch 'main' of https://github.com/fischerq/ludumdare60"
+    },
+    {
+     "sha": "4236fbfaef74bf6dc6c135b966dd5f2b6b641e01",
+     "subject": "Merge main into the coin branch"
+    },
+    {
+     "sha": "4d139bddb013001b09cc24306ac671324c457f2f",
+     "subject": "Merge pull request #25 from fischerq/claude/lucid-newton-ec9af8"
+    },
+    {
+     "sha": "5b3f3adff070217bc33101ce4cfbe695a31c267b",
+     "subject": "Cabinet: being out of coins always opens the arcade hall"
     }
    ],
    "entrypoint": "remote",
@@ -105,8 +193,28 @@
    "cost_usd": 1.233129,
    "commits": [
     {
+     "sha": "1b9a2eb39a41f2b79af4dc3eeac2a78373a3973b",
+     "subject": "Merge pull request #28 from fischerq/claude/old-tech-pacman-game-eaui1a"
+    },
+    {
      "sha": "05f538f40c27dde5d7387bfb863e0c2d7f29bca2",
      "subject": "Emulator plan: maze game runs on the machine, 9-step build plan, raw-data rule; log the Gemini chat"
+    },
+    {
+     "sha": "eb8d481ed631a7899aaf271774a19c59c9c09249",
+     "subject": "Arcade hall: characters one tile big, centered on their tile"
+    },
+    {
+     "sha": "ca750aba31e40fc3463a3825d3c993a74288b688",
+     "subject": "Log: where the exported animation settings go"
+    },
+    {
+     "sha": "73b2fd1fefb61de30a0c430678ffa4834e58a602",
+     "subject": "Merge pull request #30 from fischerq/claude/sleepy-sagan-wagbm1"
+    },
+    {
+     "sha": "9d871392c49f3b7dc366154af14d3a9f9a815945",
+     "subject": "Animation settings: hot reload every second on a local server, warn when the file is broken"
     }
    ],
    "entrypoint": "remote",
@@ -129,46 +237,112 @@
    "seq": 47,
    "date": "2026-10-17",
    "time": "14:32",
-   "duration_s": 556,
+   "duration_s": 775,
    "prompt": "suggested answers sound good. each layer will have a bit different mechanics/feel, we will tune that.  build out  the entine plan, sending separate PRs per stage.",
-   "followups": [],
+   "followups": [
+    {
+     "text": "run a parallel agent to fix the merge conflicts on open PRs.",
+     "after_reply_index": 7
+    }
+   ],
    "images": [],
    "claude_images": [],
-   "reply": "Fixing two parser holes before testing: condition codes as operands, and the `'` in `af'`.",
+   "reply": "Stage 5: shadow mode. The maze level gets drawn by the board's video chip, while the JS rules still decide what happens and write their state into the machine.",
    "progress_notes": [
     "Starting: logging plan usage, then reading the maze game code the port is based on.",
     "Big job, so I'll build it as stacked branches with one PR each. First I'm checking the CPU core's halt behaviour and the cabinet/lab code that later stages hook into.",
     "Writing a small headless check (console errors + machine frame count) to reuse at each stage.",
     "Stage 2 runs in the browser (machine at ~60 fps, no errors). Committing and opening its PR.",
     "Stage 3: the video chip. Checking how BootScene composes the maze picture so the renderer matches it.",
-    "Usage is at 3% (5-hour) / 19% (week). Now stage 4: the Z80 assembler."
+    "Usage is at 3% (5-hour) / 19% (week). Now stage 4: the Z80 assembler.",
+    "Fixing two parser holes before testing: condition codes as operands, and the `'` in `af'`.",
+    "Launching a background agent in its own worktree for the PR merge conflicts, so it doesn't collide with my git work here.",
+    "Now the first Z80 program and a test that it runs.",
+    "The commit accidentally picked up the agent's worktree folder. Removing it and ignoring that path."
    ],
    "tools": {
-    "Bash": 14,
+    "Bash": 26,
+    "mcp__github__create_pull_request": 3,
     "mcp__claude-code-remote__list_events": 2,
-    "mcp__github__create_pull_request": 2
+    "Agent": 1
    },
-   "api_requests": 16,
+   "api_requests": 58,
    "usage": {
     "claude-opus-5-5": {
-     "input": 32,
-     "cache_write_5m": 0,
-     "cache_write_1h": 66870,
-     "cache_read": 2834567,
-     "output": 51463,
-     "thinking": 26192,
-     "cost_usd": 2.131261
+     "input": 116,
+     "cache_write_5m": 75901,
+     "cache_write_1h": 94017,
+     "cache_read": 7554036,
+     "output": 69268,
+     "thinking": 31193,
+     "cost_usd": 4.028272
     }
    },
-   "cost_usd": 2.131261,
+   "cost_usd": 4.028272,
    "commits": [
+    {
+     "sha": "c2c551ee975d06c0d4aa0fb5dad7bdcfe12fa29b",
+     "subject": "Merge main into the hall character size branch"
+    },
+    {
+     "sha": "1258a58c159d7c3c1fdf06672f4c3d2264f17173",
+     "subject": "Log: merge turn"
+    },
+    {
+     "sha": "9adba60d5f6db7be079b750305bc065b6fd056c5",
+     "subject": "Merge pull request #31 from fischerq/claude/sleepy-sagan-wagbm1"
+    },
     {
      "sha": "e8a9cc1deaf0f5f85b5ec7debade38d591e97f2d",
      "subject": "Arcade step 2: global machine runtime, our board's memory map, typed bus log and frame recorder"
     },
     {
+     "sha": "2f8181bd19ed95b6b06f1c4d7bf17e30ed43e185",
+     "subject": "Merge main into the hall character size branch"
+    },
+    {
      "sha": "9b9a5f1ef0ae826afc10bcf6a791ca8038fa8b38",
      "subject": "Arcade step 3: video chip draws the playfield from VRAM, color RAM and the 8 sprites"
+    },
+    {
+     "sha": "e0296c971181dc2a03570ae65675020518a935fa",
+     "subject": "Log: merge turn"
+    },
+    {
+     "sha": "7a0158e81c9f8a078df0c55a5f8425dfe31eb0b6",
+     "subject": "Merge pull request #29 from fischerq/claude/lucid-newton-ec9af8"
+    },
+    {
+     "sha": "adc4fc0665e2c10fdc86b50db80be7d3429e4b98",
+     "subject": "Merge main into claude/keen-archimedes-hmq2uh"
+    },
+    {
+     "sha": "7beb790b04cf5e38c10407e9acc8304cd8dfbda2",
+     "subject": "Merge claude/keen-archimedes-hmq2uh (with main) into the runtime branch"
+    },
+    {
+     "sha": "99700eae74f718bb19b55d845c951c90da96f5b1",
+     "subject": "Merge branch 'claude/keen-archimedes-hmq2uh-2-runtime' into claude/keen-archimedes-hmq2uh-3-video"
+    },
+    {
+     "sha": "7b64eeab28c9ac77ba21a4224e738816b4fd1708",
+     "subject": "Arcade step 4: Z80 assembler and the first program on the board"
+    },
+    {
+     "sha": "7d2d2ac812a144eb2ac9beb493c738de39a8a9a6",
+     "subject": "Ignore agent worktrees"
+    },
+    {
+     "sha": "5a0cd8031d1c91db1f3e022a04234aeaf699cd2d",
+     "subject": "Regenerate repo stats after merging the runtime branch"
+    },
+    {
+     "sha": "32f765b348777fb2e2e6d61a1ca751903e8aedc7",
+     "subject": "WIP on claude/keen-archimedes-hmq2uh-5-shadow: 7d2d2ac Ignore agent worktrees"
+    },
+    {
+     "sha": "9047fda668e01f88450aeefd16d66b0335f43fa7",
+     "subject": "index on claude/keen-archimedes-hmq2uh-5-shadow: 7d2d2ac Ignore agent worktrees"
     }
    ],
    "entrypoint": "remote",
@@ -189,9 +363,9 @@
  ],
  "totals": {
   "prompts": 3,
-  "cost_usd": 4.482006,
-  "output_tokens": 80070,
-  "input_tokens": 6004858
+  "cost_usd": 6.379017,
+  "output_tokens": 97875,
+  "input_tokens": 10827459
  },
  "reported_by_claude_code": {
   "total_usd": 1.1509024,

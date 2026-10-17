@@ -109,3 +109,5 @@ survives only as the movement lab bench.
   one global state and can be switched smoothly mid-game; a bot plays Pac-Man while the player is in another
   layer. Layers may stylize, retime or aggregate, but always from the real raw data. Plan in
   [emulator](systems/emulator.md). (Quirin)
+- 2026-10-17: Outer game loop: the game starts on the maze; winning and losing unlock the layers below and above;
+  cheat buttons for testing. See [layers](systems/layers.md). (Quirin)
