@@ -18,7 +18,7 @@ export function screenSize() {
 }
 
 // lines: optional centered messages, e.g. [{ text: 'INSERT COIN', color: '#00ffde', row: 13 }]; box: true blanks
-// the row behind the text first (over a frozen picture that already has READY! in it).
+// the row behind the text first (over a halted picture that already has READY! in it).
 export function drawScreen(ctx, m, S, art, lines = [], best = 0) {
   const { w, h } = screenSize();
   const g = readState(m, S);

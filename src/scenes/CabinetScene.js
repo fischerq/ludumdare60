@@ -1,5 +1,5 @@
 import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, CABINET, MAZE, PIXEL, UI, BEST_KEY, LAYERS, COINS } from '../config.js';
-import { world, setFrozen } from '../systems/arcade/world.js';
+import { world, setDriver } from '../systems/arcade/world.js';
 import { readState } from '../systems/arcade/state.js';
 import { drawScreen, screenSize } from '../systems/screenImage.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
@@ -10,7 +10,8 @@ import { fxOn } from '../systems/anim.js';
 
 // Layer 2, zoom out: the arcade cabinet the maze game runs in. Pixel art with faked depth (see CABINET in
 // config). Starts zoomed in so the screen looks exactly like the maze level, then pulls back to show the whole
-// machine. Nobody plays here: the machine stands still, and a coin in the door zooms back into a fresh game.
+// machine. Nobody plays here: the bot plays on a running game, and when the machine asks for a coin, a coin in
+// the door zooms back into a fresh game.
 export default class CabinetScene extends Phaser.Scene {
   constructor() {
     super('Cabinet');
@@ -26,13 +27,14 @@ export default class CabinetScene extends Phaser.Scene {
     this.mode = this.fromAbove ? 'insert' : 'intro';
     this.introT = this.fromAbove ? 1 : 0;
     this.t = 0;
-    // The screen shows the one emulated machine, frozen: nobody is at the controls while we look at the
-    // cabinet from outside (a finished game also stands halted at GAME OVER until a coin goes in).
+    // The screen shows the one emulated machine. Nobody is at the controls while we look at the cabinet from
+    // outside: a running game is played on by the bot; a finished one stands halted at GAME OVER until a coin
+    // goes in. Without a paid game (attract mode, or the bot's own game since boot) it waits for a coin too.
     this.machine = world.machine;
     this.S = world.program.symbols;
     this.credit = 0;
-    setFrozen(true);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setFrozen(false));
+    setDriver('bot');
+    if (!world.paidGame) world.halted = true;
     this.best = 0;
     try { this.best = Number(localStorage.getItem(BEST_KEY)) || 0; } catch (e) { /* private mode */ }
 
@@ -133,15 +135,20 @@ export default class CabinetScene extends Phaser.Scene {
     this.input.on('pointerdown', (p, over) => {
       unlockAudio();
       if (this.mode === 'intro') { this.introT = 1; return; } // tap to skip the zoom-out
-      if (this.mode !== 'insert' || over.length) return; // a layer button
+      if (!this.waiting() || over.length) return; // a layer button, or the machine isn't asking for a coin
       const wp = this.cam.getWorldPoint(p.x, p.y);
       const cd = CABINET.coinDoor, pad = 24;
       if (wp.x > cd.x - pad && wp.x < cd.x + cd.w + pad && wp.y > cd.y - pad && wp.y < cd.y + cd.h + pad) this.insertCoin();
     });
     this.input.keyboard?.on('keydown', (e) => {
       unlockAudio();
-      if ((e.code === 'Space' || e.code === 'Enter') && this.mode === 'insert') this.insertCoin();
+      if ((e.code === 'Space' || e.code === 'Enter') && this.waiting()) this.insertCoin();
     });
+  }
+
+  // The machine asks for a coin only when it's halted (game over, or never started); a running game takes none.
+  waiting() {
+    return this.mode === 'insert' && world.halted;
   }
 
   // Zoom back into the screen, then the maze level takes over (data goes to GameScene).
@@ -213,10 +220,10 @@ export default class CabinetScene extends Phaser.Scene {
       if (this.introT <= 0) { this.mode = 'gone'; this.scene.start('Game', this.downData); }
     }
 
-    // The machine waits for a coin; once one drops in it shows the credit until we're back in the maze.
+    // A halted machine waits for a coin; once one drops in it shows the credit until we're back in the maze.
     const lines = [];
-    if (this.mode !== 'outro' || this.credit) {
-      // With a credit in, the credit line is enough (the frozen picture may already show READY!).
+    if (world.halted && (this.mode !== 'outro' || this.credit)) {
+      // With a credit in, the credit line is enough (the halted picture may already show READY!).
       if (!this.credit && readState(this.machine, this.S).phase === 'over') lines.push({ text: 'GAME OVER', color: '#ff0000', row: 13, box: true });
       else if (!this.credit) lines.push({ text: fxOn('insertCoin', this.t) ? '' : 'INSERT COIN', color: '#00ffde', row: 13, box: true });
       lines.push({ text: `CREDIT ${this.credit}`, row: 26 });
@@ -224,7 +231,7 @@ export default class CabinetScene extends Phaser.Scene {
     drawScreen(this.screenTex.getContext(), this.machine, this.S, this.art, lines, this.best);
     this.screenTex.refresh();
 
-    const insert = this.mode === 'insert', broke = coins() < COINS.perGame;
+    const insert = this.waiting(), broke = coins() < COINS.perGame;
     if (insert && broke) this.needCoins();
     this.prompt.setText(broke ? 'NO COINS\nLAYER UP' : 'TAP THE\nCOIN DOOR');
     // Shake the prompt a moment when the door is tapped with no coins.

@@ -85,3 +85,4 @@ minigame, a counter on the layer map, no unlock.*
   the machine until a coin goes in, and every new game costs a coin. The deep layers run the machine
   `DEEP.machineSlowdown` (4x) slower than the maze. (Quirin; slowdown factor and coin rules: Claude's defaults)
 - 2026-10-17: The cabinet no longer plays: nobody at the controls means the machine stands still there, and a coin zooms into the maze layer. (Quirin)
+- 2026-10-17: Cabinet follow-up: the bot plays on a running game there, and the coin door only takes a coin while the machine asks for one. (Quirin)

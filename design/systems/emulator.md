@@ -91,7 +91,7 @@ reference until the Z80 version matches it.
    input path as the player. It plays whenever the player isn't steering Pac-Man.
 8. **Done: layers share the machine.** Each layer is a view on `world`. The machine never pauses for a
    transition, and each layer says who controls Pac-Man (player or bot). The cabinet's screen shows the
-   machine's frame, frozen (`world.frozen`): nobody plays while we look at the cabinet.
+   machine's frame; the bot plays while we look at the cabinet.
 9. **Done: deep layers**, a first slice each (see [layer-deep](layer-deep.md)): CRT ([layer-crt](layer-crt.md)), then the others from the
    table above.
 
@@ -156,3 +156,5 @@ All eight defaults accepted by Quirin on 2026-10-17.
   Going down from the cabinet continues that game in the maze layer. (Claude)
 - 2026-10-17: Step 9: first slices of all seven deep layers built, one scene with a module per layer. (Claude)
 - 2026-10-17: While the cabinet shows, the machine is frozen (`setFrozen`), not driven by the bot; unlike `halted` it keeps the running game. (Quirin's cabinet rework)
+- 2026-10-17: No freezing after all: the bot plays on while the cabinet shows; a coin goes in only when the machine is halted. (Quirin)
+- 2026-10-17: `world.paidGame` marks a game started with a coin (`newGame`); the bot's own game from attract mode isn't one, so the cabinet halts it and asks for a coin. (Claude)

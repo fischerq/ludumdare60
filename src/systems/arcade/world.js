@@ -15,9 +15,8 @@ export const world = {
   paused: false,
   // Game over: the board waits for a coin and runs no frames (no attract mode) until one goes in.
   halted: false,
-  // Nobody at the controls (the cabinet layer shows the machine from outside): no frames, the picture stands
-  // still until someone goes back in. Unlike halted, the game in progress is kept.
-  frozen: false,
+  // The running game was paid for with a coin (newGame), not started by the bot from attract mode.
+  paidGame: false,
   speed: 1,          // machine time per real time; the deep layers slow it down (DEEP.machineSlowdown)
   acc: 0,            // ms not yet run
   listeners: new Set(),
@@ -41,6 +40,7 @@ export function newGame() {
   m.cpu.reset();
   m.irqOn = false;
   world.halted = false;
+  world.paidGame = true;
   world.input.start = 12;
 }
 
@@ -50,7 +50,6 @@ export const holdDir = (dir) => { world.input.held = dir; };
 export const pressStart = () => { world.input.start = PULSE_FRAMES; };
 export const insertCoin = () => { world.halted = false; world.input.coin = PULSE_FRAMES; };
 export const setSpeed = (speed) => { world.speed = speed; };
-export const setFrozen = (frozen) => { world.frozen = frozen; world.acc = 0; };
 
 // Sets the joystick and start bits for the next frame.
 function applyInput(m) {
@@ -79,7 +78,7 @@ export function startWorld(loadProgram = async () => null) {
 // Advance by ms of real time in whole frames. Each frame's sound latch writes go to the listeners.
 export function tickWorld(ms) {
   const m = world.machine;
-  if (!m || world.paused || world.halted || world.frozen) return;
+  if (!m || world.paused || world.halted) return;
   const frameMs = 1000 / ARCADE.frameHz;
   world.acc = Math.min(world.acc + ms * world.speed, frameMs * ARCADE.maxFramesPerTick);
   while (world.acc >= frameMs && !world.halted) {
@@ -91,7 +90,7 @@ export function tickWorld(ms) {
     const sounds = m.takeSounds();
     for (const fn of world.listeners) fn(m, sounds);
     const S = world.program?.symbols;
-    if (S && PHASES[m.read(S.PHASE)] === 'over') { world.halted = true; world.acc = 0; }
+    if (S && PHASES[m.read(S.PHASE)] === 'over') { world.halted = true; world.paidGame = false; world.acc = 0; }
   }
 }
 

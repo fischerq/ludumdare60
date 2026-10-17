@@ -19,9 +19,10 @@ cabinet.
 - Drawn at 2 screen px per art px (the maze level uses 4). The cabinet's screen shows the same game picture
   1:1, so the maze level's pixels are exactly half as big: the camera starts at the maze level's zoom with the
   screen lined up, then pulls back over 2.5 s (tap to skip).
-- **Nobody plays here.** While the cabinet shows, the machine stands still (`setFrozen` in
-  `src/systems/arcade/world.js`): no bot, no demo, the screen keeps the last picture with INSERT COIN (or
-  GAME OVER) and CREDIT 0 on top. A big magenta box with an arrow under the coin door
+- **The player doesn't play here.** Going up mid-game, the bot takes over and plays on while we watch the
+  cabinet; no prompt, and the coin door takes no coin. A halted machine (game over, or never started) asks for a
+  coin: the picture stands still with INSERT COIN (or GAME OVER) and CREDIT 0 on top, and the TAP THE COIN DOOR
+  prompt shows. Coins only go in while the machine asks for one. A big magenta box with an arrow under the coin door
   says TAP THE COIN DOOR, and a frame blinks around the door. Tap it (or Space/Enter) to insert a coin.
 - **Coins are global** (`src/wallet.js`, numbers in `COINS`): a counter at the top shows the coins held, shared
   with the arcade hall. A game costs one: the coin flies from the counter into the slot (coin sound, CREDIT 1),
@@ -32,13 +33,12 @@ cabinet.
 - Reaching it: clearing the maze level zooms out into this layer.
 
 ## Slice scope
-- Build (done): pixel cabinet, zoom-out intro, frozen screen, coin into the slot, zoom back in to a fresh game.
+- Build (done): pixel cabinet, zoom-out intro, bot plays a running game, coin into the slot when halted, zoom back in to a fresh game.
 - Not now: glare/view changes beyond a faint glass glare, stick lag or worn switches, banging the machine,
   more than one credit at a time, the zoom into the screen (next layer), mini-gurke in the coin return.
 
 ## Open questions
-- Inserting a coin while a game is still running starts a fresh one (the old one is lost). OK, or only allow the
-  coin after GAME OVER? *Default: allowed.*
+- Should the cabinet hint at anything while the bot plays (no prompt at all now)?
 
 ## Decision log
 - 2026-10-17: Zoom-out layer idea: a 3D arcade machine with screen and mechanical controls, the same game on the
@@ -49,3 +49,4 @@ cabinet.
 - 2026-10-17: The coin door prompt was hard to see: now big, magenta, under the door with a blinking frame. Coins held are shown and kept globally; one coin starts a game, with the coin animated into the slot. (Quirin)
 - 2026-10-17: The cabinet's screen shows the emulated machine: the bot's demo game until a coin goes in, then the player's game through the stick; see [emulator](emulator.md). (Claude)
 - 2026-10-17: Rework: the cabinet is only about inserting the coin and seeing the machine. No play and no bot here: the machine stands still while the cabinet shows; the coin animates into the slot, then the camera zooms into the maze layer for a fresh game. (Quirin; frozen picture for a running game and dropping PUSH START: Claude)
+- 2026-10-17: A coin goes in only when the machine asks for one (halted). Going up mid-game, the bot takes over and plays on; no freezing. (Quirin)
