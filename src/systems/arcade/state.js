@@ -23,8 +23,3 @@ export function readState(m, S) {
     frame: r16(S.FRAME), pac: actor(0), ghosts,
   };
 }
-
-// Host pokes for the cheat buttons (like a cheat cartridge writing into RAM).
-export function pokePhase(m, S, phase) {
-  m.ram[S.PHASE - 0x4c00] = PHASES.indexOf(phase);
-}

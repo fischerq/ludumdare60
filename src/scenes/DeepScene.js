@@ -1,12 +1,11 @@
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, UI, INPUT, DEEP, CHEATS } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, UI, INPUT, DEEP } from '../config.js';
 import { DEEP_LAYERS } from '../systems/layers/index.js';
 import { createWalker, steerWalker, stepWalker } from '../systems/layers/walker.js';
 import { createSwipe, swipeInput } from '../systems/swipe.js';
-import { world, setDriver, holdDir, onFrame } from '../systems/arcade/world.js';
+import { world, setDriver, holdDir, onFrame, setSpeed } from '../systems/arcade/world.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 import { showCallout } from '../callout.js';
-import { progress } from '../progress.js';
 
 const KEYS = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
@@ -41,7 +40,9 @@ export default class DeepScene extends Phaser.Scene {
     if (this.L.drive) setDriver('player');
     this.sounds = [];   // the machine's sound commands since the last update
     const off = onFrame((m, sounds) => this.sounds.push(...sounds));
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { off(); setDriver('bot'); });
+    // Down here we play with the signals that make each frame, so the machine runs DEEP.machineSlowdown times slower.
+    setSpeed(1 / DEEP.machineSlowdown);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { off(); setDriver('bot'); setSpeed(1); });
 
     const vw = GAME_WIDTH / ZOOM, vh = GAME_HEIGHT / ZOOM;
     this.cameras.main.setZoom(ZOOM).setOrigin(0, 0).setRoundPixels(true);
@@ -63,11 +64,9 @@ export default class DeepScene extends Phaser.Scene {
 
     const by = vh - 42;
     addLayerButton(this, 8, by, 'LAYER\nUP', () => this.go(this.index === 0 ? 'Game' : this.index - 1, 'up'));
-    this.addDown = () => {
-      if (this.downBtn || this.index >= DEEP_LAYERS.length - 1) return;
-      this.downBtn = addLayerButton(this, vw - 64, by, 'LAYER\nDOWN', () => this.go(this.index + 1, 'down'));
-    };
-    if (CHEATS.enabled || (progress.depth ?? 0) > this.index) this.addDown();
+    if (this.index < DEEP_LAYERS.length - 1) {
+      addLayerButton(this, vw - 64, by, 'LAYER\nDOWN', () => this.go(this.index + 1, 'down'));
+    }
 
     this.setupInput();
     this.setupPauseOnHide();
@@ -152,13 +151,11 @@ export default class DeepScene extends Phaser.Scene {
     this.counter.setText(`${Math.min(this.got, this.L.goal)}/${this.L.goal}${this.hits ? `   HITS ${this.hits}` : ''}`);
   }
 
-  // Goal reached: the next layer down opens.
+  // Goal reached.
   cleared() {
-    progress.depth = Math.max(progress.depth ?? 0, this.index + 1);
     sfx.clear();
     const last = this.index >= DEEP_LAYERS.length - 1;
     const c = showCallout(this, GAME_WIDTH / ZOOM / 2, this.oy + 40, last ? 'LAYER CLEAR!\nYOU REACHED\nTHE BOTTOM' : 'LAYER CLEAR!\nGO DEEPER?', 1);
     this.time.delayedCall(2500, () => c.destroy());
-    this.addDown();
   }
 }
