@@ -1,4 +1,4 @@
-import { COLORS, MAZE, PIXEL, UI, CABINET, HALL } from '../config.js';
+import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP } from '../config.js';
 import { mazeTiles, tileKey } from '../systems/tiles.js';
 import { world } from '../systems/arcade/world.js';
 
@@ -40,6 +40,7 @@ export default class BootScene extends Phaser.Scene {
     this.makeSticks();
     this.makeHall();
     this.makeHallCharacters();
+    this.makeDeep();
     // Wait for the arcade font so text doesn't render in the fallback first (give up after 2 s).
     const font = document.fonts?.load(`8px ${UI.arcadeFont}`) ?? Promise.resolve();
     const timeout = new Promise((r) => setTimeout(r, 2000));
@@ -256,6 +257,34 @@ export default class BootScene extends Phaser.Scene {
         if (mouth > 0 && Math.abs(Math.atan2(Math.sin(a), Math.cos(a))) < mouth) continue;
         set(x, y, color);
       }
+    }
+  }
+
+  // The deep layers' Tron look, one folder per layer (assets/deep/<layer>/), colors from DEEP.style:
+  // pac-0..3 a neon outline Pac-Man (facing right like maze/pac-*), dot and dot2 the collectibles in the
+  // layer's two accents, special the special collectible (a ring with a core).
+  makeDeep() {
+    for (const [id, P] of Object.entries(DEEP.style)) {
+      [0, 0.3, 0.6, 0.9].forEach((m, i) => this.pixels(`deep/${id}/pac-${i}`, S, S, (set) => {
+        const on = new Set();
+        this.chomper((x, y) => on.add(y * S + x), 0, 13.2, m);
+        const inside = (x, y, d) => [[-d, 0], [d, 0], [0, -d], [0, d]].every(([dx, dy]) => on.has((y + dy) * S + x + dx));
+        for (const k of on) {
+          const x = k % S, y = Math.floor(k / S);
+          set(x, y, !inside(x, y, 1) ? 0xffffff : !inside(x, y, 2) ? P.line : !inside(x, y, 3) ? P.glow : P.bg);
+        }
+      }));
+      for (const [key, c] of [['dot', P.dot], ['dot2', P.dot2]]) {
+        this.pixels(`deep/${id}/${key}`, 6, 6, (set) => {
+          this.disc(set, 6, 3, c);
+          this.bitmap(set, ['##', '##'], 0xffffff, 2, 2);
+        });
+      }
+      this.pixels(`deep/${id}/special`, 12, 12, (set) => {
+        this.disc(set, 12, 6, P.line);
+        this.disc((x, y, cc) => set(x, y, cc), 12, 4.6, P.glow);
+        this.disc(set, 12, 2.6, P.special);
+      });
     }
   }
 

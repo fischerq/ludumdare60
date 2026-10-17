@@ -9,6 +9,7 @@ import { CELL, MAP } from '../arcade/memmap.js';
 import { BUS } from '../arcade/machine.js';
 import { H } from '../arcade/video.js';
 import { tinyText, hex2 } from './font.js';
+import { css, floor, neonBox, dot, HAZARD } from './tron.js';
 
 const C = DEEP.vram;
 const COLS = 32;
@@ -26,7 +27,7 @@ export default {
   },
 
   open(st, env, x, y) {
-    return x >= 0 && x < COLS && y >= 0 && y < H && env.m.vram[y * COLS + x] !== CELL.wall;
+    return x >= 0 && x < COLS && y >= 0 && y < H;
   },
 
   update(st, env) {
@@ -57,27 +58,25 @@ export default {
   },
 
   draw(ctx, st, env, S) {
-    const { m, t } = env;
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, COLS * S, H * S);
+    const { m, t, P } = env;
+    floor(ctx, P, COLS, H, S);
     const readRow = Math.floor(((t % C.readTime) / C.readTime) * H);
+    ctx.fillStyle = css(P.glow);
+    ctx.fillRect(0, readRow * S + 1, COLS * S, S - 1);
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < COLS; x++) {
         const i = y * COLS + x, v = m.vram[i];
-        ctx.fillStyle = v === CELL.wall ? '#1a2a8a' : y === readRow ? '#102818' : st.dirty.has(i) ? '#503010' : '#0a0a14';
-        ctx.fillRect(x * S, y * S, S - 1, S - 1);
-        ctx.fillStyle = st.dirty.has(i) ? '#ffd040' : v === CELL.wall ? '#7080ff' : v ? '#ffb897' : x >= 19 ? '#202030' : '#383850';
+        if (st.dirty.has(i)) { dot(ctx, env, 'dot', x, y, S); continue; }
+        ctx.fillStyle = css(v === CELL.wall ? P.line : v ? P.dot : P.grid, x >= 19 ? 0.5 : 1);
         tinyText(ctx, hex2(v), x * S + Math.floor((S - 8) / 2), y * S + Math.floor((S - 5) / 2));
       }
     }
     if (st.head) {
       const { a } = st.head, x = a % COLS, y = Math.floor(a / COLS);
       const p = (t - st.head.t) / C.writeTime;
-      ctx.strokeStyle = `rgba(255,${Math.round(255 * (1 - p))},0,1)`;
-      ctx.lineWidth = 1;
       const r = Math.round(S * (1.5 - p));
-      ctx.strokeRect(x * S + S / 2 - r + 0.5, y * S + S / 2 - r + 0.5, 2 * r - 1, 2 * r - 1);
-      ctx.fillStyle = '#ff6040';
+      neonBox(ctx, x * S + S / 2 - r, y * S + S / 2 - r, 2 * r, 2 * r, DEEP.hazard, DEEP.hazardGlow);
+      ctx.fillStyle = HAZARD;
       tinyText(ctx, `W${hex2(st.head.v)}`, Math.min(x * S, COLS * S - 14), Math.max(0, y * S - 7));
     }
     for (const f of st.flash) {

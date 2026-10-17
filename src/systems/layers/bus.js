@@ -8,12 +8,13 @@ import { DEEP } from '../../config.js';
 import { BUS } from '../arcade/machine.js';
 import { region } from '../arcade/memmap.js';
 import { tinyText } from './font.js';
+import { css, neonLine, neonBlock, dot } from './tron.js';
 
 const C = DEEP.bus;
 const COLS = 27;          // 16 address lanes, a gap, 8 data lanes, a gap, the control column
 const ROWS = 30;
 const DATA0 = 17, CTRL = 26;
-const REGION_COLOR = { vram: '#1a2a8a', cram: '#2a1a6a', ram: '#1a5030', io: '#603018', port: '#603018', rom: '#303030' };
+const REGION_COLOR = { vram: '#4a6aff', cram: '#a45aff', ram: '#2aff7a', io: '#ffa82a', port: '#ffa82a', rom: '#808080' };
 
 export default {
   id: 'bus',
@@ -69,33 +70,31 @@ export default {
   },
 
   draw(ctx, st, env, S) {
-    ctx.fillStyle = '#000';
+    const { P } = env;
+    ctx.fillStyle = css(P.bg);
     ctx.fillRect(0, 0, COLS * S, ROWS * S);
+    for (let x = 0; x < COLS; x++) {
+      if (x < 16 || (x >= DATA0 && x < DATA0 + 8)) neonLine(ctx, x * S + S / 2, 0, x * S + S / 2, ROWS * S - 1, P.glow, P.grid);
+    }
     for (let y = 0; y < ROWS; y++) {
       const row = st.rows[y];
       if (row) {
         ctx.fillStyle = REGION_COLOR[row.io ? 'port' : region(row.addr)] ?? '#202020';
-        ctx.globalAlpha = 0.35;
-        ctx.fillRect(0, y * S, COLS * S, S - 1);
+        ctx.globalAlpha = 0.25;
+        ctx.fillRect(0, y * S + 1, COLS * S, S - 2);
         ctx.globalAlpha = 1;
       }
       for (let x = 0; x < COLS; x++) {
         const kind = this.lane(row, x);
-        const lane = x < 16 || (x >= DATA0 && x < DATA0 + 8);
-        if (lane) { ctx.fillStyle = '#1c1c28'; ctx.fillRect(x * S + S / 2 - 1, y * S, 2, S); }
-        if (kind === 'live') { ctx.fillStyle = '#ff3030'; ctx.fillRect(x * S + 2, y * S + 2, S - 4, S - 4); }
-        if (kind === 'drive') { ctx.fillStyle = '#ff8000'; ctx.fillRect(x * S + 2, y * S + 2, S - 4, S - 4); }
-        if (kind === 'data' && !st.taken.has(`${st.step - y}:${x}`)) {
-          ctx.fillStyle = '#40ff80';
-          ctx.fillRect(x * S + S / 2 - 2, y * S + S / 2 - 2, 4, 4);
-        }
+        if (kind === 'live' || kind === 'drive') neonBlock(ctx, x * S + 2, y * S + 2, S - 4, S - 4, DEEP.hazard, DEEP.hazardGlow);
+        if (kind === 'data' && !st.taken.has(`${st.step - y}:${x}`)) dot(ctx, env, 'dot', x, y, S);
       }
       if (row) {
-        ctx.fillStyle = row.write ? '#ff8000' : '#40ff80';
+        ctx.fillStyle = css(row.write ? DEEP.hazard : P.line);
         tinyText(ctx, row.io ? (row.write ? 'O' : 'I') : row.write ? 'W' : 'R', CTRL * S + 2, y * S + Math.floor((S - 5) / 2));
       }
     }
-    ctx.fillStyle = '#9aa4bf';
+    ctx.fillStyle = css(P.line);
     tinyText(ctx, 'A15', 0, 1);
     tinyText(ctx, 'A0', 15 * S, 1);
     tinyText(ctx, 'D7', DATA0 * S, 1);
