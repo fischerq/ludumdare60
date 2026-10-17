@@ -86,12 +86,17 @@ Instruction fetches from ROM are filtered out (most of the traffic). A 1 on an a
 On a read the data lanes carry the payload in: grab the 1s. On a write the CPU drives them: they're live too.
 Start in the gap between data and control lanes, which is never live. Goal: 40 data bits.
 
-## Layer -5: the CPU · built
-The program's own source listing (`game.asm` as the browser assembled it), with the program counter
-replaying a real trace: `requestTrace` records the first `DEEP.cpu.trace` instructions of a frame (from the
-vblank interrupt on), replayed at `rate` per second. The line the PC jumps to is a hit if you're on it. Every
-instruction that leaves Zero or Carry set drops a Z or C on its line (right edge) to collect. The registers
-and flags after the current instruction are shown below. Goal: 25 flags.
+## Layer -5: the CPU · built (gameplay pass)
+**Verb: warps and switch blocks.** The program's own source listing (`game.asm` as the browser assembled it), one
+page at a time; walk off the top or bottom edge to turn the page. Every `CALL` / `JP` / `JR` / `DJNZ` line has a
+warp pad at its left edge that takes you to the line it jumps to (Pokémon warp panels); `CALL` also pushes the way
+back, and `RET` pads take you back (STACK n). **Switch blocks:** the real Z and C flags raise and lower two columns
+of blocks (`zColumn`, `cColumn`, every third line) like Zelda's crystal switches; standing in one when it rises
+is a hit. **Enemy:** the program counter replays a real trace of a frame (`requestTrace`, from the vblank on, at
+`rate` per second); the line it lands on fires, a hit if you're on it. It lives in the routines that run every
+frame, so the first page is safe and warping into a routine is where it gets dangerous (`PC HERE!`). Z and C flags
+it sets drop on their lines as dots. **Objectives:** reach 4 different routines through their `CALL` pads (an
+unvisited routine's pad shows the special).
 
 ## Layer -6: the game logic · built
 No pixels: the maze as the rules see it, grid lines and wall outlines from VRAM, Pac-Man and the ghosts as

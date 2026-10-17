@@ -261,7 +261,7 @@ export const DEEP = {
     goal: 4,             // one data byte from each chip room
   },
   cpu: {                 // -5 warps (CALL / JP / RET) and flag blocks; the program counter fires on its line
-    rate: 4,             // instructions per second (the real CPU does about 800 000)
+    rate: 6,             // instructions per second (the real CPU does about 800 000)
     trace: 400,          // instructions recorded from the start of a frame
     zColumn: 15,         // Z blocks stand in this column on every third line (up while Z is set)
     cColumn: 18,         // C blocks likewise (up while C is set)
