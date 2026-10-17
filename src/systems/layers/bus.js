@@ -105,7 +105,8 @@ export default {
         st.cycle = c;
         st.selected = c.chip;
         const path = c.write ? PATHS[c.chip] : [...PATHS[c.chip]].reverse();
-        st.packets.push({ path, t, value: c.value, write: c.write });
+        // A read leaves the chip only after its access time, so there's a moment to slip in through the open door.
+        st.packets.push({ path, t: c.write ? t : t + C.readDelay, value: c.value, write: c.write });
         if (was && was !== c.chip && DOORS[was].x === px && DOORS[was].y === py) return 'hit';
       }
     }

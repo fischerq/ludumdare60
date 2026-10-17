@@ -15,7 +15,7 @@ The front door of the game: an arcade-styled maze-chomper in the spirit of Pac-M
 - Our own homage, recognisably Pac-Man-like: own maze, sprites drawn in code, no "Pac-Man" name.
 - Maze 19x25 tiles (37 px each), left-right symmetric, side tunnel that wraps; no dead ends.
 - Eat every dot to clear the maze. Dot 10, power pellet 50, ghosts 200/400/800/1600 per pellet.
-- 3 lives, one maze. Clearing it is the hook into the first tech layer (placeholder screen for now).
+- 4 lives, one maze. Clearing it is the hook into the first tech layer (placeholder screen for now).
 - 4 ghosts with the original's ideas, simplified: scatter/chase phases (7/20/7/20/5 s, then chase), never
   reverse except on phase change, pick the turn closest to a target. Blinky targets the chomper, Pinky 4 tiles
   ahead, Inky mirrors Blinky around 2 tiles ahead, Clyde chases until close, then goes to his corner.
@@ -26,11 +26,11 @@ The front door of the game: an arcade-styled maze-chomper in the spirit of Pac-M
 Swipe anywhere on the screen to turn; reversing is instant. Each swipe re-arms from where the finger is, so you
 can steer without lifting. Arrow keys / WASD on a laptop.
 Tuning (2026-10-17, after the first phone test said turning felt unresponsive):
-- Forgiving turns: a sideways swipe up to `CONTROL.turnWindow` (0.4) tiles before or after a junction snaps
+- Forgiving turns: a sideways swipe up to `CONTROL.turnWindow` (0.7) tiles before or after a junction snaps
   onto it and turns, instead of only exactly at the tile center.
 - A swipe waits `CONTROL.bufferTime` (0.8 s) for a junction it fits, then is dropped, so old swipes don't
   cause surprise turns.
-- Shorter swipe (`INPUT.swipeMin` 20 px) and a bit slower (chomper 6.5, ghosts 6 tiles/s).
+- Shorter swipe (`INPUT.swipeMin` 20 px) and a bit slower (chomper 6.5, ghosts 5.05 tiles/s).
 - Tune all four in the lab bench `maze-controls`, against the first build's numbers.
 
 ## Look and sound · decided
@@ -64,3 +64,6 @@ rendering could come later as a layer. WebAudio bleeps in
 - 2026-10-17: Art moves to 16x16 tiles and sprites in a 2x2-tile box; the maze is built from a tileset, without the
   double outer wall. See [art](art.md). (Quirin)
 - 2026-10-17: The maze game now runs as a Z80 program on the emulated arcade machine (`src/systems/arcade/game.asm`), same rules as `maze.js`; see [emulator](emulator.md). (Claude)
+- 2026-10-17: Maze easier: ghosts 6 → 5.05 tiles/s (Pac-Man 6.5), turn window 0.4 → 0.7 tiles (late swipes still take
+  the turn), 4 lives instead of 3. Playtest bots at light noise (0.25) went from 20% to about 88% cleared. (Quirin asked
+  to make the maze easier; numbers Claude's from the [playtest](playtest.md) runs)

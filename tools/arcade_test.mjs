@@ -11,7 +11,7 @@ import { botDirection } from '../src/systems/arcade/bot.js';
 import { DSW } from '../src/systems/arcade/memmap.js';
 import { IN0, IN1 } from '../src/systems/arcade/memmap.js';
 import { createGame, stepGame, steer } from '../src/systems/maze.js';
-import { ARCADE } from '../src/config.js';
+import { ARCADE, RULES } from '../src/config.js';
 
 let failed = 0;
 const check = (name, ok, info = '') => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${name} ${info}`); if (!ok) failed++; };
@@ -106,7 +106,7 @@ const Z80 = await loadZ80();
   }
   const st = readState(m, S);
   check('bot eats pellets', st.pellets < 120, `${199 - st.pellets} eaten in 60 s, score ${st.score}, ${deaths.length} deaths`);
-  check('demo play keeps the lives', st.lives === 3);
+  check('demo play keeps the lives', st.lives === RULES.lives);
 }
 
 if (failed) { console.error(`${failed} failed`); process.exit(1); }
