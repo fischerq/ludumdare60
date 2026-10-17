@@ -3,6 +3,9 @@
 
 Runs tools/export-assets.html in headless Chromium, so the PNGs come from the game's own drawing code.
 Run it after any change to the code-drawn art:  python3 tools/export_assets.py [--chrome PATH]
+
+--hook: for the Claude Code PostToolUse hook (.claude/settings.json). Exports only when an art source file
+changed since the last export (stamp in .git/), so the export stays current after every edit, whatever tool made it.
 """
 import argparse, base64, functools, html, http.server, json, re, shutil, subprocess, sys, threading
 from pathlib import Path
@@ -22,10 +25,26 @@ def find_chrome(given):
     sys.exit('No Chrome/Chromium found; pass --chrome PATH')
 
 
+# Files whose changes can change the code-drawn art.
+ART_SOURCES = ['src/scenes/BootScene.js', 'src/systems/tiles.js', 'src/config.js']
+STAMP = ROOT / '.git' / 'export-assets.stamp'
+
+
+def art_changed():
+    newest = max((ROOT / f).stat().st_mtime for f in ART_SOURCES if (ROOT / f).exists())
+    return not STAMP.exists() or newest > STAMP.stat().st_mtime
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--chrome')
-    chrome = find_chrome(ap.parse_args().chrome)
+    ap.add_argument('--hook', action='store_true')
+    args = ap.parse_args()
+    if args.hook:
+        sys.stdin.read()  # the hook payload; not needed, the stamp decides
+        if not art_changed():
+            return
+    chrome = find_chrome(args.chrome)
 
     class Quiet(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *a):
@@ -56,7 +75,9 @@ def main():
         dest = OUT / f'{key}.png'
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_bytes(base64.b64decode(data.split(',', 1)[1]))
-    print(f'{len(textures)} textures -> {OUT.relative_to(ROOT)}/')
+    if STAMP.parent.is_dir():
+        STAMP.touch()
+    print(f'{len(textures)} textures -> {OUT.relative_to(ROOT)}/' + (' (art changed: commit the PNGs with it)' if args.hook else ''))
 
 
 if __name__ == '__main__':

@@ -30,6 +30,7 @@ export default class CabinetScene extends Phaser.Scene {
     try { this.best = Number(localStorage.getItem(BEST_KEY)) || 0; } catch (e) { /* private mode */ }
 
     this.add.rectangle(0, 0, GAME_WIDTH / C.zoom, GAME_HEIGHT / C.zoom, C.colors.room).setOrigin(0);
+    this.add.rectangle(0, C.ground, GAME_WIDTH / C.zoom, GAME_HEIGHT / C.zoom - C.ground, C.colors.floor).setOrigin(0);
     this.add.image(0, 0, 'cabinet').setOrigin(0);
 
     // The game picture, redrawn into a canvas texture every frame.
