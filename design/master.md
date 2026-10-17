@@ -102,3 +102,5 @@ survives only as the movement lab bench.
 - 2026-10-17: Pixel art at 32x32 per sprite; the maze is built from a tileset. Details in [art](systems/art.md). (Quirin)
 - 2026-10-17: Layer up/down button in every layer, unlocked by default for now. (Quirin)
 - 2026-10-17: Layer above the cabinet: Pac-Man walks around the arcade shop, Pokémon-like top-down view. (Quirin)
+- 2026-10-17: Outer game loop: the game starts on the maze; winning and losing unlock the layers below and above;
+  cheat buttons for testing. See [layers](systems/layers.md). (Quirin)

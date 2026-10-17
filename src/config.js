@@ -156,11 +156,15 @@ export const CABINET = {
   stickDeadzone: 24,     // screen px the finger must move from where it touched before the stick clicks over
 };
 
-// Moving between layers with the layer button. For now every layer is open from the start; later a layer
-// unlocks when you clear the one before it.
+// Moving between layers with the layer buttons. Layers unlock through the outer game loop (src/progress.js).
 export const LAYERS = {
-  unlocked: true,
   outroTime: 1.2,        // s of zooming back in from the cabinet to the maze level
+};
+
+// Cheat buttons at the bottom of the maze and cabinet layers that fire the win/lose events, for testing the
+// unlocks. Turn off for the release.
+export const CHEATS = {
+  enabled: true,
 };
 
 // Layer 3: the arcade hall (zoom out further). A small, cozy room seen top-down like a Pokémon game: Pac-Man
