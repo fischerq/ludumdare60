@@ -203,6 +203,34 @@
           "url": "https://github.com/fischerq/ludumdare60/pull/12"
         }
       ]
+    },
+    {
+      "date": "2026-10-17",
+      "time": "11:18",
+      "seq": 32.3,
+      "kind": "human",
+      "title": "Reviewed and merged pull request #14",
+      "body": "Merged the notes on running the game locally on Windows with VS Code Live Server into `main`.",
+      "links": [
+        {
+          "label": "Pull request #14",
+          "url": "https://github.com/fischerq/ludumdare60/pull/14"
+        }
+      ]
+    },
+    {
+      "date": "2026-10-17",
+      "time": "11:36",
+      "seq": 32.6,
+      "kind": "human",
+      "title": "Reviewed and merged pull request #13",
+      "body": "Merged the menu footer, the layer designs and the cabinet layer (pixel-art arcade machine) into `main`.",
+      "links": [
+        {
+          "label": "Pull request #13",
+          "url": "https://github.com/fischerq/ludumdare60/pull/13"
+        }
+      ]
     }
   ]
 }
