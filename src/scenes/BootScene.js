@@ -44,11 +44,13 @@ export default class BootScene extends Phaser.Scene {
     const font = document.fonts?.load(`8px ${UI.arcadeFont}`) ?? Promise.resolve();
     const timeout = new Promise((r) => setTimeout(r, 2000));
     // ?scene=Cabinet (or any scene key) jumps straight to that layer, for playtesting.
-    const start = new URLSearchParams(window.location.search).get('scene');
+    // ?scene=Deep&layer=2 picks a deep layer.
+    const params = new URLSearchParams(window.location.search), start = params.get('scene');
+    const data = params.has('layer') ? { layer: Number(params.get('layer')) } : undefined;
     const target = start && this.scene.get(start) ? start : 'Menu';
     // The emulated arcade machine has to be running too: the maze level is its picture.
     const machine = (world.ready ?? Promise.resolve()).catch((e) => console.error('arcade machine failed', e));
-    Promise.all([Promise.race([font, timeout]).catch(() => {}), machine]).finally(() => this.scene.start(target));
+    Promise.all([Promise.race([font, timeout]).catch(() => {}), machine]).finally(() => this.scene.start(target, data));
   }
 
   // Draw a w x h texture; paint(set) calls set(x, y, color) for each lit pixel.

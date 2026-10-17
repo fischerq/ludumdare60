@@ -28,7 +28,24 @@ picture is lit, so standing on an uneaten dot when it arrives is a hit; black fl
 vertical blank (`vblank`), when the beam flies back switched off. Ghost sprites are always a hit. Dots the
 machine's Pac-Man eats vanish here too. Goal: 25 dots.
 
+## Layer -2: the signal chips · built
+The playfield as the video chip sees it: each tile's code from VRAM in hex, the 8 hardware sprites as boxes
+labelled with slot and sprite code. The tile fetcher reads one row every `DEEP.signals.rowTime`; each dot or
+pellet tile it fetches sends out a color index that waits `sparkLife` to be picked up. Ghost sprites crush.
+Every sound command the program writes to the sound latch (power, ghost, death, ...) swells a wave along the
+bottom of the screen, `waveRows` high for that sound: stay above it. Goal: 30 color indices.
+
+## Layer -3: video RAM · built
+VRAM as it sits in memory, 32 bytes per row in hex. Bytes holding the wall code are walls, the 13 unused
+bytes at the end of each row are open floor. The CPU's write head replays the program's real VRAM writes from
+the bus log: it hovers `DEEP.vram.writeTime` over the next address, then writes (a hit if you're on it); at
+most `queue` writes wait, older ones are skipped. Every byte that changed since the layer last looked is dirty
+and can be collected; in practice those are the dots the bot's Pac-Man eats. The video chip's read sweep is
+shown but harmless. Goal: 20 dirty bytes.
+
 ## Decision log
 - 2026-10-17: One scene for all deep layers with a pure module per layer; first slices of all seven layers
   from the Gemini chat's mapping, adapted so each is playable on a phone. (Claude)
 - 2026-10-17: CRT: the beam is only deadly where the picture is lit, otherwise no spot would be safe. (Claude)
+- 2026-10-17: Signals: sound waves stay at the bottom and swell (a wave rolling over the whole screen could
+  not be dodged). (Claude)
