@@ -51,29 +51,28 @@ slow down or aggregate, but everything comes from the machine's real raw data.
 - Not now: Tron mechanics (a deadly trail, light cycles), free movement, new hazards, art for the structures
   as asset files.
 
-## Layer -1: inside the screen (CRT) · built (gameplay pass)
-The maze picture magnified to its phosphor: walls and dots from VRAM, ghosts from the sprite registers. A
-beam sweeps the picture row by row, slowed from 16.5 ms to `DEEP.crt.beamPeriod`. Rows glow after it passes
-and fade (`decay`); a dot can be eaten only while it glows (`litAbove`). The beam only fires where the
-picture is lit, so standing on an uneaten dot when it arrives is a hit; black floor is safe, and so is the
-vertical blank (`vblank`), when the beam flies back switched off. Ghost sprites are always a hit.
-**Area:** the whole face of the tube except its rounded corners (`cornerRadius`); the maze's walls are just
-lit phosphor, walkable, and deadly under the beam like an uneaten dot. Dots the
-machine's Pac-Man eats vanish here too. Goal: 25 dots.
-**Gameplay pass:** a dark room (Zelda dark rooms, Pokémon Flash): away from the beam the picture fades almost to
-black (`darkFloor`), so you see what the beam just lit. The beam is the only sweep in the deep layers. **Enemies:**
-the ghost sprites and the beam. **Objectives:** the 4 power pellets (where the maze layout has them, whether or not
-the machine's Pac-Man ate them), eaten while lit; the other dots are counted.
+## Layer -1: inside the screen (CRT) · built (environment rework)
+**Environment:** we stand on the phosphor inside the tube: one RGB phosphor triad per tile of the machine's
+picture (three stripes behind the shadow mask), on black, with rounded tube corners (`cornerRadius`). No walls or
+maze drawn: the picture only exists as light. **The beam paints one pixel at a time** like a raster CRT: a single
+spot runs left to right along a row and row after row (`beamPeriod` for the whole picture, the real one takes
+16.5 ms), then flies back switched off (`vblank`). The three converging beams from the gun and the spot's next
+`lookAhead` cells are drawn as a warning. A triad lights in the picture's color for that spot (`rgb`: walls blue,
+dots peach, Pac-Man yellow, ghosts red) and fades (`decay`, down to `darkFloor`). **Enemies:** the spot fires only
+where the picture is lit, so it's a hit if it passes over you on a lit triad (dark phosphor is safe); the ghost
+sprites hit too. **Objectives:** the 4 power pellets (where the maze layout has them, whether or not the machine's
+Pac-Man ate them), eaten while lit; the other dots are counted.
 
-## Layer -2: the signal chips · built (gameplay pass)
-**Verb: carry and deliver.** The playfield as the video chip sees it: each tile's code from VRAM in hex, the 8
-hardware sprites as boxes labelled with slot and sprite code. **Area:** the whole tile grid (to the chip the walls
-are just tile codes). The tile fetcher hands out a color index at a random dot tile every `sparkEvery` s (it waits
-`sparkLife`); grab one and it follows you one tile behind. Take it to the **PAL** chip (palette: the index
-becomes a color), then to the **DAC**, which puts it on the screen: one objective. You carry one at a time.
-**Enemies:** the ghost sprites (touching one is a hit and drops what you carry) and the **SND** chip: every sound
-command except the dot chomp makes the area around it deadly for `pulseTime` (a timed trap, not a sweep).
-**Objectives:** 4 colors delivered.
+## Layer -2: the video board · built (environment rework)
+**Environment:** a circuit board (`DEEP.signals.layout`) with the chips that turn video RAM into a signal: VRAM, the
+tile fetcher (TILES), the sprite line buffer (SPRITES), the palette PROM, the DAC and the sound chip, joined by
+traces. Chips are solid, each with a live readout (the VRAM bytes being fetched, the fetch position, sprite codes,
+the index going into the palette, the DAC's RGB, the last sound). **Verb: carry and deliver.** Every `sparkEvery` s
+the fetcher reads a real dot tile and puts its color index (from color RAM) out on one of its pins (it waits
+`sparkLife`); grab one and it follows one tile behind you. Take it to the palette's input pins (it becomes a color),
+then to the DAC's input pins: one objective. **Enemies:** the 8 hardware sprites move over the board at their real
+register positions (touching a ghost sprite is a hit and drops what you carry), and the sound chip's area is deadly
+for `pulseTime` after every sound command but the chomp. **Objectives:** 4 colors delivered.
 
 ## Layer -3: video RAM · built (gameplay pass)
 **Verb: dodge the blade trap.** VRAM as it sits in memory, 32 bytes per row in hex. **Area:** all of VRAM, including
@@ -142,3 +141,5 @@ the ones left). Every dot Pac-Man eats is a dot.
 - 2026-10-17: Gameplay pass: every deep layer gets its own verb and enemy and 3-5 objectives to win; the beam
   sweep stays only on the screen. Signals: carry a color index via PAL to the DAC; sprites and the sound chip are
   the enemies. Bus becomes spatial (chip rooms behind decoder doors). (Quirin, from the survey defaults)
+- 2026-10-17: Screen and signals looked too much like the maze: the screen becomes phosphor triads painted by a
+  one-pixel raster beam (deadly only at its spot, on lit triads), signals becomes a circuit board of video chips. (Quirin)

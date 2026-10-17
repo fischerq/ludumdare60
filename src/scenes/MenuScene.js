@@ -1,6 +1,6 @@
 import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, PIXEL, UI } from '../config.js';
 import { unlockAudio } from '../sound.js';
-import { fxSeconds, charFrame, PAC_CYCLE } from '../systems/anim.js';
+import { fxSeconds, animFrame, PAC_CYCLE } from '../systems/anim.js';
 
 export default class MenuScene extends Phaser.Scene {
   constructor() {
@@ -19,14 +19,9 @@ export default class MenuScene extends Phaser.Scene {
     const sprite = (x, key) => this.add.image(x, cy - 100, key)
       .setScale(PIXEL.sprite * PIXEL.zoom / this.textures.get(key).getSourceImage().width);
     // Animated like in the maze: a single still frame of Max's chomp can read oddly on its own.
-    const pac = sprite(cx - 180, 'maze/pac-0');
-    const ghosts = Object.keys(COLORS.ghosts).map((name, i) => [name, sprite(cx - 60 + i * 80, `maze/ghost-${name}-left-0`)]);
-    let t = 0;
-    this.events.on('update', (_time, delta) => {
-      t += delta / 1000;
-      pac.setTexture(`maze/pac-${PAC_CYCLE[charFrame('pac', t, PAC_CYCLE.length)]}`);
-      ghosts.forEach(([name, g]) => g.setTexture(`maze/ghost-${name}-left-${charFrame(name, t, 2)}`));
-    });
+    this.pac = sprite(cx - 180, 'maze/pac-0');
+    this.ghosts = Object.keys(COLORS.ghosts).map((name, i) => [name, sprite(cx - 60 + i * 80, `maze/ghost-${name}-left-0`)]);
+    this.t = 0;
 
     const prompt = this.add.text(cx, cy + 120, 'TAP TO START', {
       fontFamily: UI.arcadeFont, fontSize: 36, color: COLORS.text,
@@ -60,5 +55,11 @@ export default class MenuScene extends Phaser.Scene {
     });
     this.input.keyboard?.once('keydown-SPACE', start);
     this.input.keyboard?.once('keydown-ENTER', start);
+  }
+
+  update(_time, delta) {
+    this.t += delta / 1000;
+    this.pac.setTexture(`maze/pac-${PAC_CYCLE[animFrame(this.t, UI.menuPacAnim, PAC_CYCLE.length)]}`);
+    this.ghosts.forEach(([name, g]) => g.setTexture(`maze/ghost-${name}-left-${animFrame(this.t, UI.menuGhostAnim, 2)}`));
   }
 }
