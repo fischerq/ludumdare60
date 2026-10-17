@@ -76,10 +76,12 @@ reference until the Z80 version matches it.
    runs in the browser too, so the CPU layer can show the real source listing with addresses. Constants come
    from `src/config.js`, so tuning stays a one-line edit. First program: boot, vblank interrupt, draw the maze
    from a ROM table into VRAM.
-5. **Done: shadow mode** (`shadow.js`). The maze layer renders from the machine. The JS game still decides what happens and
+5. **Done: shadow mode** (`shadow.js`, removed again in step 6). The maze layer renders from the machine. The JS game still decides what happens and
    writes positions, dots and score into machine RAM and sprite registers each frame. From here every lower
    layer can be built against real memory contents.
-6. **Port the rules to Z80, slice by slice.** Each slice replaces a JS piece and must pass a side-by-side test
+6. **Done: the rules run in Z80 code** (`game.asm`, about 1 400 lines; `state.js` reads its RAM). Instead of
+   a lab bench, `tools/arcade_test.mjs` plays the same swipes on both and compares every tile visited and the
+   score; peak CPU load is about 80% of a frame. Originally planned: Each slice replaces a JS piece and must pass a side-by-side test
    against `maze.js` on the same scripted input (a lab bench: machine vs. JS):
    a. input polling, Pac-Man movement, dot eating, score;
    b. ghost movement, targeting, scatter/chase modes;
@@ -138,3 +140,8 @@ All eight defaults accepted by Quirin on 2026-10-17.
 - 2026-10-17: Our board: Namco-style map, VRAM is 32 bytes per row with one cell code per maze tile, sprite
   positions are 16-bit world px, sound is a command latch at `0x5040`, a dip switch marks demo play. The
   machine runs whatever scene is showing; a HALTed CPU skips to the end of the frame. (Claude)
+- 2026-10-17: Step 6: the maze game's rules run in Z80 code on the machine. The program checks VRAM cell
+  codes for walls like the original, the joystick is held or pulsed for 2 frames per swipe, the power pellets
+  blink through a table of their color RAM addresses, and the cheat buttons poke the phase into RAM. Same
+  tiles and score as `maze.js` on scripted input; frightened ghosts use an 8-bit LFSR instead of
+  `Math.random`. (Claude)

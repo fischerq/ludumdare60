@@ -6,6 +6,10 @@ import { CELL, tileOffset } from '../src/systems/arcade/memmap.js';
 import { MAZE } from '../src/config.js';
 import { assemble } from '../src/systems/arcade/asm.js';
 import { loadProgram } from '../src/systems/arcade/program.js';
+import { readState } from '../src/systems/arcade/state.js';
+import { IN0, IN1 } from '../src/systems/arcade/memmap.js';
+import { createGame, stepGame, steer } from '../src/systems/maze.js';
+import { ARCADE } from '../src/config.js';
 
 let failed = 0;
 const check = (name, ok, info = '') => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${name} ${info}`); if (!ok) failed++; };
@@ -55,6 +59,34 @@ const Z80 = await loadZ80();
   for (let i = 0; i < 12; i++) m.runFrame();
   check('power pellets blink', m.vram[p] === CELL.power && m.cram[p] !== before, `${before} -> ${m.cram[p]}`);
   check('program halts each frame', m.halted, `${m.frameRange(0).to - m.frameRange(0).from} accesses`);
+}
+
+{ // The Z80 rules against maze.js: same swipes at the same frames, same tiles visited, same score
+  const prog = await loadProgram();
+  const m = createMachine(Z80, { rom: prog.rom });
+  for (let i = 0; i < 3; i++) m.runFrame();
+  m.setInput(1, IN1.start, true); m.runFrame(); m.setInput(1, IN1.start, false);
+  const g = createGame();
+  const script = { 130: 'left', 190: 'up', 260: 'left', 330: 'down', 420: 'right', 470: 'down', 560: 'left', 650: 'up', 760: 'right', 900: 'down', 1000: 'left' };
+  const pathM = [[], [], [], [], []], pathJ = [[], [], [], [], []];
+  const visit = (arr, t) => { if (arr.at(-1) !== t) arr.push(t); };
+  let overruns = 0, busy = 0;
+  for (let f = 0; f < 1300; f++) {
+    for (const k of ['up', 'left', 'down', 'right']) m.setInput(0, IN0[k], k === script[f]);
+    if (script[f]) steer(g, script[f]);
+    m.runFrame();
+    if (!m.halted) overruns++;
+    busy = Math.max(busy, m.busy);
+    stepGame(g, 1 / ARCADE.frameHz);
+    const st = readState(m, prog.symbols);
+    [st.pac, ...st.ghosts].forEach((a, i) => visit(pathM[i], `${Math.round(a.x) % 19},${Math.round(a.y)}`));
+    [g.pac, ...g.ghosts].forEach((a, i) => visit(pathJ[i], `${((Math.round(a.x) % 19) + 19) % 19},${Math.round(a.y)}`));
+  }
+  const same = (i) => pathJ[i].every((t, k) => pathM[i][k] === t);
+  check('pac-man moves like maze.js', same(0), `${pathM[0].length} tiles`);
+  check('ghosts move like maze.js', [1, 2, 3, 4].every(same), pathM.slice(1).map((p) => p.length).join('/'));
+  check('same score', readState(m, prog.symbols).score === g.score, `${readState(m, prog.symbols).score} vs ${g.score}`);
+  check('every frame fits the frame budget', overruns === 0, `peak ${Math.round((busy / m.frameCycles) * 100)}%`);
 }
 
 if (failed) { console.error(`${failed} failed`); process.exit(1); }

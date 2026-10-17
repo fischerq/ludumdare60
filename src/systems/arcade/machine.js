@@ -24,6 +24,7 @@ export function createMachine(Z80, { rom = new Uint8Array(0x4000) } = {}) {
     frameBus: new Float64Array(ARCADE.framesKept), // busCount at the start of each recent frame
     sounds: [],                          // sound latch writes not yet taken: { frame, name }
     cycle: 0, frameCycle: 0, frame: 0, halted: false,
+    busy: 0,                             // cycles the last frame ran before it HALTed (load = busy / frameCycles)
     hooks: [],                           // fn(addr, value, kind) for every access, e.g. a layer watching writes
   };
   m.rom.set(rom.subarray(0, 0x4000));
@@ -81,10 +82,12 @@ export function createMachine(Z80, { rom = new Uint8Array(0x4000) } = {}) {
       if (onStep) onStep(m);
       if (m.busCount === before) { m.halted = true; break; }
     }
+    m.busy = m.halted ? m.frameCycle : frameCycles;
     m.cycle += frameCycles;
     m.frame++;
   };
 
+  m.frameCycles = frameCycles;
   m.clearDirty = () => m.dirty.fill(0);
 
   // Joystick/buttons as the player (or the bot) holds them; bits are active low like on the real board.

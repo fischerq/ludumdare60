@@ -1,7 +1,7 @@
 // Builds the board's program: assembles game.asm with constants taken from src/config.js (speeds, timers,
 // the maze), so tuning the game stays a one-line edit in config. No Phaser.
 
-import { ARCADE, MAZE, SPEED, GHOSTS, RULES, CONTROL } from '../../config.js';
+import { ARCADE, MAZE, SPEED, GHOSTS, RULES, CONTROL, ANIM } from '../../config.js';
 import { assemble } from './asm.js';
 import { CELL, SOUND, MAP, IN0, IN1, DSW, VRAM_STRIDE } from './memmap.js';
 import { SPRITE } from './video.js';
@@ -33,6 +33,11 @@ export function configSymbols() {
     BUFFER_FRAMES: frames(CONTROL.bufferTime),
     IN_UP: IN0.up, IN_LEFT: IN0.left, IN_DOWN: IN0.down, IN_RIGHT: IN0.right, IN_COIN: IN0.coin,
     IN_START: IN1.start, DSW_DEMO: DSW.demo,
+    PELLET_COUNT: MAZE.layout.join('').replace(/[^.o]/g, '').length,
+    // Animation speeds from src/settings/animation.json, in frames per animation frame (read at assembly).
+    ANIM_PAC: ANIM.characters.pac ?? 2, ANIM_DEATH: ANIM.effects.pacDeath ?? 8,
+    ANIM_BLINK: ANIM.effects.powerPellet ?? 12, ANIM_FLASH: ANIM.effects.frightFlash ?? 10,
+    ANIM_CLEAR: ANIM.effects.mazeClear ?? 12,
   };
   for (const [k, v] of Object.entries(CELL)) s[`CELL_${k.toUpperCase()}`] = v;
   for (const [k, v] of Object.entries(SPRITE)) s[`SPR_${k.replace(/[A-Z]/g, (c) => `_${c}`).toUpperCase()}`] = v;
@@ -47,11 +52,15 @@ export function generatedSource() {
   for (const row of MAZE.layout) {
     lines.push(`        db ${[...row].map((c) => `0x${(code[c] ?? CELL.empty).toString(16).padStart(2, '0')}`).join(',')} ; ${row}`);
   }
+  const power = [];
+  MAZE.layout.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'o') power.push(MAP.cram[0] + y * VRAM_STRIDE + x); }));
+  lines.push(`POWER_CELLS:       ; color RAM address of each power pellet`, `        dw ${power.join(', ')}`);
+  lines.push(`POWER_COUNT equ ${power.length}`);
   const t = (v) => Math.round(v);
-  lines.push('GHOST_INIT:        ; start x px, start y px, release frames (word), corner x, corner y (tiles)');
+  lines.push('GHOST_INIT:        ; start x px, start y px, release frames (words), corner x, corner y (tiles), skirt anim');
   for (const g of GHOSTS) {
     lines.push(`        dw ${t(g.start.x * T)}, ${t(g.start.y * T)}, ${frames(g.release)}`);
-    lines.push(`        db ${g.corner.x}, ${g.corner.y} ; ${g.name}`);
+    lines.push(`        db ${g.corner.x}, ${g.corner.y}, ${ANIM.characters[g.name] ?? 10} ; ${g.name}`);
   }
   lines.push('MODE_TIMES:        ; scatter/chase schedule in frames, 0 = forever');
   lines.push(`        dw ${[...RULES.modeSchedule.map(frames), 0].join(', ')}`);
