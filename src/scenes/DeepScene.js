@@ -35,6 +35,7 @@ export default class DeepScene extends Phaser.Scene {
     this.hitT = 0;
     this.leaving = false;
     this.player = createWalker(this.L.start.x, this.L.start.y);
+    this.art = (key) => this.textures.get(key).getSourceImage();
     // The bot plays the maze game while we're down here, unless this layer steers the machine itself.
     setDriver('bot');
     if (this.L.drive) setDriver('player');
@@ -124,7 +125,7 @@ export default class DeepScene extends Phaser.Scene {
   update(time, delta) {
     const dt = Math.min(delta / 1000, 0.05);
     this.t += dt;
-    const env = { m: this.machine, S: this.S, t: this.t, dt, player: this.player, sounds: this.sounds.splice(0) };
+    const env = { m: this.machine, S: this.S, t: this.t, dt, player: this.player, sounds: this.sounds.splice(0), art: this.art };
     const open = (x, y) => this.L.open(this.st, env, x, y);
     if (this.hitT > 0) {
       this.hitT -= dt;

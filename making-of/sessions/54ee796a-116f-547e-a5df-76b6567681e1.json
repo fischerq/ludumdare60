@@ -237,7 +237,7 @@
    "seq": 47,
    "date": "2026-10-17",
    "time": "14:32",
-   "duration_s": 775,
+   "duration_s": 2370,
    "prompt": "suggested answers sound good. each layer will have a bit different mechanics/feel, we will tune that.  build out  the entine plan, sending separate PRs per stage.",
    "followups": [
     {
@@ -246,8 +246,19 @@
     }
    ],
    "images": [],
-   "claude_images": [],
-   "reply": "Stage 5: shadow mode. The maze level gets drawn by the board's video chip, while the JS rules still decide what happens and write their state into the machine.",
+   "claude_images": [
+    "media/54ee796a-3-c1.jpg",
+    "media/54ee796a-3-c10.jpg",
+    "media/54ee796a-3-c2.jpg",
+    "media/54ee796a-3-c3.jpg",
+    "media/54ee796a-3-c4.jpg",
+    "media/54ee796a-3-c5.jpg",
+    "media/54ee796a-3-c6.jpg",
+    "media/54ee796a-3-c7.jpg",
+    "media/54ee796a-3-c8.jpg",
+    "media/54ee796a-3-c9.jpg"
+   ],
+   "reply": "Everything passes. Final usage check, the making-of log, and the last PR.",
    "progress_notes": [
     "Starting: logging plan usage, then reading the maze game code the port is based on.",
     "Big job, so I'll build it as stacked branches with one PR each. First I'm checking the CPU core's halt behaviour and the cabinet/lab code that later stages hook into.",
@@ -258,27 +269,63 @@
     "Fixing two parser holes before testing: condition codes as operands, and the `'` in `af'`.",
     "Launching a background agent in its own worktree for the PR merge conflicts, so it doesn't collide with my git work here.",
     "Now the first Z80 program and a test that it runs.",
-    "The commit accidentally picked up the agent's worktree folder. Removing it and ignoring that path."
+    "The commit accidentally picked up the agent's worktree folder. Removing it and ignoring that path.",
+    "Stage 5: shadow mode. The maze level gets drawn by the board's video chip, while the JS rules still decide what happens and write their state into the machine.",
+    "`GameScene` changed a lot on `main` (animation settings, progress, callouts). Reading the new version before redoing step 5 on top of it.",
+    "I'll fix the texture keys in step 3's own branch so PR 33 is correct, then merge it up through the stack.",
+    "The agent's worktree still holds that branch. Removing the worktree (the agent is finished) and retrying.",
+    "Now redoing step 5 on the new `GameScene`.",
+    "No errors. Taking the turn's screenshot to check the machine-drawn maze by eye.",
+    "The machine draws the maze correctly: walls rebuilt from VRAM, dots, per-ghost art, Pac-Man. Committing step 5.",
+    "Now the program itself.",
+    "Fixing five register-clobber and edge bugs I found on review before running it.",
+    "A name clash: the RAM variable `LIVES` shadows the config constant `LIVES`. Renaming it, and making the assembler reject an `EQU` that redefines a config constant.",
+    "The Z80 game plays: dots, scoring, ghosts leaving the house, scatter/chase switches, deaths and lives all work. Now the side-by-side check against the JS rules on the same input.",
+    "The program's reset takes longer than one frame (clearing RAM and drawing the maze), so the test pressed START too early. Giving it a few frames first.",
+    "Identical tile paths and score. A longer run with turns, corners and a death:",
+    "Matches over 1,400 frames (Inky is one tile apart only in the final frame). Now checking fright, ghost eating, eyes going home and level clear by poking positions into RAM.",
+    "Checking that no frame overruns its cycle budget over a long run (the CPU must reach `HALT` every frame):",
+    "Overruns happen when the pellet blink (a scan of all 475 cells) lands on a busy frame. The original hard-codes its four power-pellet addresses; I'll do the same with a generated table.",
+    "No overruns now. I'll record each frame's busy cycles in the machine (useful later as a CPU-load readout) and check the headroom.",
+    "Peak load is 78% of the frame. Now step 6's JS side: a state decoder, input pulses in the world, and `GameScene` running on the machine alone (shadow mode goes away).",
+    "Running on the machine in the browser: phase PLAY, score counting. Adding the JS-vs-Z80 comparison and the frame-budget check to the test file.",
+    "All tests pass, including the side-by-side check. Screenshot, docs, then the step 6 PR.",
+    "Step 7: the bot. Checking which scenes start the maze layer, to tell a fresh game from coming back mid-game.",
+    "The bot clears the whole maze in about 60 seconds with one death and no lives lost. Checking in the browser that it plays behind the menu.",
+    "Step 8: the cabinet's screen and joystick move onto the machine. Reading `CabinetScene` first.",
+    "The cabinet screen shows the bot's demo game on the shared machine. Committing step 8.",
+    "Writing the deep-layer framework (grid walker, layer list, `DeepScene`) and the first layer, inside the CRT.",
+    "Now the scene that hosts any deep layer.",
+    "Usage hasn't moved. Next, layers -2 (signal hardware: tile fetcher, sprite boxes, sound waves) and -3 (video RAM as a hex grid, with the CPU write head replayed from the bus log).",
+    "Full-width waves rolling up the screen couldn't be dodged, so the waves now stay at the bottom, like the Gemini sketch: loud sounds raise a band you have to keep out of.",
+    "Now the video-RAM layer.",
+    "Adding `?layer=N` next to `?scene=Deep` for playtesting and screenshots.",
+    "Both layers render well: tile codes with sprite boxes and fetch sparks, and the hex VRAM with the maze visible in the bytes. Committing 9b.",
+    "The CPU layer shows real trace data, but the tiny font is missing letters (H, X, Z, T, commas...), so the source reads badly. Completing the alphabet and punctuation.",
+    "Readable now, with real source, registers and a Z flag dropped on a line. Committing 9c.",
+    "Logic shows Blinky's scatter vector to his corner. The input layer shows the live machine picture with the switch pads and IN0/IN1 bits. One overlap to fix: the status text sits on the START pad."
    ],
    "tools": {
-    "Bash": 26,
-    "mcp__github__create_pull_request": 3,
-    "mcp__claude-code-remote__list_events": 2,
-    "Agent": 1
+    "Bash": 92,
+    "mcp__github__create_pull_request": 11,
+    "Read": 11,
+    "mcp__claude-code-remote__list_events": 8,
+    "Agent": 1,
+    "Write": 1
    },
-   "api_requests": 58,
+   "api_requests": 137,
    "usage": {
     "claude-opus-5-5": {
-     "input": 116,
+     "input": 274,
      "cache_write_5m": 75901,
-     "cache_write_1h": 94017,
-     "cache_read": 7554036,
-     "output": 69268,
-     "thinking": 31193,
-     "cost_usd": 4.028272
+     "cache_write_1h": 275511,
+     "cache_read": 33380216,
+     "output": 210095,
+     "thinking": 77400,
+     "cost_usd": 13.462632
     }
    },
-   "cost_usd": 4.028272,
+   "cost_usd": 13.462632,
    "commits": [
     {
      "sha": "c2c551ee975d06c0d4aa0fb5dad7bdcfe12fa29b",
@@ -337,12 +384,44 @@
      "subject": "Regenerate repo stats after merging the runtime branch"
     },
     {
-     "sha": "32f765b348777fb2e2e6d61a1ca751903e8aedc7",
-     "subject": "WIP on claude/keen-archimedes-hmq2uh-5-shadow: 7d2d2ac Ignore agent worktrees"
+     "sha": "1d241e3f11df74741dbb2d0c53f1e1d4beb7e4c5",
+     "subject": "Merge remote-tracking branch 'origin/claude/keen-archimedes-hmq2uh-3-video' into claude/keen-archimedes-hmq2uh-4-asm"
     },
     {
-     "sha": "9047fda668e01f88450aeefd16d66b0335f43fa7",
-     "subject": "index on claude/keen-archimedes-hmq2uh-5-shadow: 7d2d2ac Ignore agent worktrees"
+     "sha": "65295777d62376f091dabeb645dab53da648cecb",
+     "subject": "Video chip: use the folder texture keys and the per-ghost art from main"
+    },
+    {
+     "sha": "74f276795c36274208f67311e529a0eddae20b44",
+     "subject": "Merge branch 'claude/keen-archimedes-hmq2uh-3-video' into claude/keen-archimedes-hmq2uh-4-asm"
+    },
+    {
+     "sha": "4ea1ab8e0c2ee5493425fddd7f9800b2de75ba4d",
+     "subject": "Arcade step 5: the maze level is the machine's picture (shadow mode)"
+    },
+    {
+     "sha": "1a85f277e0865478b849347b07b520e9505244ab",
+     "subject": "Arcade step 6: the maze game's rules run as a Z80 program on the machine"
+    },
+    {
+     "sha": "5ff4aba7955a45c3a1d77e7748dd9856cde36da4",
+     "subject": "Arcade step 7: a bot plays Pac-Man on the machine while the player is elsewhere"
+    },
+    {
+     "sha": "d05c7e0745fbc14d47c1146feda074f329888c87",
+     "subject": "Arcade step 8: the cabinet shows the shared machine, layers say who steers"
+    },
+    {
+     "sha": "f0b1a6c11603fc8790a6b8f425899f5dd7e6391d",
+     "subject": "Arcade step 9a: deep layers framework and layer -1, inside the screen"
+    },
+    {
+     "sha": "cf6495665c1974867c0ab5adab430d4c89bada2b",
+     "subject": "Arcade step 9b: deep layers -2 (signal chips) and -3 (video RAM)"
+    },
+    {
+     "sha": "66b407ab34eae7cca82ed2a3d022f545b3484192",
+     "subject": "Arcade step 9c: deep layers -4 (system bus) and -5 (CPU)"
     }
    ],
    "entrypoint": "remote",
@@ -350,8 +429,8 @@
    "plan_usage": {
     "five_hour": {
      "start": 0.02,
-     "end": 0.03,
-     "delta": 0.01
+     "end": 0.04,
+     "delta": 0.02
     },
     "seven_day": {
      "start": 0.18,
@@ -363,9 +442,9 @@
  ],
  "totals": {
   "prompts": 3,
-  "cost_usd": 6.379017,
-  "output_tokens": 97875,
-  "input_tokens": 10827459
+  "cost_usd": 15.813377,
+  "output_tokens": 238702,
+  "input_tokens": 36835291
  },
  "reported_by_claude_code": {
   "total_usd": 1.1509024,

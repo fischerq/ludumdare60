@@ -92,7 +92,7 @@ reference until the Z80 version matches it.
 8. **Done: layers share the machine.** Each layer is a view on `world`. The machine never pauses for a
    transition, and each layer says who controls Pac-Man (player or bot). The cabinet's screen shows the
    machine's frame.
-9. **Deep layers** (in progress, see [layer-deep](layer-deep.md)), one slice each: CRT ([layer-crt](layer-crt.md)), then the others from the
+9. **Done: deep layers**, a first slice each (see [layer-deep](layer-deep.md)): CRT ([layer-crt](layer-crt.md)), then the others from the
    table above.
 
 Token cost: steps 4 and 6 are the expensive ones; each slice of step 6 is its own push.
@@ -154,3 +154,4 @@ All eight defaults accepted by Quirin on 2026-10-17.
   screen is the machine's picture: before a coin it shows the bot's demo game (attract mode), the coin pulses
   the board's COIN line and the program starts a fresh game on it, the stick is held on the joystick lines.
   Going down from the cabinet continues that game in the maze layer. (Claude)
+- 2026-10-17: Step 9: first slices of all seven deep layers built, one scene with a module per layer. (Claude)
