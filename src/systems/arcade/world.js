@@ -15,6 +15,8 @@ export const world = {
   paused: false,
   // Game over: the board waits for a coin and runs no frames (no attract mode) until one goes in.
   halted: false,
+  // The running game was paid for with a coin (newGame), not started by the bot from attract mode.
+  paidGame: false,
   speed: 1,          // machine time per real time; the deep layers slow it down (DEEP.machineSlowdown)
   acc: 0,            // ms not yet run
   listeners: new Set(),
@@ -38,6 +40,7 @@ export function newGame() {
   m.cpu.reset();
   m.irqOn = false;
   world.halted = false;
+  world.paidGame = true;
   world.input.start = 12;
 }
 
@@ -87,7 +90,7 @@ export function tickWorld(ms) {
     const sounds = m.takeSounds();
     for (const fn of world.listeners) fn(m, sounds);
     const S = world.program?.symbols;
-    if (S && PHASES[m.read(S.PHASE)] === 'over') { world.halted = true; world.acc = 0; }
+    if (S && PHASES[m.read(S.PHASE)] === 'over') { world.halted = true; world.paidGame = false; world.acc = 0; }
   }
 }
 

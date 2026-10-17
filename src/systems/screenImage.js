@@ -17,7 +17,8 @@ export function screenSize() {
   return { w: W * T + MARGIN * 2, h: HUD + H * T + FOOT };
 }
 
-// lines: optional centered messages, e.g. [{ text: 'INSERT COIN', color: '#00ffde', row: 13 }]
+// lines: optional centered messages, e.g. [{ text: 'INSERT COIN', color: '#00ffde', row: 13 }]; box: true blanks
+// the row behind the text first (over a halted picture that already has READY! in it).
 export function drawScreen(ctx, m, S, art, lines = [], best = 0) {
   const { w, h } = screenSize();
   const g = readState(m, S);
@@ -44,6 +45,10 @@ export function drawScreen(ctx, m, S, art, lines = [], best = 0) {
     ctx.fillText('READY!', ox + MAZE.houseExit.x * T + T / 2, oy + 13 * T + 1);
   }
   for (const l of lines) {
+    if (l.box) {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(w / 2 - 6 * T, oy + l.row * T, 12 * T, T);
+    }
     ctx.fillStyle = l.color ?? COLORS.text;
     ctx.fillText(l.text, w / 2, oy + l.row * T + 1);
   }
