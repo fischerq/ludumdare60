@@ -148,7 +148,7 @@ export default class BootScene extends Phaser.Scene {
     const P = (x, y, d) => [x + d / 2, y - d / 2];
     const L = C.left, R = C.right, D = C.depth, pd = C.panelDepth, md = C.marqueeDepth;
     this.pixels('cabinet', W, H, (set) => {
-      this.poly(set, [[0, C.ground], [W, C.ground], [W, H], [0, H]], K.floor);
+      // The floor is drawn by the scene, so this texture is only the machine (and its shadow) on transparent.
       // Shadow on the floor behind the cabinet.
       this.poly(set, [P(L, C.ground, 0), P(R + 10, C.ground, 0), P(R + 10, C.ground, D + 12), P(L, C.ground, D + 12)], 0x0e0a10);
       // Right side panel: the side profile, sheared by depth.

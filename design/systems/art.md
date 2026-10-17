@@ -20,6 +20,9 @@ code doesn't change.
   `python3 tools/export_assets.py` writes it by running `BootScene` in headless Chrome/Chromium
   (`tools/export-assets.html` shows the same textures in a browser, with download links). Rerun it after any
   change to the code-drawn art and commit the PNGs with that change.
+- This runs automatically in Claude Code sessions: a `PostToolUse` hook (`.claude/settings.json`) calls
+  `tools/export_assets.py --hook` after every edit or shell command, and it re-exports whenever `BootScene.js`,
+  `tiles.js` or `config.js` changed since the last export.
 - Max takes the files from `assets/`, edits them, and passes them back in a separate folder,
   `assets/from-max/` (same file names and sizes), or into a conversation, where Claude puts them in that folder.
 - The export never overwrites Max's files.
@@ -63,6 +66,8 @@ Sizes are in image pixels at native resolution. Transparent background.
 | `dot` | 4x4 | 1 | Pellet, at tile resolution, centered in its tile. |
 | `power` | 16x16 | 1 | Power pellet, one tile (the game blinks it). |
 | `maze/wall-1` .. `maze/wall-15`, `maze/door`, `maze/floor` | 16x16 | 17 files | Maze tileset, one file per tile in `assets/maze/`, see above. |
+| `cabinet` | 360x640 | 1 | [Cabinet layer](layer-cabinet.md): the whole arcade machine and its floor shadow on transparent, oblique view (front flat, depth up-right at 45°). Shown at 2x. Keep the screen opening (black, at x 98, y 67, 168x264 inside the bezel), the coin door (x 140, y 460, 56x76) and the control panel where they are, or tell Claude the new positions (`CABINET` in config). The marquee text and the game picture are drawn on top by the game. |
+| `stick-n`, `stick-up/down/left/right` | 24x32 | 5 | The cabinet's joystick, neutral and pushed four ways; the base sits at y 27. |
 
 Sprites (pac, ghosts, eyes) can be 32x32; tiles and pellets stay at tile resolution. Text uses the Press Start
 2P pixel font. The life icons and the menu reuse `pac-2`.
@@ -90,3 +95,4 @@ Sprites (pac, ghosts, eyes) can be 32x32; tiles and pellets stay at tile resolut
   fresh. Other tileset answers: defaults. (Quirin)
 - 2026-10-17: One file per tile; a tileset is a folder of tiles per environment, starting with `assets/maze/`.
   (Quirin)
+- 2026-10-17: The cabinet layer's art is exported too (`cabinet`, `stick-*`), and the export re-runs automatically after art changes in Claude Code sessions. (Quirin)
