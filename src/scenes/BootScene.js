@@ -1,5 +1,5 @@
 import { COLORS, MAZE, PIXEL, UI } from '../config.js';
-import { mazeTiles, TILESET } from '../systems/tiles.js';
+import { mazeTiles, tileKey } from '../systems/tiles.js';
 
 const hex = (c) => `#${c.toString(16).padStart(6, '0')}`;
 
@@ -27,9 +27,9 @@ const FRIGHT_FACE = [
   '..##..##..##..', '.#..##..##..#.',
 ];
 
-// Generates all placeholder art in code, pixel by pixel at native size: 16x16 sprites, a tileset of 16x16
-// tiles, and the maze built from that tileset. Real art can replace any of these later under the same
-// texture keys (tools/export_assets.py writes them to assets/).
+// Generates all placeholder art in code, pixel by pixel at native size: 16x16 sprites, the 'maze' tileset of
+// 16x16 tiles (one texture per tile), and the maze built from that tileset. Real art can replace any of
+// these later under the same texture keys (tools/export_assets.py writes them to assets/).
 export default class BootScene extends Phaser.Scene {
   constructor() {
     super('Boot');
@@ -118,18 +118,17 @@ export default class BootScene extends Phaser.Scene {
     }
   }
 
-  // The tileset sheet (see TILESET in src/systems/tiles.js): 16 wall pieces, one per combination of the
-  // four cells around a tile corner, plus the ghost door and the floor. Wall pieces light the pixels at
-  // PIXEL.wallLine distance from the floor, which rounds the corners like the arcade maze.
+  // The 'maze' tileset (see src/systems/tiles.js): 16 wall pieces, one per combination of the four cells
+  // around a tile corner, plus the ghost door and the floor. Wall pieces light the pixels at PIXEL.wallLine
+  // distance from the floor, which rounds the corners like the arcade maze.
   makeTileset() {
     const T = PIXEL.tile, [near, far] = PIXEL.wallLine;
-    const tex = this.pixels('tileset', TILESET.cols * T, TILESET.rows * T, (set) => {
-      for (let mask = 0; mask < 16; mask++) {
-        const [cx, cy] = TILESET.at(mask);
-        // The piece covers the inner quarters of a 2x2 block of cells; bit order TL, TR, BR, BL.
-        const wall = (x, y) => (mask >> [[0, 1], [3, 2]][y][x]) & 1;
-        const floor = (x, y) => x >= 0 && y >= 0 && x < 2 * T && y < 2 * T
-          && !wall(Math.floor(x / T), Math.floor(y / T));
+    for (let mask = 1; mask < 16; mask++) {
+      // The piece covers the inner quarters of a 2x2 block of cells; bit order TL, TR, BR, BL.
+      const wall = (x, y) => (mask >> [[0, 1], [3, 2]][y][x]) & 1;
+      const floor = (x, y) => x >= 0 && y >= 0 && x < 2 * T && y < 2 * T
+        && !wall(Math.floor(x / T), Math.floor(y / T));
+      this.pixels(tileKey('maze', `wall-${mask}`), T, T, (set) => {
         for (let y = 0; y < T; y++) {
           for (let x = 0; x < T; x++) {
             const wx = x + T / 2, wy = y + T / 2;
@@ -142,23 +141,16 @@ export default class BootScene extends Phaser.Scene {
               }
             }
             const d = Math.sqrt(d2);
-            if (d >= near && d < far) set(cx * T + x, cy * T + y, COLORS.wall);
+            if (d >= near && d < far) set(x, y, COLORS.wall);
           }
         }
-      }
-      // Ghost door: a 4 px pink bar across the middle. The floor tile stays empty (black shows through).
-      const [dx, dy] = TILESET.at('door');
-      for (let x = 0; x < T; x++) for (let y = 8; y < 12; y++) set(dx * T + x, dy * T + y, COLORS.door);
-    });
-    this.addTileFrames(tex);
-  }
-
-  addTileFrames(tex) {
-    const T = PIXEL.tile;
-    for (const name of TILESET.names) {
-      const [x, y] = TILESET.at(name);
-      tex.add(String(name), 0, x * T, y * T, T, T);
+      });
     }
+    // Ghost door: a 4 px pink bar across the middle. The floor tile stays empty (black shows through).
+    this.pixels(tileKey('maze', 'door'), T, T, (set) => {
+      for (let x = 0; x < T; x++) for (let y = 8; y < 12; y++) set(x, y, COLORS.door);
+    });
+    this.pixels(tileKey('maze', 'floor'), T, T, () => {});
   }
 
   // Bakes the maze into one 'maze' texture from the tileset: floor and door on the cell grid, wall pieces
@@ -168,11 +160,7 @@ export default class BootScene extends Phaser.Scene {
     const { w, h, cells, walls } = mazeTiles(MAZE.layout);
     const tex = this.textures.createCanvas('maze', w * T, h * T);
     const ctx = tex.getContext();
-    const sheet = this.textures.get('tileset');
-    const draw = (name, x, y) => {
-      const f = sheet.get(String(name));
-      ctx.drawImage(f.source.image, f.cutX, f.cutY, T, T, x, y, T, T);
-    };
+    const draw = (tile, x, y) => ctx.drawImage(this.textures.get(tileKey('maze', tile)).getSourceImage(), x, y, T, T);
     cells.forEach(({ x, y, tile }) => draw(tile, x * T, y * T));
     walls.forEach(({ x, y, tile }) => draw(tile, x * T - T / 2, y * T - T / 2));
     tex.refresh();

@@ -4,22 +4,14 @@
 // cells are walls (bits TL 1, TR 2, BR 4, BL 8), so 16 pieces cover every straight, outer and inner corner.
 // Floor and ghost door tiles sit on the normal cell grid.
 
-// Sheet layout, 4 tiles wide: wall pieces 0..15 in rows 0-3 (piece n at column n % 4, row n / 4),
-// then the door and the floor in row 4.
-export const TILESET = {
-  cols: 4,
-  rows: 5,
-  names: [...Array(16).keys(), 'door', 'floor'],
-  at(name) {
-    if (name === 'door') return [0, 4];
-    if (name === 'floor') return [1, 4];
-    return [name % 4, Math.floor(name / 4)];
-  },
-};
+// A tileset is a folder of tiles, one file each: texture key '<tileset>/<tile>', file assets/<tileset>/<tile>.png.
+// The maze environment uses wall-1 .. wall-15 (no wall, no piece), door and floor.
+export const MAZE_TILES = ['door', 'floor', ...Array.from({ length: 15 }, (_, i) => `wall-${i + 1}`)];
+export const tileKey = (tileset, tile) => `${tileset}/${tile}`;
 
 // layout: rows of '#' wall, '-' ghost door, 'T' tunnel, anything else floor.
-// Returns cells [{x, y, tile}] on the cell grid and walls [{x, y, tile}] on the corner grid: piece (x, y)
-// is centered on the top-left corner of cell (x, y), so x runs 0..w and y 0..h.
+// Returns cells [{x, y, tile}] on the cell grid and walls [{x, y, tile}] on the corner grid (tile names
+// from MAZE_TILES): piece (x, y) is centered on the top-left corner of cell (x, y), so x runs 0..w and y 0..h.
 export function mazeTiles(layout) {
   const h = layout.length, w = layout[0].length;
   const isWall = (x, y) => {
@@ -41,7 +33,7 @@ export function mazeTiles(layout) {
   for (let y = 0; y <= h; y++) {
     for (let x = 0; x <= w; x++) {
       const tile = isWall(x - 1, y - 1) | isWall(x, y - 1) << 1 | isWall(x, y) << 2 | isWall(x - 1, y) << 3;
-      if (tile) walls.push({ x, y, tile });
+      if (tile) walls.push({ x, y, tile: `wall-${tile}` });
     }
   }
   return { w, h, cells, walls };

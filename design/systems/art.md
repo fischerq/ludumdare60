@@ -35,16 +35,17 @@ Max works on the core data: every file in `assets/` is the texture at its native
 copy.
 
 ## Maze from a tileset · decided
-The maze is built from `tileset.png` (`src/systems/tiles.js`, baked in `BootScene`), so changing `MAZE.layout`
-needs no new art. The sheet is 4 tiles wide and 5 high (64x80 px), 16x16 per tile:
+Tiles are separate files, one per tile, grouped in tilesets: a tileset is a folder for one environment, and
+the maze environment is `assets/maze/` (texture keys `maze/<tile>`). Other environments (e.g. deeper layers)
+get their own folder. The game builds the maze from these tiles (`src/systems/tiles.js`, baked in `BootScene`),
+so changing `MAZE.layout` needs no new art. Every tile is 16x16:
 
-- **Wall pieces 0-15** (rows 0-3, piece *n* at column *n* mod 4, row *n* div 4). A wall piece doesn't sit on a
-  cell; it sits where four cells meet, and its number says which of those four cells are wall: top-left 1,
-  top-right 2, bottom-right 4, bottom-left 8 (add them up). So 1 is an outer corner with wall only in the
-  top-left, 3 a straight wall along the top, 7 an inner corner, 15 the inside of a solid wall block. Piece 0
-  (no wall) is never used. 16 pieces cover every straight, outer and inner corner.
-- **Ghost door** (row 4, column 0) and **floor** (row 4, column 1) sit on the normal cell grid, under the walls.
-  The floor is empty in the placeholder.
+- **`wall-1` .. `wall-15`**: a wall piece doesn't sit on a cell; it sits where four cells meet, and its number
+  says which of those four cells are wall: top-left 1, top-right 2, bottom-right 4, bottom-left 8 (add them up).
+  So `wall-1` is an outer corner with wall only in the top-left, `wall-3` a straight wall along the top,
+  `wall-7` an inner corner, `wall-15` the inside of a solid wall block. These 15 pieces cover every straight,
+  outer and inner corner.
+- **`door`** and **`floor`** sit on the normal cell grid, under the walls. The floor is empty in the placeholder.
 - Outside the maze counts as wall, except where a tunnel leaves it. One wall set, no double outer wall.
 - Pellets stay separate sprites on top. When the maze is cleared, the game tints it white (`COLORS.mazeFlash`).
 
@@ -61,7 +62,7 @@ Sizes are in image pixels at native resolution. Transparent background.
 | `ghost-flash-0/1` | 16x16 | 2 | Frightened ghost flashing white near the end. |
 | `dot` | 4x4 | 1 | Pellet, at tile resolution, centered in its tile. |
 | `power` | 16x16 | 1 | Power pellet, one tile (the game blinks it). |
-| `tileset` | 64x80 | 18 tiles | Maze tileset, see above. |
+| `maze/wall-1` .. `maze/wall-15`, `maze/door`, `maze/floor` | 16x16 | 17 files | Maze tileset, one file per tile in `assets/maze/`, see above. |
 
 Sprites (pac, ghosts, eyes) can be 32x32; tiles and pellets stay at tile resolution. Text uses the Press Start
 2P pixel font. The life icons and the menu reuse `pac-2`.
@@ -87,3 +88,5 @@ Sprites (pac, ghosts, eyes) can be 32x32; tiles and pellets stay at tile resolut
   the maze built from a 16-piece tileset (Claude picked a dual grid, pieces where four cells meet, so the default
   16 pieces also get inner corners right), floor and door tiles, tint flash, one wall set. Max draws 32x32 sprites
   fresh. Other tileset answers: defaults. (Quirin)
+- 2026-10-17: One file per tile; a tileset is a folder of tiles per environment, starting with `assets/maze/`.
+  (Quirin)

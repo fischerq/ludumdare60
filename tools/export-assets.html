@@ -35,7 +35,7 @@
           out[key] = img.toDataURL('image/png');
           const fig = document.createElement('figure');
           fig.innerHTML = `<img src="${out[key]}" width="${img.width * 4}" height="${img.height * 4}">` +
-            `<figcaption><a download="${key}.png" href="${out[key]}">${key}</a> ${img.width}x${img.height}</figcaption>`;
+            `<figcaption><a download="${key.replace('/', '-')}.png" href="${out[key]}">${key}</a> ${img.width}x${img.height}</figcaption>`;
           document.getElementById('grid').append(fig);
         }
         document.getElementById('out').textContent = JSON.stringify(out);

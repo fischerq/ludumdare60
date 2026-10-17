@@ -47,11 +47,15 @@ def main():
     textures = json.loads(html.unescape(m.group(1)))
     OUT.mkdir(exist_ok=True)
     # Drop exports of textures that no longer exist (Max's folder and other files are left alone).
-    for old in OUT.glob('*.png'):
-        if old.stem not in textures:
+    # Keys with a slash are tiles: '<tileset>/<tile>' goes to assets/<tileset>/<tile>.png.
+    for old in OUT.rglob('*.png'):
+        rel = old.relative_to(OUT)
+        if rel.parts[0] != 'from-max' and rel.with_suffix('').as_posix() not in textures:
             old.unlink()
     for key, data in textures.items():
-        (OUT / f'{key}.png').write_bytes(base64.b64decode(data.split(',', 1)[1]))
+        dest = OUT / f'{key}.png'
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(base64.b64decode(data.split(',', 1)[1]))
     print(f'{len(textures)} textures -> {OUT.relative_to(ROOT)}/')
 
 

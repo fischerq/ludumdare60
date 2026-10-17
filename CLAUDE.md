@@ -18,7 +18,8 @@ When the title changes, update `GAME_TITLE` in `src/config.js`, `<title>` in `in
 
 ## Conventions
 - Placeholder art is drawn in code in `BootScene`. `assets/` always holds a 1x PNG export of every texture
-  (`assets/<key>.png`, native resolution, never upscaled): after any change to code-drawn art, run `python3 tools/export_assets.py` and commit the PNGs
+  (`assets/<key>.png`, native resolution, never upscaled; tiles one file each, in a folder per tileset like
+  `assets/maze/`): after any change to code-drawn art, run `python3 tools/export_assets.py` and commit the PNGs
   with it. Max (artist) edits these and passes them back in `assets/from-max/` or in a conversation (save them
   there); load them in `BootScene` under the same texture keys. See `design/systems/art.md`.
 - All tunable numbers (speeds, sizes, colors, timings) go in `src/config.js`, not inline in scenes, so "feel"

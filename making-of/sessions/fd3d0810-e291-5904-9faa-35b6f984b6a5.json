@@ -293,21 +293,22 @@
    "seq": 36,
    "date": "2026-10-17",
    "time": "11:35",
-   "duration_s": 262,
+   "duration_s": 272,
    "prompt": "change todays art to 16x16 and fit it into the system. defaults for the rest",
    "followups": [],
    "images": [],
    "claude_images": [
     "media/fd3d0810-6-c1.jpg"
    ],
-   "reply": "Removing the stale open questions:",
+   "reply": "Today's art is now 16x16, and the maze is built from a tileset. It's pushed to PR [fischerq/ludumdare60#15](https://github.com/fischerq/ludumdare60/pull/15). I ran the game in a headless phone-sized browser: no console errors, and the maze, sprites and HUD look right. I couldn't catch the white flash when the maze is cleared on camera, so that part is unconfirmed.\n\n- **Sprites:** all characters are 16x16 files. The game shows every sprite in the same 2x2-tile box on screen, whatever its size in the file, so Max's 32x32 art replaces a 16x16 file with no code change. On screen they look the same as before.\n- **Tiles and pellets:** maze tiles are 16x16 and the game scales everything 2x (was 8 px tiles at 4x). The dot is 4x4 and the power pellet is one 16x16 tile.\n- **Tileset:** `assets/tileset.png` is a 64x80 sheet of 16 wall pieces, the ghost door and a floor tile (empty for now). The game builds the maze from it automatically, so changing the maze layout needs no new art.\n- **One change from the defaults:** each wall piece sits where four cells meet, not on a cell. I did this because the 16 pieces then also get the inside corners right; the default would have left gaps there. `design/systems/art.md` explains the numbering for Max.\n- **Also changed:** the maze is tinted white when cleared, there's one wall set (no double outer wall), and pellets stay separate sprites.\n- **Export:** `assets/` is re-exported. The built maze image isn't in it, since it's made from the tileset and isn't something to edit.\n\n**To test on the phone:** play a round and check that turning still feels the same, the walls and their corners look clean, the ghost door is visible, and the maze blinks white when you clear it.\n\nPlan usage was at 2% of the 5-hour limit and 17% of the weekly limit at the last reading. The end-of-turn check returned nothing new.",
    "progress_notes": [
     "Now the config and the new BootScene.",
     "Next, the GameScene and Menu changes: sprite scaling, HUD positions at the new resolution, and the white flash done as a tint.",
     "Now the exporter: leave out the built maze, which isn't source art, and delete stale PNGs.",
     "Exports are done. Now checking the game in headless Chromium.",
     "The maze builds correctly from the tileset, corners included. The overlapping menu is just my test script leaving the menu running. Taking a clean screenshot:",
-    "Game, maze and pellets look right, with no console errors. The flash frame I caught happened to be the unlit half of the blink. Now updating the docs."
+    "Game, maze and pellets look right, with no console errors. The flash frame I caught happened to be the unlit half of the blink. Now updating the docs.",
+    "Removing the stale open questions:"
    ],
    "tools": {
     "Bash": 13,
@@ -315,19 +316,74 @@
     "Write": 2,
     "Read": 2
    },
-   "api_requests": 16,
+   "api_requests": 17,
    "usage": {
     "claude-opus-5-5": {
-     "input": 32,
+     "input": 34,
      "cache_write_5m": 0,
-     "cache_write_1h": 36491,
-     "cache_read": 2502236,
-     "output": 24231,
-     "thinking": 10225,
-     "cost_usd": 1.277123
+     "cache_write_1h": 37208,
+     "cache_read": 2673031,
+     "output": 24961,
+     "thinking": 10282,
+     "cost_usd": 1.331626
     }
    },
-   "cost_usd": 1.277123,
+   "cost_usd": 1.331626,
+   "commits": [
+    {
+     "sha": "d13259e15fd797b08c529c7f8125ebab6143a16e",
+     "subject": "Art at 16x16 and the maze built from a tileset"
+    }
+   ],
+   "entrypoint": "remote",
+   "branch": "claude/affectionate-allen-g8i4y8",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.02,
+     "end": 0.02,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.17,
+     "end": 0.17,
+     "delta": 0.0
+    }
+   }
+  },
+  {
+   "index": 7,
+   "seq": 37,
+   "date": "2026-10-17",
+   "time": "11:42",
+   "duration_s": 73,
+   "prompt": "make it separate files per tile (and a tileset for e.g. the maze environment)",
+   "followups": [],
+   "images": [],
+   "claude_images": [],
+   "reply": "Same maze, now from one texture per tile. Updating the docs:",
+   "progress_notes": [
+    "PR #15 is still open. Switching to one file per tile, grouped into a `maze` tileset folder:",
+    "Rewrapping two long comment lines, then re-exporting and checking the game:"
+   ],
+   "tools": {
+    "Bash": 5,
+    "mcp__claude-code-remote__list_events": 2,
+    "mcp__github__list_pull_requests": 1,
+    "Read": 1
+   },
+   "api_requests": 7,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 14,
+     "cache_write_5m": 0,
+     "cache_write_1h": 9939,
+     "cache_read": 1235903,
+     "output": 6312,
+     "thinking": 716,
+     "cost_usd": 0.452989
+    }
+   },
+   "cost_usd": 0.452989,
    "commits": [],
    "entrypoint": "remote",
    "branch": "claude/affectionate-allen-g8i4y8",
@@ -346,10 +402,10 @@
   }
  ],
  "totals": {
-  "prompts": 6,
-  "cost_usd": 3.319126,
-  "output_tokens": 51681,
-  "input_tokens": 6758230
+  "prompts": 7,
+  "cost_usd": 3.826618,
+  "output_tokens": 58723,
+  "input_tokens": 8175600
  },
  "reported_by_claude_code": {
   "total_usd": 0.4483256,
