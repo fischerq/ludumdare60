@@ -99,6 +99,19 @@ Characters are 32x32; tiles and pellets stay at tile resolution. Text uses the P
 - `?codeart` in the URL shows only the code-drawn art (the export uses this to get the placeholders).
 - Keep the arcade palette in `COLORS` as the starting point; Max can change it.
 
+## Animation speed · decided
+- Per character (`pac`, `blinky`, `pinky`, `inky`, `clyde`): how many game frames (60 per second) each animation
+  frame is held. Lives in `src/settings/animation.json`, not `config.js`, so the lab can export it.
+- Tune it in the lab bench ([`/lab/bench.html?b=animation`](../../lab/bench.html?b=animation)), press
+  **Download settings**, save the file over `src/settings/animation.json` and commit it. The game fetches the file
+  at start and again whenever the tab comes back (hot reload).
+- Pac only animates while moving (his clock is distance moved / his speed), ghosts animate all the time. The
+  same numbers apply in the maze, the cabinet picture and the hall. Shared code: `src/systems/anim.js`.
+- Effects are tuned the same way (`effects` in the file): `pacDeath` (one-shot, 10 frames), `powerPellet`,
+  `frightFlash`, `mazeClear` (blinks: on one tick, off one), `coinBob` (hall coins), `insertCoin` (cabinet text
+  blinks) and `tapPrompt` (menu/game-over fade, one tick each way; read when the scene starts).
+- Not yet: per-scene speeds, frame lists in the JSON.
+
 ## Open questions
 - Does Max redraw the tileset too, or only the characters? *Default: characters first.*
 - What does Max draw for the deeper layers (cabinet, hardware, code)? Waits for the [layers](layers.md) design.
@@ -127,3 +140,5 @@ Characters are 32x32; tiles and pellets stay at tile resolution. Text uses the P
   still turned for up and down. Hall characters get their own top-down sprites (right/up/down, two walk frames,
   ghosts with the cap drawn in), shown 2x2 tiles big and standing on their tile. Principle: optimize the art
   layout so Max can customize the graphics easily and cleanly. (Quirin)
+- 2026-10-17: Animation speed is set per character in game frames per animation frame, in `src/settings/animation.json`, tuned and exported from the lab. (Quirin)
+- 2026-10-17: All animations are tunable like this: blinks, flashes, the death animation and the prompt fade under `effects` in the same file. (Quirin)

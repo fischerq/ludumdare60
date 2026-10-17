@@ -1,9 +1,12 @@
-import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, CABINET, MAZE, PIXEL, UI, BEST_KEY, LAYERS, COINS } from '../config.js';
+import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, CABINET, MAZE, PIXEL, UI, BEST_KEY, LAYERS, COINS, CHEATS } from '../config.js';
 import { createGame, stepGame, steer } from '../systems/maze.js';
 import { drawScreen, screenSize } from '../systems/screenImage.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 import { coins, spendCoin } from '../wallet.js';
+import { showCallout } from '../callout.js';
+import { progress } from '../progress.js';
+import { fxOn } from '../systems/anim.js';
 
 const KEYS = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
@@ -61,15 +64,16 @@ export default class CabinetScene extends Phaser.Scene {
     this.makePrompt();
     this.makeCounter();
     this.stickGfx = this.add.graphics();
-    // Down one layer: zoom back into the screen, to the maze level.
-    if (LAYERS.unlocked) {
-      this.layerBtn = addLayerButton(this, 8, 8, 'LAYER\nDOWN', () => {
-        if (this.mode !== 'outro') { sfx.frightOff(); this.mode = 'outro'; }
-      });
-      // Up one layer: the arcade hall this cabinet stands in.
-      this.layerUpBtn = addLayerButton(this, 360 - 8 - 56, 8, 'LAYER\nUP', () => {
-        if (this.mode !== 'outro' && this.mode !== 'gone') { sfx.frightOff(); this.mode = 'gone'; this.scene.start('Hall', { from: 'cabinet' }); }
-      });
+    // Down one layer: zoom back into the screen, to the maze level (always open: that's where we came from).
+    this.layerBtn = addLayerButton(this, 8, 8, 'LAYER\nDOWN', () => {
+      if (this.mode !== 'outro') { sfx.frightOff(); this.mode = 'outro'; }
+    });
+    this.addUpButton();
+    if (CHEATS.enabled) {
+      this.cheatBtns = [
+        addLayerButton(this, 4, C.ground - 38, 'CHEAT\nWIN', () => this.cheat(true)),
+        addLayerButton(this, 360 - 4 - 56, C.ground - 38, 'CHEAT\nLOSE', () => this.cheat(false)),
+      ];
     }
 
     this.cam = this.cameras.main.setOrigin(0, 0).setRoundPixels(true);
@@ -98,7 +102,7 @@ export default class CabinetScene extends Phaser.Scene {
   makeCounter() {
     const x = 180, y = 23;
     this.add.graphics().fillStyle(0x000000, 1).fillRect(x - 40, y - 15, 80, 30);
-    this.counterCoin = this.add.image(x - 22, y, 'arcade/coin').setScale(2);
+    this.counterCoin = this.add.image(x - 22, y, 'arcade/coin');
     this.counter = this.add.text(x - 8, y + 1, '', {
       fontFamily: UI.arcadeFont, fontSize: 16, color: CABINET.counterColor, resolution: 1,
     }).setOrigin(0, 0.5);
@@ -139,7 +143,7 @@ export default class CabinetScene extends Phaser.Scene {
       unlockAudio();
       if (this.mode === 'cleared') { this.scene.start('Menu'); return; }
       if (this.mode === 'intro') { this.introT = 1; return; } // tap to skip the zoom-out
-      if (this.mode === 'outro' || (this.layerBtn && over.includes(this.layerBtn)) || (this.layerUpBtn && over.includes(this.layerUpBtn))) return;
+      if (this.mode === 'outro' || over.length) return; // a button, not the joystick
       const wp = this.cam.getWorldPoint(p.x, p.y);
       const cd = CABINET.coinDoor, pad = 24;
       if (this.mode === 'insert' && wp.x > cd.x - pad && wp.x < cd.x + cd.w + pad && wp.y > cd.y - pad && wp.y < cd.y + cd.h + pad) {
@@ -195,18 +199,27 @@ export default class CabinetScene extends Phaser.Scene {
 
   // One coin flies from the counter into the left coin slot, then the game starts.
   insertCoin() {
-    if (!spendCoin()) { sfx.click(); this.noCoinT = this.t; return; }
+    if (!spendCoin()) {
+      sfx.click();
+      this.noCoinT = this.t;
+      // Out of coins: the hall is where more are.
+      progress.hall = true;
+      this.addUpButton();
+      return;
+    }
+    this.callout?.destroy();
+    this.callout = null;
     this.mode = 'coin';
     this.showCoins();
     this.tweens.add({ targets: this.counter, scale: 1.4, duration: 90, yoyo: true });
     const cd = CABINET.coinDoor, from = this.counterCoin;
-    const coin = this.add.image(from.x, from.y, 'arcade/coin').setScale(2);
+    const coin = this.add.image(from.x, from.y, 'arcade/coin');
     const to = { x: cd.x + 15, y: cd.y + 18 }, ms = COINS.flyTime * 1000;
     this.tweens.add({ targets: coin, x: to.x, duration: ms, ease: 'Sine.easeInOut' });
     // Up a little first, then down into the slot.
     this.tweens.add({ targets: coin, y: to.y, duration: ms, ease: 'Back.easeIn' });
     this.tweens.add({
-      targets: coin, scaleX: 0, scaleY: 1.6, duration: 120, delay: ms - 60,
+      targets: coin, scaleX: 0, scaleY: 0.8, duration: 120, delay: ms - 60,
       onComplete: () => {
         coin.destroy();
         sfx.coin();
@@ -220,6 +233,31 @@ export default class CabinetScene extends Phaser.Scene {
         });
       },
     });
+  }
+
+  // Up one layer: the arcade hall this cabinet stands in. Opens after the first game over here ("need coins?").
+  addUpButton() {
+    if (!progress.hall || this.layerUpBtn) return;
+    this.layerUpBtn = addLayerButton(this, 360 - 8 - 56, 8, 'LAYER\nUP', () => {
+      if (this.mode !== 'outro' && this.mode !== 'gone') { sfx.frightOff(); this.mode = 'gone'; this.scene.start('Hall', { from: 'cabinet' }); }
+    });
+  }
+
+  // Cheat buttons: end the game on the cabinet's screen as if it was won or lost.
+  cheat(won) {
+    if (this.mode !== 'play') return;
+    sfx.frightOff();
+    this.g.phase = won ? 'cleared' : 'over';
+    this.handle({ type: won ? 'cleared' : 'over' });
+  }
+
+  // Game over on the cabinet: back to INSERT COIN; the first time, point the player at the hall to find coins.
+  gameOver() {
+    this.mode = 'insert';
+    if (progress.hall) return;
+    progress.hall = true;
+    this.addUpButton();
+    this.callout = showCallout(this, this.screenPos.x + 84, this.screenPos.y + 100, 'NEED COINS?', 1);
   }
 
   setupPauseOnHide() {
@@ -258,7 +296,7 @@ export default class CabinetScene extends Phaser.Scene {
     if (this.mode === 'insert' || this.mode === 'intro' || this.mode === 'coin') {
       if (this.mode === 'coin' && this.credit) lines.push({ text: 'PUSH START', color: '#00ffde', row: 13 });
       else if (this.g.phase === 'over') lines.push({ text: 'GAME OVER', color: '#ff0000', row: 13 });
-      else if (Math.floor(this.t * 2) % 2) lines.push({ text: 'INSERT COIN', color: '#00ffde', row: 13 });
+      else if (!fxOn('insertCoin', this.t)) lines.push({ text: 'INSERT COIN', color: '#00ffde', row: 13 });
       lines.push({ text: `CREDIT ${this.credit}`, row: 26 });
     }
     if (this.mode === 'cleared') lines.push({ text: 'MAZE CLEAR!', color: '#ffff00', row: 13 });
@@ -283,7 +321,7 @@ export default class CabinetScene extends Phaser.Scene {
       case 'ghost': sfx.ghost(); break;
       case 'death': sfx.frightOff(); sfx.death(); break;
       case 'clear': sfx.frightOff(); sfx.clear(); break;
-      case 'over': this.mode = 'insert'; break;
+      case 'over': this.gameOver(); break;
       case 'cleared': this.mode = 'cleared'; break;
       default: break;
     }
