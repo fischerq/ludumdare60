@@ -202,9 +202,7 @@ export default class CabinetScene extends Phaser.Scene {
     if (!spendCoin()) {
       sfx.click();
       this.noCoinT = this.t;
-      // Out of coins: the hall is where more are.
-      progress.hall = true;
-      this.addUpButton();
+      this.needCoins();
       return;
     }
     this.callout?.destroy();
@@ -254,10 +252,14 @@ export default class CabinetScene extends Phaser.Scene {
   // Game over on the cabinet: back to INSERT COIN; the first time, point the player at the hall to find coins.
   gameOver() {
     this.mode = 'insert';
-    if (progress.hall) return;
+    if (!progress.hall) this.needCoins();
+  }
+
+  // Out of coins (or the first game over): open the arcade hall, where the coins are, and say so on the screen.
+  needCoins() {
     progress.hall = true;
     this.addUpButton();
-    this.callout = showCallout(this, this.screenPos.x + 84, this.screenPos.y + 100, 'NEED COINS?', 1);
+    this.callout ??= showCallout(this, this.screenPos.x + 84, this.screenPos.y + 100, 'NEED COINS?\nGO LAYER UP', 1);
   }
 
   setupPauseOnHide() {
@@ -304,6 +306,7 @@ export default class CabinetScene extends Phaser.Scene {
     this.screenTex.refresh();
 
     const insert = this.mode === 'insert', broke = coins() < COINS.perGame;
+    if (insert && broke) this.needCoins();
     this.prompt.setText(insert ? (broke ? 'NO COINS\nLAYER UP' : 'TAP THE\nCOIN DOOR') : this.mode === 'cleared' ? 'TAP TO\nCONTINUE' : '');
     // Shake the prompt a moment when the door is tapped with no coins.
     const shake = this.noCoinT !== undefined && this.t - this.noCoinT < 0.3;

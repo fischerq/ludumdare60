@@ -26,7 +26,8 @@ happens there (`src/progress.js`, in memory for the session):
   screen; says "coming soon" until that layer exists).
 - **First loss on the maze:** callout "GAME OVER, INSERT COIN", and the maze gets **LAYER UP** (to the cabinet).
 - **First loss on the cabinet:** callout "NEED COINS?" on its screen, and the cabinet gets **LAYER UP** (to the
-  arcade hall, where the coins are). The cabinet always has LAYER DOWN, the hall always has LAYER DOWN.
+  arcade hall, where the coins are). The same happens whenever the cabinet waits for a coin and the player has none,
+  so you can never be stuck at the cabinet without a way to the coins. The cabinet always has LAYER DOWN, the hall always has LAYER DOWN.
 - A round on the maze ends on the maze (no more automatic jump to the cabinet): the callout says tap to play again.
 - **Cheats for testing:** CHEAT WIN / CHEAT LOSE buttons at the bottom of the maze and the cabinet fire those events
   (`CHEATS.enabled` in config; turn off for the release). Layer buttons: `src/layerButton.js`, callouts:
@@ -76,3 +77,5 @@ minigame, a counter on the layer map, no unlock.*
 - 2026-10-17: Outer game loop: start on the maze; first win unlocks LAYER DOWN ("want to go deeper?"), first loss
   LAYER UP ("insert coin"), first loss on the cabinet unlocks the hall ("need coins?"). Cheat buttons instead of
   unlocking everything. (Quirin)
+- 2026-10-17: Fix: being out of coins at the cabinet always opens the hall ("NEED COINS? GO LAYER UP"), not only
+  the first game over. (Quirin reported the hall not unlocking with 0 coins)

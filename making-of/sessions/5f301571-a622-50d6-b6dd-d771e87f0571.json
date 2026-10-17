@@ -787,8 +787,16 @@
      "subject": "Log: merge main (per-layer character art) into the animation-speed branch, screenshots"
     },
     {
+     "sha": "e17d6edf9d0d3a6b0a1d1b0f2b17d06f9ddf9493",
+     "subject": "Cabinet: prominent coin door prompt, global coin counter, animated coin insert"
+    },
+    {
      "sha": "9c26259af311eb3eadbd539bf8c0086b42ca8341",
      "subject": "Merge pull request #23 from fischerq/claude/sleepy-sagan-wagbm1"
+    },
+    {
+     "sha": "bb01629b68b2dde1a3b387fb6906caac4af6bb2f",
+     "subject": "Animation lab: character picker, −/+ buttons on sliders, Download settings at the top"
     }
    ],
    "entrypoint": "remote_mobile",
@@ -811,14 +819,14 @@
    "seq": 48,
    "date": "2026-10-17",
    "time": "13:39",
-   "duration_s": 251,
+   "duration_s": 271,
    "prompt": "lets improve the outer game loop. the game should start at the maze layer (we want to keep the instant recognizability of playing pacman). When you win for the first time,  it should give you a callout \"want to go deeper?\" and add the layer down button. when losing the first time, it should say \"insert coin\" and open the layer up button. after losing on the cabinet layer, should ask \"need coins\", and unlock the arcade layer. for testing, instead of permanently unlocking everything, add cheat buttons at the bottom to trigger the win/lose events to unlock",
    "followups": [],
    "images": [],
    "claude_images": [
     "media/5f301571-11-c1.jpg"
    ],
-   "reply": "Both callouts and the unlock flow look right. Updating the docs (outer game loop) and committing to a new PR:",
+   "reply": "The outer game loop is in. PR #19 had already been merged, so this is a new PR: https://github.com/fischerq/ludumdare60/pull/27\n\n**How it works now**\n- **Start:** the game starts on the maze with no layer buttons. A round also ends on the maze now, instead of jumping to the cabinet: a callout appears and you tap to play again.\n- **First win on the maze:** \"MAZE CLEAR! WANT TO GO DEEPER?\", and **LAYER DOWN** appears. It says \"INSIDE THE SCREEN: COMING SOON\", since that layer isn't built yet.\n- **First loss on the maze:** \"GAME OVER, INSERT COIN\", and **LAYER UP** to the cabinet appears.\n- **First loss on the cabinet:** \"NEED COINS?\" over the cabinet's screen, and the cabinet's **LAYER UP** to the arcade hall appears. The cabinet and the hall always keep their LAYER DOWN.\n- **Cheats:** CHEAT WIN and CHEAT LOSE buttons sit at the bottom of the maze and the cabinet and trigger those events. One switch in `src/config.js` (`CHEATS.enabled`) turns them off for the release.\n- **Unlocks last only for the browser session:** a reload starts again with just the maze.\n\nI removed the separate game-over screen; the high score is still saved.\n\nThe menu screen still comes first, because it holds the Making-Of, Lab and Impressum links. \"Tap to start\" goes straight into the maze.\n\n**Checked:** in a phone-sized browser, running lose → play again → win → LAYER UP → coin → cheat lose made each button appear at the right step, with no errors.\n\n**Usage:** 5-hour window 2%, weekly 18%.\n\n**On the phone:** use the cheat buttons to walk through the unlocks, and check that the callouts read well and that a tap afterwards starts a new round.",
    "progress_notes": [
     "Spelled out clearly, so I'll build it directly. Starting checks, and reading the current GameScene since other sessions have changed it:",
     "PR #19 is merged; restarting the branch from the latest `main`, then reading the parts of GameScene I'll change:",
@@ -829,28 +837,71 @@
     "Now the cabinet: LAYER DOWN always, LAYER UP only once the hall is unlocked, \"NEED COINS?\" on the first loss, and cheat buttons:",
     "Simplifying that check: any button under the finger means \"not a joystick touch\":",
     "After the win, LAYER DOWN is missing. Checking whether the \"play again\" tap restarted the round:",
-    "That was headless timing: with the extra wait, LAYER DOWN appears as intended. Checking the two callouts visually:"
+    "That was headless timing: with the extra wait, LAYER DOWN appears as intended. Checking the two callouts visually:",
+    "Both callouts and the unlock flow look right. Updating the docs (outer game loop) and committing to a new PR:"
    ],
    "tools": {
     "Bash": 14,
     "mcp__claude-code-remote__list_events": 2,
     "mcp__github__pull_request_read": 1,
-    "Read": 1
+    "Read": 1,
+    "mcp__github__create_pull_request": 1
    },
-   "api_requests": 14,
+   "api_requests": 16,
    "usage": {
     "claude-opus-5-5": {
-     "input": 28,
+     "input": 32,
      "cache_write_5m": 0,
-     "cache_write_1h": 418401,
-     "cache_read": 5938202,
-     "output": 16882,
+     "cache_write_1h": 419660,
+     "cache_read": 6868022,
+     "output": 18128,
      "thinking": 5224,
-     "cost_usd": 4.8726
+     "cost_usd": 5.093572
     }
    },
-   "cost_usd": 4.8726,
-   "commits": [],
+   "cost_usd": 5.093572,
+   "commits": [
+    {
+     "sha": "7073cf5d2a8b13c8530bdcfc4bd4c2522e3e1ba9",
+     "subject": "Animation lab: a Frames button per animation shows all its frames, current one outlined"
+    },
+    {
+     "sha": "853de368ea61986cfaf7738748413a456121454f",
+     "subject": "Outer game loop: start on the maze, unlock layers by winning and losing, cheat buttons"
+    },
+    {
+     "sha": "0901b14810f9d26890dfff4c641a3da28e1fb9e5",
+     "subject": "Merge pull request #27 from fischerq/claude/old-tech-pacman-game-eaui1a"
+    },
+    {
+     "sha": "d3d6ae03898fcf5f5ce6ada42cafebf7e5c93258",
+     "subject": "Merge main into the branch"
+    },
+    {
+     "sha": "047bc1f39eae4270a984707cf7289e64d821f4d0",
+     "subject": "Log: merge main (outer game loop) into the animation lab branch"
+    },
+    {
+     "sha": "415ae7e96fcd102abdc15e78abd525f1b4eedd9a",
+     "subject": "Merge pull request #26 from fischerq/claude/sleepy-sagan-wagbm1"
+    },
+    {
+     "sha": "81e2771e1e12af7ce0649f85490d52f85b8eb7b0",
+     "subject": "replace assets"
+    },
+    {
+     "sha": "53833dc91854a144dd4eb049e169f3c1cf2eb71f",
+     "subject": "Merge branch 'main' of https://github.com/fischerq/ludumdare60"
+    },
+    {
+     "sha": "4236fbfaef74bf6dc6c135b966dd5f2b6b641e01",
+     "subject": "Merge main into the coin branch"
+    },
+    {
+     "sha": "4d139bddb013001b09cc24306ac671324c457f2f",
+     "subject": "Merge pull request #25 from fischerq/claude/lucid-newton-ec9af8"
+    }
+   ],
    "entrypoint": "remote_mobile",
    "branch": "claude/old-tech-pacman-game-eaui1a",
    "plan_usage": {
@@ -865,19 +916,72 @@
      "delta": 0.0
     }
    }
+  },
+  {
+   "index": 12,
+   "seq": 52,
+   "date": "2026-10-17",
+   "time": "14:01",
+   "duration_s": 218,
+   "prompt": "unlocking the arcage layer doesnt work. we immediately have 0 coins after the first loss.  and it still doesnt unlock. fix",
+   "followups": [],
+   "images": [],
+   "claude_images": [
+    "media/5f301571-12-c1.jpg"
+   ],
+   "reply": "Working: 0 coins, \"NEED COINS? GO LAYER UP\" on the screen, and LAYER UP top right. Docs line, screenshot, commit, new PR:",
+   "progress_notes": [
+    "PR #27 is merged, and `main` has since taken in a \"coin branch\" (#25) that changed cabinet coins. That's likely the cause. Restarting from `main` and reading the cabinet's coin and game-over code:",
+    "No button overlaps the coin door, so taps reach it. Next I'll reproduce your exact path through the UI: lose on the maze → LAYER UP → tap the coin door → CHEAT LOSE.",
+    "Still works. Checking the screen when broke:"
+   ],
+   "tools": {
+    "Bash": 10,
+    "mcp__claude-code-remote__list_events": 2,
+    "mcp__github__pull_request_read": 1,
+    "Read": 1
+   },
+   "api_requests": 11,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 22,
+     "cache_write_5m": 0,
+     "cache_write_1h": 33499,
+     "cache_read": 5365837,
+     "output": 9962,
+     "thinking": 4792,
+     "cost_usd": 1.540487
+    }
+   },
+   "cost_usd": 1.540487,
+   "commits": [],
+   "entrypoint": "remote_mobile",
+   "branch": "claude/old-tech-pacman-game-eaui1a",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.02,
+     "end": 0.02,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.18,
+     "end": 0.18,
+     "delta": 0.0
+    }
+   }
   }
  ],
  "totals": {
-  "prompts": 11,
-  "cost_usd": 20.759191,
-  "output_tokens": 251523,
-  "input_tokens": 47848729
+  "prompts": 12,
+  "cost_usd": 22.52065,
+  "output_tokens": 262731,
+  "input_tokens": 54179170
  },
  "reported_by_claude_code": {
-  "total_usd": 16.519455099999995,
+  "total_usd": 21.7136303,
   "by_model": {
    "claude-haiku-5-5": 0.000163,
-   "claude-opus-5-5": 16.519293
+   "claude-opus-5-5": 21.713468
   }
  }
 }
