@@ -294,7 +294,7 @@
    "seq": 49,
    "date": "2026-10-17",
    "time": "13:38",
-   "duration_s": 120,
+   "duration_s": 129,
    "prompt": "for each animation in the lab, add a button to show all the frames",
    "followups": [],
    "images": [],
@@ -302,10 +302,11 @@
     "media/c1becd39-5-c1.jpg",
     "media/c1becd39-5-c2.jpg"
    ],
-   "reply": "Works: the strips show every frame with the current one outlined. Publishing screenshots and pushing to PR #26.",
+   "reply": "Every animation in the lab now has a \"Frames\" button that shows all of its frames. It's pushed to the open PR: https://github.com/fischerq/ludumdare60/pull/26\n\n- **How it works:** the buttons sit above the preview, one per animation for the character or effect set you picked. Tapping one opens a strip of every frame under that animation, with the frame showing right now outlined. The buttons toggle, so you can open several at once.\n- **Pac:** the chomp cycle (6 steps), the hall walk (right, up, down, 2 frames each) and the 10 death frames.\n- **Each ghost:** maze and hall sprites (4 directions, 2 frames each) and frightened/flashing (4 frames).\n- **Effects:** the power pellet on/off, the maze-clear flash colours, the hall coin bob, the \"INSERT COIN\" blink and the tap prompt's two fade end points.\n- **One exception:** \"Moving at his maze speed\" has no button, because it uses the same frames as the chomp.\n\nI tested it in a headless phone-size browser for every character and effect set: each button opens and closes its strip, and there were no console errors.\n\n**On the phone:** pick a ghost, tap the Frames buttons and check the outline follows the animation, then do the same with Pac's death.\n\nPlan usage: the last check showed no change since 1% of the 5-hour window, 18% weekly.",
    "progress_notes": [
     "PR #26 is still open, so I'll push there. Adding a per-animation \"Frames\" toggle to the harness and bench.",
-    "Expected: buttons re-render on each tap. Fixing the test to tap by id."
+    "Expected: buttons re-render on each tap. Fixing the test to tap by id.",
+    "Works: the strips show every frame with the current one outlined. Publishing screenshots and pushing to PR #26."
    ],
    "tools": {
     "Bash": 7,
@@ -313,20 +314,33 @@
     "mcp__github__list_pull_requests": 1,
     "Read": 1
    },
-   "api_requests": 9,
+   "api_requests": 10,
    "usage": {
     "claude-opus-5-5": {
-     "input": 18,
+     "input": 20,
      "cache_write_5m": 0,
-     "cache_write_1h": 12867,
-     "cache_read": 1742983,
-     "output": 11086,
+     "cache_write_1h": 13304,
+     "cache_read": 1943717,
+     "output": 11543,
      "thinking": 1688,
-     "cost_usd": 0.673325
+     "cost_usd": 0.726115
     }
    },
-   "cost_usd": 0.673325,
-   "commits": [],
+   "cost_usd": 0.726115,
+   "commits": [
+    {
+     "sha": "7073cf5d2a8b13c8530bdcfc4bd4c2522e3e1ba9",
+     "subject": "Animation lab: a Frames button per animation shows all its frames, current one outlined"
+    },
+    {
+     "sha": "853de368ea61986cfaf7738748413a456121454f",
+     "subject": "Outer game loop: start on the maze, unlock layers by winning and losing, cheat buttons"
+    },
+    {
+     "sha": "0901b14810f9d26890dfff4c641a3da28e1fb9e5",
+     "subject": "Merge pull request #27 from fischerq/claude/old-tech-pacman-game-eaui1a"
+    }
+   ],
    "entrypoint": "remote",
    "branch": "claude/sleepy-sagan-wagbm1",
    "plan_usage": {
@@ -341,18 +355,69 @@
      "delta": 0.0
     }
    }
+  },
+  {
+   "index": 6,
+   "seq": 50,
+   "date": "2026-10-17",
+   "time": "13:50",
+   "duration_s": 50,
+   "prompt": "fix the merge conflicts",
+   "followups": [],
+   "images": [],
+   "claude_images": [],
+   "reply": "Only the generated stats file conflicts. Taking main's copy (the exporter rewrites it), then a quick smoke test.",
+   "progress_notes": [],
+   "tools": {
+    "Bash": 4,
+    "mcp__claude-code-remote__list_events": 2,
+    "mcp__github__list_pull_requests": 1
+   },
+   "api_requests": 5,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 10,
+     "cache_write_5m": 0,
+     "cache_write_1h": 12311,
+     "cache_read": 1052205,
+     "output": 1397,
+     "thinking": 0,
+     "cost_usd": 0.336909
+    }
+   },
+   "cost_usd": 0.336909,
+   "commits": [
+    {
+     "sha": "d3d6ae03898fcf5f5ce6ada42cafebf7e5c93258",
+     "subject": "Merge main into the branch"
+    }
+   ],
+   "entrypoint": "remote",
+   "branch": "claude/sleepy-sagan-wagbm1",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.02,
+     "end": 0.02,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.18,
+     "end": 0.18,
+     "delta": 0.0
+    }
+   }
   }
  ],
  "totals": {
-  "prompts": 5,
-  "cost_usd": 4.360488,
-  "output_tokens": 57645,
-  "input_tokens": 10160358
+  "prompts": 6,
+  "cost_usd": 4.750187,
+  "output_tokens": 59499,
+  "input_tokens": 11426057
  },
  "reported_by_claude_code": {
-  "total_usd": 2.2074298000000008,
+  "total_usd": 4.611215200000001,
   "by_model": {
-   "claude-opus-5-5": 2.20743
+   "claude-opus-5-5": 4.611215
   }
  }
 }
