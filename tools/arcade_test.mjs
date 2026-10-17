@@ -7,6 +7,8 @@ import { MAZE } from '../src/config.js';
 import { assemble } from '../src/systems/arcade/asm.js';
 import { loadProgram } from '../src/systems/arcade/program.js';
 import { readState } from '../src/systems/arcade/state.js';
+import { botDirection } from '../src/systems/arcade/bot.js';
+import { DSW } from '../src/systems/arcade/memmap.js';
 import { IN0, IN1 } from '../src/systems/arcade/memmap.js';
 import { createGame, stepGame, steer } from '../src/systems/maze.js';
 import { ARCADE } from '../src/config.js';
@@ -87,6 +89,24 @@ const Z80 = await loadZ80();
   check('ghosts move like maze.js', [1, 2, 3, 4].every(same), pathM.slice(1).map((p) => p.length).join('/'));
   check('same score', readState(m, prog.symbols).score === g.score, `${readState(m, prog.symbols).score} vs ${g.score}`);
   check('every frame fits the frame budget', overruns === 0, `peak ${Math.round((busy / m.frameCycles) * 100)}%`);
+}
+
+{ // The bot plays a demo game: it eats, and its deaths don't cost lives
+  const prog = await loadProgram(), S = prog.symbols;
+  const m = createMachine(Z80, { rom: prog.rom });
+  m.setDip(DSW.demo, true);
+  for (let i = 0; i < 3; i++) m.runFrame();
+  m.setInput(1, IN1.start, true); m.runFrame(); m.setInput(1, IN1.start, false);
+  const deaths = [];
+  for (let f = 0; f < 3600; f++) {
+    const d = botDirection(m, S);
+    for (const k of ['up', 'left', 'down', 'right']) m.setInput(0, IN0[k], k === d);
+    m.runFrame();
+    for (const e of m.takeSounds()) if (e.name === 'death') deaths.push(f);
+  }
+  const st = readState(m, S);
+  check('bot eats pellets', st.pellets < 120, `${199 - st.pellets} eaten in 60 s, score ${st.score}, ${deaths.length} deaths`);
+  check('demo play keeps the lives', st.lives === 3);
 }
 
 if (failed) { console.error(`${failed} failed`); process.exit(1); }
