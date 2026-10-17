@@ -1,0 +1,64 @@
+{
+ "session_id": "fd3d0810-e291-5904-9faa-35b6f984b6a5",
+ "title": null,
+ "session_url": "https://claude.ai/code/session_01A8RJquXeQ2sVgbSBEVG4L8",
+ "claude_code_version": "2.1.302",
+ "first_date": "2026-10-17",
+ "last_date": "2026-10-17",
+ "turns": [
+  {
+   "index": 1,
+   "seq": 31,
+   "date": "2026-10-17",
+   "time": "11:16",
+   "duration_s": 26,
+   "prompt": "Add a way to run the game locally on windows using liveserver in VS Code",
+   "followups": [],
+   "images": [],
+   "claude_images": [],
+   "reply": "Branch is up to date with main. Adding the VS Code config and README section.",
+   "progress_notes": [],
+   "tools": {
+    "Bash": 4,
+    "mcp__claude-code-remote__list_events": 2,
+    "ToolSearch": 1,
+    "mcp__github__list_pull_requests": 1
+   },
+   "api_requests": 6,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 12,
+     "cache_write_5m": 0,
+     "cache_write_1h": 29941,
+     "cache_read": 423291,
+     "output": 2269,
+     "thinking": 248,
+     "cost_usd": 0.369614
+    }
+   },
+   "cost_usd": 0.369614,
+   "commits": [],
+   "entrypoint": "remote",
+   "branch": "claude/affectionate-allen-g8i4y8",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.01,
+     "end": 0.01,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.17,
+     "end": 0.17,
+     "delta": 0.0
+    }
+   }
+  }
+ ],
+ "totals": {
+  "prompts": 1,
+  "cost_usd": 0.369614,
+  "output_tokens": 2269,
+  "input_tokens": 453244
+ },
+ "reported_by_claude_code": null
+}
