@@ -14,8 +14,8 @@ the arcade machine, using the maze characters or mechanics to show how the old t
   cabinet stands in. See [layer-arcade](layer-arcade.md).
 
 The two layers next to the maze game come first:
-- **Zoom out: the cabinet.** A pixel-art arcade machine with simulated depth, the same game on its screen, played
-  through a 4-way joystick (built). See [layer-cabinet](layer-cabinet.md).
+- **Zoom out: the cabinet.** A pixel-art arcade machine with simulated depth; you see the machine and put a coin
+  in, which zooms back into a fresh maze game (built). See [layer-cabinet](layer-cabinet.md).
 - **Zoom in: the screen.** Inside the CRT: the game above plays itself and lights up the pixels; we eat dots
   only while they glow and dodge the refresh beam. See [layer-crt](layer-crt.md).
 
@@ -23,8 +23,8 @@ The two layers next to the maze game come first:
 The game starts at the maze layer, so it's instantly recognisable as Pac-Man. Every layer always has its
 LAYER UP and LAYER DOWN buttons (no unlocking, no cheat buttons). Layer buttons: `src/layerButton.js`, callouts:
 `src/callout.js`.
-- **Coins run the machine** (`src/wallet.js`, `COINS` in config). Every fresh game costs a coin, on the maze as on
-  the cabinet; the first game from the menu uses the coin you start with.
+- **Coins run the machine** (`src/wallet.js`, `COINS` in config). Every fresh game costs a coin, on the maze or
+  through the cabinet's coin door; the first game from the menu uses the coin you start with.
 - **Game over halts the machine**: it runs no frames (no attract mode, no bot) until a coin goes in, in every layer
   (`world.halted` in `src/systems/arcade/world.js`). On the maze the callout says "TAP TO INSERT COIN" while you
   have coins, otherwise "OUT OF COINS, GO LAYER UP" (cabinet, then the hall where the coins are).
@@ -84,3 +84,5 @@ minigame, a counter on the layer map, no unlock.*
 - 2026-10-17: Layer up/down always available everywhere; cheat buttons and unlocking removed. A game over halts
   the machine until a coin goes in, and every new game costs a coin. The deep layers run the machine
   `DEEP.machineSlowdown` (4x) slower than the maze. (Quirin; slowdown factor and coin rules: Claude's defaults)
+- 2026-10-17: The cabinet no longer plays: nobody at the controls means the machine stands still there, and a coin zooms into the maze layer. (Quirin)
+- 2026-10-17: Cabinet follow-up: the bot plays on a running game there, and the coin door only takes a coin while the machine asks for one. (Quirin)

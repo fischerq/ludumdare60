@@ -1,5 +1,5 @@
 import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, CABINET, MAZE, PIXEL, UI, BEST_KEY, LAYERS, COINS } from '../config.js';
-import { world, onFrame, holdDir, insertCoin, setDriver } from '../systems/arcade/world.js';
+import { world, setDriver } from '../systems/arcade/world.js';
 import { readState } from '../systems/arcade/state.js';
 import { drawScreen, screenSize } from '../systems/screenImage.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
@@ -8,14 +8,10 @@ import { coins, spendCoin } from '../wallet.js';
 import { showCallout } from '../callout.js';
 import { fxOn } from '../systems/anim.js';
 
-const KEYS = {
-  ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
-  KeyA: 'left', KeyD: 'right', KeyW: 'up', KeyS: 'down',
-};
-
-// Layer 2, zoom out: the same maze game on the screen of an arcade cabinet, played with its 4-way joystick.
-// Pixel art with faked depth (see CABINET in config). Starts zoomed in so the screen looks exactly like the
-// maze level, then pulls back to show the whole machine.
+// Layer 2, zoom out: the arcade cabinet the maze game runs in. Pixel art with faked depth (see CABINET in
+// config). Starts zoomed in so the screen looks exactly like the maze level, then pulls back to show the whole
+// machine. Nobody plays here: the bot plays on a running game, and when the machine asks for a coin, a coin in
+// the door zooms back into a fresh game.
 export default class CabinetScene extends Phaser.Scene {
   constructor() {
     super('Cabinet');
@@ -31,15 +27,14 @@ export default class CabinetScene extends Phaser.Scene {
     this.mode = this.fromAbove ? 'insert' : 'intro';
     this.introT = this.fromAbove ? 1 : 0;
     this.t = 0;
-    this.stickDir = null;
-    this.keyDir = null;
-    // The screen shows the one emulated machine. Until a coin goes in, the bot plays a demo game on it
-    // (or it stands halted at GAME OVER: a finished game waits for a coin).
+    // The screen shows the one emulated machine. Nobody is at the controls while we look at the cabinet from
+    // outside: a running game is played on by the bot; a finished one stands halted at GAME OVER until a coin
+    // goes in. Without a paid game (attract mode, or the bot's own game since boot) it waits for a coin too.
     this.machine = world.machine;
     this.S = world.program.symbols;
     this.credit = 0;
-    const off = onFrame((m, sounds) => { if (this.mode === 'play') sounds.forEach((e) => this.handle(e.name)); });
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { off(); setDriver('bot'); });
+    setDriver('bot');
+    if (!world.paidGame) world.halted = true;
     this.best = 0;
     try { this.best = Number(localStorage.getItem(BEST_KEY)) || 0; } catch (e) { /* private mode */ }
 
@@ -63,18 +58,17 @@ export default class CabinetScene extends Phaser.Scene {
     this.add.text(mid, C.marqueeTop - C.marqueeDepth / 2 + 10, GAME_TITLE.toUpperCase(), {
       fontFamily: UI.arcadeFont, fontSize: 8, color: COLORS.textReady, resolution: 1,
     }).setOrigin(0.5, 0);
-    this.stick = this.add.image(mid - 1, C.panelY - 8, 'cabinet/stick-n').setOrigin(0.5, 27 / 32);
+    this.add.image(mid - 1, C.panelY - 8, 'cabinet/stick-n').setOrigin(0.5, 27 / 32);
 
     this.makePrompt();
     this.makeCounter();
-    this.stickGfx = this.add.graphics();
-    // Down one layer: zoom back into the screen, to the maze level (always open: that's where we came from).
+    // Down one layer: zoom back into the screen and go on with the machine's game on the maze level.
     this.layerBtn = addLayerButton(this, 8, 8, 'LAYER\nDOWN', () => {
-      if (this.mode !== 'outro') { sfx.frightOff(); this.mode = 'outro'; }
+      if (this.mode !== 'outro' && this.mode !== 'coin') { sfx.frightOff(); this.layerDown({ continue: true }); }
     });
     // Up one layer: the arcade hall this cabinet stands in, where the coins are.
     this.layerUpBtn = addLayerButton(this, 360 - 8 - 56, 8, 'LAYER\nUP', () => {
-      if (this.mode !== 'outro' && this.mode !== 'gone') { sfx.frightOff(); this.mode = 'gone'; this.scene.start('Hall', { from: 'cabinet' }); }
+      if (this.mode !== 'outro' && this.mode !== 'gone' && this.mode !== 'coin') { sfx.frightOff(); this.mode = 'gone'; this.scene.start('Hall', { from: 'cabinet' }); }
     });
 
     this.cam = this.cameras.main.setOrigin(0, 0).setRoundPixels(true);
@@ -138,67 +132,32 @@ export default class CabinetScene extends Phaser.Scene {
   }
 
   setupInput() {
-    // Joystick: put a finger down anywhere and push; it clicks into one of four directions.
-    this.anchor = null;
     this.input.on('pointerdown', (p, over) => {
       unlockAudio();
-      if (this.mode === 'cleared') { this.scene.start('Menu'); return; }
       if (this.mode === 'intro') { this.introT = 1; return; } // tap to skip the zoom-out
-      if (this.mode === 'outro' || over.length) return; // a button, not the joystick
+      if (!this.waiting() || over.length) return; // a layer button, or the machine isn't asking for a coin
       const wp = this.cam.getWorldPoint(p.x, p.y);
       const cd = CABINET.coinDoor, pad = 24;
-      if (this.mode === 'insert' && wp.x > cd.x - pad && wp.x < cd.x + cd.w + pad && wp.y > cd.y - pad && wp.y < cd.y + cd.h + pad) {
-        this.insertCoin();
-        return;
-      }
-      this.anchor = { x: p.x, y: p.y, id: p.id };
+      if (wp.x > cd.x - pad && wp.x < cd.x + cd.w + pad && wp.y > cd.y - pad && wp.y < cd.y + cd.h + pad) this.insertCoin();
     });
-    this.input.on('pointermove', (p) => {
-      if (!this.anchor || p.id !== this.anchor.id || !p.isDown) return;
-      const dx = p.x - this.anchor.x, dy = p.y - this.anchor.y;
-      let dir = null;
-      if (Math.max(Math.abs(dx), Math.abs(dy)) >= CABINET.stickDeadzone) {
-        dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
-      }
-      this.setStick(dir);
-      this.drawStick(p.x, p.y);
-    });
-    this.input.on('pointerup', (p) => {
-      if (!this.anchor || p.id !== this.anchor.id) return;
-      this.anchor = null;
-      this.setStick(null);
-      this.stickGfx.clear();
-    });
-
     this.input.keyboard?.on('keydown', (e) => {
       unlockAudio();
-      if ((e.code === 'Space' || e.code === 'Enter') && this.mode === 'insert') this.insertCoin();
-      if ((e.code === 'Space' || e.code === 'Enter') && this.mode === 'cleared') this.scene.start('Menu');
-      if (KEYS[e.code]) { this.keyDir = KEYS[e.code]; this.setStick(this.keyDir); }
-    });
-    this.input.keyboard?.on('keyup', (e) => {
-      if (KEYS[e.code] === this.keyDir) { this.keyDir = null; this.setStick(null); }
+      if ((e.code === 'Space' || e.code === 'Enter') && this.waiting()) this.insertCoin();
     });
   }
 
-  setStick(dir) {
-    if (dir === this.stickDir) return;
-    if (dir) sfx.click();
-    this.stickDir = dir;
-    this.stick.setTexture(`cabinet/stick-${dir ?? 'n'}`);
+  // The machine asks for a coin only when it's halted (game over, or never started); a running game takes none.
+  waiting() {
+    return this.mode === 'insert' && world.halted;
   }
 
-  // Where the finger is: a faint ring around the touch point and a knob, in art pixels.
-  drawStick(x, y) {
-    const z = this.cam.zoom, a = this.cam.getWorldPoint(this.anchor.x, this.anchor.y);
-    const r = 70 / z;
-    const kx = a.x + Phaser.Math.Clamp((x - this.anchor.x) / z, -r, r);
-    const ky = a.y + Phaser.Math.Clamp((y - this.anchor.y) / z, -r, r);
-    this.stickGfx.clear().lineStyle(2, 0xffffff, 0.25).strokeCircle(Math.round(a.x), Math.round(a.y), Math.round(r))
-      .fillStyle(CABINET.colors.ball, 0.45).fillCircle(Math.round(kx), Math.round(ky), Math.round(30 / z));
+  // Zoom back into the screen, then the maze level takes over (data goes to GameScene).
+  layerDown(data) {
+    this.mode = 'outro';
+    this.downData = data;
   }
 
-  // One coin flies from the counter into the left coin slot, then the game starts.
+  // One coin flies from the counter into the left coin slot, then we zoom into the screen for a fresh game.
   insertCoin() {
     if (!spendCoin()) {
       sfx.click();
@@ -223,21 +182,10 @@ export default class CabinetScene extends Phaser.Scene {
         coin.destroy();
         sfx.coin();
         this.credit = 1;
-        this.time.delayedCall(COINS.startDelay * 1000, () => {
-          if (this.mode !== 'coin') return;
-          this.credit = 0;
-          this.mode = 'play';
-          setDriver('player');
-          insertCoin();           // the coin line on the board: the program starts a fresh game
-        });
+        // The coin is paid here, so the maze level starts its game without taking another.
+        this.time.delayedCall(COINS.startDelay * 1000, () => this.layerDown({ free: true }));
       },
     });
-  }
-
-  // Game over on the cabinet: the machine halts, back to INSERT COIN.
-  gameOver() {
-    this.mode = 'insert';
-    setDriver('bot');
   }
 
   // Out of coins: point the player up to the arcade hall, where the coins are.
@@ -269,48 +217,29 @@ export default class CabinetScene extends Phaser.Scene {
     if (this.mode === 'outro') {
       this.introT -= dt / LAYERS.outroTime;
       this.setIntro(Math.max(0, this.introT));
-      if (this.introT <= 0) { this.mode = 'gone'; this.scene.start('Game', { continue: true }); }
-    }
-    if (this.mode === 'play') {
-      // A joystick is held, not swiped: the stick's direction is held on the board's input lines.
-      holdDir(this.stickDir);
+      if (this.introT <= 0) { this.mode = 'gone'; this.scene.start('Game', this.downData); }
     }
 
+    // A halted machine waits for a coin; once one drops in it shows the credit until we're back in the maze.
     const lines = [];
-    if (this.mode === 'insert' || this.mode === 'intro' || this.mode === 'coin') {
-      if (this.mode === 'coin' && this.credit) lines.push({ text: 'PUSH START', color: '#00ffde', row: 13 });
-      else if (readState(this.machine, this.S).phase === 'over') lines.push({ text: 'GAME OVER', color: '#ff0000', row: 13 });
-      else if (!fxOn('insertCoin', this.t)) lines.push({ text: 'INSERT COIN', color: '#00ffde', row: 13 });
+    if (world.halted && (this.mode !== 'outro' || this.credit)) {
+      // With a credit in, the credit line is enough (the halted picture may already show READY!).
+      if (!this.credit && readState(this.machine, this.S).phase === 'over') lines.push({ text: 'GAME OVER', color: '#ff0000', row: 13, box: true });
+      else if (!this.credit) lines.push({ text: fxOn('insertCoin', this.t) ? '' : 'INSERT COIN', color: '#00ffde', row: 13, box: true });
       lines.push({ text: `CREDIT ${this.credit}`, row: 26 });
     }
-    if (this.mode === 'cleared') lines.push({ text: 'MAZE CLEAR!', color: '#ffff00', row: 13 });
     drawScreen(this.screenTex.getContext(), this.machine, this.S, this.art, lines, this.best);
     this.screenTex.refresh();
 
-    const insert = this.mode === 'insert', broke = coins() < COINS.perGame;
+    const insert = this.waiting(), broke = coins() < COINS.perGame;
     if (insert && broke) this.needCoins();
-    this.prompt.setText(insert ? (broke ? 'NO COINS\nLAYER UP' : 'TAP THE\nCOIN DOOR') : this.mode === 'cleared' ? 'TAP TO\nCONTINUE' : '');
+    this.prompt.setText(broke ? 'NO COINS\nLAYER UP' : 'TAP THE\nCOIN DOOR');
     // Shake the prompt a moment when the door is tapped with no coins.
     const shake = this.noCoinT !== undefined && this.t - this.noCoinT < 0.3;
     this.prompt.setX((CABINET.coinDoor.x + CABINET.coinDoor.w / 2) + (shake ? Math.round(Math.sin(this.t * 60) * 3) : 0));
-    this.prompt.setVisible(insert || this.mode === 'cleared');
-    this.promptBox.setVisible(insert || this.mode === 'cleared');
+    this.prompt.setVisible(insert);
+    this.promptBox.setVisible(insert);
     this.doorFrame.setVisible(insert && !broke && Math.floor(this.t * 3) % 2 === 0);
   }
 
-  // Sound commands from the machine while the player's game runs.
-  handle(name) {
-    switch (name) {
-      case 'start': sfx.start(); break;
-      case 'dot': sfx.dot(); break;
-      case 'power': sfx.power(); sfx.frightOn(); break;
-      case 'frightEnd': sfx.frightOff(); break;
-      case 'ghost': sfx.ghost(); break;
-      case 'death': sfx.frightOff(); sfx.death(); break;
-      case 'clear': sfx.frightOff(); sfx.clear(); break;
-      case 'over': this.gameOver(); break;
-      case 'cleared': this.mode = 'cleared'; break;
-      default: break;
-    }
-  }
 }

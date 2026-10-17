@@ -153,7 +153,6 @@ export const CABINET = {
   },
   glare: 0.07,
   introTime: 2.5,        // s of zooming out from the maze level
-  stickDeadzone: 24,     // screen px the finger must move from where it touched before the stick clicks over
   promptColor: '#ff3cf0', // the "tap the coin door" call to action and the blinking frame around the door
   promptBox: 0x000000,
   counterColor: '#ffd23f', // the coin counter at the top
