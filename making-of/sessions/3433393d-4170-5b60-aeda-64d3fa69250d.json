@@ -559,41 +559,56 @@
    "seq": 59,
    "date": "2026-10-17",
    "time": "16:03",
-   "duration_s": 249,
+   "duration_s": 270,
    "prompt": "Do commits/prs by max show up in the making of? make it so, we should have a before/after for art updates",
    "followups": [],
    "images": [],
    "claude_images": [
     "media/3433393d-4-c1.jpg"
    ],
-   "reply": "Good. Dropping the `.png` from captions so they don't break mid-word, then documenting the rule:",
+   "reply": "They didn't show up before, and now they do. Max's only commit so far, \"replace assets\" at 13:55, which he pushed straight to `main`, was missing because the making-of page only knew Claude turns and hand-written entries. Pull request: https://github.com/fischerq/ludumdare60/pull/45\n\n**What changed:**\n- **Commits on the timeline:** every commit not made by Claude (merges excluded) now appears in the timeline as \"Commit by Max\", placed at the time it happened. This includes direct pushes and commits inside PRs, and the exporter that already runs every turn picks them up automatically.\n- **Art before/after:** each image the commit changed under `assets/` is shown as a before → after pair, with sharp pixels and two pairs per row on a phone. For Max's commit that's the coin, the cabinet and 14 Pac-Man frames.\n- **Game screenshots before/after:** shown as side-by-side pairs under the art. These aren't automatic: Claude takes them with `tools/shot.js`, which can now shoot any older version of the game directly (`--at <commit>`). I did it for Max's commit (the maze and the cabinet), and `CLAUDE.md` now says to do it at the start of each turn for any new art commit that still lacks them.\n- **Names:** git names are mapped to \"Max\" and \"Quirin\" in `meta.json`; email addresses aren't published.\n\nI checked the page in a phone-size headless browser; the entry rendered correctly with no console errors.\n\nTo test on the phone after merging: open `/making-of/`, find \"replace assets\" on Saturday afternoon, open it, and check that the art pairs and the before/after screenshots look right.\n\nThe last plan usage reading I have is from the previous turn: 3% of the 5-hour limit and 18% weekly. This turn's checks returned no new numbers.",
    "progress_notes": [
     "Now the page side: load `commits.json` and render commit entries with a before → after art grid.",
     "Extending `tools/shot.js` so it can shoot any revision directly (`--at <rev>`) and accepts `commit-<sha8>-before/after` names:",
     "Shots taken. Sorting would put \"after\" first, so I'll group them into labelled before/after pairs:",
     "Works on a phone viewport with no console errors. The art grid shows one pair per row, so I'll tighten it to fit two, then update the rules and commit.",
-    "The pairs wrap onto two lines in 120 px columns. Switching each card to a three-column grid (before, arrow, after):"
+    "The pairs wrap onto two lines in 120 px columns. Switching each card to a three-column grid (before, arrow, after):",
+    "Good. Dropping the `.png` from captions so they don't break mid-word, then documenting the rule:"
    ],
    "tools": {
     "Bash": 15,
     "Read": 3,
     "mcp__claude-code-remote__list_events": 2,
-    "mcp__github__list_pull_requests": 1
+    "mcp__github__list_pull_requests": 1,
+    "mcp__github__create_pull_request": 1
    },
-   "api_requests": 19,
+   "api_requests": 21,
    "usage": {
     "claude-opus-5-5": {
-     "input": 38,
+     "input": 42,
      "cache_write_5m": 0,
-     "cache_write_1h": 144421,
-     "cache_read": 3268777,
-     "output": 16180,
+     "cache_write_1h": 145797,
+     "cache_read": 3653911,
+     "output": 17357,
      "thinking": 4114,
-     "cost_usd": 2.132875
+     "cost_usd": 2.244466
     }
    },
-   "cost_usd": 2.132875,
-   "commits": [],
+   "cost_usd": 2.244466,
+   "commits": [
+    {
+     "sha": "47d32da3297bdea8bf31ade3aae9958e0ffeae8c",
+     "subject": "Making-of: commits made outside Claude Code, with before/after art"
+    },
+    {
+     "sha": "e2e1acd0b0adad7cc73334d8fe44c09e8cf589d2",
+     "subject": "Merge pull request #45 from fischerq/claude/awesome-curie-yjo939"
+    },
+    {
+     "sha": "c8b632d324b302e2bef298a815c0b2fb79bacbce",
+     "subject": "Outer loop: layer buttons always on, game over halts the machine, deep layers run it 4x slower"
+    }
+   ],
    "entrypoint": "remote",
    "branch": "claude/awesome-curie-yjo939",
    "plan_usage": {
@@ -608,18 +623,78 @@
      "delta": 0.0
     }
    }
+  },
+  {
+   "index": 5,
+   "seq": 60,
+   "date": "2026-10-17",
+   "time": "16:34",
+   "duration_s": 84,
+   "prompt": "Fix the preview on the making of page. It still says mini-gurke. Need to update the event page about gasteig today/gamerei tomorrow",
+   "followups": [],
+   "images": [],
+   "claude_images": [
+    "media/3433393d-5-c1.jpg"
+   ],
+   "reply": "The push hook runs before the whole command, so it saw the uncommitted change. Committing first, then pushing separately:",
+   "progress_notes": [
+    "Thumbnail is current. Now the event page text:",
+    "Looks good on a phone. Committing and opening the PR."
+   ],
+   "tools": {
+    "Bash": 8,
+    "Read": 3,
+    "mcp__claude-code-remote__list_events": 2
+   },
+   "api_requests": 10,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 20,
+     "cache_write_5m": 0,
+     "cache_write_1h": 22464,
+     "cache_read": 2100136,
+     "output": 5367,
+     "thinking": 1142,
+     "cost_usd": 0.707159
+    }
+   },
+   "cost_usd": 0.707159,
+   "commits": [
+    {
+     "sha": "0b7b78fd230d20f6a7906fb6eb46211d6379ff55",
+     "subject": "Merge origin/main into claude/awesome-curie-yjo939"
+    },
+    {
+     "sha": "1175da3af53d0f8b76febf659f3ffc34ad4b281e",
+     "subject": "Merge pull request #47 from fischerq/claude/game-loop-tweaks-timing-9lbcmb"
+    }
+   ],
+   "entrypoint": "remote",
+   "branch": "claude/awesome-curie-yjo939",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.05,
+     "end": 0.05,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.19,
+     "end": 0.19,
+     "delta": 0.0
+    }
+   }
   }
  ],
  "totals": {
-  "prompts": 4,
-  "cost_usd": 4.550337,
-  "output_tokens": 41800,
-  "input_tokens": 8906346
+  "prompts": 5,
+  "cost_usd": 5.369087,
+  "output_tokens": 48344,
+  "input_tokens": 11415480
  },
  "reported_by_claude_code": {
-  "total_usd": 2.5081730000000007,
+  "total_usd": 4.798562199999999,
   "by_model": {
-   "claude-opus-5-5": 2.508173
+   "claude-opus-5-5": 4.798562
   }
  }
 }
