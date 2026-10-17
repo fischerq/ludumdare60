@@ -1,5 +1,6 @@
 import { COLORS, MAZE, PIXEL, UI, CABINET, HALL } from '../config.js';
 import { mazeTiles, tileKey } from '../systems/tiles.js';
+import { world } from '../systems/arcade/world.js';
 
 const hex = (c) => `#${c.toString(16).padStart(6, '0')}`;
 
@@ -45,7 +46,9 @@ export default class BootScene extends Phaser.Scene {
     // ?scene=Cabinet (or any scene key) jumps straight to that layer, for playtesting.
     const start = new URLSearchParams(window.location.search).get('scene');
     const target = start && this.scene.get(start) ? start : 'Menu';
-    Promise.race([font, timeout]).catch(() => {}).finally(() => this.scene.start(target));
+    // The emulated arcade machine has to be running too: the maze level is its picture.
+    const machine = (world.ready ?? Promise.resolve()).catch((e) => console.error('arcade machine failed', e));
+    Promise.all([Promise.race([font, timeout]).catch(() => {}), machine]).finally(() => this.scene.start(target));
   }
 
   // Draw a w x h texture; paint(set) calls set(x, y, color) for each lit pixel.
