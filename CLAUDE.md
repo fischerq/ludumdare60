@@ -78,6 +78,9 @@ on the same scripted input (pause, speed, scrub, live touch mode). Use one when 
   `git push` (`PreToolUse` hook), regenerating `repo-stats.json` and the sessions index instead of resolving them.
   If a real conflict remains, the push is blocked with the merge left in the tree: resolve it (keep both sides of
   decision logs and config blocks), commit, push again. Merge, never rebase or force-push a branch with an open PR.
+  A clean merge at turn start is pushed right away when the branch has an upstream. Between sessions, the
+  `sync-prs` GitHub Action (`.github/workflows/sync-prs.yml`) merges `main` into every open PR whenever `main`
+  changes; on a real conflict it comments on the PR instead, and the next session resolves it.
 
 ## AI-use log (making-of)
 Every human prompt and its token usage/cost is published in `making-of/` as a scrollable "making of" page.
