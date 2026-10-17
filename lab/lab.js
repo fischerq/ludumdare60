@@ -31,6 +31,10 @@ async function main() {
   let liveTarget = null;
   // Benches with groups (e.g. one per character) get a picker; only that group's sliders show.
   let group = bench.groups?.[0] ?? null;
+  // Toggle buttons a bench offers for the current group (e.g. "show all frames" per animation), and which are on.
+  const toggled = new Set();
+  const view = () => ({ group, toggled });
+  const world = () => bench.worldFor?.(view()) ?? bench.world;
 
   // Controls
   $('#scenario').innerHTML = bench.scenarios.map((s) => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
@@ -77,6 +81,7 @@ async function main() {
     <section class="panel" data-i="${i}">
       <h2>${esc(v.name)}</h2>
       <p class="note">${esc(v.note || '')}</p>
+      ${bench.toggles ? '<div class="toggles"></div>' : ''}
       <canvas></canvas>
       <p class="readout"></p>
       ${v.editable ? `
@@ -132,7 +137,8 @@ async function main() {
   function bindPointer(canvas) {
     const toWorld = (e) => {
       const r = canvas.getBoundingClientRect();
-      return { x: ((e.clientX - r.left) / r.width) * bench.world.w, y: ((e.clientY - r.top) / r.height) * bench.world.h };
+      const w = world();
+      return { x: ((e.clientX - r.left) / r.width) * w.w, y: ((e.clientY - r.top) / r.height) * w.h };
     };
     canvas.addEventListener('pointerdown', (e) => {
       if (!scenario.live) return;
@@ -147,6 +153,18 @@ async function main() {
 
   function showGroup() {
     grid.querySelectorAll('.sliders label').forEach((l) => { l.hidden = !!group && !group.keys.includes(l.dataset.k); });
+    paintToggles();
+  }
+  function paintToggles() {
+    if (!bench.toggles) return;
+    const list = bench.toggles(group);
+    grid.querySelectorAll('.toggles').forEach((box) => {
+      box.innerHTML = list.map((tg) => `<button type="button" data-id="${esc(tg.id)}" aria-pressed="${toggled.has(tg.id)}">${esc(tg.label)}</button>`).join('');
+      box.querySelectorAll('button').forEach((btn) => btn.addEventListener('click', () => {
+        if (toggled.has(btn.dataset.id)) toggled.delete(btn.dataset.id); else toggled.add(btn.dataset.id);
+        paintToggles();
+      }));
+    });
   }
   showGroup();
 
@@ -180,7 +198,8 @@ async function main() {
   function resize(canvas) {
     const dpr = window.devicePixelRatio || 1;
     const w = Math.round(canvas.clientWidth * dpr);
-    const h = Math.round(w * (bench.world.h / bench.world.w));
+    const wd = world();
+    const h = Math.round(w * (wd.h / wd.w));
     if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
   }
 
@@ -197,12 +216,12 @@ async function main() {
     for (const v of variants) {
       resize(v.canvas);
       const ctx = v.canvas.getContext('2d');
-      const s = v.canvas.width / bench.world.w;
+      const s = v.canvas.width / world().w;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.fillStyle = colors.bg;
       ctx.fillRect(0, 0, v.canvas.width, v.canvas.height);
       ctx.setTransform(s, 0, 0, s, 0, 0);
-      bench.draw(ctx, v.state, v.params, input, colors, group);
+      bench.draw(ctx, v.state, v.params, input, colors, view());
       v.readout.textContent = bench.readout ? bench.readout(v.state, v.params) : '';
     }
     $('#clock').textContent = scenario.live ? 'live' : `${t.toFixed(2)} s / ${scenario.duration} s`;

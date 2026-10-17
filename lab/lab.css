@@ -38,3 +38,6 @@
 .panel .row button { flex: 1 1 120px; font-size: 13px; }
 .snippet { background: var(--code-bg); border-radius: 8px; padding: 8px; font-size: 12px; overflow-x: auto; margin: 8px 0 0; }
 .controls .download { border-color: var(--accent); color: var(--accent-strong); }
+.panel .toggles { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.panel .toggles button { flex: 1 1 140px; font-size: 13px; }
+.panel .toggles button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
