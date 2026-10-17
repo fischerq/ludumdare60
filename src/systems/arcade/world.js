@@ -17,7 +17,7 @@ export const world = {
   listeners: new Set(),
   // What the player (or the bot) does with the controls: a swipe pulses a direction for a few frames, a held
   // stick holds one, START is pressed for a few frames.
-  input: { held: null, pulse: null, pulseFrames: 0, start: 0 },
+  input: { held: null, pulse: null, pulseFrames: 0, start: 0, coin: 0 },
   // Who steers Pac-Man: 'player' while the maze layer (or the cabinet) is showing, otherwise the 'bot'.
   driver: 'bot',
 };
@@ -41,6 +41,7 @@ const PULSE_FRAMES = 2;
 export const pressDir = (dir) => { world.input.pulse = dir; world.input.pulseFrames = PULSE_FRAMES; };
 export const holdDir = (dir) => { world.input.held = dir; };
 export const pressStart = () => { world.input.start = PULSE_FRAMES; };
+export const insertCoin = () => { world.input.coin = PULSE_FRAMES; };
 
 // Sets the joystick and start bits for the next frame.
 function applyInput(m) {
@@ -50,6 +51,8 @@ function applyInput(m) {
   for (const d of ['up', 'left', 'down', 'right']) m.setInput(0, IN0[d], d === dir);
   m.setInput(1, IN1.start, inp.start > 0);
   if (inp.start > 0) inp.start--;
+  m.setInput(0, IN0.coin, inp.coin > 0);
+  if (inp.coin > 0) inp.coin--;
 }
 
 // Creates the machine once. loadProgram() returns { rom, symbols, listing } (or null for an empty ROM).

@@ -1,5 +1,6 @@
 import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, CABINET, MAZE, PIXEL, UI, BEST_KEY, LAYERS, COINS, CHEATS } from '../config.js';
-import { createGame, stepGame, steer } from '../systems/maze.js';
+import { world, onFrame, holdDir, insertCoin, setDriver } from '../systems/arcade/world.js';
+import { readState, pokePhase } from '../systems/arcade/state.js';
 import { drawScreen, screenSize } from '../systems/screenImage.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
@@ -33,9 +34,12 @@ export default class CabinetScene extends Phaser.Scene {
     this.t = 0;
     this.stickDir = null;
     this.keyDir = null;
-    this.g = createGame();
-    this.g.phase = 'attract';
+    // The screen shows the one emulated machine. Until a coin goes in, the bot plays a demo game on it.
+    this.machine = world.machine;
+    this.S = world.program.symbols;
     this.credit = 0;
+    const off = onFrame((m, sounds) => { if (this.mode === 'play') sounds.forEach((e) => this.handle(e.name)); });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { off(); setDriver('bot'); });
     this.best = 0;
     try { this.best = Number(localStorage.getItem(BEST_KEY)) || 0; } catch (e) { /* private mode */ }
 
@@ -44,7 +48,7 @@ export default class CabinetScene extends Phaser.Scene {
     this.add.image(0, 0, 'cabinet/machine').setOrigin(0);
 
     // The game picture, redrawn into a canvas texture every frame.
-    const { w, h } = screenSize(this.g);
+    const { w, h } = screenSize();
     this.screenTex = this.textures.exists('cab-screen') ? this.textures.get('cab-screen') : this.textures.createCanvas('cab-screen', w, h);
     this.screenPos = { x: C.left + C.panelDepth / 2 + C.bezel.x, y: C.screenTop - C.panelDepth / 2 + C.bezel.y };
     this.add.image(this.screenPos.x, this.screenPos.y, 'cab-screen').setOrigin(0);
@@ -225,9 +229,9 @@ export default class CabinetScene extends Phaser.Scene {
         this.time.delayedCall(COINS.startDelay * 1000, () => {
           if (this.mode !== 'coin') return;
           this.credit = 0;
-          this.g = createGame();
           this.mode = 'play';
-          sfx.start();
+          setDriver('player');
+          insertCoin();           // the coin line on the board: the program starts a fresh game
         });
       },
     });
@@ -245,13 +249,14 @@ export default class CabinetScene extends Phaser.Scene {
   cheat(won) {
     if (this.mode !== 'play') return;
     sfx.frightOff();
-    this.g.phase = won ? 'cleared' : 'over';
-    this.handle({ type: won ? 'cleared' : 'over' });
+    pokePhase(this.machine, this.S, won ? 'cleared' : 'over');
+    this.handle(won ? 'cleared' : 'over');
   }
 
   // Game over on the cabinet: back to INSERT COIN; the first time, point the player at the hall to find coins.
   gameOver() {
     this.mode = 'insert';
+    setDriver('bot');
     if (!progress.hall) this.needCoins();
   }
 
@@ -289,20 +294,19 @@ export default class CabinetScene extends Phaser.Scene {
       if (this.introT <= 0) { this.mode = 'gone'; this.scene.start('Game', { continue: true }); }
     }
     if (this.mode === 'play') {
-      // A joystick is held, not swiped: keep steering while it's pushed.
-      if (this.stickDir) steer(this.g, this.stickDir);
-      for (const e of stepGame(this.g, dt)) this.handle(e);
+      // A joystick is held, not swiped: the stick's direction is held on the board's input lines.
+      holdDir(this.stickDir);
     }
 
     const lines = [];
     if (this.mode === 'insert' || this.mode === 'intro' || this.mode === 'coin') {
       if (this.mode === 'coin' && this.credit) lines.push({ text: 'PUSH START', color: '#00ffde', row: 13 });
-      else if (this.g.phase === 'over') lines.push({ text: 'GAME OVER', color: '#ff0000', row: 13 });
+      else if (readState(this.machine, this.S).phase === 'over') lines.push({ text: 'GAME OVER', color: '#ff0000', row: 13 });
       else if (!fxOn('insertCoin', this.t)) lines.push({ text: 'INSERT COIN', color: '#00ffde', row: 13 });
       lines.push({ text: `CREDIT ${this.credit}`, row: 26 });
     }
     if (this.mode === 'cleared') lines.push({ text: 'MAZE CLEAR!', color: '#ffff00', row: 13 });
-    drawScreen(this.screenTex.getContext(), this.g, this.art, this.t, lines, this.best);
+    drawScreen(this.screenTex.getContext(), this.machine, this.S, this.art, lines, this.best);
     this.screenTex.refresh();
 
     const insert = this.mode === 'insert', broke = coins() < COINS.perGame;
@@ -316,8 +320,10 @@ export default class CabinetScene extends Phaser.Scene {
     this.doorFrame.setVisible(insert && !broke && Math.floor(this.t * 3) % 2 === 0);
   }
 
-  handle(e) {
-    switch (e.type) {
+  // Sound commands from the machine while the player's game runs.
+  handle(name) {
+    switch (name) {
+      case 'start': sfx.start(); break;
       case 'dot': sfx.dot(); break;
       case 'power': sfx.power(); sfx.frightOn(); break;
       case 'frightEnd': sfx.frightOff(); break;
