@@ -284,6 +284,15 @@ export const UI = {
   legalSize: 22,
 };
 
+// Emulated arcade machine (Pac-Man-style hardware) that the lower layers read from. See design/systems/emulator.md.
+export const ARCADE = {
+  // MIT Z80 core by Molly Howell, pinned to a commit. A classic script (global Z80), loaded by src/systems/arcade/z80.js.
+  z80Url: 'https://cdn.jsdelivr.net/gh/DrGoldfire/Z80.js@2207d7c6a8b42246ea12efbf9dba8b2adf010437/Z80.js',
+  clockHz: 3072000,     // Z80 clock
+  frameHz: 60.606,      // vblank rate; one interrupt per frame
+  busLogSize: 4096,     // last N bus accesses kept for the bus layer
+};
+
 // Animation speeds (characters and effects), in game frames per animation frame. Lives in a JSON file so the lab can
 // export it: tune at /lab/bench.html?b=animation, download, save over src/settings/animation.json.
 // These defaults are only used if the file can't be loaded.

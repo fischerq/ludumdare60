@@ -46,6 +46,7 @@ Rough order from outside to inside; we pick a few, not all.
 - **Electronics:** logic gates, clock signal.
 
 ## Emulation sidecar · decided to plan for it (design open)
+Plain JS core chosen for the prep; details and open questions in [emulator](emulator.md).
 The Z80 assembly layer will probably be one we want, so we plan for an emulator.
 Idea: simulate the old tech for real, running code in the original language (e.g. Z80 assembly) in a wasm
 sidecar, and use that code's visibility for a level.
@@ -74,6 +75,7 @@ minigame, a counter on the layer map, no unlock.*
   zoom in to the screen. (Quirin)
 - 2026-10-17: Button to move a layer up or down; all layers unlocked by default for now. (Quirin)
 - 2026-10-17: Another layer above the cabinet: the arcade hall, Pokémon-like top-down. (Quirin)
+- 2026-10-17: The emulator is a plain JS Z80 core from a pinned CDN URL; see [emulator](emulator.md). (Claude)
 - 2026-10-17: Outer game loop: start on the maze; first win unlocks LAYER DOWN ("want to go deeper?"), first loss
   LAYER UP ("insert coin"), first loss on the cabinet unlocks the hall ("need coins?"). Cheat buttons instead of
   unlocking everything. (Quirin)
