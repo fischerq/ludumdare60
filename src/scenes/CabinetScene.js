@@ -1,12 +1,11 @@
-import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, CABINET, MAZE, PIXEL, UI, BEST_KEY, LAYERS, COINS, CHEATS } from '../config.js';
+import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, CABINET, MAZE, PIXEL, UI, BEST_KEY, LAYERS, COINS } from '../config.js';
 import { world, onFrame, holdDir, insertCoin, setDriver } from '../systems/arcade/world.js';
-import { readState, pokePhase } from '../systems/arcade/state.js';
+import { readState } from '../systems/arcade/state.js';
 import { drawScreen, screenSize } from '../systems/screenImage.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 import { coins, spendCoin } from '../wallet.js';
 import { showCallout } from '../callout.js';
-import { progress } from '../progress.js';
 import { fxOn } from '../systems/anim.js';
 
 const KEYS = {
@@ -34,7 +33,8 @@ export default class CabinetScene extends Phaser.Scene {
     this.t = 0;
     this.stickDir = null;
     this.keyDir = null;
-    // The screen shows the one emulated machine. Until a coin goes in, the bot plays a demo game on it.
+    // The screen shows the one emulated machine. Until a coin goes in, the bot plays a demo game on it
+    // (or it stands halted at GAME OVER: a finished game waits for a coin).
     this.machine = world.machine;
     this.S = world.program.symbols;
     this.credit = 0;
@@ -72,13 +72,10 @@ export default class CabinetScene extends Phaser.Scene {
     this.layerBtn = addLayerButton(this, 8, 8, 'LAYER\nDOWN', () => {
       if (this.mode !== 'outro') { sfx.frightOff(); this.mode = 'outro'; }
     });
-    this.addUpButton();
-    if (CHEATS.enabled) {
-      this.cheatBtns = [
-        addLayerButton(this, 4, C.ground - 38, 'CHEAT\nWIN', () => this.cheat(true)),
-        addLayerButton(this, 360 - 4 - 56, C.ground - 38, 'CHEAT\nLOSE', () => this.cheat(false)),
-      ];
-    }
+    // Up one layer: the arcade hall this cabinet stands in, where the coins are.
+    this.layerUpBtn = addLayerButton(this, 360 - 8 - 56, 8, 'LAYER\nUP', () => {
+      if (this.mode !== 'outro' && this.mode !== 'gone') { sfx.frightOff(); this.mode = 'gone'; this.scene.start('Hall', { from: 'cabinet' }); }
+    });
 
     this.cam = this.cameras.main.setOrigin(0, 0).setRoundPixels(true);
     this.setIntro(this.introT);
@@ -237,33 +234,14 @@ export default class CabinetScene extends Phaser.Scene {
     });
   }
 
-  // Up one layer: the arcade hall this cabinet stands in. Opens after the first game over here ("need coins?").
-  addUpButton() {
-    if (!progress.hall || this.layerUpBtn) return;
-    this.layerUpBtn = addLayerButton(this, 360 - 8 - 56, 8, 'LAYER\nUP', () => {
-      if (this.mode !== 'outro' && this.mode !== 'gone') { sfx.frightOff(); this.mode = 'gone'; this.scene.start('Hall', { from: 'cabinet' }); }
-    });
-  }
-
-  // Cheat buttons: end the game on the cabinet's screen as if it was won or lost.
-  cheat(won) {
-    if (this.mode !== 'play') return;
-    sfx.frightOff();
-    pokePhase(this.machine, this.S, won ? 'cleared' : 'over');
-    this.handle(won ? 'cleared' : 'over');
-  }
-
-  // Game over on the cabinet: back to INSERT COIN; the first time, point the player at the hall to find coins.
+  // Game over on the cabinet: the machine halts, back to INSERT COIN.
   gameOver() {
     this.mode = 'insert';
     setDriver('bot');
-    if (!progress.hall) this.needCoins();
   }
 
-  // Out of coins (or the first game over): open the arcade hall, where the coins are, and say so on the screen.
+  // Out of coins: point the player up to the arcade hall, where the coins are.
   needCoins() {
-    progress.hall = true;
-    this.addUpButton();
     this.callout ??= showCallout(this, this.screenPos.x + 84, this.screenPos.y + 100, 'NEED COINS?\nGO LAYER UP', 1);
   }
 

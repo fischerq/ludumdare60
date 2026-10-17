@@ -20,18 +20,18 @@ The two layers next to the maze game come first:
   only while they glow and dodge the refresh beam. See [layer-crt](layer-crt.md).
 
 ## Outer game loop · decided
-The game starts at the maze layer, so it's instantly recognisable as Pac-Man. Other layers unlock through what
-happens there (`src/progress.js`, in memory for the session):
-- **First win on the maze:** callout "MAZE CLEAR! WANT TO GO DEEPER?", and the maze gets **LAYER DOWN** (into the
-  screen; says "coming soon" until that layer exists).
-- **First loss on the maze:** callout "GAME OVER, INSERT COIN", and the maze gets **LAYER UP** (to the cabinet).
-- **First loss on the cabinet:** callout "NEED COINS?" on its screen, and the cabinet gets **LAYER UP** (to the
-  arcade hall, where the coins are). The same happens whenever the cabinet waits for a coin and the player has none,
-  so you can never be stuck at the cabinet without a way to the coins. The cabinet always has LAYER DOWN, the hall always has LAYER DOWN.
-- A round on the maze ends on the maze (no more automatic jump to the cabinet): the callout says tap to play again.
-- **Cheats for testing:** CHEAT WIN / CHEAT LOSE buttons at the bottom of the maze and the cabinet fire those events
-  (`CHEATS.enabled` in config; turn off for the release). Layer buttons: `src/layerButton.js`, callouts:
-  `src/callout.js`.
+The game starts at the maze layer, so it's instantly recognisable as Pac-Man. Every layer always has its
+LAYER UP and LAYER DOWN buttons (no unlocking, no cheat buttons). Layer buttons: `src/layerButton.js`, callouts:
+`src/callout.js`.
+- **Coins run the machine** (`src/wallet.js`, `COINS` in config). Every fresh game costs a coin, on the maze as on
+  the cabinet; the first game from the menu uses the coin you start with.
+- **Game over halts the machine**: it runs no frames (no attract mode, no bot) until a coin goes in, in every layer
+  (`world.halted` in `src/systems/arcade/world.js`). On the maze the callout says "TAP TO INSERT COIN" while you
+  have coins, otherwise "OUT OF COINS, GO LAYER UP" (cabinet, then the hall where the coins are).
+- **Maze clear:** callout "MAZE CLEAR! WANT TO GO DEEPER?"; tap plays on for free.
+- **The cabinet** says "NEED COINS? GO LAYER UP" whenever it waits for a coin and the player has none.
+- **Deep layers run the machine slower** than the maze, by `DEEP.machineSlowdown` (4x): down there we play with
+  the signals that make each frame. Cabinet and hall run at normal speed.
 
 ## Layer ideas · open (brainstorm, nothing decided)
 Rough order from outside to inside; we pick a few, not all.
@@ -81,3 +81,6 @@ minigame, a counter on the layer map, no unlock.*
   unlocking everything. (Quirin)
 - 2026-10-17: Fix: being out of coins at the cabinet always opens the hall ("NEED COINS? GO LAYER UP"), not only
   the first game over. (Quirin reported the hall not unlocking with 0 coins)
+- 2026-10-17: Layer up/down always available everywhere; cheat buttons and unlocking removed. A game over halts
+  the machine until a coin goes in, and every new game costs a coin. The deep layers run the machine
+  `DEEP.machineSlowdown` (4x) slower than the maze. (Quirin; slowdown factor and coin rules: Claude's defaults)

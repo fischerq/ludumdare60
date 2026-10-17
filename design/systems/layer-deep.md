@@ -14,8 +14,8 @@ slow down or aggregate, but everything comes from the machine's real raw data.
 
 ## Shared rules · decided (Claude, defaults accepted by Quirin)
 - Same controls as the maze: swipe to walk a grid one tile at a time (`DEEP.walkSpeed`).
-- Each layer has a goal (eat N things). Reaching it opens LAYER DOWN; LAYER UP always works. With
-  `CHEATS.enabled` every layer is open.
+- Each layer has a goal (eat N things). LAYER UP and LAYER DOWN always work.
+- The machine runs `DEEP.machineSlowdown` times slower down here than on the maze.
 - A hit flashes the player and puts it back at the start (`DEEP.hitPause`); hits are only counted.
 - While the player is down here, the bot plays the maze game on the machine, so the data keeps moving.
 - Moving between layers zooms and fades (`DEEP.transition`).
@@ -77,3 +77,5 @@ the START pad starts a new game. Every dot Pac-Man eats counts, Pac-Man dying is
 - 2026-10-17: CRT: the beam is only deadly where the picture is lit, otherwise no spot would be safe. (Claude)
 - 2026-10-17: Signals: sound waves stay at the bottom and swell (a wave rolling over the whole screen could
   not be dodged). (Claude)
+- 2026-10-17: LAYER DOWN always open (no goal gate, no cheats); the machine runs DEEP.machineSlowdown (4x) slower
+  down here. (Quirin)
