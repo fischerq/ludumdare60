@@ -197,45 +197,89 @@ export const DEEP = {
     input:   { bg: 0x140602, grid: 0x34140a, line: 0xff6a2a, glow: 0x4a1a08, dot: 0xffb08a, dot2: 0xffffff, special: 0xffffff },
   },
   machineSlowdown: 4,    // the machine runs this many times slower in the deep layers than on the maze
-  crt: {
+  // Each layer: its own verb and enemy, and goal = the number of objectives (3 to 5) that win it.
+  crt: {                 // -1 dark room: eat the power pellets while the beam has lit them; the ghosts hunt
     beamPeriod: 3.2,     // s for one picture (the real one takes 16.5 ms)
     vblank: 0.22,        // share of the period with the beam off (vertical blank: safe to cross)
     decay: 0.9,          // s for the phosphor to fade to a third
-    litAbove: 0.35,      // glow above which a dot can be eaten
+    litAbove: 0.35,      // glow above which a dot or pellet can be eaten
+    darkFloor: 0.08,     // how much of the unlit picture still shows (dark room)
     pacColor: 0xfff23a,  // the machine's Pac-Man sprite on the phosphor
     cornerRadius: 2,     // tiles: the tube's rounded corners can't be walked on
-    goal: 25,
+    goal: 4,             // the four power pellets
   },
-  signals: {
-    rowTime: 0.12,       // s for the tile fetcher to read one row of tiles
-    sparkLife: 1.6,      // s a fetched color index waits to be picked up
-    waveTime: 1.4,       // s a sound wave takes to roll up the screen
-    waveRows: { power: 3, ghost: 2, death: 4, frightEnd: 2, clear: 4, start: 2 }, // how thick each sound's wave is
-    goal: 30,
+  signals: {             // -2 carry and deliver: color index -> palette chip -> DAC
+    sparkEvery: 1.2,     // s between color indices the tile fetcher hands out at dot tiles
+    sparkLife: 6,        // s one waits to be picked up
+    maxSparks: 4,
+    pulseTime: 0.6,      // s the sound chip's area is deadly after a sound command
+    pulseRadius: 2,      // tiles around the sound chip
+    palette: { x: 0, y: 12 },  // 2x2 chips (top-left tile); the tunnel row's ends
+    dac: { x: 17, y: 12 },
+    sound: { x: 8, y: 23 },    // 3x2 sound chip at the bottom
+    goal: 4,             // colors delivered
   },
-  vram: {
-    writeTime: 0.5,      // s the CPU's write head hovers over the next address before it writes
+  vram: {                // -3 blade trap: the write head dashes along a row to the address it writes
+    waitTime: 0.7,       // s it waits at the row's start (telegraph)
+    dashSpeed: 24,       // bytes per second along the row
     queue: 3,            // writes waiting at most; older ones are skipped
-    readTime: 2.5,       // s for the video chip's read sweep over all rows
-    goal: 20,
+    goal: 4,             // the power pellet bytes
   },
-  bus: {
-    rate: 5,             // bus cycles shown per second (the real bus does about a million)
-    goal: 40,
+  bus: {                 // -4 the spatial bus: chip rooms behind decoder doors, packets on the lanes
+    cycleTime: 1.1,      // s between bus cycles shown
+    packetSpeed: 7,      // tiles per second along the lanes
+    // # wall, . floor, = bus lane (packets run here), C the CPU; chip rooms: interior r a v i, door R A V I
+    // (open while the decoder selects that chip): ROM, RAM, VRAM, I/O.
+    layout: [
+      '##################',
+      '#...........#rrrr#',
+      '#...........#rrrr#',
+      '#.........==Rrrrr#',
+      '#.........=.#rrrr#',
+      '#.........=.#rrrr#',
+      '#.........=.######',
+      '#.........=.#aaaa#',
+      '#.........=.#aaaa#',
+      '#.........==Aaaaa#',
+      '#CCC......=.#aaaa#',
+      '#CCC......=.#aaaa#',
+      '#CCC=======.######',
+      '#CCC......=.#vvvv#',
+      '#CCC......=.#vvvv#',
+      '#.........==Vvvvv#',
+      '#.........=.#vvvv#',
+      '#.........=.#vvvv#',
+      '#.........=.######',
+      '#.........=.#iiii#',
+      '#.........=.#iiii#',
+      '#.........==Iiiii#',
+      '#...........#iiii#',
+      '#...........#iiii#',
+      '#...........######',
+      '##################',
+    ],
+    goal: 4,             // one data byte from each chip room
   },
-  cpu: {
+  cpu: {                 // -5 warps (CALL / JP / RET) and flag blocks; the program counter fires on its line
     rate: 4,             // instructions per second (the real CPU does about 800 000)
     trace: 400,          // instructions recorded from the start of a frame
-    goal: 25,
+    zColumn: 15,         // Z blocks stand in this column on every third line (up while Z is set)
+    cColumn: 18,         // C blocks likewise (up while C is set)
+    goal: 4,             // routines reached through a CALL warp
   },
-  logic: {
-    vectorWidth: 0.45,   // tiles: how close to a target vector line counts as touching it
-    vectorColors: { blinky: 0xff2a3a, pinky: 0xff6a8a, inky: 0xff8a5a, clyde: 0xffb0a0 }, // deadly: all reds
-    goal: 30,
+  logic: {               // -6 line of sight: crossing a ghost's target vector sends a seeker after you
+    vectorWidth: 0.45,   // tiles: how close to a target vector line counts as crossing it
+    seekTime: 6,         // s a seeker hunts before it gives up
+    seekSpeed: 3.6,      // tiles per second (you walk DEEP.walkSpeed)
+    vectorColors: { blinky: 0xff2a3a, pinky: 0xff6a8a, inky: 0xff8a5a, clyde: 0xffb0a0 },
+    goal: 4,             // stand on each ghost's target tile
   },
-  input: {
+  input: {               // -7 pressure plates and a push block; a noise spark crawls after you
     bounce: 0.25,        // s a switch chatters on and off after you step on it
-    goal: 30,            // dots Pac-Man eats while you steer
+    sparkSpeed: 1.6,     // tiles per second
+    block: { x: 8, y: 15 },
+    corner: 4,           // tiles: how close to a maze corner the machine's Pac-Man has to get
+    goal: 4,             // the four corners of the maze
   },
 };
 

@@ -16,7 +16,12 @@ slow down or aggregate, but everything comes from the machine's real raw data.
 
 ## Shared rules · decided (Claude, defaults accepted by Quirin)
 - Same controls as the maze: swipe to walk a grid one tile at a time (`DEEP.walkSpeed`).
-- Each layer has a goal (eat N things). LAYER UP and LAYER DOWN always work.
+- **Each layer has its own verb and its own enemy, and 3 to 5 objectives** (`goal`); doing them all wins the
+  layer (LAYER CLEAR). Dots are still everywhere to eat, but they're only counted. The counter shows
+  `GOALS n/goal   DOTS n`, a line under it says what to do next. LAYER UP and LAYER DOWN always work.
+- Only the screen layer has a sweeping beam; every other layer's danger moves differently. Mechanics come from
+  the [top-down mechanics survey](topdown-mechanics.md). Enemies that hunt you use `src/systems/layers/chaser.js`
+  (shortest path on the grid).
 - The machine runs `DEEP.machineSlowdown` times slower down here than on the maze.
 - A hit flashes the player and puts it back at the start (`DEEP.hitPause`); hits are only counted.
 - While the player is down here, the bot plays the maze game on the machine, so the data keeps moving.
@@ -56,13 +61,15 @@ vertical blank (`vblank`), when the beam flies back switched off. Ghost sprites 
 lit phosphor, walkable, and deadly under the beam like an uneaten dot. Dots the
 machine's Pac-Man eats vanish here too. Goal: 25 dots.
 
-## Layer -2: the signal chips · built
-The playfield as the video chip sees it: each tile's code from VRAM in hex, the 8 hardware sprites as boxes
-labelled with slot and sprite code. The tile fetcher reads one row every `DEEP.signals.rowTime`; each dot or
-pellet tile it fetches sends out a color index that waits `sparkLife` to be picked up. Ghost sprites crush.
-**Area:** the whole tile grid, walls included (to the
-chip they're just tile codes). Every sound command the program writes to the sound latch (power, ghost, death, ...) swells a wave along the
-bottom of the screen, `waveRows` high for that sound: stay above it. Goal: 30 color indices.
+## Layer -2: the signal chips · built (gameplay pass)
+**Verb: carry and deliver.** The playfield as the video chip sees it: each tile's code from VRAM in hex, the 8
+hardware sprites as boxes labelled with slot and sprite code. **Area:** the whole tile grid (to the chip the walls
+are just tile codes). The tile fetcher hands out a color index at a random dot tile every `sparkEvery` s (it waits
+`sparkLife`); grab one and it follows you one tile behind. Take it to the **PAL** chip (palette: the index
+becomes a color), then to the **DAC**, which puts it on the screen: one objective. You carry one at a time.
+**Enemies:** the ghost sprites (touching one is a hit and drops what you carry) and the **SND** chip: every sound
+command except the dot chomp makes the area around it deadly for `pulseTime` (a timed trap, not a sweep).
+**Objectives:** 4 colors delivered.
 
 ## Layer -3: video RAM · built
 VRAM as it sits in memory, 32 bytes per row in hex. Bytes holding the wall code are walls, the 13 unused
@@ -113,3 +120,6 @@ the START pad starts a new game. Every dot Pac-Man eats counts, Pac-Man dying is
   keeps rounded corners; lit walls on the screen are deadly under the beam). Bus, CPU and wires keep their layouts. (Quirin asked; Claude)
 - 2026-10-17: LAYER DOWN always open (no goal gate, no cheats); the machine runs DEEP.machineSlowdown (4x) slower
   down here. (Quirin)
+- 2026-10-17: Gameplay pass: every deep layer gets its own verb and enemy and 3-5 objectives to win; the beam
+  sweep stays only on the screen. Signals: carry a color index via PAL to the DAC; sprites and the sound chip are
+  the enemies. Bus becomes spatial (chip rooms behind decoder doors). (Quirin, from the survey defaults)
