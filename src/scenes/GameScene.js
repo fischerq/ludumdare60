@@ -1,4 +1,5 @@
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY, LAYERS } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY, LAYERS, SPEED } from '../config.js';
+import { PAC_CYCLE, charFrame, fxOn, fxOnce } from '../systems/anim.js';
 import { createGame, stepGame, steer, DIRS } from '../systems/maze.js';
 import { createSwipe, swipeInput } from '../systems/swipe.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
@@ -65,9 +66,8 @@ export default class GameScene extends Phaser.Scene {
       if (!kind) return null;
       return this.add.image(this.sx(x), this.sy(y), kind === 1 ? 'maze/dot' : 'maze/power');
     }));
-    // Power pellets blink on and off, no fading.
-    const power = this.pelletSprites.flat().filter((s) => s && s.texture.key === 'maze/power');
-    this.time.addEvent({ delay: 200, loop: true, callback: () => power.forEach((s) => s.active && s.setVisible(!s.visible)) });
+    // Power pellets blink on and off, no fading (in render).
+    this.powerSprites = this.pelletSprites.flat().filter((s) => s && s.texture.key === 'maze/power');
   }
 
   makeHud() {
@@ -187,23 +187,25 @@ export default class GameScene extends Phaser.Scene {
     this.scoreText.setText(String(g.score || '00'));
     if (g.score > this.best) this.bestText.setText(String(g.score));
     this.readyText.setVisible(g.phase === 'ready');
+    const pelletOn = fxOn('powerPellet', time);
+    this.powerSprites.forEach((s) => s.active && s.setVisible(pelletOn));
     this.lifeIcons.forEach((icon, i) => icon.setVisible(i < g.lives - 1));
 
     this.pac.setPosition(this.sx(p.x), this.sy(p.y));
     if (g.phase === 'dying') {
-      const k = 1 - Math.max(0, g.phaseTime) / RULES.dyingTime;
-      this.pac.setTexture(`maze/pac-die-${Math.min(9, Math.floor(k * 12))}`).setVisible(k < 0.85).setAngle(0).setFlipX(false);
+      const f = fxOnce('pacDeath', RULES.dyingTime - Math.max(0, g.phaseTime), 10);
+      this.pac.setTexture(`maze/pac-die-${Math.max(0, f)}`).setVisible(f >= 0).setAngle(0).setFlipX(false);
     } else {
-      const cycle = [0, 1, 2, 3, 2, 1];
-      const frame = g.phase === 'ready' ? 0 : cycle[Math.floor(p.moved * 4) % cycle.length];
+      // Pac only animates while moving: tiles moved / speed = seconds of movement.
+      const frame = g.phase === 'ready' ? 0 : PAC_CYCLE[charFrame('pac', p.moved / SPEED.pac, PAC_CYCLE.length)];
       this.pac.setTexture(`maze/pac-${frame}`).setVisible(true).setAngle(ANGLE[p.dir] ?? 0).setFlipX(p.dir === 'left');
     }
 
-    const skirt = Math.floor(time * 6) % 2;
-    const flashing = g.fright > 0 && g.fright < RULES.frightFlashTime && Math.floor(time * 6) % 2 === 0;
+    const flashing = g.fright > 0 && g.fright < RULES.frightFlashTime && !fxOn('frightFlash', time);
     const hideGhosts = g.phase === 'dying' || g.phase === 'clearing' || g.phase === 'cleared';
     g.ghosts.forEach((gh, i) => {
       const dir = DIRS[gh.dir] ? gh.dir : 'left';
+      const skirt = charFrame(gh.name, time, 2);
       this.ghostSprites[i].setPosition(this.sx(gh.x), this.sy(gh.y)).setVisible(!hideGhosts).setTexture(
         gh.state === 'eyes' || gh.state === 'enter' ? `maze/eyes-${dir}`
           : gh.frightened ? `maze/ghost-${flashing ? 'flash' : 'fright'}-${skirt}`
@@ -211,7 +213,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     if (g.phase === 'clearing') {
-      if (Math.floor(time * 5) % 2) this.mazeImage.setTintFill(COLORS.mazeFlash); else this.mazeImage.clearTint();
+      if (!fxOn('mazeClear', time)) this.mazeImage.setTintFill(COLORS.mazeFlash); else this.mazeImage.clearTint();
     }
   }
 }

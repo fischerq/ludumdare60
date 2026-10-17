@@ -3,6 +3,7 @@ import { createGame, stepGame, steer } from '../systems/maze.js';
 import { drawScreen, screenSize } from '../systems/screenImage.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
+import { fxOn } from '../systems/anim.js';
 
 const KEYS = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
@@ -203,14 +204,14 @@ export default class CabinetScene extends Phaser.Scene {
     const lines = [];
     if (this.mode === 'insert' || this.mode === 'intro') {
       if (this.g.phase === 'over') lines.push({ text: 'GAME OVER', color: '#ff0000', row: 13 });
-      else if (Math.floor(this.t * 2) % 2) lines.push({ text: 'INSERT COIN', color: '#00ffde', row: 13 });
+      else if (!fxOn('insertCoin', this.t)) lines.push({ text: 'INSERT COIN', color: '#00ffde', row: 13 });
       lines.push({ text: 'CREDIT 0', row: 26 });
     }
     if (this.mode === 'cleared') lines.push({ text: 'MAZE CLEAR!', color: '#ffff00', row: 13 });
     drawScreen(this.screenTex.getContext(), this.g, this.art, this.t, lines, this.best);
     this.screenTex.refresh();
 
-    const blink = Math.floor(this.t * 2) % 2 === 0;
+    const blink = fxOn('insertCoin', this.t);
     this.prompt.setText(this.mode === 'insert' && blink ? 'TAP THE COIN DOOR' : this.mode === 'cleared' ? 'TAP TO CONTINUE' : '');
   }
 

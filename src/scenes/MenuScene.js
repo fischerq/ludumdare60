@@ -1,5 +1,6 @@
 import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, PIXEL, UI } from '../config.js';
 import { unlockAudio } from '../sound.js';
+import { fxSeconds } from '../systems/anim.js';
 
 export default class MenuScene extends Phaser.Scene {
   constructor() {
@@ -24,7 +25,7 @@ export default class MenuScene extends Phaser.Scene {
       fontFamily: UI.arcadeFont, fontSize: 36, color: COLORS.text,
     }).setOrigin(0.5);
 
-    this.tweens.add({ targets: prompt, alpha: 0.2, duration: 500, yoyo: true, repeat: -1 });
+    this.tweens.add({ targets: prompt, alpha: 0.2, duration: fxSeconds('tapPrompt') * 1000, yoyo: true, repeat: -1 });
 
     this.add.text(cx, GAME_HEIGHT - 260, 'SWIPE TO TURN\nEAT ALL THE DOTS', {
       fontFamily: UI.arcadeFont, fontSize: 24, color: COLORS.textDim, align: 'center',

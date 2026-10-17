@@ -1,6 +1,7 @@
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, HALL, PIXEL, UI } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, HALL, PIXEL, UI, ANIM } from '../config.js';
 import { createHall, stepHall, facing, pacPos, actorPos, startChase, endChase, stepGhosts } from '../systems/hall.js';
 import { tileKey } from '../systems/tiles.js';
+import { PAC_CYCLE, charFrame, animFrame } from '../systems/anim.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 
@@ -258,13 +259,12 @@ export default class HallScene extends Phaser.Scene {
 
     const p = this.h.pac, pp = pacPos(this.h);
     // Pac-Man's art has right, up and down; left is the right one mirrored.
-    const frame = p.moving ? Math.floor((p.steps + p.t) * 4) % 2 : 0;
+    const frame = p.moving ? charFrame('pac', (p.steps + p.t) / HALL.walkSpeed, 2) : 0;
     this.place(this.pac.setTexture(`arcade/pac-${p.dir === 'left' ? 'right' : p.dir}-${frame}`).setFlipX(p.dir === 'left'), pp);
-    const skirt = Math.floor(this.t * 4) % 2;
-    this.h.npcs.forEach((n, i) => this.place(this.npcSprites[i].setTexture(`arcade/ghost-${n.name}-${n.dir}-${skirt}`), actorPos(n)));
+    this.h.npcs.forEach((n, i) => this.place(this.npcSprites[i].setTexture(`arcade/ghost-${n.name}-${n.dir}-${charFrame(n.name, this.t, 2)}`), actorPos(n)));
     for (const [k, s] of this.coinSprites) {
       const y = Number(k.split(',')[1]);
-      if (s.active) s.y = this.sy(y) + (Math.floor(this.t * 3 + y) % 2);
+      if (s.active) s.y = this.sy(y) + animFrame(this.t + y * ANIM.effects.coinBob / ANIM.fps, ANIM.effects.coinBob, 2);
     }
     this.coinText.setText(`COINS ${this.h.got}/${HALL.coinsNeeded}`);
     this.updateCamera();

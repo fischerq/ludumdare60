@@ -1,5 +1,6 @@
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, UI, BEST_KEY } from '../config.js';
 import { unlockAudio } from '../sound.js';
+import { fxSeconds } from '../systems/anim.js';
 
 export default class GameOverScene extends Phaser.Scene {
   constructor() {
@@ -35,7 +36,7 @@ export default class GameOverScene extends Phaser.Scene {
     }
 
     const prompt = this.add.text(cx, cy + 320, 'TAP TO PLAY AGAIN', style(COLORS.text, 28)).setOrigin(0.5);
-    this.tweens.add({ targets: prompt, alpha: 0.2, duration: 500, yoyo: true, repeat: -1 });
+    this.tweens.add({ targets: prompt, alpha: 0.2, duration: fxSeconds('tapPrompt') * 1000, yoyo: true, repeat: -1 });
 
     // Short delay so the swipe that ended the game doesn't instantly restart.
     this.time.delayedCall(600, () => {

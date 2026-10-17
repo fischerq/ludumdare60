@@ -59,7 +59,8 @@ async function main() {
           </label>`).join('')}
         </div>
         <div class="row"><button type="button" class="reset-params">Reset to current</button>
-          <button type="button" class="copy">Copy for config.js</button></div>
+          ${bench.configSnippet ? '<button type="button" class="copy">Copy for config.js</button>' : ''}
+          ${bench.exportFile ? '<button type="button" class="download">Download settings</button>' : ''}</div>
         <pre class="snippet" hidden></pre>` : ''}
     </section>`).join('');
 
@@ -87,6 +88,15 @@ async function main() {
       pre.hidden = false;
       try { await navigator.clipboard.writeText(text); el.querySelector('.copy').textContent = 'Copied'; } catch (e) { /* shown below instead */ }
       setTimeout(() => { el.querySelector('.copy').textContent = 'Copy for config.js'; }, 1500);
+    });
+    // Settings that live in a JSON file: download it, then save it over the file the bench names.
+    el.querySelector('.download')?.addEventListener('click', () => {
+      const { name, text } = bench.exportFile(v.params);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+      a.download = name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     });
     bindPointer(v.canvas);
   });
