@@ -444,6 +444,27 @@ def export_session(path, commits, next_seq, window):
     return out_file
 
 
+def attach_claude_images():
+    """Screenshots can be added after a session's transcript is gone (backfilled with tools/shot.js), so
+    refresh every session file's claude_images from making-of/media/, not only the ones exported now."""
+    for p in OUT_DIR.glob("*.json"):
+        if p.name == "index.json":
+            continue
+        try:
+            d = json.loads(p.read_text())
+        except Exception:
+            continue
+        changed = False
+        for i, t in enumerate(d.get("turns", [])):
+            imgs = sorted(f"media/{m.name}" for m in MEDIA_DIR.glob(f"{p.stem[:8]}-{t.get('index', i + 1)}-c*")
+                          if m.suffix.lower() in (".jpg", ".jpeg", ".png", ".webp"))
+            if imgs != (t.get("claude_images") or []):
+                t["claude_images"] = imgs
+                changed = True
+        if changed:
+            p.write_text(json.dumps(d, indent=1, ensure_ascii=False) + "\n")
+
+
 def write_manifest():
     files = []
     for p in sorted(OUT_DIR.glob("*.json")):
@@ -508,6 +529,7 @@ def main():
             if out:
                 written.append(out)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+    attach_claude_images()
     write_manifest()
     write_repo_stats()
     if "--hook" not in sys.argv:

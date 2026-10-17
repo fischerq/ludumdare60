@@ -94,7 +94,12 @@
     }
    },
    "cost_usd": 0.315836,
-   "commits": [],
+   "commits": [
+    {
+     "sha": "ce4aaf7e2c8282d76070d4c582a6a345a308c979",
+     "subject": "Log: questions for per-layer 32x32 character sprites"
+    }
+   ],
    "entrypoint": "remote",
    "branch": "claude/quirky-noether-8gpe2k",
    "plan_usage": {
