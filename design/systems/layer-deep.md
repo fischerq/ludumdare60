@@ -7,6 +7,8 @@
 `src/systems/layers/<id>.js` (no Phaser), the walking player in `src/systems/layers/walker.js`, numbers in
 `DEEP` in `src/config.js`.
 
+**Research:** [top-down mechanics survey](topdown-mechanics.md) (proposals for a gameplay pass per layer)
+
 ## Purpose
 Going down from the maze game, each layer is a view of the one emulated machine that runs it (see
 [emulator](emulator.md)), from the picture tube down to the input wires. Gameplay in a layer may stylize,
