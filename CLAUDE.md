@@ -125,8 +125,8 @@ Every human prompt and its token usage/cost is published in `making-of/` as a sc
   and say the time wasn't recorded. Never invent details the user didn't give.
 
 ## Event page
-`event/index.html` is a shareable page for the in-person Ludum Dare 60 site in Munich (Die Gamerei, hosted by
-Munich eSports). It only states facts with a source. The official start (Sat 17 Oct 00:00 CEST) is from the ldjam.com countdown.
+`event/index.html` is a shareable page for the in-person Ludum Dare 60 site in Munich (Saturday at Gasteig HP8,
+Sunday at Die Gamerei, hosted by Munich eSports). It only states facts with a source. The official start (Sat 17 Oct 00:00 CEST) is from the ldjam.com countdown.
 Venue hours (Sat 9:00 to Sun 17:00) are the user's current plan, and coordination happens on the Gamedev/Muc Discord
 (https://discord.gg/FeZ96Z89A). Update the page when the plan changes.
 The Games card shows one tile per game (thumbnail in `event/games/`, title, author, Play and Making-of
