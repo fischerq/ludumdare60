@@ -660,7 +660,7 @@
    "seq": 43,
    "date": "2026-10-17",
    "time": "12:23",
-   "duration_s": 412,
+   "duration_s": 435,
    "prompt": "the hall  needs to be smaller, with more details, we want more pokemon-like cozyness.",
    "followups": [
     {
@@ -672,7 +672,7 @@
    "claude_images": [
     "media/5f301571-10-c1.jpg"
    ],
-   "reply": "Still working after the merge. `assets/export.json` comes from `main`'s exporter (PR #20) and the hook refreshed it, so it goes in with the final commit:",
+   "reply": "The hall is now a small cozy room, and your follow-up chase is in. It's all in PR #19, which I merged with `main` first (PR #20 had landed): https://github.com/fischerq/ludumdare60/pull/19\n\n**Cozy room**\n- One small room (11×15 tiles) that fits the screen, shown at 4× instead of 2×, so Pac-Man and the ghosts are Pokémon-sized.\n- Warm wooden floor, a red rug, and a wallpapered back wall with windows, a Pac-Man poster, a ghost poster and a clock.\n- Plants in the corners, five cabinets with our yellow one in the middle, a claw machine, a soda machine, a bin, the counter (\"the owner is asleep\"), the change machine and the door.\n- Everything has a line when you tap it while facing it. The text box now grows to fit its text.\n\n**Pac-Man mechanics**\n- **Movement:** the same one-tile-per-step grid movement as before.\n- **Collectibles:** only bonus coins, like the fruit in the maze. There are 5 on the floor, and 3 let you play our cabinet.\n- **The chase:**\n  - I picked **Blinky** as the one who gets angry: tap him and he says \"WHAT DID YOU SAY?! GET HIM, GUYS!\". When you close that, all four ghosts chase you after a 1-second head start.\n  - They use their real maze rules, scaled down for the small room: Blinky comes straight at you, Pinky aims ahead of you, Inky works off Blinky's position, and Clyde backs off when he gets close.\n  - The frightened siren plays during the chase.\n- **Ways out:** walk out the **door**, or enter **our cabinet** if you have the coins.\n- **Caught:** they throw you out and you're back at the start, keeping your coins.\n- **They give up** after 20 seconds.\n\n**Checked:** in a phone-sized browser, the room renders and walking works. Talking to Blinky starts the chase and being caught resets everything, with no errors. The new tiles (36 in `assets/arcade/`) were exported automatically and are listed for Max.\n\n**One question:** should entering the machine work as an escape even without the 3 coins? Right now it needs them, so with no coins the door is the only way out.\n\n**Usage:** this turn's checks returned no new readings. The last one I saw was 3% of the 5-hour window and 18% weekly.\n\n**On the phone:** check that the room feels cozy at 4×, that drag-to-walk feels right, and whether the chase is too easy or too hard. The chase numbers are in `HALL.chase` in `src/config.js`.",
    "progress_notes": [
     "A small cozy room means a different approach. Plan:\n- **Smaller room:** about 9×12 tiles of floor, so it fits one screen with no scrolling.\n- **Closer camera:** show it at 4× (Pokémon-sized characters, also fixing \"is Pac-Man big enough\").\n- **Details:** warm wooden floor, a rug, a wallpapered back wall with windows, posters and a clock, plants, a claw machine, a soda machine, a bin, a counter and a doormat.\n\nLaying out the room first:",
     "The decorations above the cabinets are meant to be out of reach. The one real problem is the plant in the corner, which Pinky boxes in, so I'll move Pinky one tile. Updating the config:",
@@ -686,27 +686,29 @@
     "Two fixes: the text box overflows with long lines, and Blinky catches Pac-Man instantly because he's standing right next to him. I'll size the box to its text and give Pac-Man a 1-second head start:",
     "Both fixed. Updating the docs: the cozy room, the chase, and the new tile names in `art.md`.",
     "PR #19 is open but conflicts with `main` again. I'll commit, then merge `main` in and resolve:",
-    "Only the generated `repo-stats.json` conflicts. I'll take `main`'s copy, let the exporter regenerate it, and re-run the hall test on the merged code:"
+    "Only the generated `repo-stats.json` conflicts. I'll take `main`'s copy, let the exporter regenerate it, and re-run the hall test on the merged code:",
+    "Still working after the merge. `assets/export.json` comes from `main`'s exporter (PR #20) and the hook refreshed it, so it goes in with the final commit:"
    ],
    "tools": {
     "Bash": 15,
     "Read": 2,
     "mcp__claude-code-remote__list_events": 2,
-    "mcp__github__pull_request_read": 1
+    "mcp__github__pull_request_read": 1,
+    "mcp__github__update_pull_request": 1
    },
-   "api_requests": 18,
+   "api_requests": 20,
    "usage": {
     "claude-opus-5-5": {
-     "input": 36,
+     "input": 40,
      "cache_write_5m": 0,
-     "cache_write_1h": 41212,
-     "cache_read": 7261694,
-     "output": 33538,
+     "cache_write_1h": 43102,
+     "cache_read": 8107299,
+     "output": 35255,
      "thinking": 9682,
-     "cost_usd": 2.452939
+     "cost_usd": 2.671536
     }
    },
-   "cost_usd": 2.452939,
+   "cost_usd": 2.671536,
    "commits": [
     {
      "sha": "d0f5c283ac1172181c4b1657c496b3fdbc8d476e",
@@ -719,6 +721,82 @@
     {
      "sha": "ca39b2abb33e019b5508c96ad8d4d8086eda2831",
      "subject": "Merge main into the branch"
+    },
+    {
+     "sha": "f169e725b4befdde9af50e735706ac4754c09779",
+     "subject": "Refresh asset export manifest; AI log update"
+    },
+    {
+     "sha": "a601ddf51b3d67f356dab693b33eb811dc96bc72",
+     "subject": "Merge pull request #19 from fischerq/claude/old-tech-pacman-game-eaui1a"
+    },
+    {
+     "sha": "68fcb41ae39d83bc2629a1a9281d6a27e55efe43",
+     "subject": "Making-of screenshots: backfill missing ones, tools/shot.js, exporter attaches images to every session"
+    },
+    {
+     "sha": "d9874164bb4ecaa36cea99ef42cf4abdbf398d63",
+     "subject": "Log: question about ghost sprites"
+    },
+    {
+     "sha": "5de0c58b691bfde3ec15e23babf7978c6e6145d7",
+     "subject": "Merge pull request #21 from fischerq/claude/awesome-curie-yjo939"
+    },
+    {
+     "sha": "a096864add2d2cade004c1ec7a6383af95c51489",
+     "subject": "Animation speed per character in src/settings/animation.json, tuned and exported from a lab bench"
+    },
+    {
+     "sha": "f406d2aac5a45c4921a901487d34fc1b2eed86f4",
+     "subject": "Log: refresh after merging main"
+    },
+    {
+     "sha": "ce4aaf7e2c8282d76070d4c582a6a345a308c979",
+     "subject": "Log: questions for per-layer 32x32 character sprites"
+    },
+    {
+     "sha": "20c87dfdd227a7f241627a76137b0993ad9819cd",
+     "subject": "Merge main into the branch"
+    },
+    {
+     "sha": "3844386b03e892f22d09a0179bc8ca8c2349498f",
+     "subject": "Per-layer 32x32 character art, one file per state"
+    },
+    {
+     "sha": "fa64e3fef0f7ec92405109a8575b7b696d8d1f30",
+     "subject": "Log: per-layer character art turn, screenshots"
+    },
+    {
+     "sha": "d37232c8da3ac72164a5e9392552d1dfd2582742",
+     "subject": "Stop tracking Python bytecode cache"
+    },
+    {
+     "sha": "6985e71b25065141073c916bf99234d8026d535f",
+     "subject": "Make every animation tunable: effects in src/settings/animation.json and the lab bench"
+    },
+    {
+     "sha": "6feb47429e5f7a5e57a487d81ba255de6822e0b2",
+     "subject": "Merge pull request #22 from fischerq/claude/quirky-noether-8gpe2k"
+    },
+    {
+     "sha": "279a753fd7e5c8ae63e671c5c3c4533425c29f96",
+     "subject": "Merge main into the branch"
+    },
+    {
+     "sha": "f088c09de2fa52e8ca3ba3cae429e0c6745b63d4",
+     "subject": "Log: merge main (per-layer character art) into the animation-speed branch, screenshots"
+    },
+    {
+     "sha": "e17d6edf9d0d3a6b0a1d1b0f2b17d06f9ddf9493",
+     "subject": "Cabinet: prominent coin door prompt, global coin counter, animated coin insert"
+    },
+    {
+     "sha": "9c26259af311eb3eadbd539bf8c0086b42ca8341",
+     "subject": "Merge pull request #23 from fischerq/claude/sleepy-sagan-wagbm1"
+    },
+    {
+     "sha": "bb01629b68b2dde1a3b387fb6906caac4af6bb2f",
+     "subject": "Animation lab: character picker, −/+ buttons on sliders, Download settings at the top"
     }
    ],
    "entrypoint": "remote_mobile",
@@ -735,19 +813,175 @@
      "delta": 0.0
     }
    }
+  },
+  {
+   "index": 11,
+   "seq": 48,
+   "date": "2026-10-17",
+   "time": "13:39",
+   "duration_s": 271,
+   "prompt": "lets improve the outer game loop. the game should start at the maze layer (we want to keep the instant recognizability of playing pacman). When you win for the first time,  it should give you a callout \"want to go deeper?\" and add the layer down button. when losing the first time, it should say \"insert coin\" and open the layer up button. after losing on the cabinet layer, should ask \"need coins\", and unlock the arcade layer. for testing, instead of permanently unlocking everything, add cheat buttons at the bottom to trigger the win/lose events to unlock",
+   "followups": [],
+   "images": [],
+   "claude_images": [
+    "media/5f301571-11-c1.jpg"
+   ],
+   "reply": "The outer game loop is in. PR #19 had already been merged, so this is a new PR: https://github.com/fischerq/ludumdare60/pull/27\n\n**How it works now**\n- **Start:** the game starts on the maze with no layer buttons. A round also ends on the maze now, instead of jumping to the cabinet: a callout appears and you tap to play again.\n- **First win on the maze:** \"MAZE CLEAR! WANT TO GO DEEPER?\", and **LAYER DOWN** appears. It says \"INSIDE THE SCREEN: COMING SOON\", since that layer isn't built yet.\n- **First loss on the maze:** \"GAME OVER, INSERT COIN\", and **LAYER UP** to the cabinet appears.\n- **First loss on the cabinet:** \"NEED COINS?\" over the cabinet's screen, and the cabinet's **LAYER UP** to the arcade hall appears. The cabinet and the hall always keep their LAYER DOWN.\n- **Cheats:** CHEAT WIN and CHEAT LOSE buttons sit at the bottom of the maze and the cabinet and trigger those events. One switch in `src/config.js` (`CHEATS.enabled`) turns them off for the release.\n- **Unlocks last only for the browser session:** a reload starts again with just the maze.\n\nI removed the separate game-over screen; the high score is still saved.\n\nThe menu screen still comes first, because it holds the Making-Of, Lab and Impressum links. \"Tap to start\" goes straight into the maze.\n\n**Checked:** in a phone-sized browser, running lose → play again → win → LAYER UP → coin → cheat lose made each button appear at the right step, with no errors.\n\n**Usage:** 5-hour window 2%, weekly 18%.\n\n**On the phone:** use the cheat buttons to walk through the unlocks, and check that the callouts read well and that a tap afterwards starts a new round.",
+   "progress_notes": [
+    "Spelled out clearly, so I'll build it directly. Starting checks, and reading the current GameScene since other sessions have changed it:",
+    "PR #19 is merged; restarting the branch from the latest `main`, then reading the parts of GameScene I'll change:",
+    "PR #19 is merged; the branch is now fresh from `main`. Checking what else references the GameOver scene, since the end-of-round now stays on the maze layer:",
+    "Writing the progress state, the callout helper and the config change:",
+    "Now GameScene: layer buttons that appear as layers unlock, the end-of-round callouts that stay on the maze layer, and the cheat buttons:",
+    "Import fixed (`main` had added `SPEED` there). Re-applying the remaining GameScene edits:",
+    "Now the cabinet: LAYER DOWN always, LAYER UP only once the hall is unlocked, \"NEED COINS?\" on the first loss, and cheat buttons:",
+    "Simplifying that check: any button under the finger means \"not a joystick touch\":",
+    "After the win, LAYER DOWN is missing. Checking whether the \"play again\" tap restarted the round:",
+    "That was headless timing: with the extra wait, LAYER DOWN appears as intended. Checking the two callouts visually:",
+    "Both callouts and the unlock flow look right. Updating the docs (outer game loop) and committing to a new PR:"
+   ],
+   "tools": {
+    "Bash": 14,
+    "mcp__claude-code-remote__list_events": 2,
+    "mcp__github__pull_request_read": 1,
+    "Read": 1,
+    "mcp__github__create_pull_request": 1
+   },
+   "api_requests": 16,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 32,
+     "cache_write_5m": 0,
+     "cache_write_1h": 419660,
+     "cache_read": 6868022,
+     "output": 18128,
+     "thinking": 5224,
+     "cost_usd": 5.093572
+    }
+   },
+   "cost_usd": 5.093572,
+   "commits": [
+    {
+     "sha": "7073cf5d2a8b13c8530bdcfc4bd4c2522e3e1ba9",
+     "subject": "Animation lab: a Frames button per animation shows all its frames, current one outlined"
+    },
+    {
+     "sha": "853de368ea61986cfaf7738748413a456121454f",
+     "subject": "Outer game loop: start on the maze, unlock layers by winning and losing, cheat buttons"
+    },
+    {
+     "sha": "0901b14810f9d26890dfff4c641a3da28e1fb9e5",
+     "subject": "Merge pull request #27 from fischerq/claude/old-tech-pacman-game-eaui1a"
+    },
+    {
+     "sha": "d3d6ae03898fcf5f5ce6ada42cafebf7e5c93258",
+     "subject": "Merge main into the branch"
+    },
+    {
+     "sha": "047bc1f39eae4270a984707cf7289e64d821f4d0",
+     "subject": "Log: merge main (outer game loop) into the animation lab branch"
+    },
+    {
+     "sha": "415ae7e96fcd102abdc15e78abd525f1b4eedd9a",
+     "subject": "Merge pull request #26 from fischerq/claude/sleepy-sagan-wagbm1"
+    },
+    {
+     "sha": "81e2771e1e12af7ce0649f85490d52f85b8eb7b0",
+     "subject": "replace assets"
+    },
+    {
+     "sha": "53833dc91854a144dd4eb049e169f3c1cf2eb71f",
+     "subject": "Merge branch 'main' of https://github.com/fischerq/ludumdare60"
+    },
+    {
+     "sha": "4236fbfaef74bf6dc6c135b966dd5f2b6b641e01",
+     "subject": "Merge main into the coin branch"
+    },
+    {
+     "sha": "4d139bddb013001b09cc24306ac671324c457f2f",
+     "subject": "Merge pull request #25 from fischerq/claude/lucid-newton-ec9af8"
+    }
+   ],
+   "entrypoint": "remote_mobile",
+   "branch": "claude/old-tech-pacman-game-eaui1a",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.01,
+     "end": 0.02,
+     "delta": 0.01
+    },
+    "seven_day": {
+     "start": 0.18,
+     "end": 0.18,
+     "delta": 0.0
+    }
+   }
+  },
+  {
+   "index": 12,
+   "seq": 52,
+   "date": "2026-10-17",
+   "time": "14:01",
+   "duration_s": 218,
+   "prompt": "unlocking the arcage layer doesnt work. we immediately have 0 coins after the first loss.  and it still doesnt unlock. fix",
+   "followups": [],
+   "images": [],
+   "claude_images": [
+    "media/5f301571-12-c1.jpg"
+   ],
+   "reply": "Working: 0 coins, \"NEED COINS? GO LAYER UP\" on the screen, and LAYER UP top right. Docs line, screenshot, commit, new PR:",
+   "progress_notes": [
+    "PR #27 is merged, and `main` has since taken in a \"coin branch\" (#25) that changed cabinet coins. That's likely the cause. Restarting from `main` and reading the cabinet's coin and game-over code:",
+    "No button overlaps the coin door, so taps reach it. Next I'll reproduce your exact path through the UI: lose on the maze → LAYER UP → tap the coin door → CHEAT LOSE.",
+    "Still works. Checking the screen when broke:"
+   ],
+   "tools": {
+    "Bash": 10,
+    "mcp__claude-code-remote__list_events": 2,
+    "mcp__github__pull_request_read": 1,
+    "Read": 1
+   },
+   "api_requests": 11,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 22,
+     "cache_write_5m": 0,
+     "cache_write_1h": 33499,
+     "cache_read": 5365837,
+     "output": 9962,
+     "thinking": 4792,
+     "cost_usd": 1.540487
+    }
+   },
+   "cost_usd": 1.540487,
+   "commits": [],
+   "entrypoint": "remote_mobile",
+   "branch": "claude/old-tech-pacman-game-eaui1a",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.02,
+     "end": 0.02,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.18,
+     "end": 0.18,
+     "delta": 0.0
+    }
+   }
   }
  ],
  "totals": {
-  "prompts": 10,
-  "cost_usd": 15.667994,
-  "output_tokens": 232924,
-  "input_tokens": 40644599
+  "prompts": 12,
+  "cost_usd": 22.52065,
+  "output_tokens": 262731,
+  "input_tokens": 54179170
  },
  "reported_by_claude_code": {
-  "total_usd": 9.808707499999997,
+  "total_usd": 21.7136303,
   "by_model": {
    "claude-haiku-5-5": 0.000163,
-   "claude-opus-5-5": 9.808545
+   "claude-opus-5-5": 21.713468
   }
  }
 }

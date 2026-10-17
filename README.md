@@ -55,7 +55,7 @@ logged in `making-of/` and shown at [`/making-of/`](making-of/) as a scrollable 
 index.html            viewport + Phaser CDN script + loads src/main.js
 src/main.js           Phaser config (720x1280 portrait, Scale.FIT, arcade physics), scene list
 src/config.js         tunable constants: speeds, sizes, colors
-src/scenes/           Boot (placeholder textures), Menu, Game, GameOver
+src/scenes/           Boot (placeholder textures), Menu, Game (maze), Cabinet, Hall
 src/systems/          pure mechanic logic shared by the game and the lab (no Phaser)
 design/               design docs: master.md, systems/*.md
 lab/                  testing grounds: harness (lab.js) + benches/*.js
