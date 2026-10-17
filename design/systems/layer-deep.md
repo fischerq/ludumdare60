@@ -98,13 +98,15 @@ frame, so the first page is safe and warping into a routine is where it gets dan
 it sets drop on their lines as dots. **Objectives:** reach 4 different routines through their `CALL` pads (an
 unvisited routine's pad shows the special).
 
-## Layer -6: the game logic · built
-No pixels: the maze as the rules see it, grid lines and wall outlines from VRAM, Pac-Man and the ghosts as
-points at their RAM positions. Each ghost that hunts shows its target vector, the line to the tile it aims
-for, computed from RAM with the same rules (`ghostTarget`): the scatter corner, or its chase rule. **Area:** the rules' whole
-tile grid; walls are only faint outlines. Vectors
-are deadly (`DEEP.logic.vectorWidth`); they swing as Pac-Man moves and flip with the mode. Frightened ghosts
-have none. The pellets are nodes to collect. Goal: 30.
+## Layer -6: the game logic · built (gameplay pass)
+**Verb: line of sight.** No pixels: the maze as the rules see it, grid lines and faint wall outlines from VRAM,
+Pac-Man and the ghosts as points at their RAM positions. Each hunting ghost shows its target vector, the line to the
+tile it aims for, computed from RAM with the same rules (`ghostTarget`). **Area:** the rules' whole tile grid.
+**Enemy:** like a Pokémon trainer, a ghost sees along its vector: crossing it (`vectorWidth`) gets you spotted
+("!"), and a seeker comes out of that ghost and hunts you on the grid (`seekSpeed`, shortest path) for `seekTime`
+s; touching it is a hit. Frightened ghosts have no vector and see nothing. **Objectives:** stand once on each of
+the 4 ghosts' target tiles (they move with the mode and with Pac-Man; scatter corners are clamped into the grid).
+The pellets are dots.
 
 ## Layer -7: the input wires · built
 The joystick's switches as pads on the board, wired to IN0's bits (START to IN1). Standing on a pad closes
