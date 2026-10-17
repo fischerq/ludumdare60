@@ -26,7 +26,8 @@ const Z80 = await loadZ80();
 }
 
 { // Video chip decoding
-  check('sprite codes', spriteArt(SPRITE.pac + 1 * 4 + 2).key === 'pac-2' && spriteArt(SPRITE.ghost + 7).eyes === 'eyes-right'
+  check('sprite codes', spriteArt(SPRITE.pac + 1 * 4 + 2).key === 'maze/pac-2' && spriteArt(SPRITE.pac + 4).flipX
+    && spriteArt(SPRITE.ghost + 2 * 8 + 3 * 2 + 1).key === 'maze/ghost-inky-right-1'
     && spriteArt(SPRITE.points + 3).text === '1600' && spriteArt(0) === null);
   const vram = new Uint8Array(0x400);
   const code = { '#': CELL.wall, '-': CELL.door, T: CELL.tunnel, G: CELL.house, '.': CELL.dot, o: CELL.power };
