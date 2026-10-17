@@ -465,6 +465,110 @@ def attach_claude_images():
             p.write_text(json.dumps(d, indent=1, ensure_ascii=False) + "\n")
 
 
+COMMITS_LOG = ROOT / "making-of" / "commits.json"
+ART_DIR = MEDIA_DIR / "art"
+ART_EXTENSIONS = {".png", ".gif", ".jpg", ".jpeg", ".webp"}
+
+
+def write_commits_log(window):
+    """Commits made outside Claude Code (e.g. Max replacing art) as timeline entries in
+    making-of/commits.json. Art files they change under assets/ are copied as a before/after pair
+    into making-of/media/art/<sha8>/; game screenshots saved as media/commit-<sha8>-*.jpg (tools/shot.js
+    --commit) are attached too. Merge commits and commits already linked from manual-log.json are skipped.
+    A commit keeps the seq it got the first time; a new one is slotted in by time between its neighbours."""
+    def git(*args, text=True):
+        return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=text).stdout
+    try:
+        previous = {e["sha"]: e for e in json.loads(COMMITS_LOG.read_text()).get("entries", [])}
+    except Exception:
+        previous = {}
+    try:
+        manual = json.loads(MANUAL_LOG.read_text()).get("entries", [])
+    except Exception:
+        manual = []
+    linked = {l.get("url", "").rstrip("/").rsplit("/", 1)[-1] for e in manual for l in e.get("links", [])}
+    try:
+        meta = json.loads(META.read_text())
+    except Exception:
+        meta = {}
+    names = meta.get("people", {})
+    repo_url = meta.get("repo_url", "").rstrip("/")
+
+    # Every timeline item with a sortable (date, time) key, to slot new commits in.
+    placed = []
+    for f in OUT_DIR.glob("*.json"):
+        if f.name == "index.json":
+            continue
+        try:
+            placed += [((t["date"], t.get("time", "")), t["seq"]) for t in json.loads(f.read_text()).get("turns", [])]
+        except Exception:
+            pass
+    placed += [((e["date"], e.get("time", "")), e["seq"]) for e in manual if "seq" in e]
+    placed += [((e["date"], e.get("time", "")), e["seq"]) for e in previous.values()]
+
+    entries = []
+    log = git("log", "HEAD", "--no-merges", "--reverse", "--format=%H%x09%aI%x09%an%x09%s")
+    for line in log.splitlines():
+        sha, when, author, subject = line.split("\t", 3)
+        if author == "Claude" or sha in linked or any(sha.startswith(x) for x in linked if len(x) >= 7):
+            continue
+        dt = parse_ts(when)
+        pub = public_when(dt, window)
+        art = []
+        changed = git("diff-tree", "--no-commit-id", "-r", "--name-status", sha).splitlines()
+        for row in changed:
+            status, *paths = row.split("\t")
+            path = paths[-1]
+            if not path.startswith("assets/") or Path(path).suffix.lower() not in ART_EXTENSIONS:
+                continue
+            base = str(Path(path[len("assets/"):]).with_suffix("")).replace("/", "__")
+            pair = {"name": path[len("assets/"):]}
+            for side, rev, src in (("before", f"{sha}^", paths[0]), ("after", sha, path)):
+                if (side == "before" and status.startswith("A")) or (side == "after" and status.startswith("D")):
+                    continue
+                dest = ART_DIR / sha[:8] / f"{base}.{side}{Path(path).suffix.lower()}"
+                if not dest.exists():
+                    data = subprocess.run(["git", "show", f"{rev}:{src}"], cwd=ROOT, capture_output=True).stdout
+                    if not data:
+                        continue
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    dest.write_bytes(data)
+                pair[side] = str(dest.relative_to(MEDIA_DIR.parent))
+            art.append(pair)
+        if sha in previous:
+            seq = previous[sha]["seq"]
+        else:
+            key = (pub["date"], pub.get("time", ""))
+            before = max((q for k, q in placed if k <= key), default=0)
+            after = min((q for k, q in placed if k > key and q > before), default=before + 1)
+            seq = round((before + after) / 2, 4)
+            placed.append((key, seq))
+        shots = {}
+        for m in sorted(MEDIA_DIR.glob(f"commit-{sha[:8]}-*")):
+            hit = re.match(rf"commit-{sha[:8]}-(before|after)-(\d+)$", m.stem)
+            if hit and m.suffix.lower() in (".jpg", ".jpeg", ".png", ".webp"):
+                shots.setdefault(int(hit[2]), {})[hit[1]] = f"media/{m.name}"
+        shots = [shots[n] for n in sorted(shots)]
+        other = len(changed) - len(art)
+        body = "Changed " + " and ".join(x for x in (
+            plural_s(len(art), "art file") if art else "",
+            plural_s(other, "other file" if art else "file") if other else "") if x) + "."
+        entries.append({
+            "sha": sha, **pub, "seq": seq, "kind": "commit",
+            "author": names.get(author, author.split(" ")[0]),
+            "title": subject, "body": body, "art": art, "shots": shots,
+            "links": [{"label": f"Commit {sha[:7]}", "url": f"{repo_url}/commit/{sha}"}] if repo_url else [],
+        })
+    COMMITS_LOG.write_text(json.dumps({
+        "_readme": "Generated by tools/ai_log.py from git: commits made outside Claude Code. Don't edit by hand.",
+        "entries": entries,
+    }, indent=1, ensure_ascii=False) + "\n")
+
+
+def plural_s(n, word):
+    return f"{n} {word}{'' if n == 1 else 's'}"
+
+
 def write_manifest():
     files = []
     for p in sorted(OUT_DIR.glob("*.json")):
@@ -505,10 +609,11 @@ def max_seq():
             seqs += [t.get("seq") or 0 for t in json.loads(p.read_text()).get("turns", [])]
         except Exception:
             pass
-    try:
-        seqs += [e.get("seq") or 0 for e in json.loads(MANUAL_LOG.read_text()).get("entries", [])]
-    except Exception:
-        pass
+    for log in (MANUAL_LOG, COMMITS_LOG):
+        try:
+            seqs += [e.get("seq") or 0 for e in json.loads(log.read_text()).get("entries", [])]
+        except Exception:
+            pass
     return int(max(seqs))
 
 
@@ -530,6 +635,7 @@ def main():
                 written.append(out)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     attach_claude_images()
+    write_commits_log(window)
     write_manifest()
     write_repo_stats()
     if "--hook" not in sys.argv:

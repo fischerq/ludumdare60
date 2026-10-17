@@ -182,3 +182,16 @@ dialog#thread::backdrop { background: rgba(0, 0, 0, .45); }
 .order-row { display: flex; justify-content: flex-end; margin-top: 8px; }
 #order { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 13px; font-size: 13px;
   font-weight: 600; color: var(--muted); cursor: pointer; }
+
+/* Before → after pairs for art a commit changed. */
+.art-diff { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin: 10px 0; }
+.art-diff figure { margin: 0; padding: 8px; background: #000; border-radius: 10px; display: grid;
+  grid-template-columns: 1fr auto 1fr; align-items: center; justify-items: center; gap: 4px; }
+.art-diff a { display: flex; justify-content: center; min-width: 0; }
+.art-diff img { display: block; height: 48px; width: auto; max-width: 100%; object-fit: contain; image-rendering: pixelated; }
+.art-diff .arrow, .art-diff .none { color: #9aa; font-size: 13px; }
+.art-diff figcaption { grid-column: 1 / -1; text-align: center; color: #cdd; font-size: 12px; word-break: break-all; }
+.shot-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+.shot-pair figure { margin: 0; }
+.shot-pair img { display: block; width: 100%; border-radius: 10px; }
+.shot-pair figcaption { text-align: center; color: var(--muted); font-size: 12px; margin-top: 4px; }

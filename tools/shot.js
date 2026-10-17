@@ -2,10 +2,12 @@
 // Dev tool only: uses the Playwright that comes preinstalled in the cloud container (global npm), the game
 // itself stays build-free.
 //
-//   node tools/shot.js <session8>-<turn>-c<n> [page] [--scene Key] [--wait ms] [--root dir] [--full]
+//   node tools/shot.js <session8>-<turn>-c<n> [page] [--scene Key] [--wait ms] [--at rev | --root dir] [--full]
+//   node tools/shot.js commit-<sha8>-before-<n> [page] --at <sha>^ ...   (before/after shots of an art commit)
+//   node tools/shot.js commit-<sha8>-after-<n> [page] --at <sha> ...
 //
 // page: path under the site root, default '' (the game). --scene starts that Phaser scene first.
-// --root serves another checkout (e.g. a worktree of an old commit, for backfilling). Writes
+// --at shoots that git revision (from a temporary worktree); --root serves another checkout. Writes
 // making-of/media/<name>.jpg in this checkout through publish_image in tools/ai_log.py.
 
 const { execSync, spawn } = require('child_process');
@@ -17,15 +19,23 @@ const repo = path.resolve(__dirname, '..');
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf(k); return i < 0 ? d : args.splice(i, 2)[1]; };
 const flag = (k) => { const i = args.indexOf(k); return i >= 0 && args.splice(i, 1).length > 0; };
-const scene = opt('--scene'), wait = Number(opt('--wait', 2500)), root = path.resolve(opt('--root', repo));
+const scene = opt('--scene'), wait = Number(opt('--wait', 2500)), at = opt('--at');
+let root = path.resolve(opt('--root', repo));
 const full = flag('--full');
 const [name, page = ''] = args;
-if (!name || !/^[0-9a-f]{8}-\d+-c\d+$/.test(name)) {
-  console.error('usage: node tools/shot.js <session8>-<turn>-c<n> [page] [--scene Key] [--wait ms] [--root dir] [--full]');
+if (!name || !/^([0-9a-f]{8}-\d+-c\d+|commit-[0-9a-f]{8}-(before|after)-\d+)$/.test(name)) {
+  console.error('usage: node tools/shot.js <session8>-<turn>-c<n> | commit-<sha8>-<before|after>-<n> [page] [--scene Key] [--wait ms] [--at rev | --root dir] [--full]');
   process.exit(1);
 }
 
 const { chromium } = require(path.join(execSync('npm root -g').toString().trim(), 'playwright'));
+let worktree = null;
+if (at) {
+  worktree = fs.mkdtempSync(path.join(os.tmpdir(), 'shot-wt-'));
+  execSync(`git worktree add -q --detach "${worktree}" "${at}"`, { cwd: repo });
+  root = worktree;
+}
+const cleanup = () => { if (worktree) execSync(`git worktree remove --force "${worktree}"`, { cwd: repo }); };
 const port = 8700 + Math.floor(Math.random() * 200);
 const server = spawn('python3', ['-m', 'http.server', String(port)], { cwd: root, stdio: 'ignore' });
 
@@ -50,8 +60,9 @@ const server = spawn('python3', ['-m', 'http.server', String(port)], { cwd: root
   await pg.screenshot({ path: png, fullPage: full });
   await browser.close();
   server.kill();
+  cleanup();
   const dest = path.join(repo, 'making-of', 'media', `${name}.jpg`);
   execSync(`python3 -c "import sys,pathlib; sys.path.insert(0,'tools'); import ai_log; ` +
     `ai_log.publish_image(open(sys.argv[1],'rb').read(), pathlib.Path(sys.argv[2]))" "${png}" "${dest}"`, { cwd: repo });
   console.log(dest, errors.length ? `\nconsole errors:\n${errors.join('\n')}` : '(no console errors)');
-})().catch((e) => { server.kill(); console.error(e); process.exit(1); });
+})().catch((e) => { server.kill(); cleanup(); console.error(e); process.exit(1); });
