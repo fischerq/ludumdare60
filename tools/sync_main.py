@@ -88,6 +88,10 @@ def push_merge():
         return
     if git("rev-list", "--count", "@{u}..HEAD").stdout.strip() == "0":
         return
+    # The remote branch is already part of main: its PR was merged, so a push would add commits no open PR covers.
+    if git("merge-base", "--is-ancestor", "@{u}", f"origin/{BASE}").returncode == 0:
+        print("sync_main: not pushing, this branch's PR is already merged; restart the branch from main")
+        return
     branch = git("rev-parse", "--abbrev-ref", "HEAD").stdout.strip()
     r = git("push", "-q", "origin", branch)
     print(f"sync_main: pushed {branch}" if r.returncode == 0 else f"sync_main: push failed: {r.stderr.strip()}")
