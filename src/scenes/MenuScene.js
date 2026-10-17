@@ -1,6 +1,6 @@
 import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, PIXEL, UI } from '../config.js';
 import { unlockAudio } from '../sound.js';
-import { fxSeconds, charFrame, PAC_CYCLE } from '../systems/anim.js';
+import { fxSeconds, animFrame, PAC_CYCLE } from '../systems/anim.js';
 
 export default class MenuScene extends Phaser.Scene {
   constructor() {
@@ -24,8 +24,8 @@ export default class MenuScene extends Phaser.Scene {
     let t = 0;
     this.events.on('update', (_time, delta) => {
       t += delta / 1000;
-      pac.setTexture(`maze/pac-${PAC_CYCLE[charFrame('pac', t, PAC_CYCLE.length)]}`);
-      ghosts.forEach(([name, g]) => g.setTexture(`maze/ghost-${name}-left-${charFrame(name, t, 2)}`));
+      pac.setTexture(`maze/pac-${PAC_CYCLE[animFrame(t, UI.menuPacAnim, PAC_CYCLE.length)]}`);
+      ghosts.forEach(([name, g]) => g.setTexture(`maze/ghost-${name}-left-${animFrame(t, UI.menuGhostAnim, 2)}`));
     });
 
     const prompt = this.add.text(cx, cy + 120, 'TAP TO START', {
