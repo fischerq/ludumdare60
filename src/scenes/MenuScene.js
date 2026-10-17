@@ -1,4 +1,4 @@
-import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, UI } from '../config.js';
+import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, PIXEL, UI } from '../config.js';
 import { unlockAudio } from '../sound.js';
 
 export default class MenuScene extends Phaser.Scene {
@@ -11,15 +11,15 @@ export default class MenuScene extends Phaser.Scene {
     const cy = GAME_HEIGHT / 2;
 
     this.add.text(cx, cy - 300, GAME_TITLE.toUpperCase(), {
-      fontFamily: UI.arcadeFont, fontSize: 56, color: COLORS.textReady,
+      fontFamily: UI.arcadeFont, fontSize: 48, color: COLORS.textReady,
     }).setOrigin(0.5);
 
     // The cast, arcade attract-screen style.
-    this.add.image(cx - 180, cy - 100, 'pac-2');
+    this.add.image(cx - 180, cy - 100, 'pac-2').setScale(PIXEL.zoom);
     ['blinky', 'pinky', 'inky', 'clyde'].forEach((name, i) => {
       const x = cx - 60 + i * 80;
-      this.add.image(x, cy - 100, 'ghost-0').setTint(COLORS.ghosts[name]);
-      this.add.image(x, cy - 100, 'eyes-left');
+      this.add.image(x, cy - 100, 'ghost-0').setTint(COLORS.ghosts[name]).setScale(PIXEL.zoom);
+      this.add.image(x, cy - 100, 'eyes-left').setScale(PIXEL.zoom);
     });
 
     const prompt = this.add.text(cx, cy + 120, 'TAP TO START', {

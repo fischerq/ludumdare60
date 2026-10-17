@@ -1,21 +1,25 @@
 // All tunable constants live here. Tweak these for "feel" changes.
 
 // Working title, still to be changed. Also update index.html <title> and making-of/meta.json.
-export const GAME_TITLE = 'mini-gurke';
+export const GAME_TITLE = 'Layers of Pac';
 
 export const GAME_WIDTH = 720;
 export const GAME_HEIGHT = 1280;
 
 export const COLORS = {
   background: 0x000000,
-  wall: 0x2a3cff,
+  // Arcade palette, close to the original's.
+  wall: 0x2121de,
   door: 0xffb8de,
   dot: 0xffb897,
-  pac: 0xffe600,
-  ghosts: { blinky: 0xff2020, pinky: 0xffb8ff, inky: 0x00ffff, clyde: 0xffb851 },
-  fright: 0x2121ff,
+  pac: 0xffff00,
+  ghosts: { blinky: 0xff0000, pinky: 0xffb8de, inky: 0x00ffde, clyde: 0xffb847 },
+  eyeWhite: 0xdedede,
+  pupil: 0x2121de,
+  fright: 0x2121de,
   frightFace: 0xffb897,
-  frightFlash: 0xffffff,
+  frightFlash: 0xdedede,
+  frightFlashFace: 0xff0000,
   text: '#ffffff',
   textDim: '#9aa4bf',
   textHud: '#ff2020',
@@ -64,19 +68,25 @@ export const MAZE = {
     '#.................#',
     '###################',
   ],
-  tile: 37,            // px per tile; 19 tiles = 703 px wide
-  top: 170,            // px from the top of the screen to the maze (room for the score)
+  top: 40,             // art px from the top of the screen to the maze (room for the score)
   pacStart: { x: 9, y: 17 },
   houseExit: { x: 9, y: 9 },   // tile just above the ghost door
   houseInside: { x: 9, y: 11 },
 };
 
+// The maze is drawn at arcade resolution: 8 art px per tile, like the original, scaled up with hard
+// pixel edges. 720 / 4 = 180 art px across, so the 19-tile maze (152 px) fits with a border.
+export const PIXEL = {
+  tile: 8,
+  zoom: 4,             // screen px per art px; keep it a whole number so every art pixel is the same size
+};
+
 // Speeds in tiles per second.
 export const SPEED = {
-  pac: 7.5,
-  ghost: 7,
-  ghostTunnel: 3.5,
-  ghostFright: 4,
+  pac: 6.5,
+  ghost: 6,
+  ghostTunnel: 3,
+  ghostFright: 3.5,
   ghostEyes: 15,
   ghostHouse: 3,       // leaving or entering the ghost house
 };
@@ -108,7 +118,13 @@ export const RULES = {
 };
 
 export const INPUT = {
-  swipeMin: 30,        // px of finger travel that counts as a swipe; you can keep swiping without lifting
+  swipeMin: 20,        // px of finger travel that counts as a swipe; you can keep swiping without lifting
+};
+
+// How forgiving turning is. Tune in the lab: /lab/bench.html?b=maze-controls
+export const CONTROL = {
+  turnWindow: 0.4,     // tiles before or after a junction where a sideways swipe still takes the turn
+  bufferTime: 0.8,     // s a swipe waits for a junction it fits; after that it's dropped
 };
 
 export const BEST_KEY = 'ld60.best'; // localStorage key for the high score

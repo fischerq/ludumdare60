@@ -66,7 +66,7 @@
    "seq": 29,
    "date": "2026-10-17",
    "time": "09:44",
-   "duration_s": 404,
+   "duration_s": 423,
    "prompt": "Defaults look good, except for layout (we should do full screen for a more pure experience, clearing the first level will change it).\nShould do a bit of sound right away.\n\nThe z80 assembly will probably be a layer we want, so yes should plan for the emulator.\n\nBuild the first version",
    "followups": [],
    "images": [],
@@ -74,35 +74,105 @@
     "media/5f301571-2-c1.jpg",
     "media/5f301571-2-c2.jpg"
    ],
-   "reply": "Usage: 5-hour 1%, weekly 17%. PR #11 is still open, so I'm pushing to it.",
+   "reply": "I built the first playable maze game and pushed it to the open PR #11: https://github.com/fischerq/ludumdare60/pull/11.\n\n**What's in it**\n- **Our own Pac-Man-style game, full screen:** a 19×25 maze with a tunnel that wraps around the sides, blue glowing walls and a pixel font. Clearing the maze shows a placeholder \"something is behind the glass\" screen where the first layer will go.\n- **Ghosts:** four of them, each with a simplified version of the original chase behaviour. They take turns chasing and retreating to their corners. Power pellets turn them blue (flashing near the end), and eaten ghosts float back to the house as eyes.\n- **Controls:** swipe anywhere to turn. A turn waits until it fits, reversing is instant, and you can keep swiping without lifting your finger. Arrow keys or WASD work on a laptop.\n- **Rest of the game:** 3 lives, score and high score.\n- **Sound:** generated in the browser, no audio files. There's a start jingle, the waka on dots, a power-pellet sound and a wobble while ghosts are blue, plus sounds for eating a ghost, dying and clearing the maze.\n- **Code shape:** the game rules have no Phaser in them (`src/systems/maze.js`), so lab benches and later layers can reuse them. All numbers and the maze layout are in `src/config.js`.\n\n**Checks:** a headless run of 30 games with random steering had no crashes, every dot is reachable and the maze has no dead ends. In a phone-sized browser the game ran with no errors and a swipe steered correctly. The design docs now record your decisions: full screen instead of a cabinet, sound from the start, and planning for the Z80 emulator.\n\n**Usage:** 5-hour window 1%, weekly 17%.\n\n**On the phone, check:**\n- Does swiping feel right, or does it turn too easily or too late? The swipe distance is one number in `src/config.js` (`INPUT.swipeMin`).\n- Is the game too fast or too hard?\n- Do you hear sound? If not, check the silent switch, since iOS mutes browser audio when it's on.",
    "progress_notes": [
     "Now writing the config, then the pure rules module.",
     "Rules work in a headless sim (no crashes, all dots reachable, no dead ends). Now sound, art and scenes.",
     "Menu, config key, main.js, index.html font:",
     "Only headless-WebGL noise, no game errors. The swipe steered up. Checking the screenshots:",
     "Looks right. Saving a screenshot for the making-of page, then docs.",
-    "Now the docs."
+    "Now the docs.",
+    "Usage: 5-hour 1%, weekly 17%. PR #11 is still open, so I'm pushing to it."
    ],
    "tools": {
     "Bash": 17,
     "Write": 5,
     "mcp__claude-code-remote__list_events": 2,
     "Read": 2,
-    "mcp__github__pull_request_read": 1
+    "mcp__github__pull_request_read": 1,
+    "mcp__github__update_pull_request": 1
    },
-   "api_requests": 21,
+   "api_requests": 23,
    "usage": {
     "claude-opus-5-5": {
-     "input": 42,
+     "input": 46,
      "cache_write_5m": 0,
-     "cache_write_1h": 53280,
-     "cache_read": 2347486,
-     "output": 39800,
+     "cache_write_1h": 54559,
+     "cache_read": 2619232,
+     "output": 41179,
      "thinking": 14720,
-     "cost_usd": 1.691905
+     "cost_usd": 1.784082
     }
    },
-   "cost_usd": 1.691905,
+   "cost_usd": 1.784082,
+   "commits": [
+    {
+     "sha": "f43fb136ee374da69ab5af02592d1faabfe50958",
+     "subject": "Arcade maze game: first playable version with swipe controls and sound"
+    },
+    {
+     "sha": "d98ab95d7449a934397a2c9a2d646f4b184db0c1",
+     "subject": "Merge pull request #11 from fischerq/claude/old-tech-pacman-game-eaui1a"
+    }
+   ],
+   "entrypoint": "remote_mobile",
+   "branch": "claude/old-tech-pacman-game-eaui1a",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.01,
+     "end": 0.01,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.17,
+     "end": 0.17,
+     "delta": 0.0
+    }
+   }
+  },
+  {
+   "index": 3,
+   "seq": 30,
+   "date": "2026-10-17",
+   "time": "10:13",
+   "duration_s": 518,
+   "prompt": "Its not reactive enough on turning using the swipe gestures. maybe too fast /too hard to tell when to turn. Tweak, make a lab for tuning the movement controls.\nAlso change the name, \"Layers of Pac\".\nWe should iterate the art style of the this initial level. We want to imitate the style of the original more, e.g. make it look pixelated on a similar resolution as the classic. \nWe might later add actual emulation of the real rendering, for now get a similar effect cheaply",
+   "followups": [],
+   "images": [],
+   "claude_images": [
+    "media/5f301571-3-c1.jpg",
+    "media/5f301571-3-c2.jpg"
+   ],
+   "reply": "Plausible numbers now. Committing and opening a new PR (the old one was merged).",
+   "progress_notes": [
+    "PR #11 was merged, so I'll restart the branch from the latest `main` (which includes it). First let me look at the lab bench API.",
+    "Now the pixel-art BootScene:",
+    "Now the GameScene, drawn at arcade resolution with a 4× camera:",
+    "The lab panels are max 340 px wide, so I'll use two variants (first build vs. current/editable) to keep live swiping usable on a phone.",
+    "The pixel look works, but the ghosts are missing in the game screenshot. Investigating:",
+    "Ghosts render fine; the earlier miss was a screenshot timing fluke. Next I'll update the docs and push.",
+    "PR #11 was merged outside Claude Code, so I'm adding it to the manual log as CLAUDE.md asks:",
+    "Bench counts were inflated because one long swipe fires several times. Fixing the counter:"
+   ],
+   "tools": {
+    "Bash": 25,
+    "Read": 5,
+    "mcp__claude-code-remote__list_events": 3,
+    "Write": 3
+   },
+   "api_requests": 31,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 62,
+     "cache_write_5m": 0,
+     "cache_write_1h": 68903,
+     "cache_read": 5736232,
+     "output": 42975,
+     "thinking": 17528,
+     "cost_usd": 2.558218
+    }
+   },
+   "cost_usd": 2.558218,
    "commits": [],
    "entrypoint": "remote_mobile",
    "branch": "claude/old-tech-pacman-game-eaui1a",
@@ -121,10 +191,16 @@
   }
  ],
  "totals": {
-  "prompts": 2,
-  "cost_usd": 2.203789,
-  "output_tokens": 46288,
-  "input_tokens": 2941951
+  "prompts": 3,
+  "cost_usd": 4.854184,
+  "output_tokens": 90642,
+  "input_tokens": 9020177
  },
- "reported_by_claude_code": null
+ "reported_by_claude_code": {
+  "total_usd": 2.3581685000000006,
+  "by_model": {
+   "claude-haiku-5-5": 0.000163,
+   "claude-opus-5-5": 2.358006
+  }
+ }
 }
