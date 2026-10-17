@@ -1,5 +1,5 @@
 {
-  "_readme": "Animation speed per character: how many game frames (at 60 per second) each animation frame is shown. Higher is slower. Tune in the lab (/lab/bench.html?b=animation), press Download, and save the file over this one.",
+  "_readme": "Animation speeds: how many game frames (at 60 per second) each animation frame is shown. Higher is slower. characters: walk/chomp and skirt wobble. effects: blinks, flashes and the death animation (blinks are on for one tick, off for one). Tune in the lab (/lab/bench.html?b=animation), press Download, and save the file over this one.",
   "fps": 60,
   "characters": {
     "pac": 2,
@@ -7,5 +7,14 @@
     "pinky": 10,
     "inky": 10,
     "clyde": 10
+  },
+  "effects": {
+    "pacDeath": 8,
+    "powerPellet": 12,
+    "frightFlash": 10,
+    "mazeClear": 12,
+    "coinBob": 20,
+    "insertCoin": 30,
+    "tapPrompt": 30
   }
 }

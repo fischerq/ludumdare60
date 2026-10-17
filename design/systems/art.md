@@ -96,7 +96,10 @@ Sprites (pac, ghosts, eyes) can be 32x32; tiles and pellets stay at tile resolut
   at start and again whenever the tab comes back (hot reload).
 - Pac only animates while moving (his clock is distance moved / his speed), ghosts animate all the time. The
   same numbers apply in the maze, the cabinet picture and the hall. Shared code: `src/systems/anim.js`.
-- Not yet: per-scene or per-state speeds (fright, eyes, dying), frame lists in the JSON.
+- Effects are tuned the same way (`effects` in the file): `pacDeath` (one-shot, 10 frames), `powerPellet`,
+  `frightFlash`, `mazeClear` (blinks: on one tick, off one), `coinBob` (hall coins), `insertCoin` (cabinet text
+  blinks) and `tapPrompt` (menu/game-over fade, one tick each way; read when the scene starts).
+- Not yet: per-scene speeds, frame lists in the JSON.
 
 ## Open questions
 - Does Max redraw the tileset too, or only the characters? *Default: characters first.*
@@ -120,3 +123,4 @@ Sprites (pac, ghosts, eyes) can be 32x32; tiles and pellets stay at tile resolut
 - 2026-10-17: Max edits the files in `assets/` in place (no `from-max/` folder); the game loads the art from
   `assets/`, and the export keeps every file he edited. (Quirin)
 - 2026-10-17: Animation speed is set per character in game frames per animation frame, in `src/settings/animation.json`, tuned and exported from the lab. (Quirin)
+- 2026-10-17: All animations are tunable like this: blinks, flashes, the death animation and the prompt fade under `effects` in the same file. (Quirin)

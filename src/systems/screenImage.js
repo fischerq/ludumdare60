@@ -4,7 +4,7 @@
 // `art(key)` returns the source canvas of a texture made in BootScene.
 
 import { CABINET, COLORS, MAZE, PIXEL, RULES, SPEED } from '../config.js';
-import { PAC_CYCLE, charFrame } from './anim.js';
+import { PAC_CYCLE, charFrame, fxOn, fxOnce } from './anim.js';
 import { DIRS } from './maze.js';
 
 const T = CABINET.screenTile;
@@ -52,7 +52,7 @@ export function drawScreen(ctx, g, art, time, lines = [], best = 0) {
     ctx.restore();
   };
 
-  const clearing = g.phase === 'clearing' && Math.floor(time * 5) % 2;
+  const clearing = g.phase === 'clearing' && !fxOn('mazeClear', time);
   const maze = clearing ? tint(art('maze'), COLORS.mazeFlash) : art('maze');
   ctx.drawImage(maze, ox, oy, maze.width * K, maze.height * K);
   const pellet = (src, x, y) => {
@@ -60,7 +60,7 @@ export function drawScreen(ctx, g, art, time, lines = [], best = 0) {
     ctx.drawImage(src, Math.round(x - s / 2), Math.round(y - s / 2), s, s);
   };
 
-  const blink = Math.floor(time * 5) % 2 === 0;
+  const blink = fxOn('powerPellet', time);
   g.pellets.forEach((row, y) => row.forEach((k, x) => {
     if (k === 1) pellet(art('dot'), cx(x), cy(y));
     else if (k === 2 && blink) pellet(art('power'), cx(x), cy(y));
@@ -68,15 +68,15 @@ export function drawScreen(ctx, g, art, time, lines = [], best = 0) {
 
   const p = g.pac;
   if (g.phase === 'dying') {
-    const k = 1 - Math.max(0, g.phaseTime) / RULES.dyingTime;
-    if (k < 0.85) sprite(art(`pac-die-${Math.min(9, Math.floor(k * 12))}`), cx(p.x), cy(p.y), ANGLE.up);
+    const f = fxOnce('pacDeath', RULES.dyingTime - Math.max(0, g.phaseTime), 10);
+    if (f >= 0) sprite(art(`pac-die-${f}`), cx(p.x), cy(p.y), ANGLE.up);
   } else {
     const frame = g.phase === 'ready' ? 0 : PAC_CYCLE[charFrame('pac', p.moved / SPEED.pac, PAC_CYCLE.length)];
     sprite(art(`pac-${frame}`), cx(p.x), cy(p.y), ANGLE[p.dir] ?? 0);
   }
 
   if (!['dying', 'clearing', 'cleared'].includes(g.phase)) {
-    const flashing = g.fright > 0 && g.fright < RULES.frightFlashTime && Math.floor(time * 6) % 2 === 0;
+    const flashing = g.fright > 0 && g.fright < RULES.frightFlashTime && !fxOn('frightFlash', time);
     for (const gh of g.ghosts) {
       const x = cx(gh.x), y = cy(gh.y);
       const skirt = charFrame(gh.name, time, 2);

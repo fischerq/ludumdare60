@@ -1,7 +1,7 @@
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, HALL, PIXEL, UI } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, HALL, PIXEL, UI, ANIM } from '../config.js';
 import { createHall, stepHall, facing, pacPos, actorPos, startChase, endChase, stepGhosts } from '../systems/hall.js';
 import { tileKey } from '../systems/tiles.js';
-import { PAC_CYCLE, charFrame } from '../systems/anim.js';
+import { PAC_CYCLE, charFrame, animFrame } from '../systems/anim.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 
@@ -267,7 +267,7 @@ export default class HallScene extends Phaser.Scene {
     });
     for (const [k, s] of this.coinSprites) {
       const y = Number(k.split(',')[1]);
-      if (s.active) s.y = this.sy(y) + (Math.floor(this.t * 3 + y) % 2);
+      if (s.active) s.y = this.sy(y) + animFrame(this.t + y * ANIM.effects.coinBob / ANIM.fps, ANIM.effects.coinBob, 2);
     }
     this.coinText.setText(`COINS ${this.h.got}/${HALL.coinsNeeded}`);
     this.updateCamera();
