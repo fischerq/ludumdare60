@@ -1,11 +1,15 @@
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY, LAYERS } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY, SPEED, CHEATS } from '../config.js';
+import { PAC_CYCLE, charFrame, fxOn, fxOnce } from '../systems/anim.js';
 import { createGame, stepGame, steer, DIRS } from '../systems/maze.js';
 import { createSwipe, swipeInput } from '../systems/swipe.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
+import { showCallout } from '../callout.js';
+import { progress } from '../progress.js';
 
 const T = PIXEL.tile;
-const ANGLE = { right: 0, down: 90, left: 180, up: 270 };
+// Pac-Man's art faces right: left is a mirror image, up and down are turned.
+const ANGLE = { right: 0, down: 90, left: 0, up: 270 };
 const KEYS = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
   KeyA: 'left', KeyD: 'right', KeyW: 'up', KeyS: 'down',
@@ -26,16 +30,15 @@ export default class GameScene extends Phaser.Scene {
     this.ox = Math.floor((this.viewW - this.g.maze.w * T) / 2);
     this.oy = MAZE.top;
     this.leaving = false;
+    this.ended = false;
+    this.upBtn = this.downBtn = this.soon = null;
     this.cameras.main.setOrigin(0, 0).setZoom(PIXEL.zoom).setRoundPixels(true);
 
     this.mazeImage = this.add.image(this.ox, this.oy, 'maze').setOrigin(0);
     this.makePellets();
 
-    this.pac = this.sprite(0, 0, 'pac-0');
-    this.ghostSprites = this.g.ghosts.map((gh) => ({
-      body: this.sprite(0, 0, 'ghost-0').setTint(COLORS.ghosts[gh.name]),
-      eyes: this.sprite(0, 0, 'eyes-left'),
-    }));
+    this.pac = this.sprite(0, 0, 'maze/pac-0');
+    this.ghostSprites = this.g.ghosts.map(() => this.sprite(0, 0, 'maze/eyes-left'));
     // Black side borders hide actors while they pass through the tunnel, like the arcade screen.
     const mazeW = this.g.maze.w * T;
     this.add.rectangle(0, 0, this.ox, this.viewH, COLORS.background).setOrigin(0);
@@ -65,11 +68,10 @@ export default class GameScene extends Phaser.Scene {
   makePellets() {
     this.pelletSprites = this.g.pellets.map((row, y) => row.map((kind, x) => {
       if (!kind) return null;
-      return this.add.image(this.sx(x), this.sy(y), kind === 1 ? 'dot' : 'power');
+      return this.add.image(this.sx(x), this.sy(y), kind === 1 ? 'maze/dot' : 'maze/power');
     }));
-    // Power pellets blink on and off, no fading.
-    const power = this.pelletSprites.flat().filter((s) => s && s.texture.key === 'power');
-    this.time.addEvent({ delay: 200, loop: true, callback: () => power.forEach((s) => s.active && s.setVisible(!s.visible)) });
+    // Power pellets blink on and off, no fading (in render).
+    this.powerSprites = this.pelletSprites.flat().filter((s) => s && s.texture.key === 'maze/power');
   }
 
   makeHud() {
@@ -85,15 +87,15 @@ export default class GameScene extends Phaser.Scene {
     this.readyText = this.text(this.sx(MAZE.houseExit.x), this.oy + 13 * T + 2, 'READY!', COLORS.textReady)
       .setOrigin(0.5, 0);
     this.hint = this.text(this.viewW / 2, mazeBottom + 88, 'SWIPE TO TURN', COLORS.textDim).setOrigin(0.5, 0);
-    // Up one layer: zoom out to the cabinet.
-    if (LAYERS.unlocked) {
-      addLayerButton(this, this.viewW - 32 - 112, mazeBottom + 8, 'LAYER\nUP', () => {
-        if (!this.leaving) { this.leaving = true; this.scene.start('Cabinet'); }
-      }, 2);
+    this.mazeBottom = mazeBottom;
+    this.addLayerButtons();
+    if (CHEATS.enabled) {
+      addLayerButton(this, 32, this.viewH - 38, 'CHEAT\nWIN', () => this.cheat(true));
+      addLayerButton(this, 32 + 64, this.viewH - 38, 'CHEAT\nLOSE', () => this.cheat(false));
     }
     this.lifeIcons = [];
     for (let i = 0; i < RULES.lives - 1; i++) {
-      this.lifeIcons.push(this.sprite(this.ox + 24 + i * 32, mazeBottom + 24, 'pac-2').setAngle(180));
+      this.lifeIcons.push(this.sprite(this.ox + 24 + i * 32, mazeBottom + 24, 'maze/life'));
     }
   }
 
@@ -167,13 +169,54 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  finish(cleared) {
+  // The layer buttons the player has unlocked so far (they appear as soon as a layer unlocks).
+  addLayerButtons() {
+    const y = this.mazeBottom + 8, upX = this.viewW - 24 - 112;
+    if (progress.cabinet && !this.upBtn) {
+      // Up one layer: zoom out to the cabinet.
+      this.upBtn = addLayerButton(this, upX, y, 'LAYER\nUP', () => this.leave('Cabinet'), 2);
+    }
+    if (progress.deeper && !this.downBtn) {
+      // Down one layer: into the screen. Not built yet.
+      this.downBtn = addLayerButton(this, upX - 116, y, 'LAYER\nDOWN', () => {
+        if (this.soon) return;
+        this.soon = showCallout(this, this.viewW / 2, this.oy + 6 * T, 'INSIDE THE SCREEN:\nCOMING SOON');
+        this.time.delayedCall(1500, () => { this.soon.destroy(); this.soon = null; });
+      }, 2);
+    }
+  }
+
+  leave(scene) {
     if (this.leaving) return;
     this.leaving = true;
-    // Clearing the maze zooms out to the next layer, the cabinet; losing ends the run.
-    this.time.delayedCall(cleared ? 300 : 1200, () => {
-      if (cleared) this.saveBest();
-      this.scene.start(cleared ? 'Cabinet' : 'GameOver', { score: this.g.score, cleared });
+    this.scene.start(scene);
+  }
+
+  // Cheat buttons: end the round as if the maze was cleared or the last life lost.
+  cheat(won) {
+    if (this.ended) return;
+    sfx.frightOff();
+    this.g.phase = won ? 'cleared' : 'over';
+    this.finish(won);
+  }
+
+  // The round is over. The outer game loop: the first win unlocks the layer below, the first loss the cabinet
+  // above ("insert coin"). Either way the player stays on the maze; tap to play again.
+  finish(cleared) {
+    if (this.ended) return;
+    this.ended = true;
+    this.saveBest();
+    let text = cleared ? 'MAZE CLEAR!' : 'GAME OVER';
+    if (cleared && !progress.deeper) { progress.deeper = true; text += '\n\nWANT TO GO\nDEEPER?'; }
+    if (!cleared && !progress.cabinet) { progress.cabinet = true; text += '\n\nINSERT COIN'; }
+    this.addLayerButtons();
+    showCallout(this, this.viewW / 2, this.oy + 12 * T, `${text}\n\nTAP TO PLAY AGAIN`);
+    // Short delay so the swipe that ended the round doesn't restart it at once.
+    this.time.delayedCall(600, () => {
+      this.input.on('pointerdown', (p, over) => { if (!over.length && !this.leaving) this.scene.restart(); });
+      const again = () => { if (!this.leaving) this.scene.restart(); };
+      this.input.keyboard?.once('keydown-SPACE', again);
+      this.input.keyboard?.once('keydown-ENTER', again);
     });
   }
 
@@ -189,34 +232,33 @@ export default class GameScene extends Phaser.Scene {
     this.scoreText.setText(String(g.score || '00'));
     if (g.score > this.best) this.bestText.setText(String(g.score));
     this.readyText.setVisible(g.phase === 'ready');
+    const pelletOn = fxOn('powerPellet', time);
+    this.powerSprites.forEach((s) => s.active && s.setVisible(pelletOn));
     this.lifeIcons.forEach((icon, i) => icon.setVisible(i < g.lives - 1));
 
     this.pac.setPosition(this.sx(p.x), this.sy(p.y));
     if (g.phase === 'dying') {
-      const k = 1 - Math.max(0, g.phaseTime) / RULES.dyingTime;
-      this.pac.setTexture(`pac-die-${Math.min(9, Math.floor(k * 12))}`).setVisible(k < 0.85).setAngle(270);
+      const f = fxOnce('pacDeath', RULES.dyingTime - Math.max(0, g.phaseTime), 10);
+      this.pac.setTexture(`maze/pac-die-${Math.max(0, f)}`).setVisible(f >= 0).setAngle(0).setFlipX(false);
     } else {
-      const cycle = [0, 1, 2, 3, 2, 1];
-      const frame = g.phase === 'ready' ? 0 : cycle[Math.floor(p.moved * 4) % cycle.length];
-      this.pac.setTexture(`pac-${frame}`).setVisible(true).setAngle(ANGLE[p.dir] ?? 0);
+      // Pac only animates while moving: tiles moved / speed = seconds of movement.
+      const frame = g.phase === 'ready' ? 0 : PAC_CYCLE[charFrame('pac', p.moved / SPEED.pac, PAC_CYCLE.length)];
+      this.pac.setTexture(`maze/pac-${frame}`).setVisible(true).setAngle(ANGLE[p.dir] ?? 0).setFlipX(p.dir === 'left');
     }
 
-    const skirt = Math.floor(time * 6) % 2;
-    const flashing = g.fright > 0 && g.fright < RULES.frightFlashTime && Math.floor(time * 6) % 2 === 0;
+    const flashing = g.fright > 0 && g.fright < RULES.frightFlashTime && !fxOn('frightFlash', time);
     const hideGhosts = g.phase === 'dying' || g.phase === 'clearing' || g.phase === 'cleared';
     g.ghosts.forEach((gh, i) => {
-      const { body, eyes } = this.ghostSprites[i];
-      const x = this.sx(gh.x), y = this.sy(gh.y);
-      const eyesOnly = gh.state === 'eyes' || gh.state === 'enter';
-      body.setPosition(x, y).setVisible(!hideGhosts && !eyesOnly);
-      eyes.setPosition(x, y).setVisible(!hideGhosts && !gh.frightened)
-        .setTexture(`eyes-${DIRS[gh.dir] ? gh.dir : 'left'}`);
-      if (gh.frightened) body.setTexture(`ghost-${flashing ? 'flash' : 'fright'}-${skirt}`).clearTint();
-      else body.setTexture(`ghost-${skirt}`).setTint(COLORS.ghosts[gh.name]);
+      const dir = DIRS[gh.dir] ? gh.dir : 'left';
+      const skirt = charFrame(gh.name, time, 2);
+      this.ghostSprites[i].setPosition(this.sx(gh.x), this.sy(gh.y)).setVisible(!hideGhosts).setTexture(
+        gh.state === 'eyes' || gh.state === 'enter' ? `maze/eyes-${dir}`
+          : gh.frightened ? `maze/ghost-${flashing ? 'flash' : 'fright'}-${skirt}`
+            : `maze/ghost-${gh.name}-${dir}-${skirt}`);
     });
 
     if (g.phase === 'clearing') {
-      if (Math.floor(time * 5) % 2) this.mazeImage.setTintFill(COLORS.mazeFlash); else this.mazeImage.clearTint();
+      if (!fxOn('mazeClear', time)) this.mazeImage.setTintFill(COLORS.mazeFlash); else this.mazeImage.clearTint();
     }
   }
 }

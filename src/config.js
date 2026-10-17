@@ -76,8 +76,8 @@ export const MAZE = {
 };
 
 // The game world is in tile pixels: 16 per tile, scaled up with hard pixel edges. 720 / 2 = 360 world px
-// across, so the 19-tile maze (304 px) fits with a border. Sprites are shown in a box of 2x2 tiles whatever
-// their native size (today's art is 16x16, Max's will be 32x32), like the original's 16 px sprites on 8 px tiles.
+// across, so the 19-tile maze (304 px) fits with a border. Sprites are 32x32 and shown in a box of 2x2 tiles
+// whatever their native size, like the original's 16 px sprites on 8 px tiles.
 export const PIXEL = {
   tile: 16,
   zoom: 2,             // screen px per world px; keep it a whole number so every tile pixel is the same size
@@ -154,17 +154,32 @@ export const CABINET = {
   glare: 0.07,
   introTime: 2.5,        // s of zooming out from the maze level
   stickDeadzone: 24,     // screen px the finger must move from where it touched before the stick clicks over
+  promptColor: '#ff3cf0', // the "tap the coin door" call to action and the blinking frame around the door
+  promptBox: 0x000000,
+  counterColor: '#ffd23f', // the coin counter at the top
 };
 
-// Moving between layers with the layer button. For now every layer is open from the start; later a layer
-// unlocks when you clear the one before it.
+// Coins Pac-Man holds, shared by every layer (src/wallet.js): found in the arcade hall, one per game in the cabinet.
+export const COINS = {
+  start: 1,              // coins held when the page loads
+  perGame: 1,            // coins one game in the cabinet costs
+  flyTime: 0.6,          // s the coin takes from the counter into the cabinet's coin slot
+  startDelay: 0.5,       // s from the coin dropping in to the game starting
+};
+
+// Moving between layers with the layer buttons. Layers unlock through the outer game loop (src/progress.js).
 export const LAYERS = {
-  unlocked: true,
   outroTime: 1.2,        // s of zooming back in from the cabinet to the maze level
 };
 
+// Cheat buttons at the bottom of the maze and cabinet layers that fire the win/lose events, for testing the
+// unlocks. Turn off for the release.
+export const CHEATS = {
+  enabled: true,
+};
+
 // Layer 3: the arcade hall (zoom out further). A small, cozy room seen top-down like a Pokémon game: Pac-Man
-// walks one tile per step. 16 px tiles shown at 4x, sprites at one tile; the room fits one screen.
+// walks one tile per step. 16 px tiles shown at 4x, characters 32x32 art shown one tile big; the room fits one screen.
 // # wall (dark trim), back wall row: | wallpaper, ^ window, * Pac-Man poster, + ghost poster, @ clock.
 // . floor, ~ rug, o coin, S start (in front of our cabinet), 1-4 ghost visitors (blinky, pinky, inky, clyde).
 // 1x2-tile machines, upper-case on top, lower-case below: cabinets R red, B blue, G green, V violet, Y yellow
@@ -189,7 +204,7 @@ export const HALL = {
   ],
   zoom: 4,               // screen px per art px in the hall (the other layers use 2): cozier, bigger characters
   walkSpeed: 4,          // tiles per second
-  coinsNeeded: 3,        // coins to play our cabinet (there are 5 on the floor)
+  charSize: 16,          // art px a character is shown at: one tile (the 32x32 art is scaled down)
   dragDeadzone: 24,      // screen px a finger moves before it counts as walking, not a tap
   tapTime: 350,          // ms; a touch shorter than this that didn't move is a tap (talk / use)
   introZoom: 24,         // camera zoom at the start of the zoom-out from the cabinet (the small cabinet fills the view)
@@ -201,6 +216,7 @@ export const HALL = {
     rug: 0xb83a3a, rugBorder: 0xf2c94c, rugDark: 0x8a2a2a,
     counter: 0x7a4a2a, counterTop: 0xc89058, change: 0x8a8a96, door: 0x6a4020, mat: 0x5a7a3a,
     plantPot: 0xb0603a, leaf: 0x3a9a48, leafLight: 0x6ac860, coin: 0xffd23f, cap: 0x2040c0, sky: 0x8ad0ff,
+    shoe: 0xc03020, pacFace: 0x3a2a10, // Pac-Man's shoes and face in the hall
     cabinets: { r: 0xd03030, b: 0x3060d0, g: 0x30a050, v: 0x8040c0, y: 0xf2c200 },
   },
   ghosts: { 1: 'blinky', 2: 'pinky', 3: 'inky', 4: 'clyde' },
@@ -278,3 +294,45 @@ export const ARCADE = {
   framesKept: 8,        // frames the recorder can replay
   maxFramesPerTick: 4,  // after a hitch, catch up at most this many frames at once
 };
+
+// Animation speeds (characters and effects), in game frames per animation frame. Lives in a JSON file so the lab can
+// export it: tune at /lab/bench.html?b=animation, download, save over src/settings/animation.json.
+// These defaults are only used if the file can't be loaded.
+const ANIM_FALLBACK = {
+  fps: 60,
+  characters: { pac: 2, blinky: 10, pinky: 10, inky: 10, clyde: 10 },
+  effects: { pacDeath: 8, powerPellet: 12, frightFlash: 10, mazeClear: 12, coinBob: 20, insertCoin: 30, tapPrompt: 30 },
+};
+const ANIM_URL = new URL('./settings/animation.json', import.meta.url);
+
+// A broken file (e.g. a trailing comma) is reported in the console instead of silently using the defaults.
+let animWarned = '';
+const animWarn = (msg) => { if (msg !== animWarned) console.warn(msg); animWarned = msg; };
+async function fetchAnim() {
+  let res;
+  try { res = await fetch(ANIM_URL, { cache: 'no-store' }); } catch (e) { return null; } // offline or file://
+  if (!res.ok) { animWarn(`animation.json: HTTP ${res.status}, ignoring it`); return null; }
+  try { const f = JSON.parse(await res.text()); animWarned = ''; return f; } catch (e) {
+    animWarn(`animation.json is not valid JSON (${e.message}), ignoring it`);
+    return null;
+  }
+}
+
+const animFile = await fetchAnim();
+export const ANIM = {
+  fps: animFile?.fps ?? ANIM_FALLBACK.fps,
+  characters: { ...ANIM_FALLBACK.characters, ...animFile?.characters },
+  effects: { ...ANIM_FALLBACK.effects, ...animFile?.effects },
+};
+console.info(animFile ? 'animation.json loaded' : 'animation.json not loaded, using the defaults', ANIM);
+
+// Hot reload: fetch the file again and swap the numbers in place (the game calls this when the tab comes back).
+export async function reloadAnim() {
+  const f = await fetchAnim();
+  if (!f) return;
+  const before = JSON.stringify(ANIM);
+  if (f.fps) ANIM.fps = f.fps;
+  Object.assign(ANIM.characters, f.characters);
+  Object.assign(ANIM.effects, f.effects);
+  if (JSON.stringify(ANIM) !== before) console.info('animation.json reloaded', ANIM);
+}

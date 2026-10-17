@@ -1,5 +1,6 @@
 import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, PIXEL, UI } from '../config.js';
 import { unlockAudio } from '../sound.js';
+import { fxSeconds } from '../systems/anim.js';
 
 export default class MenuScene extends Phaser.Scene {
   constructor() {
@@ -17,18 +18,14 @@ export default class MenuScene extends Phaser.Scene {
     // The cast, arcade attract-screen style.
     const sprite = (x, key) => this.add.image(x, cy - 100, key)
       .setScale(PIXEL.sprite * PIXEL.zoom / this.textures.get(key).getSourceImage().width);
-    sprite(cx - 180, 'pac-2');
-    ['blinky', 'pinky', 'inky', 'clyde'].forEach((name, i) => {
-      const x = cx - 60 + i * 80;
-      sprite(x, 'ghost-0').setTint(COLORS.ghosts[name]);
-      sprite(x, 'eyes-left');
-    });
+    sprite(cx - 180, 'maze/pac-2');
+    Object.keys(COLORS.ghosts).forEach((name, i) => sprite(cx - 60 + i * 80, `maze/ghost-${name}-left-0`));
 
     const prompt = this.add.text(cx, cy + 120, 'TAP TO START', {
       fontFamily: UI.arcadeFont, fontSize: 36, color: COLORS.text,
     }).setOrigin(0.5);
 
-    this.tweens.add({ targets: prompt, alpha: 0.2, duration: 500, yoyo: true, repeat: -1 });
+    this.tweens.add({ targets: prompt, alpha: 0.2, duration: fxSeconds('tapPrompt') * 1000, yoyo: true, repeat: -1 });
 
     this.add.text(cx, GAME_HEIGHT - 260, 'SWIPE TO TURN\nEAT ALL THE DOTS', {
       fontFamily: UI.arcadeFont, fontSize: 24, color: COLORS.textDim, align: 'center',

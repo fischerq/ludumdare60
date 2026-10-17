@@ -3,29 +3,11 @@ import { mazeTiles, tileKey } from '../systems/tiles.js';
 
 const hex = (c) => `#${c.toString(16).padStart(6, '0')}`;
 
-// Ghost body, 14x14 inside a 16x16 sprite: 11 shared rows plus 3 skirt rows per animation frame.
-const GHOST_TOP = [
-  '.....####.....',
-  '...########...',
-  '..##########..',
-  '.############.',
-  '.############.',
-  '.############.',
-  '##############',
-  '##############',
-  '##############',
-  '##############',
-  '##############',
-];
-const GHOST_SKIRT = [
-  ['##############', '##.###..###.##', '#...##..##...#'],
-  ['##############', '####.####.####', '.##...##...##.'],
-];
-const FRIGHT_FACE = [
-  '..............', '..............', '..............', '..............', '..............',
-  '....##..##....', '....##..##....', '..............', '..............',
-  '..##..##..##..', '.#..##..##..#.',
-];
+// Every character sprite is 32x32, one file per state, so Max can redraw any of them on its own.
+const S = 32;
+const DIRS4 = ['left', 'right', 'up', 'down'];
+const LOOK = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
+const EYE_WHITE = ['.####.', '######', '######', '######', '######', '######', '######', '.####.'];
 
 // Loads the art from assets/ (one PNG per texture key, listed in assets/export.json) and draws a code
 // placeholder, pixel by pixel at native size, for any key whose file is missing: 16x16 sprites, the 'maze'
@@ -56,6 +38,7 @@ export default class BootScene extends Phaser.Scene {
     this.makeCabinet();
     this.makeSticks();
     this.makeHall();
+    this.makeHallCharacters();
     // Wait for the arcade font so text doesn't render in the fallback first (give up after 2 s).
     const font = document.fonts?.load(`8px ${UI.arcadeFont}`) ?? Promise.resolve();
     const timeout = new Promise((r) => setTimeout(r, 2000));
@@ -107,8 +90,8 @@ export default class BootScene extends Phaser.Scene {
     }
   }
 
-  // The arcade hall (layer 3), a cozy top-down room: tileset assets/arcade/ (16x16 each), plus the coin and the
-  // cap the ghost visitors wear. 1x2 machines are two tiles, top and bottom.
+  // The arcade hall (layer 3), a cozy top-down room: tileset assets/arcade/ (16x16 each), plus the coin.
+  // 1x2 machines are two tiles, top and bottom.
   makeHall() {
     const T = PIXEL.tile, K = HALL.colors;
     const rect = (set, x, y, w, h, c) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) set(i, j, c); };
@@ -244,65 +227,126 @@ export default class BootScene extends Phaser.Scene {
         shadow(set);
       });
     }
-    this.pixels('coin', 10, 10, (set) => {
+    this.pixels('arcade/coin', 10, 10, (set) => {
       this.disc(set, 10, 4.6, 0xa07010);
       this.disc(set, 10, 3.6, K.coin);
       set(4, 3, 0xffffff); set(3, 4, 0xffffff);
-    });
-    // A cap for the ghost visitors, drawn over the (tinted) ghost body, 16x16 like the ghost.
-    this.pixels('visitor-cap', 16, 16, (set) => {
-      rect(set, 4, 0, 8, 1, K.cap);
-      rect(set, 3, 1, 10, 3, K.cap);
-      rect(set, 8, 3, 7, 1, K.cap);
-      set(7, 1, 0xffffff);
     });
   }
 
   // Pellets at tile resolution: a 4x4 dot, a 16x16 power pellet.
   makePellets() {
-    this.pixels('dot', 4, 4, (set) => this.disc(set, 4, 2.1, COLORS.dot));
-    this.pixels('power', 16, 16, (set) => this.disc(set, 16, 7.6, COLORS.dot));
+    this.pixels('maze/dot', 4, 4, (set) => this.disc(set, 4, 2.1, COLORS.dot));
+    this.pixels('maze/power', 16, 16, (set) => this.disc(set, 16, 7.6, COLORS.dot));
   }
 
-  // Chomper facing right, 16x16: pac-0 (closed) .. pac-3 (wide open), death frames pac-die-0..9.
+  // Lit where pixel (x, y) of an S x S sprite is inside a circle of radius r around (cx, cy), outside the mouth: a
+  // wedge of half-angle `mouth` around the direction `facing` (radians, 0 = right, -PI/2 = up).
+  chomper(set, color, r, mouth, facing = 0, cx = 16, cy = 16) {
+    for (let y = 0; y < S; y++) {
+      for (let x = 0; x < S; x++) {
+        const dx = x + 0.5 - cx, dy = y + 0.5 - cy;
+        if (dx * dx + dy * dy > r * r) continue;
+        const a = Math.atan2(dy, dx) - facing;
+        if (mouth > 0 && Math.abs(Math.atan2(Math.sin(a), Math.cos(a))) < mouth) continue;
+        set(x, y, color);
+      }
+    }
+  }
+
+  // The maze level's Pac-Man: maze/pac-0 (closed) .. pac-3 (wide open) facing right (the game flips it for left
+  // and turns it for up and down), maze/pac-die-0..9 facing up, maze/life (a spare life, facing left).
   makePac() {
-    const frame = (key, mouth) => this.pixels(key, 16, 16, (set) => {
-      for (let y = 0; y < 16; y++) {
-        for (let x = 0; x < 16; x++) {
-          const dx = x + 0.5 - 8, dy = y + 0.5 - 8;
-          if (dx * dx + dy * dy > 6.6 * 6.6) continue;
-          if (mouth > 0 && Math.abs(Math.atan2(dy, dx)) < mouth) continue;
-          set(x, y, COLORS.pac);
+    [0, 0.3, 0.6, 0.9].forEach((m, i) => this.pixels(`maze/pac-${i}`, S, S, (set) => this.chomper(set, COLORS.pac, 13.2, m)));
+    for (let i = 0; i < 10; i++) {
+      this.pixels(`maze/pac-die-${i}`, S, S, (set) => this.chomper(set, COLORS.pac, 13.2, 0.3 + (i / 9) * (Math.PI - 0.3), -Math.PI / 2));
+    }
+    this.pixels('maze/life', S, S, (set) => this.chomper(set, COLORS.pac, 13.2, 0.6, Math.PI));
+  }
+
+  // Ghost body: a dome, straight sides and four skirt teeth that shift half a tooth in frame 1.
+  ghostBody(set, color, f) {
+    for (let y = 2; y < 31; y++) {
+      for (let x = 2; x < 30; x++) {
+        const dx = x + 0.5 - 16, dy = y + 0.5 - 15;
+        if (y < 15 && dx * dx + dy * dy > 14 * 14) continue;
+        if (y >= 27 && y - 26 > 4 - Math.abs(((x - 2 + 0.5 + f * 3.5) % 7) - 3.5)) continue;
+        set(x, y, color);
+      }
+    }
+  }
+
+  // Eyes looking `dir`: the whites shift two pixels that way, the pupils sit at that edge.
+  ghostEyes(set, dir) {
+    const [dx, dy] = LOOK[dir];
+    for (const ex of [8, 18]) {
+      const x0 = ex + dx * 2, y0 = 9 + dy * 2;
+      this.bitmap(set, EYE_WHITE, COLORS.eyeWhite, x0, y0);
+      this.bitmap(set, ['####', '####', '####', '####'], COLORS.pupil, x0 + 1 + dx, y0 + 2 + dy * 2);
+    }
+  }
+
+  // The maze level's ghosts, one sprite per state: maze/ghost-<name>-<dir>-<frame> (body and eyes),
+  // maze/ghost-fright-<frame>, maze/ghost-flash-<frame> (shared by all four), maze/eyes-<dir> (eaten, eyes only).
+  makeGhosts() {
+    const frightened = (set, f, body, face) => {
+      this.ghostBody(set, body, f);
+      for (const ex of [10, 18]) this.bitmap(set, ['####', '####', '####', '####'], face, ex, 11);
+      for (let x = 6; x < 26; x++) { const z = Math.floor((x - 6) / 3) % 2 * 2; set(x, 19 + z, face); set(x, 20 + z, face); }
+    };
+    [0, 1].forEach((f) => {
+      for (const [name, color] of Object.entries(COLORS.ghosts)) {
+        for (const dir of DIRS4) {
+          this.pixels(`maze/ghost-${name}-${dir}-${f}`, S, S, (set) => { this.ghostBody(set, color, f); this.ghostEyes(set, dir); });
+        }
+      }
+      this.pixels(`maze/ghost-fright-${f}`, S, S, (set) => frightened(set, f, COLORS.fright, COLORS.frightFace));
+      this.pixels(`maze/ghost-flash-${f}`, S, S, (set) => frightened(set, f, COLORS.frightFlash, COLORS.frightFlashFace));
+    });
+    for (const dir of DIRS4) this.pixels(`maze/eyes-${dir}`, S, S, (set) => this.ghostEyes(set, dir));
+  }
+
+  // The arcade hall's characters, top-down, feet at the bottom of the 32x32 sprite, two walk frames each:
+  // arcade/pac-<right|up|down>-<frame> (the game flips right for left) and arcade/ghost-<name>-<dir>-<frame>, the
+  // ghost visitors with their cap on (seen from behind when walking up).
+  makeHallCharacters() {
+    const K = HALL.colors;
+    const rect = (set, x, y, w, h, c) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) set(i, j, c); };
+    const feet = (set, f) => { rect(set, 10, f ? 27 : 28, 5, 3, K.shoe); rect(set, 17, f ? 28 : 27, 5, 3, K.shoe); };
+    const pac = {
+      right: (set, f) => { feet(set, f); this.chomper(set, COLORS.pac, 12.5, f ? 0.6 : 0.2, 0, 16, 15); rect(set, 17, 7, 2, 3, K.pacFace); },
+      up: (set, f) => { feet(set, f); this.chomper(set, COLORS.pac, 12.5, 0, 0, 16, 15); },
+      down: (set, f) => {
+        feet(set, f);
+        this.chomper(set, COLORS.pac, 12.5, 0, 0, 16, 15);
+        rect(set, 11, 10, 2, 4, K.pacFace); rect(set, 19, 10, 2, 4, K.pacFace);
+        rect(set, 12, 19, 8, 1, K.pacFace); rect(set, 11, 18, 1, 1, K.pacFace); rect(set, 20, 18, 1, 1, K.pacFace);
+        if (f) rect(set, 13, 20, 6, 2, K.pacFace);
+      },
+    };
+    const brim = { right: [22, 6, 9, 2], left: [1, 6, 9, 2], down: [6, 7, 20, 2] };
+    const cap = (set, dir) => {
+      for (let y = 1; y < 7; y++) {
+        for (let x = 0; x < S; x++) {
+          const dx = x + 0.5 - 16, dy = y + 0.5 - 15;
+          if (dx * dx + dy * dy <= 14.5 * 14.5) set(x, y, K.cap);
+        }
+      }
+      if (brim[dir]) rect(set, ...brim[dir], K.cap);
+      rect(set, 15, 1, 2, 1, 0xffffff);
+    };
+    [0, 1].forEach((f) => {
+      for (const [dir, draw] of Object.entries(pac)) this.pixels(`arcade/pac-${dir}-${f}`, S, S, (set) => draw(set, f));
+      for (const [name, color] of Object.entries(COLORS.ghosts)) {
+        for (const dir of DIRS4) {
+          this.pixels(`arcade/ghost-${name}-${dir}-${f}`, S, S, (set) => {
+            this.ghostBody(set, color, f);
+            if (dir !== 'up') this.ghostEyes(set, dir);
+            cap(set, dir);
+          });
         }
       }
     });
-    [0, 0.3, 0.6, 0.9].forEach((m, i) => frame(`pac-${i}`, m));
-    for (let i = 0; i < 10; i++) frame(`pac-die-${i}`, 0.3 + (i / 9) * (Math.PI - 0.3));
-  }
-
-  makeGhosts() {
-    const body = (set, color, f) => this.bitmap(set, [...GHOST_TOP, ...GHOST_SKIRT[f]], color, 1, 1);
-    [0, 1].forEach((f) => {
-      this.pixels(`ghost-${f}`, 16, 16, (set) => body(set, 0xffffff, f));
-      this.pixels(`ghost-fright-${f}`, 16, 16, (set) => {
-        body(set, COLORS.fright, f); this.bitmap(set, FRIGHT_FACE, COLORS.frightFace, 1, 1);
-      });
-      this.pixels(`ghost-flash-${f}`, 16, 16, (set) => {
-        body(set, COLORS.frightFlash, f); this.bitmap(set, FRIGHT_FACE, COLORS.frightFlashFace, 1, 1);
-      });
-    });
-    // Eyes look where the ghost is going: whites shift one pixel, pupils sit at that edge.
-    const white = ['.##.', '####', '####', '####', '.##.'];
-    const look = { left: [-1, 0, 0, 2], right: [1, 0, 2, 2], up: [0, -1, 1, 0], down: [0, 1, 1, 3] };
-    for (const [dir, [dx, dy, px, py]] of Object.entries(look)) {
-      this.pixels(`eyes-${dir}`, 16, 16, (set) => {
-        for (const ex of [3, 9]) {
-          const x0 = ex + dx, y0 = 4 + dy;
-          this.bitmap(set, white, COLORS.eyeWhite, x0, y0);
-          this.bitmap(set, ['##', '##'], COLORS.pupil, x0 + px, y0 + py);
-        }
-      });
-    }
   }
 
   // The cabinet in an oblique view: the front is drawn flat, depth goes up and right at 45°, so the right side
@@ -313,7 +357,7 @@ export default class BootScene extends Phaser.Scene {
     // A point on a front-facing plane at depth d.
     const P = (x, y, d) => [x + d / 2, y - d / 2];
     const L = C.left, R = C.right, D = C.depth, pd = C.panelDepth, md = C.marqueeDepth;
-    this.pixels('cabinet', W, H, (set) => {
+    this.pixels('cabinet/machine', W, H, (set) => {
       // The floor is drawn by the scene, so this texture is only the machine (and its shadow) on transparent.
       // Shadow on the floor behind the cabinet.
       this.poly(set, [P(L, C.ground, 0), P(R + 10, C.ground, 0), P(R + 10, C.ground, D + 12), P(L, C.ground, D + 12)], 0x0e0a10);
@@ -352,7 +396,7 @@ export default class BootScene extends Phaser.Scene {
     const ball = CABINET.colors.ball;
     const push = { n: [0, 0], up: [0, -5], down: [0, 3], left: [-6, 0], right: [6, 0] };
     for (const [k, [dx, dy]] of Object.entries(push)) {
-      this.pixels(`stick-${k}`, 24, 32, (set) => {
+      this.pixels(`cabinet/stick-${k}`, 24, 32, (set) => {
         for (let x = 4; x < 20; x++) for (let y = 25; y < 30; y++) if (((x - 11.5) / 8) ** 2 + ((y - 27) / 2.6) ** 2 <= 1) set(x, y, 0x050505);
         const bx = 12 + dx, by = 10 + dy;
         for (let i = 0; i <= 16; i++) {

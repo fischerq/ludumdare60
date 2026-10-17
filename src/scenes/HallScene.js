@@ -1,11 +1,12 @@
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, HALL, PIXEL, UI } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, HALL, PIXEL, UI, COINS, ANIM } from '../config.js';
 import { createHall, stepHall, facing, pacPos, actorPos, startChase, endChase, stepGhosts } from '../systems/hall.js';
 import { tileKey } from '../systems/tiles.js';
+import { PAC_CYCLE, charFrame, animFrame } from '../systems/anim.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
+import { coins, addCoin, coinTaken } from '../wallet.js';
 
 const T = PIXEL.tile;
-const ANGLE = { right: 0, down: 90, left: 180, up: 270 };
 const KEYS = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
   KeyA: 'left', KeyD: 'right', KeyW: 'up', KeyS: 'down',
@@ -24,6 +25,8 @@ export default class HallScene extends Phaser.Scene {
 
   create() {
     this.h = createHall();
+    // Coins picked up on an earlier visit stay gone (they're in the wallet).
+    for (const k of [...this.h.coins]) if (coinTaken(k)) this.h.coins.delete(k);
     this.viewW = GAME_WIDTH / HALL.zoom;
     this.viewH = GAME_HEIGHT / HALL.zoom;
     // The room fits the screen: center it.
@@ -45,22 +48,27 @@ export default class HallScene extends Phaser.Scene {
     this.coinSprites = new Map();
     for (const k of this.h.coins) {
       const [x, y] = k.split(',').map(Number);
-      this.coinSprites.set(k, this.add.image(this.sx(x), this.sy(y), 'coin'));
+      this.coinSprites.set(k, this.add.image(this.sx(x), this.sy(y), 'arcade/coin'));
     }
-    this.npcSprites = this.h.npcs.map((n) => ({
-      body: this.add.image(this.sx(n.x), this.sy(n.y), 'ghost-0').setDisplaySize(T, T).setTint(COLORS.ghosts[n.name]),
-      eyes: this.add.image(this.sx(n.x), this.sy(n.y), 'eyes-up').setDisplaySize(T, T),
-      cap: this.add.image(this.sx(n.x), this.sy(n.y), 'visitor-cap').setDisplaySize(T, T),
-    }));
-    this.pac = this.add.image(0, 0, 'pac-0').setDisplaySize(T, T);
+    // Characters fill one tile, centered on it, like a Pokémon game; lower ones are drawn in front.
+    const actor = (key) => this.add.image(0, 0, key);
+    this.npcSprites = this.h.npcs.map((n) => actor(`arcade/ghost-${n.name}-up-0`));
+    this.pac = actor('arcade/pac-up-0');
 
     this.makeUi();
+    this.children.list.filter((o) => o.scrollFactorX === 0).forEach((o) => o.setDepth(1e6));
     this.setupInput();
     this.setupPauseOnHide();
     this.updateCamera();
   }
 
   sx(x) { return this.ox + x * T + T / 2; }
+
+  // A character at tile position `at`: fills exactly that one tile (HALL.charSize), like a Pokémon game, whatever the art's size.
+  place(s, at) {
+    const y = Math.round(this.sy(at.y));
+    s.setDisplaySize(HALL.charSize, HALL.charSize).setPosition(Math.round(this.sx(at.x)), y).setDepth(y);
+  }
   sy(y) { return this.oy + y * T + T / 2; }
 
   drawMap() {
@@ -145,8 +153,8 @@ export default class HallScene extends Phaser.Scene {
       return;
     }
     if (f.cell.toLowerCase() === 'y') {
-      if (this.h.got >= HALL.coinsNeeded) this.goDown();
-      else this.say(tx.yNeedCoins.replace('{n}', this.h.got).replace('{need}', HALL.coinsNeeded));
+      if (coins() >= COINS.perGame) this.goDown();
+      else this.say(tx.yNeedCoins.replace('{n}', coins()).replace('{need}', COINS.perGame));
     } else if (HALL.cellText[f.cell]) this.say(tx[HALL.cellText[f.cell]]);
   }
 
@@ -241,6 +249,7 @@ export default class HallScene extends Phaser.Scene {
       for (const e of stepHall(this.h, dt, this.held ?? this.keyDir)) {
         if (e.type === 'door') { this.stopChase(HALL.text.escaped, { x: this.h.pac.x, y: this.h.pac.y }); break; }
         sfx.coin();
+        addCoin(`${e.x},${e.y}`);
         this.coinSprites.get(`${e.x},${e.y}`)?.destroy();
         this.say(HALL.text.coin);
       }
@@ -253,23 +262,15 @@ export default class HallScene extends Phaser.Scene {
     }
 
     const p = this.h.pac, pp = pacPos(this.h);
-    const cycle = [0, 1, 2, 3, 2, 1];
-    const frame = p.moving ? cycle[Math.floor((p.steps + p.t) * 6) % cycle.length] : 1;
-    this.pac.setPosition(Math.round(this.sx(pp.x)), Math.round(this.sy(pp.y))).setTexture(`pac-${frame}`)
-      .setDisplaySize(T, T).setAngle(ANGLE[p.dir]);
-    const skirt = Math.floor(this.t * 4) % 2;
-    this.h.npcs.forEach((n, i) => {
-      const s = this.npcSprites[i], np = actorPos(n);
-      const x = Math.round(this.sx(np.x)), y = Math.round(this.sy(np.y));
-      s.body.setTexture(`ghost-${skirt}`).setDisplaySize(T, T).setPosition(x, y);
-      s.eyes.setTexture(`eyes-${n.dir}`).setDisplaySize(T, T).setPosition(x, y);
-      s.cap.setPosition(x, y);
-    });
+    // Pac-Man's art has right, up and down; left is the right one mirrored.
+    const frame = p.moving ? charFrame('pac', (p.steps + p.t) / HALL.walkSpeed, 2) : 0;
+    this.place(this.pac.setTexture(`arcade/pac-${p.dir === 'left' ? 'right' : p.dir}-${frame}`).setFlipX(p.dir === 'left'), pp);
+    this.h.npcs.forEach((n, i) => this.place(this.npcSprites[i].setTexture(`arcade/ghost-${n.name}-${n.dir}-${charFrame(n.name, this.t, 2)}`), actorPos(n)));
     for (const [k, s] of this.coinSprites) {
       const y = Number(k.split(',')[1]);
-      if (s.active) s.y = this.sy(y) + (Math.floor(this.t * 3 + y) % 2);
+      if (s.active) s.y = this.sy(y) + animFrame(this.t + y * ANIM.effects.coinBob / ANIM.fps, ANIM.effects.coinBob, 2);
     }
-    this.coinText.setText(`COINS ${this.h.got}/${HALL.coinsNeeded}`);
+    this.coinText.setText(`COINS ${coins()}`);
     this.updateCamera();
   }
 }
