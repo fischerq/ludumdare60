@@ -1,6 +1,6 @@
 # Art (pixel art and visual design)
 
-**Status:** decided, except loading Max's art (proposed)
+**Status:** decided
 **Parent:** [master](../master.md)
 **Lab bench:** none
 **Code:** placeholder art `src/scenes/BootScene.js`, colors `COLORS` and scale `PIXEL` in `src/config.js`,
@@ -23,9 +23,11 @@ code doesn't change.
 - This runs automatically in Claude Code sessions: a `PostToolUse` hook (`.claude/settings.json`) calls
   `tools/export_assets.py --hook` after every edit or shell command, and it re-exports whenever `BootScene.js`,
   `tiles.js` or `config.js` changed since the last export.
-- Max takes the files from `assets/`, edits them, and passes them back in a separate folder,
-  `assets/from-max/` (same file names and sizes), or into a conversation, where Claude puts them in that folder.
-- The export never overwrites Max's files.
+- Max edits the files in `assets/` in place (same file names; sizes as in the table below), or passes them into
+  a conversation, where Claude puts them in place.
+- The export never overwrites or deletes a file Max edited: `assets/export.json` keeps the hash of what the export
+  last wrote, and a file that differs from it is his. To go back to the code-drawn version of one file, delete it and
+  run the export again.
 
 ## Base resolution · decided
 Sprites: 32x32 base resolution for Max's art. Today's code-drawn sprites are 16x16 (a 14x14 figure with a
@@ -77,9 +79,13 @@ Sizes are in image pixels at native resolution. Transparent background.
 Sprites (pac, ghosts, eyes) can be 32x32; tiles and pellets stay at tile resolution. Text uses the Press Start
 2P pixel font. The life icons and the menu reuse `pac-2`.
 
-## Loading Max's art · proposed
-- `BootScene` loads a PNG from `assets/from-max/` when it exists and falls back to the code-drawn placeholder
-  otherwise, so art can land one sprite at a time. Not built yet; wired in when the first file arrives.
+## Loading the art · decided
+- The game loads its art from the files: `BootScene` loads `assets/<key>.png` for every key in
+  `assets/export.json` and draws the code placeholder only when a file is missing. So whatever is in `assets/`
+  is what the game shows; Max saves a file, reloads the page and sees it in the game.
+- Over plain `http` (a local server like `python3 -m http.server` or Live Server) the files are fetched fresh on
+  every load, so a browser cache never hides an edit.
+- `?codeart` in the URL shows only the code-drawn art (the export uses this to get the placeholders).
 - Keep the arcade palette in `COLORS` as the starting point; Max can change it.
 
 ## Open questions
@@ -101,3 +107,5 @@ Sprites (pac, ghosts, eyes) can be 32x32; tiles and pellets stay at tile resolut
 - 2026-10-17: One file per tile; a tileset is a folder of tiles per environment, starting with `assets/maze/`.
   (Quirin)
 - 2026-10-17: The cabinet layer's art is exported too (`cabinet`, `stick-*`), and the export re-runs automatically after art changes in Claude Code sessions. (Quirin)
+- 2026-10-17: Max edits the files in `assets/` in place (no `from-max/` folder); the game loads the art from
+  `assets/`, and the export keeps every file he edited. (Quirin)
