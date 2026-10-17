@@ -6,7 +6,6 @@ import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 
 const T = PIXEL.tile;
-const ANGLE = { right: 0, down: 90, left: 180, up: 270 };
 const KEYS = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
   KeyA: 'left', KeyD: 'right', KeyW: 'up', KeyS: 'down',
@@ -46,22 +45,27 @@ export default class HallScene extends Phaser.Scene {
     this.coinSprites = new Map();
     for (const k of this.h.coins) {
       const [x, y] = k.split(',').map(Number);
-      this.coinSprites.set(k, this.add.image(this.sx(x), this.sy(y), 'coin'));
+      this.coinSprites.set(k, this.add.image(this.sx(x), this.sy(y), 'arcade/coin'));
     }
-    this.npcSprites = this.h.npcs.map((n) => ({
-      body: this.add.image(this.sx(n.x), this.sy(n.y), 'ghost-0').setDisplaySize(T, T).setTint(COLORS.ghosts[n.name]),
-      eyes: this.add.image(this.sx(n.x), this.sy(n.y), 'eyes-up').setDisplaySize(T, T),
-      cap: this.add.image(this.sx(n.x), this.sy(n.y), 'visitor-cap').setDisplaySize(T, T),
-    }));
-    this.pac = this.add.image(0, 0, 'pac-0').setDisplaySize(T, T);
+    // Characters are 2x2 tiles, standing on their tile (feet at its bottom edge); lower ones are drawn in front.
+    const actor = (key) => this.add.image(0, 0, key).setOrigin(0.5, 1);
+    this.npcSprites = this.h.npcs.map((n) => actor(`arcade/ghost-${n.name}-up-0`));
+    this.pac = actor('arcade/pac-up-0');
 
     this.makeUi();
+    this.children.list.filter((o) => o.scrollFactorX === 0).forEach((o) => o.setDepth(1e6));
     this.setupInput();
     this.setupPauseOnHide();
     this.updateCamera();
   }
 
   sx(x) { return this.ox + x * T + T / 2; }
+
+  // A character at tile position `at`: feet on the tile's bottom edge, shown at PIXEL.sprite whatever the art's size.
+  place(s, at) {
+    const y = Math.round(this.sy(at.y) + T / 2);
+    s.setDisplaySize(PIXEL.sprite, PIXEL.sprite).setPosition(Math.round(this.sx(at.x)), y).setDepth(y);
+  }
   sy(y) { return this.oy + y * T + T / 2; }
 
   drawMap() {
@@ -254,17 +258,10 @@ export default class HallScene extends Phaser.Scene {
     }
 
     const p = this.h.pac, pp = pacPos(this.h);
-    const frame = p.moving ? PAC_CYCLE[charFrame('pac', (p.steps + p.t) / HALL.walkSpeed, PAC_CYCLE.length)] : 1;
-    this.pac.setPosition(Math.round(this.sx(pp.x)), Math.round(this.sy(pp.y))).setTexture(`pac-${frame}`)
-      .setDisplaySize(T, T).setAngle(ANGLE[p.dir]);
-    this.h.npcs.forEach((n, i) => {
-      const s = this.npcSprites[i], np = actorPos(n);
-      const x = Math.round(this.sx(np.x)), y = Math.round(this.sy(np.y));
-      const skirt = charFrame(n.name, this.t, 2);
-      s.body.setTexture(`ghost-${skirt}`).setDisplaySize(T, T).setPosition(x, y);
-      s.eyes.setTexture(`eyes-${n.dir}`).setDisplaySize(T, T).setPosition(x, y);
-      s.cap.setPosition(x, y);
-    });
+    // Pac-Man's art has right, up and down; left is the right one mirrored.
+    const frame = p.moving ? charFrame('pac', (p.steps + p.t) / HALL.walkSpeed, 2) : 0;
+    this.place(this.pac.setTexture(`arcade/pac-${p.dir === 'left' ? 'right' : p.dir}-${frame}`).setFlipX(p.dir === 'left'), pp);
+    this.h.npcs.forEach((n, i) => this.place(this.npcSprites[i].setTexture(`arcade/ghost-${n.name}-${n.dir}-${charFrame(n.name, this.t, 2)}`), actorPos(n)));
     for (const [k, s] of this.coinSprites) {
       const y = Number(k.split(',')[1]);
       if (s.active) s.y = this.sy(y) + animFrame(this.t + y * ANIM.effects.coinBob / ANIM.fps, ANIM.effects.coinBob, 2);

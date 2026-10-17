@@ -6,7 +6,8 @@ import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 
 const T = PIXEL.tile;
-const ANGLE = { right: 0, down: 90, left: 180, up: 270 };
+// Pac-Man's art faces right: left is a mirror image, up and down are turned.
+const ANGLE = { right: 0, down: 90, left: 0, up: 270 };
 const KEYS = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
   KeyA: 'left', KeyD: 'right', KeyW: 'up', KeyS: 'down',
@@ -32,11 +33,8 @@ export default class GameScene extends Phaser.Scene {
     this.mazeImage = this.add.image(this.ox, this.oy, 'maze').setOrigin(0);
     this.makePellets();
 
-    this.pac = this.sprite(0, 0, 'pac-0');
-    this.ghostSprites = this.g.ghosts.map((gh) => ({
-      body: this.sprite(0, 0, 'ghost-0').setTint(COLORS.ghosts[gh.name]),
-      eyes: this.sprite(0, 0, 'eyes-left'),
-    }));
+    this.pac = this.sprite(0, 0, 'maze/pac-0');
+    this.ghostSprites = this.g.ghosts.map(() => this.sprite(0, 0, 'maze/eyes-left'));
     // Black side borders hide actors while they pass through the tunnel, like the arcade screen.
     const mazeW = this.g.maze.w * T;
     this.add.rectangle(0, 0, this.ox, this.viewH, COLORS.background).setOrigin(0);
@@ -66,10 +64,10 @@ export default class GameScene extends Phaser.Scene {
   makePellets() {
     this.pelletSprites = this.g.pellets.map((row, y) => row.map((kind, x) => {
       if (!kind) return null;
-      return this.add.image(this.sx(x), this.sy(y), kind === 1 ? 'dot' : 'power');
+      return this.add.image(this.sx(x), this.sy(y), kind === 1 ? 'maze/dot' : 'maze/power');
     }));
     // Power pellets blink on and off, no fading (in render).
-    this.powerSprites = this.pelletSprites.flat().filter((s) => s && s.texture.key === 'power');
+    this.powerSprites = this.pelletSprites.flat().filter((s) => s && s.texture.key === 'maze/power');
   }
 
   makeHud() {
@@ -93,7 +91,7 @@ export default class GameScene extends Phaser.Scene {
     }
     this.lifeIcons = [];
     for (let i = 0; i < RULES.lives - 1; i++) {
-      this.lifeIcons.push(this.sprite(this.ox + 24 + i * 32, mazeBottom + 24, 'pac-2').setAngle(180));
+      this.lifeIcons.push(this.sprite(this.ox + 24 + i * 32, mazeBottom + 24, 'maze/life'));
     }
   }
 
@@ -196,25 +194,22 @@ export default class GameScene extends Phaser.Scene {
     this.pac.setPosition(this.sx(p.x), this.sy(p.y));
     if (g.phase === 'dying') {
       const f = fxOnce('pacDeath', RULES.dyingTime - Math.max(0, g.phaseTime), 10);
-      this.pac.setTexture(`pac-die-${Math.max(0, f)}`).setVisible(f >= 0).setAngle(270);
+      this.pac.setTexture(`maze/pac-die-${Math.max(0, f)}`).setVisible(f >= 0).setAngle(0).setFlipX(false);
     } else {
       // Pac only animates while moving: tiles moved / speed = seconds of movement.
       const frame = g.phase === 'ready' ? 0 : PAC_CYCLE[charFrame('pac', p.moved / SPEED.pac, PAC_CYCLE.length)];
-      this.pac.setTexture(`pac-${frame}`).setVisible(true).setAngle(ANGLE[p.dir] ?? 0);
+      this.pac.setTexture(`maze/pac-${frame}`).setVisible(true).setAngle(ANGLE[p.dir] ?? 0).setFlipX(p.dir === 'left');
     }
 
     const flashing = g.fright > 0 && g.fright < RULES.frightFlashTime && !fxOn('frightFlash', time);
     const hideGhosts = g.phase === 'dying' || g.phase === 'clearing' || g.phase === 'cleared';
     g.ghosts.forEach((gh, i) => {
-      const { body, eyes } = this.ghostSprites[i];
-      const x = this.sx(gh.x), y = this.sy(gh.y);
-      const eyesOnly = gh.state === 'eyes' || gh.state === 'enter';
-      body.setPosition(x, y).setVisible(!hideGhosts && !eyesOnly);
-      eyes.setPosition(x, y).setVisible(!hideGhosts && !gh.frightened)
-        .setTexture(`eyes-${DIRS[gh.dir] ? gh.dir : 'left'}`);
+      const dir = DIRS[gh.dir] ? gh.dir : 'left';
       const skirt = charFrame(gh.name, time, 2);
-      if (gh.frightened) body.setTexture(`ghost-${flashing ? 'flash' : 'fright'}-${skirt}`).clearTint();
-      else body.setTexture(`ghost-${skirt}`).setTint(COLORS.ghosts[gh.name]);
+      this.ghostSprites[i].setPosition(this.sx(gh.x), this.sy(gh.y)).setVisible(!hideGhosts).setTexture(
+        gh.state === 'eyes' || gh.state === 'enter' ? `maze/eyes-${dir}`
+          : gh.frightened ? `maze/ghost-${flashing ? 'flash' : 'fright'}-${skirt}`
+            : `maze/ghost-${gh.name}-${dir}-${skirt}`);
     });
 
     if (g.phase === 'clearing') {

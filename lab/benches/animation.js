@@ -15,29 +15,15 @@ const GAP = 144;   // px between sprite centres
 const col = (i) => 72 + i * GAP;
 
 // The exported 1x PNGs, the same files the game loads.
-const KEYS = ['pac-0', 'pac-1', 'pac-2', 'pac-3', 'ghost-0', 'ghost-1', 'eyes-right', 'power', 'coin',
-  'ghost-fright-0', 'ghost-fright-1', 'ghost-flash-0', 'ghost-flash-1', ...Array.from({ length: 10 }, (_, i) => `pac-die-${i}`)];
+const KEYS = ['pac-0', 'pac-1', 'pac-2', 'pac-3', 'power', 'ghost-fright-0', 'ghost-fright-1', 'ghost-flash-0', 'ghost-flash-1',
+  ...['blinky', 'pinky', 'inky', 'clyde'].flatMap((g) => [`ghost-${g}-right-0`, `ghost-${g}-right-1`]),
+  ...Array.from({ length: 10 }, (_, i) => `pac-die-${i}`)].map((k) => `maze/${k}`).concat('arcade/coin');
 const img = {};
 for (const k of KEYS) {
   img[k] = new Image();
   img[k].src = new URL(`../../assets/${k}.png`, import.meta.url).href;
 }
 const ready = (i) => i && (i instanceof HTMLCanvasElement || (i.complete && i.naturalWidth));
-const tinted = new Map();
-function tint(src, color) {
-  const key = `${src.src}-${color}`;
-  if (!tinted.has(key) && ready(src)) {
-    const c = document.createElement('canvas');
-    c.width = src.naturalWidth; c.height = src.naturalHeight;
-    const x = c.getContext('2d');
-    x.drawImage(src, 0, 0);
-    x.globalCompositeOperation = 'source-in';
-    x.fillStyle = `#${color.toString(16).padStart(6, '0')}`;
-    x.fillRect(0, 0, c.width, c.height);
-    tinted.set(key, c);
-  }
-  return tinted.get(key);
-}
 const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
 
 export default {
@@ -77,32 +63,31 @@ export default {
     // Characters.
     CHARS.forEach((k, i) => {
       const x = col(i), y = 90;
-      if (k === 'pac') sprite(img[`pac-${PAC_CYCLE[frame('pac', PAC_CYCLE.length)]}`], x, y);
+      if (k === 'pac') sprite(img[`maze/pac-${PAC_CYCLE[frame('pac', PAC_CYCLE.length)]}`], x, y);
       else {
-        sprite(tint(img[`ghost-${frame(k, 2)}`], COLORS.ghosts[k]), x, y);
-        sprite(img['eyes-right'], x, y);
+        sprite(img[`maze/ghost-${k}-right-${frame(k, 2)}`], x, y);
       }
       label(k, x, y + 76);
     });
     // Pac on the move, wrapping around: the chomp rate against how fast he covers ground.
     const run = (t * SPEED.pac * (SIZE / 2)) % (720 + SIZE);
-    sprite(img[`pac-${PAC_CYCLE[frame('pac', PAC_CYCLE.length)]}`], run - SIZE / 2, 270);
+    sprite(img[`maze/pac-${PAC_CYCLE[frame('pac', PAC_CYCLE.length)]}`], run - SIZE / 2, 270);
 
     // Effects, row one: death (plays once, then a short pause), power pellet, fright flash, maze clear.
     const y1 = 430;
     const deathTicks = Math.floor((t * ANIM.fps) / p.pacDeath) % 14; // 10 frames + 4 ticks hidden
-    if (deathTicks < 10) sprite(img[`pac-die-${deathTicks}`], col(0), y1);
+    if (deathTicks < 10) sprite(img[`maze/pac-die-${deathTicks}`], col(0), y1);
     label('pacDeath', col(0), y1 + 76);
-    if (on('powerPellet')) sprite(img.power, col(1), y1, 64);
+    if (on('powerPellet')) sprite(img['maze/power'], col(1), y1, 64);
     label('powerPellet', col(1), y1 + 76);
-    sprite(img[`ghost-${on('frightFlash') ? 'fright' : 'flash'}-${frame('blinky', 2)}`], col(2), y1);
+    sprite(img[`maze/ghost-${on('frightFlash') ? 'fright' : 'flash'}-${frame('blinky', 2)}`], col(2), y1);
     label('frightFlash', col(2), y1 + 76);
     ctx.fillStyle = on('mazeClear') ? hex(COLORS.wall) : hex(COLORS.mazeFlash);
     ctx.fillRect(col(3) - 70, y1 - 40, 140, 16);
     ctx.fillRect(col(3) - 70, y1 + 24, 140, 16);
     ctx.fillRect(col(3) - 70, y1 - 40, 16, 80);
     label('mazeClear', col(3), y1 + 76);
-    for (let i = 0; i < 2; i++) sprite(img.coin, col(4) - 24 + i * 48, y1 + animFrame(t + (i * p.coinBob) / ANIM.fps, p.coinBob, 2) * 4, 40);
+    for (let i = 0; i < 2; i++) sprite(img['arcade/coin'], col(4) - 24 + i * 48, y1 + animFrame(t + (i * p.coinBob) / ANIM.fps, p.coinBob, 2) * 4, 40);
     label('coinBob', col(4), y1 + 76);
 
     // Effects, row two: text blinks.

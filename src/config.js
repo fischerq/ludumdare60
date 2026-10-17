@@ -76,8 +76,8 @@ export const MAZE = {
 };
 
 // The game world is in tile pixels: 16 per tile, scaled up with hard pixel edges. 720 / 2 = 360 world px
-// across, so the 19-tile maze (304 px) fits with a border. Sprites are shown in a box of 2x2 tiles whatever
-// their native size (today's art is 16x16, Max's will be 32x32), like the original's 16 px sprites on 8 px tiles.
+// across, so the 19-tile maze (304 px) fits with a border. Sprites are 32x32 and shown in a box of 2x2 tiles
+// whatever their native size, like the original's 16 px sprites on 8 px tiles.
 export const PIXEL = {
   tile: 16,
   zoom: 2,             // screen px per world px; keep it a whole number so every tile pixel is the same size
@@ -164,7 +164,7 @@ export const LAYERS = {
 };
 
 // Layer 3: the arcade hall (zoom out further). A small, cozy room seen top-down like a Pokémon game: Pac-Man
-// walks one tile per step. 16 px tiles shown at 4x, sprites at one tile; the room fits one screen.
+// walks one tile per step. 16 px tiles shown at 4x, characters 32x32 (2x2 tiles) standing on their tile; the room fits one screen.
 // # wall (dark trim), back wall row: | wallpaper, ^ window, * Pac-Man poster, + ghost poster, @ clock.
 // . floor, ~ rug, o coin, S start (in front of our cabinet), 1-4 ghost visitors (blinky, pinky, inky, clyde).
 // 1x2-tile machines, upper-case on top, lower-case below: cabinets R red, B blue, G green, V violet, Y yellow
@@ -201,6 +201,7 @@ export const HALL = {
     rug: 0xb83a3a, rugBorder: 0xf2c94c, rugDark: 0x8a2a2a,
     counter: 0x7a4a2a, counterTop: 0xc89058, change: 0x8a8a96, door: 0x6a4020, mat: 0x5a7a3a,
     plantPot: 0xb0603a, leaf: 0x3a9a48, leafLight: 0x6ac860, coin: 0xffd23f, cap: 0x2040c0, sky: 0x8ad0ff,
+    shoe: 0xc03020, pacFace: 0x3a2a10, // Pac-Man's shoes and face in the hall
     cabinets: { r: 0xd03030, b: 0x3060d0, g: 0x30a050, v: 0x8040c0, y: 0xf2c200 },
   },
   ghosts: { 1: 'blinky', 2: 'pinky', 3: 'inky', 4: 'clyde' },
