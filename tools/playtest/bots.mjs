@@ -19,50 +19,47 @@ function segDist(px, py, a, b) {
   return Math.hypot(px - a.x - k * dx, py - a.y - k * dy);
 }
 
-// -1 the screen: pellets only while their row glows, never on a lit tile when the beam comes, away from ghosts.
+// -1 the screen: a beam spot paints the picture cell by cell. Eat a pellet while its cell glows, never stand on a
+// lit cell (a wall, a dot, a sprite) when the spot gets there, keep away from the ghosts.
 const crt = {
   setup(c) {
-    const C = DEEP.crt, L = c.L;
-    c.lastPass = (y, T) => {
-      const off = (y / H) * (1 - C.vblank) * C.beamPeriod;
+    const C = DEEP.crt, N = W * H;
+    c.lastPass = (i, T) => {
+      const off = (i / N) * (1 - C.vblank) * C.beamPeriod;
       return Math.floor((T - off) / C.beamPeriod) * C.beamPeriod + off;
     };
-    c.lit = (x, y) => {
-      const i = tileOffset(x, y), v = c.m.vram[i];
-      return (PELLETS.some((p) => p.x === x && p.y === y) && !c.st.got.has(i))
-        || ((v === CELL.dot || v === CELL.power) && !c.st.eaten.has(i)) || v === CELL.wall || v === CELL.door;
-    };
-    c.beamNear = (y, T0, T1) => {
-      for (let T = T0; T <= T1; T += 0.03) { const b = L.beam(T); if (b !== null && Math.abs(b - (y + 0.5)) < 0.9) return true; }
-      return false;
-    };
+    c.lit = (x, y) => !!c.st.pic?.[y * W + x];
   },
+  frame(c) { c.ghosts = spritesOf(c.m, SPRITE.ghost, SPRITE.eyes); },
   targets: (c) => PELLETS.filter((p) => !c.st.got.has(tileOffset(p.x, p.y))),
   ready(c, x, y, eta) {
     const T = c.t + eta + 0.05;
-    return Math.pow(1 / 3, (T - c.lastPass(y, T)) / DEEP.crt.decay) > DEEP.crt.litAbove + 0.08;
+    return Math.pow(1 / 3, (T - c.lastPass(y * W + x, T)) / DEEP.crt.decay) > DEEP.crt.litAbove + 0.08;
   },
   blocked(c, x, y, eta) {
     if (near(c.ghosts, x, y, 1.6 + eta * ghostSpeed)) return true;
-    return c.lit(x, y) && c.beamNear(y, c.t + eta - 0.12, c.t + eta + 0.3);
+    const T = c.t + eta;
+    return c.lit(x, y) && c.lastPass(y * W + x, T + 0.35) >= T - 0.12;
   },
-  frame(c) { c.ghosts = spritesOf(c.m, SPRITE.ghost, SPRITE.eyes); },
 };
 
-// -2 signals: grab a color index, carry it to PAL, then to the DAC; sprites and the sound pulse are deadly.
+// -2 the video board: grab a color index at a fetcher pin, carry it to the palette pins, then the DAC pins;
+// the hardware sprites and the sound chip's pulse are deadly.
+const SIG = DEEP.signals.layout;
+const pins = (ch) => SIG.flatMap((row, y) => [...row].map((v, x) => (v === ch ? { x, y } : null))).filter(Boolean);
+const SIG_PINS = { p: pins('p'), d: pins('d') };
 const signals = {
   frame(c) { c.ghosts = spritesOf(c.m, SPRITE.ghost, SPRITE.points); },
   targets(c) {
-    const C = DEEP.signals, carry = c.st.carry;
-    if (!carry) return [...c.st.sparks].filter(([, s]) => c.t - s.t < C.sparkLife - 0.5).map(([k]) => ({ x: k % W, y: Math.floor(k / W) }));
-    const chip = carry.stage === 'index' ? C.palette : C.dac;
-    return [[0, 0], [1, 0], [0, 1], [1, 1]].map(([dx, dy]) => ({ x: chip.x + dx, y: chip.y + dy }));
+    const carry = c.st.carry, cols = SIG[0].length;
+    if (!carry) return [...c.st.sparks].filter(([, s]) => c.t - s.t < DEEP.signals.sparkLife - 0.5).map(([k]) => ({ x: k % cols, y: Math.floor(k / cols) }));
+    return SIG_PINS[carry.stage === 'index' ? 'p' : 'd'];
   },
   blocked(c, x, y, eta) {
     if (c.L.inPulse(x, y)) return true;
     return c.ghosts.some((g) => Math.max(Math.abs(g.x - x), Math.abs(g.y - y)) < 1.5 + eta * ghostSpeed);
   },
-  score: (c, x, y) => Math.min(9, ...c.ghosts.map((g) => manhattan(g, { x, y }))) - Math.abs(x - 9) * 0.1 - Math.abs(y - 12) * 0.1,
+  score: (c, x, y) => Math.min(9, ...c.ghosts.map((g) => manhattan(g, { x, y }))),
 };
 
 // -3 video RAM: the four pellet bytes; keep out of the row the write head is about to dash along.
@@ -91,14 +88,28 @@ const bus = {
     const st = c.st, T = c.t + eta;
     if ('RAVI'.includes(busAt(x, y)) && T + 0.3 > st.next) return true;
     for (const p of st.packets) {
-      for (const dT of [-0.15, 0, 0.15]) {
+      for (const dT of [-0.1, 0, 0.1]) {
         const k = Math.floor((T + dT - p.t) * DEEP.bus.packetSpeed);
-        for (let j = k - 1; j <= k + 2; j++) { const q = p.path[j]; if (q && q.x === x && q.y === y) return true; }
+        for (let j = k - 1; j <= k + 1; j++) { const q = p.path[j]; if (q && q.x === x && q.y === y) return true; }
       }
     }
     return false;
   },
   relaxedOpen: (c, x, y) => busAt(x, y) !== '#' && busAt(x, y) !== 'C',
+  // No open door to go through: wait off the lanes, next to the doors still to do (or inside the room, off the
+  // tile the packets run into), and go the moment one opens.
+  waitAt(c) {
+    const p = c.player, here = busAt(Math.round(p.x), Math.round(p.y));
+    const room = { r: 'rom', a: 'ram', v: 'vram', i: 'io' }[here];
+    if (room && c.st.selected !== room) {
+      const out = [];
+      for (let y = 0; y < BUS_MAP.length; y++) for (let x = 0; x < BUS_MAP[0].length; x++) {
+        if (busAt(x, y) === here && !(x === 13 && 'RAVI'.includes(busAt(12, y)))) out.push({ x, y });
+      }
+      return out;
+    }
+    return Object.entries(BUS_CENTERS).filter(([room]) => !c.st.done.has(room)).flatMap(([, q]) => [{ x: 8, y: q.y }, { x: 9, y: q.y }]);
+  },
 };
 
 // -5 the CPU: CALL warps into routines not yet visited, page by page; off the PC's next line, the flag blocks
@@ -278,6 +289,12 @@ export function decideDeep(bot, c) {
   if (p.dir && (p.x !== from.x || p.y !== from.y) && isGoal(from.x, from.y, 0.1)) return p.dir;
   const r = plan({ ...base, open, blocked, isGoal });
   if (r) return r.dir;
+  if (bot.waitAt) {
+    const spots = bot.waitAt(c), isSpot = (x, y) => spots.some((q) => q.x === x && q.y === y);
+    if (isSpot(from.x, from.y)) return evade({ ...base, open, blocked, score: (x, y) => (isSpot(x, y) ? 10 : 0) + toward(x, y) });
+    const w = plan({ ...base, open, blocked, isGoal: isSpot });
+    if (w) return w.dir;
+  }
   // No safe way all the way: take the plain way as long as its next tile is safe now. Walking into a closed door
   // just stands there until it opens.
   const q = plan({ ...base, open: roomy, isGoal: isGoalTile });

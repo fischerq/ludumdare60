@@ -9,7 +9,7 @@
 //   node tools/playtest.mjs --levels 0,0.5,1      noise levels (default PLAYTEST.levels)
 //   node tools/playtest.mjs --knob reaction       sweep one knob only: reaction, slip, lapse (default all)
 //   node tools/playtest.mjs --runs 50 --seed 7    run count and base seed (run i uses seed + i at every level)
-//   node tools/playtest.mjs --out FILE            results file (default design/playtest/results.json); --no-save
+//   node tools/playtest.mjs --out FILE            results file (default lab/playtest/results.json); --no-save
 //   node tools/playtest.mjs --verbose             one line per run
 // Needs network once for the pinned Z80 core (like tools/arcade_test.mjs).
 
@@ -28,7 +28,7 @@ const levels = opt('levels', PLAYTEST.levels.join(',')).split(',').map(Number);
 const knob = opt('knob', 'all');
 const runs = Number(opt('runs', flag('quick') ? PLAYTEST.quickRuns : PLAYTEST.runs));
 const seed = Number(opt('seed', 1));
-const out = opt('out', 'design/playtest/results.json');
+const out = opt('out', 'lab/playtest/results.json');
 
 const unknown = layers.filter((l) => l !== 'playthrough' && !LAYERS.includes(l));
 if (unknown.length) { console.error(`unknown layer(s): ${unknown.join(', ')}; known: ${LAYERS.join(' ')} playthrough`); process.exit(1); }
