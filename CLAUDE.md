@@ -92,10 +92,13 @@ Every human prompt and its token usage/cost is published in `making-of/` as a sc
 - The timeline row for a prompt is the prompt's own first sentence; don't write summaries.
 - Tokens and the model per prompt are the main numbers; the headline cost is the share of the subscription
   (`plan`, `plan_price_month` and `plan_currency` in `meta.json`; the billed price is 214,20 € a month). API list prices are reference only.
-- **Screenshots:** images pasted into prompts are published automatically (status bar cropped, resized). When you
-  check a change in a headless browser, save one or two representative screenshots as
-  `making-of/media/<first 8 chars of session id>-<turn index>-c<n>.jpg` (use `publish_image` in `tools/ai_log.py`);
-  the exporter attaches them to that turn as Claude's images.
+- **Screenshots:** images pasted into prompts are published automatically (status bar cropped, resized). **Every
+  turn that changes something visible** (game, lab bench, making-of, event or Impressum page) saves one or two
+  representative screenshots of the result as `making-of/media/<first 8 chars of session id>-<turn index>-c<n>.jpg`
+  (turn index = this prompt's 1-based number in the session). Use `node tools/shot.js <name> [page] [--scene Key]`,
+  which takes a phone-size shot and publishes it; `--root <worktree>` shoots an old commit for backfilling. Turns
+  that only touch docs, tooling or the log don't need one. The exporter attaches them to that turn as Claude's
+  images, also for sessions whose transcript is gone.
 - The headline has six equal tiles: prompts, merged PRs (lines of code, commits), subscription share, tokens, Claude
   time, API list price. PR count and lines of code come from git via `making-of/repo-stats.json` (written by the exporter).
 - If a new model shows up, add its prices to `PRICES` in `tools/ai_log.py` (models are read from the transcript).
