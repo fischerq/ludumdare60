@@ -76,7 +76,7 @@ reference until the Z80 version matches it.
    runs in the browser too, so the CPU layer can show the real source listing with addresses. Constants come
    from `src/config.js`, so tuning stays a one-line edit. First program: boot, vblank interrupt, draw the maze
    from a ROM table into VRAM.
-5. **Shadow mode.** The maze layer renders from the machine. The JS game still decides what happens and
+5. **Done: shadow mode** (`shadow.js`). The maze layer renders from the machine. The JS game still decides what happens and
    writes positions, dots and score into machine RAM and sprite registers each frame. From here every lower
    layer can be built against real memory contents.
 6. **Port the rules to Z80, slice by slice.** Each slice replaces a JS piece and must pass a side-by-side test
