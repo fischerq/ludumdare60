@@ -1,4 +1,4 @@
-import { COLORS, MAZE, PIXEL, UI } from '../config.js';
+import { COLORS, MAZE, PIXEL, UI, CABINET } from '../config.js';
 
 const hex = (c) => `#${c.toString(16).padStart(6, '0')}`;
 
@@ -40,10 +40,15 @@ export default class BootScene extends Phaser.Scene {
     this.makeGhosts();
     this.makeMaze('maze', COLORS.wall);
     this.makeMaze('maze-white', 0xdedede);
+    this.makeCabinet();
+    this.makeSticks();
     // Wait for the arcade font so text doesn't render in the fallback first (give up after 2 s).
     const font = document.fonts?.load(`8px ${UI.arcadeFont}`) ?? Promise.resolve();
     const timeout = new Promise((r) => setTimeout(r, 2000));
-    Promise.race([font, timeout]).catch(() => {}).finally(() => this.scene.start('Menu'));
+    // ?scene=Cabinet (or any scene key) jumps straight to that layer, for playtesting.
+    const start = new URLSearchParams(window.location.search).get('scene');
+    const target = start && this.scene.get(start) ? start : 'Menu';
+    Promise.race([font, timeout]).catch(() => {}).finally(() => this.scene.start(target));
   }
 
   // Draw a w x h texture; paint(set) calls set(x, y, color) for each lit pixel.
@@ -52,6 +57,22 @@ export default class BootScene extends Phaser.Scene {
     const ctx = tex.getContext();
     paint((x, y, color) => { ctx.fillStyle = hex(color); ctx.fillRect(x, y, 1, 1); });
     tex.refresh();
+  }
+
+  // Fill a polygon with hard pixel edges (no anti-aliasing): a pixel is in if its center is.
+  poly(set, pts, color) {
+    const ys = pts.map((p) => p[1]);
+    for (let y = Math.floor(Math.min(...ys)); y < Math.ceil(Math.max(...ys)); y++) {
+      const cy = y + 0.5, xs = [];
+      pts.forEach(([x0, y0], i) => {
+        const [x1, y1] = pts[(i + 1) % pts.length];
+        if ((y0 <= cy) !== (y1 <= cy)) xs.push(x0 + ((cy - y0) / (y1 - y0)) * (x1 - x0));
+      });
+      xs.sort((a, b) => a - b);
+      for (let i = 0; i + 1 < xs.length; i += 2) {
+        for (let x = Math.ceil(xs[i] - 0.5); x <= Math.floor(xs[i + 1] - 0.5); x++) set(x, y, color);
+      }
+    }
   }
 
   bitmap(set, rows, color, ox = 0, oy = 0) {
@@ -99,6 +120,69 @@ export default class BootScene extends Phaser.Scene {
           const x0 = ex + dx, y0 = 3 + dy;
           this.bitmap(set, white, COLORS.eyeWhite, x0, y0);
           this.bitmap(set, ['##', '##'], COLORS.pupil, x0 + px, y0 + py);
+        }
+      });
+    }
+  }
+
+  // The cabinet in an oblique view: the front is drawn flat, depth goes up and right at 45°, so the right side
+  // panel and the top show. The screen is left black; the scene draws the game picture into it.
+  makeCabinet() {
+    const C = CABINET, K = C.colors;
+    const W = Math.round(720 / C.zoom), H = Math.round(1280 / C.zoom);
+    // A point on a front-facing plane at depth d.
+    const P = (x, y, d) => [x + d / 2, y - d / 2];
+    const L = C.left, R = C.right, D = C.depth, pd = C.panelDepth, md = C.marqueeDepth;
+    this.pixels('cabinet', W, H, (set) => {
+      this.poly(set, [[0, C.ground], [W, C.ground], [W, H], [0, H]], K.floor);
+      // Shadow on the floor behind the cabinet.
+      this.poly(set, [P(L, C.ground, 0), P(R + 10, C.ground, 0), P(R + 10, C.ground, D + 12), P(L, C.ground, D + 12)], 0x0e0a10);
+      // Right side panel: the side profile, sheared by depth.
+      this.poly(set, [
+        P(R, C.ground, 0), P(R, C.panelY, 0), P(R, C.panelY - 20, pd), P(R, C.screenTop, pd), P(R, C.screenTop, md),
+        P(R, C.marqueeTop, md), P(R, C.marqueeTop, D), P(R, C.ground, D),
+      ], K.side);
+      // Top.
+      this.poly(set, [P(L, C.marqueeTop, md), P(R, C.marqueeTop, md), P(R, C.marqueeTop, D), P(L, C.marqueeTop, D)], K.top);
+      // Lower body front with a black kick plate.
+      this.poly(set, [[L, C.panelY], [R, C.panelY], [R, C.ground], [L, C.ground]], K.front);
+      this.poly(set, [[L, C.ground - 18], [R, C.ground - 18], [R, C.ground], [L, C.ground]], K.trim);
+      // Control panel: sloped top surface from the front edge back to the screen.
+      this.poly(set, [[L, C.panelY], [R, C.panelY], P(R, C.panelY - 20, pd), P(L, C.panelY - 20, pd)], K.panel);
+      this.poly(set, [[L, C.panelY], [R, C.panelY], [R, C.panelY + 4], [L, C.panelY + 4]], K.top);
+      // Screen section, set back, with the black bezel.
+      const [sx0, sy0] = P(L, C.screenTop, pd), [sx1, sy1] = P(R, C.panelY - 20, pd);
+      this.poly(set, [[sx0, sy0], [sx1, sy0], [sx1, sy1], [sx0, sy1]], K.trim);
+      // Marquee box sticking out over the screen.
+      const [mx0, my0] = P(L, C.marqueeTop, md), [mx1, my1] = P(R, C.screenTop, md);
+      this.poly(set, [[mx0, my0], [mx1, my0], [mx1, my1], [mx0, my1]], 0x140c00);
+      this.poly(set, [[mx0, my1 - 3], [mx1, my1 - 3], [mx1, my1], [mx0, my1]], K.front);
+      // Coin door with two lit slots and a coin return.
+      const cd = C.coinDoor;
+      this.poly(set, [[cd.x, cd.y], [cd.x + cd.w, cd.y], [cd.x + cd.w, cd.y + cd.h], [cd.x, cd.y + cd.h]], K.door);
+      for (const x of [cd.x + 12, cd.x + cd.w - 18]) {
+        this.poly(set, [[x, cd.y + 12], [x + 6, cd.y + 12], [x + 6, cd.y + 24], [x, cd.y + 24]], K.slot);
+      }
+      this.poly(set, [[cd.x + 18, cd.y + 50], [cd.x + cd.w - 18, cd.y + 50], [cd.x + cd.w - 18, cd.y + 62], [cd.x + 18, cd.y + 62]], 0x000000);
+    });
+  }
+
+  // The joystick as seen on the control panel: neutral and pushed four ways. 24x32, base at the bottom.
+  makeSticks() {
+    const ball = CABINET.colors.ball;
+    const push = { n: [0, 0], up: [0, -5], down: [0, 3], left: [-6, 0], right: [6, 0] };
+    for (const [k, [dx, dy]] of Object.entries(push)) {
+      this.pixels(`stick-${k}`, 24, 32, (set) => {
+        for (let x = 4; x < 20; x++) for (let y = 25; y < 30; y++) if (((x - 11.5) / 8) ** 2 + ((y - 27) / 2.6) ** 2 <= 1) set(x, y, 0x050505);
+        const bx = 12 + dx, by = 10 + dy;
+        for (let i = 0; i <= 16; i++) {
+          const t = i / 16;
+          const x = Math.round(12 + (bx - 12) * t), y = Math.round(27 + (by - 27) * t);
+          set(x, y, 0xbbbbbb); set(x - 1, y, 0x888888);
+        }
+        for (let y = -6; y <= 6; y++) for (let x = -6; x <= 6; x++) {
+          if (x * x + y * y > 38) continue;
+          set(bx + x, by + y, x + y < -5 ? 0xff8080 : ball);
         }
       });
     }

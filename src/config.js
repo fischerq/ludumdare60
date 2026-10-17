@@ -127,6 +127,30 @@ export const CONTROL = {
   bufferTime: 0.8,     // s a swipe waits for a junction it fits; after that it's dropped
 };
 
+// Layer 2: the cabinet (zoom out). Pixel art like the maze level, faked 3D (oblique view: depth goes up and
+// to the right at 45°). Drawn at 2 screen px per art px, half the maze level's 4, so the game picture on the
+// cabinet's screen is the maze level shrunk by exactly 2: zooming out is seamless.
+export const CABINET = {
+  zoom: 2,               // screen px per art px; the view is 360x640 art px
+  left: 72, right: 264,  // front face of the cabinet, art px
+  ground: 632,
+  depth: 64,             // art px of depth; drawn as (+depth/2, -depth/2)
+  panelY: 392,           // top of the lower body = front edge of the control panel
+  panelDepth: 28,        // how far the screen is set back behind the control panel
+  screenTop: 68,         // top of the screen section (at the set-back depth)
+  marqueeTop: 40,
+  marqueeDepth: 16,
+  bezel: { x: 12, y: 13 },
+  coinDoor: { x: 140, y: 460, w: 56, h: 76 },
+  colors: {
+    front: 0xf2c200, side: 0xa88600, top: 0xffe36a, trim: 0x111111, panel: 0x262626,
+    door: 0x2c2c2c, slot: 0xff3030, floor: 0x1c1420, room: 0x07070c, ball: 0xd81818,
+  },
+  glare: 0.07,
+  introTime: 2.5,        // s of zooming out from the maze level
+  stickDeadzone: 24,     // screen px the finger must move from where it touched before the stick clicks over
+};
+
 export const BEST_KEY = 'ld60.best'; // localStorage key for the high score
 
 export const SOUND = {

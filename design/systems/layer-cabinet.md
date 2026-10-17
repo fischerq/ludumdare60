@@ -1,44 +1,43 @@
 # Layer: the cabinet (zoom out)
 
-**Status:** proposed (ideas, not built)
+**Status:** decided, first slice built 2026-10-17
 **Parent:** [layers](layers.md) · [master](../master.md)
 **Lab bench:** none yet
-**Code:** none yet
+**Code:** `src/scenes/CabinetScene.js`, cabinet and joystick art in `src/scenes/BootScene.js` (`makeCabinet`,
+`makeSticks`), game picture `src/systems/screenImage.js`, numbers in `CABINET` in `src/config.js`.
+Playtest directly: `?scene=Cabinet`.
 
 ## Purpose
 One layer up from the [maze game](arcade-maze.md): we step back and see the whole arcade machine. Same game on
 its screen, but now played through the machine's physical controls. Theme: Old Tech, the cabinet.
 
-## Rules · proposed (from Quirin's first ideas, to iterate)
-- A 3D-looking view of an arcade cabinet: screen, control panel, joystick, coin slot.
-- The maze game runs on the cabinet's screen, the same code and picture as the first level.
-- Controls are different: instead of swiping anywhere, you move the cabinet's **joystick** (drag the ball top).
-  The real Pac-Man stick is a 4-way joystick with microswitches and a restrictor gate: it clicks into four
-  directions, and diagonals don't exist.
-- Ideas to pick from: insert a coin to get credits (= lives); the view changes (camera angle, glare on the glass,
-  you can't see the whole screen); the stick has throw and lag, or a worn-out microswitch; the machine shakes or
-  the picture rolls if you bang it.
+## Rules · decided
+- **No real 3D: pixel art throughout, 3D simulated.** The cabinet is pixel art in an oblique view: the front is
+  drawn flat, depth goes up and to the right at 45°, so the right side panel and the top show (yellow like the
+  Pac-Man upright, marquee with the title, black bezel, control panel, coin door with lit slots).
+- Drawn at 2 screen px per art px (the maze level uses 4). The cabinet's screen shows the same game picture
+  1:1, so the maze level's pixels are exactly half as big: the camera starts at the maze level's zoom with the
+  screen lined up, then pulls back over 2.5 s (tap to skip).
+- The screen runs in attract mode: INSERT COIN, CREDIT 0. Tap the coin door (or Space/Enter) to insert a coin:
+  coin sound, start jingle, a fresh game with 3 lives. Game over goes back to INSERT COIN.
+- **Joystick:** put a finger down anywhere and push; past 24 px it clicks into one of four directions (no
+  diagonals), with a microswitch click. Held, not swiped: the chomper keeps steering while the stick is pushed.
+  The pixel stick on the panel leans the same way; a faint ring shows where the finger is. Arrow keys on a laptop.
+- Clearing the maze here shows MAZE CLEAR, then back to the menu (the screen layer comes next).
+- Reaching it: clearing the maze level zooms out into this layer.
 
-## Feel · open
-Should it feel like standing at the machine (first person, low angle) or like looking at it on a table?
-
-## Slice scope · open
-To be written once the questions are answered.
+## Slice scope
+- Build (done): pixel cabinet, zoom-out intro, attract screen, coin to start, 4-way stick, game on the screen.
+- Not now: glare/view changes beyond a faint glass glare, stick lag or worn switches, banging the machine,
+  credits counter beyond one coin, the zoom into the screen (next layer), mini-gurke in the coin return.
 
 ## Open questions
-1. **How 3D:** a pre-drawn 2.5D cabinet with the game drawn flat into the screen, a fake perspective (Phaser's
-   Plane/Mesh), or real 3D (three.js from a pinned CDN, with the game as a texture)? *Default: fake perspective
-   in Phaser, no new library; it's the cheapest in tokens.*
-2. **Joystick on the phone:** drag the ball top in the 3D view, or a big on-screen stick at the bottom drawn
-   like the real one? *Default: big stick at the bottom, styled like the cabinet's, with click feedback.*
-3. **Camera:** fixed angle, or does it move (e.g. you start far away and walk up)? *Default: fixed, with a short
-   zoom-out transition from the first level.*
-4. **What makes it harder or different:** coins, glare, stick lag, worn switch, view angle? *Default: coins +
-   4-way stick only for the first slice.*
-5. **Order:** is this the layer after the first level, with the CRT layer after it, or are both reachable from
-   the maze? *Default: maze → zoom out (cabinet) → zoom in (screen); one path.*
-6. **Mini-gurke:** stuck under the joystick or in the coin return? *Default: in the coin return.*
+- Is the game on the cabinet screen big enough to play on a phone (tiles are 16 screen px)?
+- Does the held joystick feel better or worse than swiping? Tune `CABINET.stickDeadzone`.
 
 ## Decision log
 - 2026-10-17: Zoom-out layer idea: a 3D arcade machine with screen and mechanical controls, the same game on the
   screen, but controls and view are different. (Quirin)
+- 2026-10-17: Defaults accepted (fixed camera with a zoom-out intro, joystick at the bottom of the touch area,
+  coins as the start, order maze → cabinet → screen). (Quirin)
+- 2026-10-17: Real 3D was asked for, then corrected: no real 3D, pixel art throughout, simulate the 3D. (Quirin)

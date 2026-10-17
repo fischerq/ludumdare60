@@ -11,8 +11,8 @@ the arcade machine, using the maze characters or mechanics to show how the old t
 
 ## Next layers · proposed
 The two layers next to the maze game come first:
-- **Zoom out: the cabinet.** A 3D-looking arcade machine, the same game on its screen, played through a 4-way
-  joystick. See [layer-cabinet](layer-cabinet.md).
+- **Zoom out: the cabinet.** A pixel-art arcade machine with simulated depth, the same game on its screen, played
+  through a 4-way joystick (built). See [layer-cabinet](layer-cabinet.md).
 - **Zoom in: the screen.** Inside the CRT: the game above plays itself and lights up the pixels; we eat dots
   only while they glow and dodge the refresh beam. See [layer-crt](layer-crt.md).
 

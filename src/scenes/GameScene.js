@@ -157,9 +157,17 @@ export default class GameScene extends Phaser.Scene {
   finish(cleared) {
     if (this.leaving) return;
     this.leaving = true;
+    // Clearing the maze zooms out to the next layer, the cabinet; losing ends the run.
     this.time.delayedCall(cleared ? 300 : 1200, () => {
-      this.scene.start('GameOver', { score: this.g.score, cleared });
+      if (cleared) this.saveBest();
+      this.scene.start(cleared ? 'Cabinet' : 'GameOver', { score: this.g.score, cleared });
     });
+  }
+
+  saveBest() {
+    try {
+      localStorage.setItem(BEST_KEY, String(Math.max(this.g.score, Number(localStorage.getItem(BEST_KEY)) || 0)));
+    } catch (e) { /* private mode */ }
   }
 
   render(time) {
