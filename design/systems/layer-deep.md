@@ -71,13 +71,14 @@ becomes a color), then to the **DAC**, which puts it on the screen: one objectiv
 command except the dot chomp makes the area around it deadly for `pulseTime` (a timed trap, not a sweep).
 **Objectives:** 4 colors delivered.
 
-## Layer -3: video RAM · built
-VRAM as it sits in memory, 32 bytes per row in hex. Bytes holding the wall code are walls, the 13 unused
-bytes at the end of each row are open floor. **Area:** all of VRAM; wall bytes are walkable like any other byte. The CPU's write head replays the program's real VRAM writes from
-the bus log: it hovers `DEEP.vram.writeTime` over the next address, then writes (a hit if you're on it); at
-most `queue` writes wait, older ones are skipped. Every byte that changed since the layer last looked is dirty
-and can be collected; in practice those are the dots the bot's Pac-Man eats. The video chip's read sweep is
-shown but harmless. Goal: 20 dirty bytes.
+## Layer -3: video RAM · built (gameplay pass)
+**Verb: dodge the blade trap.** VRAM as it sits in memory, 32 bytes per row in hex. **Area:** all of VRAM, including
+the 13 unused bytes at the end of each row. **Enemy:** the CPU's write head, a Zelda blade trap: it replays the
+program's real VRAM writes from the bus log (at most `queue` waiting, older ones skipped). For each write it waits
+`waitTime` at the start of that row (the row glows red: telegraph), then dashes along the row at `dashSpeed` to the
+address and writes; anything in its way is hit. No read sweep any more. Every byte that changed since the layer last
+looked is dirty and can be eaten as a dot (in practice, the dots the bot's Pac-Man eats). **Objectives:** the 4
+power pellet bytes (where the maze layout has its `o`s).
 
 ## Layer -4: the system bus · built
 16 address lanes, 8 data lanes and a control column (R/W, I/O in/out); each row is one bus cycle of a real
