@@ -1,6 +1,6 @@
 # Top-down mechanics survey (for the deep layers)
 
-**Status:** research notes, nothing decided
+**Status:** research notes; the per-layer proposals were taken (built 2026-10-17, see [layer-deep](layer-deep.md))
 **Parent:** [layer-deep](layer-deep.md) · [master](../master.md)
 
 ## Purpose
@@ -32,7 +32,7 @@ web check (links at the bottom); names are the common fan names.
 | Keys and locked doors | Zelda small keys, Pokémon gym badges | A key opens one door; doors gate areas | Address decoding: an address selects (opens) one chip |
 | Follower / escort | Pokémon walking partner, Zelda escort missions | Something trails behind you, follows your path | The light trail; a signal following the path you laid |
 
-## Per-layer proposals · proposed (see the open questions in the chat, not decided)
+## Per-layer proposals · decided (Quirin took the defaults; bus as the spatial variant)
 Each layer gets its own verb, so no two play alike; the sweeping beam stays only on the screen layer.
 
 - **-1 Screen: dark room.** Keep the beam (the only sweep). The tube is dark; you only see what glowed recently,
@@ -67,3 +67,5 @@ Each layer gets its own verb, so no two play alike; the sweeping beam stays only
 
 ## Decision log
 - 2026-10-17: Survey written for the gameplay pass over the deep layers; proposals wait for Quirin's answers. (Claude)
+- 2026-10-17: Proposals taken with their defaults; the bus is rebuilt as a spatial bus (chip rooms behind decoder
+  doors) instead of spinner lanes. Each layer also gets 3-5 objectives to win and its own enemy. (Quirin)
