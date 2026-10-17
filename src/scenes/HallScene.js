@@ -50,8 +50,8 @@ export default class HallScene extends Phaser.Scene {
       const [x, y] = k.split(',').map(Number);
       this.coinSprites.set(k, this.add.image(this.sx(x), this.sy(y), 'arcade/coin'));
     }
-    // Characters are 2x2 tiles, standing on their tile (feet at its bottom edge); lower ones are drawn in front.
-    const actor = (key) => this.add.image(0, 0, key).setOrigin(0.5, 1);
+    // Characters fill one tile, centered on it, like a Pokémon game; lower ones are drawn in front.
+    const actor = (key) => this.add.image(0, 0, key);
     this.npcSprites = this.h.npcs.map((n) => actor(`arcade/ghost-${n.name}-up-0`));
     this.pac = actor('arcade/pac-up-0');
 
@@ -64,10 +64,10 @@ export default class HallScene extends Phaser.Scene {
 
   sx(x) { return this.ox + x * T + T / 2; }
 
-  // A character at tile position `at`: feet on the tile's bottom edge, shown at PIXEL.sprite whatever the art's size.
+  // A character at tile position `at`: fills exactly that one tile (HALL.charSize), like a Pokémon game, whatever the art's size.
   place(s, at) {
-    const y = Math.round(this.sy(at.y) + T / 2);
-    s.setDisplaySize(PIXEL.sprite, PIXEL.sprite).setPosition(Math.round(this.sx(at.x)), y).setDepth(y);
+    const y = Math.round(this.sy(at.y));
+    s.setDisplaySize(HALL.charSize, HALL.charSize).setPosition(Math.round(this.sx(at.x)), y).setDepth(y);
   }
   sy(y) { return this.oy + y * T + T / 2; }
 

@@ -30,7 +30,7 @@ code doesn't change.
   run the export again.
 
 ## Base resolution · decided
-Sprites: 32x32, code-drawn placeholders included. The game shows every sprite in the same box of 2x2 tiles
+Sprites: 32x32, code-drawn placeholders included. The maze and cabinet show every sprite in the same box of 2x2 tiles (the arcade hall: one tile)
 (`PIXEL.sprite`), whatever its native size. Tiles are 16x16 (`PIXEL.tile`); the game world
 is 16 px per tile, scaled up 2x (`PIXEL.zoom`).
 
@@ -81,7 +81,7 @@ Sizes are in image pixels at native resolution. Transparent background.
 | `cabinet/machine` | 360x640 | 1 | [Cabinet layer](layer-cabinet.md): the whole arcade machine and its floor shadow on transparent, oblique view (front flat, depth up-right at 45°). Shown at 2x. Keep the screen opening (black, at x 98, y 67, 168x264 inside the bezel), the coin door (x 140, y 460, 56x76) and the control panel where they are, or tell Claude the new positions (`CABINET` in config). The marquee text and the game picture are drawn on top by the game; the picture uses the maze level's sprites. |
 | `cabinet/stick-n`, `cabinet/stick-up/down/left/right` | 24x32 | 5 | The cabinet's joystick, neutral and pushed four ways; the base sits at y 27. |
 | **Arcade hall** (`assets/arcade/`) | | | |
-| `arcade/pac-<right/up/down>-<f>` | 32x32 | 6 | Pac-Man walking, top-down, two frames each; left is `right` mirrored. Feet at the bottom of the picture: the game stands him on his tile and shows him 2x2 tiles big. |
+| `arcade/pac-<right/up/down>-<f>` | 32x32 | 6 | Pac-Man walking, top-down, two frames each; left is `right` mirrored. The game shows him one tile big (16x16, half size), centered on his tile. |
 | `arcade/ghost-<name>-<dir>-<f>` | 32x32 | 32 files | The ghost visitors with their cap on, per ghost, direction and frame; `up` is seen from behind. |
 | `arcade/coin` | 10x10 | 1 | Coin on the hall floor. |
 | `arcade/floor`, `arcade/rug-tl/tc/tr/ml/mc/mr/bl/bc/br`, `arcade/wall-top`, `arcade/wall-face`, `arcade/window`, `arcade/poster-pac`, `arcade/poster-ghost`, `arcade/clock`, `arcade/counter`, `arcade/plant`, `arcade/bin`, `arcade/door` | 16x16 | 20 files | [Arcade hall](layer-arcade.md) tileset, top-down, cozy. The rug is a 9-slice (t/m/b row, l/c/r column). `wall-face` is the wallpaper on the back wall; window, posters and clock sit on that row. Objects (plant, bin, counter) are drawn over the floor tile with a contact shadow. |

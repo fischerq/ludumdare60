@@ -179,7 +179,7 @@ export const CHEATS = {
 };
 
 // Layer 3: the arcade hall (zoom out further). A small, cozy room seen top-down like a Pokémon game: Pac-Man
-// walks one tile per step. 16 px tiles shown at 4x, characters 32x32 (2x2 tiles) standing on their tile; the room fits one screen.
+// walks one tile per step. 16 px tiles shown at 4x, characters 32x32 art shown one tile big; the room fits one screen.
 // # wall (dark trim), back wall row: | wallpaper, ^ window, * Pac-Man poster, + ghost poster, @ clock.
 // . floor, ~ rug, o coin, S start (in front of our cabinet), 1-4 ghost visitors (blinky, pinky, inky, clyde).
 // 1x2-tile machines, upper-case on top, lower-case below: cabinets R red, B blue, G green, V violet, Y yellow
@@ -204,6 +204,7 @@ export const HALL = {
   ],
   zoom: 4,               // screen px per art px in the hall (the other layers use 2): cozier, bigger characters
   walkSpeed: 4,          // tiles per second
+  charSize: 16,          // art px a character is shown at: one tile (the 32x32 art is scaled down)
   dragDeadzone: 24,      // screen px a finger moves before it counts as walking, not a tap
   tapTime: 350,          // ms; a touch shorter than this that didn't move is a tap (talk / use)
   introZoom: 24,         // camera zoom at the start of the zoom-out from the cabinet (the small cabinet fills the view)

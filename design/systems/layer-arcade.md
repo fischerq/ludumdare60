@@ -52,3 +52,4 @@ the arcade as a place.
 - 2026-10-17: Hall characters get their own 32x32 sprites (`arcade/pac-*`, `arcade/ghost-*` with the cap drawn in),
   shown 2x2 tiles big standing on their tile, lower ones in front. See [art](art.md). (Quirin)
 - 2026-10-17: Coins are global (one wallet for all layers), spent one per game in the cabinet; the hall needs one coin, not 3. Start with 1 coin, picked-up coins don't respawn (Claude's defaults, proposed). (Quirin)
+- 2026-10-17: Hall characters now fill exactly one tile (`HALL.charSize` 16), centered on it like a Pokémon game; the 32x32 art is shown at half size. Replaces the 2x2-tile size above. (Quirin)
