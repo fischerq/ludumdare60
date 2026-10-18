@@ -21,7 +21,8 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+# REPO_ROOT: run this copy against another checkout (the sync-prs workflow runs main's tools on each PR branch).
+ROOT = Path(os.environ.get("REPO_ROOT") or Path(__file__).resolve().parent.parent).resolve()
 OUT_DIR = ROOT / "making-of" / "sessions"
 MANUAL_LOG = ROOT / "making-of" / "manual-log.json"
 MEDIA_DIR = ROOT / "making-of" / "media"
