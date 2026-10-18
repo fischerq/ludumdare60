@@ -156,6 +156,44 @@ export const CABINET = {
   promptColor: '#ff3cf0', // the "tap the coin door" call to action and the blinking frame around the door
   promptBox: 0x000000,
   counterColor: '#ffd23f', // the coin counter at the top
+  // The coin minigame behind the coin door (src/systems/coinmech.js, design/systems/layer-cabinet.md). Art px of
+  // the close-up view (180x320, shown at 4x), drawn far right of the cabinet in the scene's world (originX).
+  coinMech: {
+    originX: 1000, w: 180, h: 320, zoom: 4,
+    zoomInTime: 0.4,      // s of zooming from the cabinet into the coin door, and back out
+    hand: { x: 36, y: 22 }, // where the coin waits to be flicked in (it bobs)
+    handBob: 2,           // art px up and down
+    flickMin: 24,         // screen px of swipe that counts as a flick (a tap works too)
+    dropTime: 0.25,       // s from the hand into the slot
+    // The coin's center along the track (art px): slot, slope, ledge 1, past the reject arm, ledge 2, turn,
+    // past the slug magnet, onto the coin switch.
+    track: [[36, 66], [72, 86], [86, 86], [132, 116], [146, 116], [154, 128], [62, 182], [42, 202]],
+    stops: [2, 4],        // track points where the coin rests on a ledge until a tap rolls it on
+    speed: 170,           // art px/s rolling
+    coinR: 8,             // the coin is 16x16
+    arm: { x: 109, y: 101, zone: 12, period: 1.3, block: 0.45, warn: 0.12 }, // swings across the track; zone: art px either side; block/warn: fractions of the period
+    magnet: { x: 108, y: 155, zone: 13, period: 1.5, on: 0.4, warn: 0.15, offset: 0.5 },
+    cup: { x: 150, y: 250 },   // the coin return the rejected coin drops into
+    rejectTime: 0.6,      // s falling into the coin return
+    retryDelay: 0.7,      // s before the coin is back in hand
+    switchAt: { x: 40, y: 212 }, // the coin switch the coin presses at the end of the track
+    pulseTime: 0.6,       // s for the pulse to run down the wire to the board
+    wire: [[30, 212], [8, 212], [8, 320]], // from the switch down to the board (art px)
+    doneDelay: 0.4,       // s after the pulse before we zoom back out (CREDIT 1)
+    textY: 292,           // center of the hint text at the bottom
+    text: {
+      hand: 'FLICK THE COIN\nINTO THE SLOT', hold: 'TAP TO ROLL ON', roll: '',
+      arm: 'REJECT ARM!\nCOIN RETURNED', magnet: 'SLUG MAGNET!\nCOIN RETURNED', ok: 'COIN OK!\nIN0 COIN BIT',
+    },
+    textColor: '#ffd23f', failColor: '#ff3030', okColor: '#00ff66',
+    colors: {
+      back: 0x141418, plate: 0x5c626c, plateDark: 0x3a3e46, rivet: 0x8c929c, rail: 0xc8ccd4, railDark: 0x7a7e88,
+      slot: 0x000000, arm: 0xd0d4dc, armDark: 0x6c7078, armWarn: 0xffb000, magnet: 0xb02020, magnetPole: 0xc8ccd4,
+      magnetOn: 0xff4040, spark: 0xa0d8ff, switchBody: 0x202020, switchLever: 0xe8e8e8, switchLit: 0x00ff66,
+      cup: 0x262626, cupRim: 0x8c929c, wire: 0x7a3a10, wireLit: 0xffe060, coin: 0xffd23f, coinDark: 0xb08a10,
+      coinLight: 0xfff4b0, box: 0x1e1e22,
+    },
+  },
 };
 
 // Coins Pac-Man holds, shared by every layer (src/wallet.js): found in the arcade hall, one per game in the cabinet.
@@ -273,17 +311,33 @@ export const DEEP = {
     ],
     goal: 4,             // colors delivered
   },
-  ram: {                 // -3 work RAM, blade trap: the write head dashes along a row to the address it writes
-    waitTime: 0.7,       // s it waits at the row's start (telegraph)
-    dashSpeed: 24,       // bytes per second along the row
-    queue: 3,            // writes waiting at most; older ones are skipped
-    nameReach: 31,       // bytes past a symbol the status line still names it by (GHOST0+4)
-    // The objectives: game state bytes, by the program's symbol (+ add bytes), with the name shown over them.
+  ram: {                 // -3 work RAM, poke the game state: bit lamps flip bits in the real RAM, the write head dashes
+    waitTime: 0.8,       // s the write head waits at a variable's left edge (telegraph: its bits glow red)
+    dashSpeed: 9,        // bits per second it dashes along the variable's bits, writing
+    restTime: 0.25,      // s between two dashes
+    msgTime: 2.5,        // s a poke's message stays in the status line
+    textScale: 2,        // art px per font pixel of the names and values
+    hudScale: 2,         // the same for the score, lives and goals next to the picture
+    // The variables, two columns of four (in order), by the program's symbols. kind: byte (the 8 bits of sym + add),
+    // hi (the high byte of a 16-bit value: each bit is x256), lo0 (the low byte of a 16-bit value, a poke also
+    // clears the high byte: the count can't underflow for good), tile (an actor's 16-bit position in px, the
+    // lamps are the tile number, px / 16; a poke that would put the actor off the maze or into a wall is refused).
+    vars: [
+      { id: 'score', name: 'SCORE', sym: 'SCORE', kind: 'hi' },
+      { id: 'lives', name: 'LIVES', sym: 'LIVES_LEFT', kind: 'byte' },
+      { id: 'level', name: 'LEVEL', sym: 'LEVEL', kind: 'byte', show: 1 }, // shown +1: 0 is level 1
+      { id: 'dots', name: 'DOTS LEFT', sym: 'PELLETS', kind: 'lo0' },
+      { id: 'pacX', name: 'PAC X', sym: 'PAC', add: 'A_X', kind: 'tile', axis: 'x' },
+      { id: 'pacY', name: 'PAC Y', sym: 'PAC', add: 'A_Y', kind: 'tile', axis: 'y' },
+      { id: 'blinkyX', name: 'BLINKY X', sym: 'GHOST0', add: 'A_X', kind: 'tile', axis: 'x', ghost: 0 },
+      { id: 'scared', name: 'BLINKY SCARED', sym: 'GHOST0', add: 'A_FRIGHT', kind: 'byte' },
+    ],
+    // The objectives: each one a change the game shows. min: the variable's value to reach (after a poke of yours).
     goals: [
-      { sym: 'SCORE', name: 'SCORE' },
-      { sym: 'LIVES_LEFT', name: 'LIVES' },
-      { sym: 'PAC', name: 'PAC X' },
-      { sym: 'GHOST0', name: 'BLINKY X' },
+      { id: 'lives', name: '5 LIVES', var: 'lives', min: 5 },
+      { id: 'score', name: 'SCORE 10000+', var: 'score', min: 10000 },
+      { id: 'moved', name: 'MOVE BLINKY', var: 'blinkyX' },
+      { id: 'scared', name: 'SCARE BLINKY', var: 'scared' },
     ],
   },
   bus: {                 // -4 the spatial bus: chip rooms behind decoder doors, packets on the lanes
@@ -324,12 +378,25 @@ export const DEEP = {
     ],
     goal: 4,             // one data byte from each chip room
   },
-  cpu: {                 // -5 warps (CALL / JP / RET) and flag blocks; the program counter fires on its line
-    rate: 6,             // instructions per second (the real CPU does about 800 000)
-    trace: 400,          // instructions recorded from the start of a frame
-    zColumn: 15,         // Z blocks stand in this column on every third line (up while Z is set)
-    cColumn: 18,         // C blocks likewise (up while C is set)
-    goal: 4,             // routines reached through a CALL warp
+  cpu: {                 // -5 Game Genie: carry a patch onto a line of the real program; the PC steps through it
+    rate: 3.2,           // lines per second the program counter steps while it's in the routine on screen
+    awayTime: 0.7,       // s the PC stays out of view between two visits (a CALL out, the rest of the frame)
+    arrowTime: 0.7,      // s a branch arrow stays on screen
+    trace: 16000,        // instructions recorded from the start of a frame (a busy frame has about 10 000)
+    retry: 0.35,         // s between trace requests while the routine doesn't run (e.g. no dot eaten that frame)
+    grace: 1,            // s after a respawn or a new routine before the PC can hit you
+    nextDelay: 1.8,      // s the patched line shows before the next routine comes up
+    lines: 12,           // lines of source on screen
+    // The four patches, in order: routine, the line to replace (as written in game.asm, label and comment
+    // left out), how many lines above it the screen starts, the replacement text and what it writes:
+    // word: LD rr,nn with nn = sym * times; nop: NOPs over the instruction.
+    patches: [
+      { name: 'DOTS WORTH 10X', routine: 'eat', line: 'ld de, DOT_POINTS', above: 1, text: 'LD DE,DOT_POINTS*10', word: { sym: 'DOT_POINTS', times: 10 } },
+      { name: 'PAC-MAN 2X FAST', routine: 'move_pac', line: 'ld de, SPD_PAC', above: 6, text: 'LD DE,SPD_PAC*2', word: { sym: 'SPD_PAC', times: 2 } },
+      { name: 'GHOSTS HALF SPEED', routine: 'move_ghost', line: 'ld de, SPD_GHOST', above: 7, text: 'LD DE,SPD_GHOST/2', word: { sym: 'SPD_GHOST', times: 0.5 } },
+      { name: 'PAC EATS ANY GHOST', routine: 'check_hits', line: 'jr z, .death', above: 11, text: 'NOP  NOP', nop: true },
+    ],
+    goal: 4,             // patches written
   },
   logic: {               // -6 line of sight: crossing a ghost's target vector sends a seeker after you
     vectorWidth: 0.45,   // tiles: how close to a target vector line counts as crossing it
@@ -338,13 +405,33 @@ export const DEEP = {
     vectorColors: { blinky: 0xff2a3a, pinky: 0xff6a8a, inky: 0xff8a5a, clyde: 0xffb0a0 },
     goal: 4,             // stand on each ghost's target tile
   },
-  input: {               // -7 pressure plates and a push block; a noise spark crawls after you
-    bounce: 0.25,        // s a switch chatters on and off after you step on it
-    sparkSpeed: 1.6,     // tiles per second
-    sparkDelay: 4,       // s before the spark starts crawling (at the start and after it got you)
-    block: { x: 8, y: 15 },
-    corner: 4,           // tiles: how close to a maze corner the machine's Pac-Man has to get
-    goal: 4,             // the four corners of the maze
+  input: {               // -7 fix the joystick, then play: carry the 4 cut wire ends to IN0's pins, then swipe-play
+    // The board below the picture (tiles; 11 x 17, the picture and IN0's port take the rows above `top`).
+    top: 8,
+    base: { x: 4, y: 13 }, // the joystick's 3x3 base (its microswitches are the middles of its edges)
+    start: { x: 4, y: 11 },
+    // Per direction: its switch (a tile of the base), the IN0 pin it belongs on (on row `top`), the wire's route
+    // once repaired, and the cut wire as it lies at the start (from the switch; the last tile is its loose end).
+    // Tiles are [x, y]; a route goes straight between its corners.
+    wires: {
+      up:    { switch: [5, 13], pin: [5, 8],  route: [[5, 13], [5, 8]],                     loose: [[5, 13], [5, 11], [9, 11]] },
+      left:  { switch: [4, 14], pin: [2, 8],  route: [[4, 14], [2, 14], [2, 8]],            loose: [[4, 14], [3, 14], [3, 11], [0, 11]] },
+      right: { switch: [6, 14], pin: [8, 8],  route: [[6, 14], [8, 14], [8, 8]],            loose: [[6, 14], [7, 14], [7, 15], [9, 15]] },
+      down:  { switch: [5, 15], pin: [10, 8], route: [[5, 15], [5, 16], [10, 16], [10, 8]], loose: [[5, 15], [5, 16], [1, 16]] },
+    },
+    // Noise sparks run along the wires from their switch (a carried wire has none). Each wire fires one every
+    // sparkEvery s (random in the range); its switch blinks red sparkWarn s before.
+    sparkSpeed: 3,       // tiles per second
+    sparkEvery: [3.5, 6],
+    sparkWarn: 0.8,
+    sparkDelay: 3,       // s of quiet at the start and after a hit
+    cutFlash: 0.6,       // s the switch and pin of a cut wire flash when the machine's Pac-Man wants that way
+    pictureT: 7,         // px per maze tile of the small picture while you repair
+    playT: 14,           // px per maze tile of the big picture while you play (it grows over playGrow s)
+    playGrow: 0.6,
+    playSpeed: 0.5,      // machine speed while you play (the deep layers run it at 1 / machineSlowdown)
+    playDots: 20,        // dots to eat with the repaired stick to win
+    goal: 5,             // the 4 wires and the test game
   },
 };
 

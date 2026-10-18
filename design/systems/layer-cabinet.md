@@ -4,7 +4,7 @@
 **Parent:** [layers](layers.md) · [master](../master.md)
 **Lab bench:** none yet
 **Code:** `src/scenes/CabinetScene.js`, cabinet and joystick art in `src/scenes/BootScene.js` (`makeCabinet`,
-`makeSticks`), game picture `src/systems/screenImage.js`, numbers in `CABINET` in `src/config.js`.
+`makeSticks`, `makeCoinMech`), coin minigame logic `src/systems/coinmech.js`, game picture `src/systems/screenImage.js`, numbers in `CABINET` in `src/config.js`.
 Playtest directly: `?scene=Cabinet`.
 
 ## Purpose
@@ -23,17 +23,36 @@ cabinet.
   cabinet; no prompt, and the coin door takes no coin. A halted machine (game over, or never started) asks for a
   coin: the picture stands still with INSERT COIN (or GAME OVER) and CREDIT 0 on top, and the TAP THE COIN DOOR
   prompt shows. Coins only go in while the machine asks for one. A big magenta box with an arrow under the coin door
-  says TAP THE COIN DOOR, and a frame blinks around the door. Tap it (or Space/Enter) to insert a coin.
+  says TAP THE COIN DOOR, and a frame blinks around the door. Tap it (or Space/Enter) to open the coin minigame.
 - **Coins are global** (`src/wallet.js`, numbers in `COINS`): a counter at the top shows the coins held, shared
-  with the arcade hall. A game costs one: the coin flies from the counter into the slot (coin sound, CREDIT 1),
-  then the camera zooms back into the screen and the maze layer starts a fresh game with 3 lives (already paid). With no coins the box says NO COINS / LAYER UP (find more
+  with the arcade hall. A game costs one: the coin has to get through the coin minigame (below); once the coin
+  switch takes it the counter drops by one and the screen shows CREDIT 1, then the camera zooms back into the screen and the maze layer starts a fresh game with 3 lives (already paid). With no coins the box says NO COINS / LAYER UP (find more
   in the hall). You start with 1 coin. Game over goes back to INSERT COIN. *(start count and no-coin hint: proposed)*
+- **Coin minigame** *(decided 2026-10-18)*: real coin mechs tested coins mechanically, so every coin goes through
+  ours, no skip. Tapping the door zooms into it (0.4 s) and cuts to the coin mechanism behind it (art
+  `assets/cabinet/coinmech-*`, shown at 4x). Flick the coin into the slot (a swipe; a tap works too). It rolls
+  down the track and rests on two ledges; tap to roll it on. After the first ledge a **reject arm** swings across
+  the track, after the second the **slug magnet** pulses on and off (both turn amber just before and after they're
+  active). If the coin touches the arm while it's out, or passes the magnet while it's on, it drops into the
+  **coin return**: not lost, back in hand to try again. At the end it presses the **coin switch**, which sends a
+  pulse down the wire to the board (the COIN bit in IN0, as the input wires layer shows): COIN OK, the coin is
+  spent, we zoom back out to CREDIT 1 and into the maze for a fresh game. About 3 to 5 s with good timing. Space or
+  Enter does the flick and the taps. Only the hint line at the bottom explains it (FLICK THE COIN INTO THE SLOT /
+  TAP TO ROLL ON / REJECT ARM! / SLUG MAGNET! / COIN OK!). Numbers in `CABINET.coinMech`. Nothing new while the
+  bot plays (the door takes no coin then). A BACK box at the top leaves without spending the coin *(proposed,
+  Claude: otherwise there's no way out, the layer buttons are off screen)*.
 - LAYER DOWN without a coin zooms back in and goes on with the machine's game where it stood.
 - The joystick on the panel is only art now (the directional stick textures stay in `assets/cabinet/` for later).
 - Reaching it: clearing the maze level zooms out into this layer.
 
 ## Slice scope
 - Build (done): pixel cabinet, zoom-out intro, bot plays a running game, coin into the slot when halted, zoom back in to a fresh game.
+- Build (coin minigame, 2026-10-18): zoom into the door, flick into the slot, two ledges with tap-to-roll, reject
+  arm and slug magnet with a warning state, coin return and retry, coin switch with a pulse down the wire, coin
+  spent only on success, BACK; placeholder art in code, one file per state for Max.
+- Not now (coin minigame): fake coins or slugs to sort, different coins, difficulty that changes with progress,
+  a coin jam or banging the door, the pulse actually toggling IN0 in the emulator (it's shown, the credit is
+  still given by the scene), a lab bench.
 - Not now: glare/view changes beyond a faint glass glare, stick lag or worn switches, banging the machine,
   more than one credit at a time, the zoom into the screen (next layer), mini-gurke in the coin return.
 
@@ -50,3 +69,4 @@ cabinet.
 - 2026-10-17: The cabinet's screen shows the emulated machine: the bot's demo game until a coin goes in, then the player's game through the stick; see [emulator](emulator.md). (Claude)
 - 2026-10-17: Rework: the cabinet is only about inserting the coin and seeing the machine. No play and no bot here: the machine stands still while the cabinet shows; the coin animates into the slot, then the camera zooms into the maze layer for a fresh game. (Quirin; frozen picture for a running game and dropping PUSH START: Claude)
 - 2026-10-17: A coin goes in only when the machine asks for one (halted). Going up mid-game, the bot takes over and plays on; no freezing. (Quirin)
+- 2026-10-18: Coin minigame: tapping the coin door zooms into the coin mechanism; flick the coin into the slot, tap to roll it past the reject arm and the slug magnet; pass presses the coin switch (pulse down the wire, COIN bit in IN0) for CREDIT 1, fail drops it into the coin return to retry, no coin lost. Every coin, no skip, about 5 s. (Quirin, defaults accepted)

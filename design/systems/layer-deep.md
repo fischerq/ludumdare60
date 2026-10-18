@@ -100,18 +100,36 @@ the DAC's three slots, their R/G/B levels rise over them, then they leave one af
 wire off the board (`dropTime`, `convertTime`, `sendTime`, `sendGap`). **The frame timer** counts down `frameTime` s; at zero the pixels you carry are dropped and the
 fetcher moves on to a new tile. **Objectives:** 4 deliveries.
 
-## Layer -3: work RAM · built (replaces video RAM, 2026-10-18)
-**Verb: dodge the blade trap.** The program's work RAM (`MAP.ram`, 0x4c00-0x4fef) as it sits in memory, 32 bytes
-per row in hex (the last row is half: the sprite registers follow). Code `src/systems/layers/ram.js`, numbers in
-`DEEP.ram`. **Enemy:** the CPU's write head, a Zelda blade trap: it replays the program's real work RAM writes from
-the bus log (at most `queue` waiting, older ones skipped). For each write it waits `waitTime` at the start of that
-row (the row glows red: telegraph), then dashes along the row at `dashSpeed` to the address and writes; anything in
-its way is hit. The status line names what it writes by the program's own symbols (`SCORE`, `GHOST0+4`, the stack
-at the top). Every byte that changed since the layer last looked is dirty and can be eaten as a dot.
-**Objectives:** game state bytes found by symbol (`DEEP.ram.goals`): the score, the lives, Pac-Man's x and Blinky's
-x; the status line lists the ones left.
+## Layer -3: work RAM · decided, built (poke the game state, 2026-10-18)
+**Environment:** eight of the game's variables in the machine's real work RAM (`MAP.ram`, found by the program's own
+symbols, `DEEP.ram.vars`), as big boxes in two columns: the name, the value and a row of 8 bit lamps (high bit on the
+left). SCORE (the lamps are its high byte, each worth 256), LIVES, LEVEL, DOTS LEFT (`PELLETS`), PAC X, PAC Y,
+BLINKY X and BLINKY SCARED (Blinky's fright byte). Positions are 16-bit pixel values; their lamps are the tile
+number (px / 16), so a flip moves the actor by whole tiles. A small picture of the maze game runs live at the top
+left (like the input wires), with the score, the lives, the game's phase and the objectives next to it. Lanes
+between the boxes; the name rows are solid, so each lamp is reached from the lane below it. Code
+`src/systems/layers/ram.js`, numbers in `DEEP.ram`.
+**Verb: poke.** Stepping onto a lamp flips that bit in the emulated RAM (once per visit, like a cheat device; not a
+CPU write, so it's not on the bus) and the game reacts at once: more lives, a score jump, Pac-Man or Blinky jumps
+tiles, Blinky turns blue. The cheat keeps positions sane: a flip that would put an actor off the maze or into a wall,
+or move it outside play (Blinky only while he's out of the house), is refused (the lamp flashes red, the status line
+says why). DOTS LEFT also clears its high byte, so the count can't stay underflowed. The lamps that move an
+unfinished objective on blink white.
+**Enemy:** the CPU's write head, a Zelda blade trap. When the program really writes one of the variables (read from
+the bus log), the variable is queued; the head takes the one that has waited longest, its bits glow red at its left
+edge for `waitTime` (telegraph), then it dashes along the 8 bits at `dashSpeed`; anyone on them is hit, the name row
+and the lanes are safe. The status line says which variable it writes. Positions are written every frame the actor
+moves and the score and dots on every dot, so those boxes get dashed often; LIVES, LEVEL and BLINKY SCARED rarely.
+Most writes are read-modify-write (`x = x + 1`, `score += 10`), so a poke survives them; real overwrites happen when
+the program sets a value: a new round resets DOTS LEFT, a power pellet ending or Blinky being eaten clears his fright.
+**Objectives** (`DEEP.ram.goals`, each needs a poke of yours): **5 LIVES**, **SCORE 10000+**, **MOVE BLINKY** (a
+flip of BLINKY X while he's out), **SCARE BLINKY** (any bit on while he's out: he turns blue in the picture and
+Pac-Man can eat him). No dots. The pokes stay in the machine's RAM after you leave.
+Playtest bot (quick runs): wins 100% in about 11 s up to noise 0.25, 100% in 31 s at 0.5, 20% at full noise.
+Not in this pass: more ghosts (Pinky, Inky, Clyde), the level-256 kill screen via LEVEL + DOTS LEFT, a sound per poke.
 
-Before (until 2026-10-18) this layer was **video RAM**: the same blade trap over VRAM with the 4 power pellet bytes
+Before the rework (2026-10-18) the work RAM was a 32x32 hex dump of tiny 2-digit cells with the same blade trap
+along rows, and the objectives were finding 4 named bytes, which changed nothing in the game. Before that this layer was **video RAM**: the same blade trap over VRAM with the 4 power pellet bytes
 as objectives. Replaced because there were already many video layers.
 
 ## Layer -4: the system bus · built (gameplay pass, spatial; polish 2026-10-18)
@@ -127,17 +145,36 @@ time, so the door can be slipped through before the read comes out; a waiting re
 one on the lanes or in a doorway is a hit, inside a chip room packets are harmless. A read drops up to 3 of
 its 1 bits on its lane as dots. **Objectives:** the data byte in each of the 4 chip rooms.
 
-## Layer -5: the CPU · built (gameplay pass)
-**Verb: warps and switch blocks.** The program's own source listing (`game.asm` as the browser assembled it), one
-page at a time; walk off the top or bottom edge to turn the page. Every `CALL` / `JP` / `JR` / `DJNZ` line has a
-warp pad at its left edge that takes you to the line it jumps to (Pokémon warp panels); `CALL` also pushes the way
-back, and `RET` pads take you back (STACK n). **Switch blocks:** the real Z and C flags raise and lower two columns
-of blocks (`zColumn`, `cColumn`, every third line) like Zelda's crystal switches; standing in one when it rises
-is a hit. **Enemy:** the program counter replays a real trace of a frame (`requestTrace`, from the vblank on, at
-`rate` per second); the line it lands on fires, a hit if you're on it. It lives in the interrupt handler and the
-routines that run every frame; the status line says which page it's on (`PC HERE!` when it's on yours). Z and C flags
-it sets drop on their lines as dots. **Objectives:** reach 4 different routines through their `CALL` pads (an
-unvisited routine's pad shows the special).
+## Layer -5: the CPU · built (Game Genie rework, 2026-10-18)
+**Verb: carry a patch onto the program (Game Genie).** One routine of the real program per screen: 12 big lines of
+`game.asm` as the browser assembled it (`DEEP.cpu.lines`, labels in the second accent), the machine's picture small
+at the top left with the patch list and the score beside it, and the registers (PC, A, HL, DE, the Z and C flags)
+as big boxes at the bottom. Code `src/systems/layers/cpu.js`, numbers in `DEEP.cpu`.
+**Objectives: 4 patches** (`patches`), one per routine, in this order. A patch token (a card with the replacement
+instruction on it) lies on a line; walk onto it to take it (it follows you), then onto the marked line (blinking
+outline): the patch is really written into the machine's ROM and the line shows the new instruction. The picture
+at the top flashes, and after `nextDelay` the next routine comes up. Each patch is 2 or 3 bytes the program has:
+- `eat`: `LD DE,DOT_POINTS` becomes `LD DE,DOT_POINTS*10`: **dots worth 10x** (the score beside the picture jumps).
+- `move_pac`: `LD DE,SPD_PAC` becomes `LD DE,SPD_PAC*2`: **Pac-Man 2x fast**.
+- `move_ghost`: `LD DE,SPD_GHOST` becomes `LD DE,SPD_GHOST/2`: **ghosts half speed** (in the maze, not frightened).
+- `check_hits`: `JR Z,.DEATH` becomes `NOP NOP`: **Pac-Man eats any ghost** he touches (it turns to eyes).
+**Enemy: the program counter**, a glowing red cursor. It replays a real trace of a frame (`requestTrace`), slowed
+down: `rate` lines per second while it's on a line of this screen, `awayTime` for each stretch it spends
+elsewhere (a CALL out, the rest of the frame); the panel then says where (`PC IN ACCUM`). The line it lands on
+next has a red outline; it's a hit if it lands on your line (`grace` after a respawn or a new routine). Wherever
+it doesn't just go on to the next line, a white arrow in the left gutter shows the jump (line to line, or off the
+top or bottom edge when it leaves). A frame that doesn't run this screen's lines (no dot eaten in `eat`) is skipped
+and a new trace taken after `retry`. The four routines get harder: `eat`'s dot part runs only when a dot is eaten,
+`move_pac` once a frame, `move_ghost` four times, `check_hits` loops over the ghosts twice a frame.
+**Patches stay** in the ROM for the rest of the session (until the page reloads), also in the maze, which is the
+fun: nothing in them can crash the program (the score is 16 bits and wraps as it always would). Entering the CPU
+layer puts the original program back first (`revertPatches`), so it can be played again; the playtest resets it
+before every fresh machine. No dots in this layer (the counter shows `PATCHES n/4`).
+Playtest bot (quick runs): wins 100% at every noise level, about 19 s without noise, 30 s at 0.5, 40 to 50 s at
+0.75 to full noise (2 to 4 hits).
+
+Before (until 2026-10-18) this layer was the whole source listing in 51 pages with warp pads on CALL / JP / RET
+lines and Z / C flag switch blocks; reaching a routine did nothing in the game, and the text was too small.
 
 ## Layer -6: the game logic · built (gameplay pass)
 **Verb: line of sight.** No pixels: the maze as the rules see it, grid lines and faint wall outlines from VRAM,
@@ -149,30 +186,46 @@ s; touching it is a hit. Frightened ghosts have no vector and see nothing. **Obj
 the 4 ghosts' target tiles (they move with the mode and with Pac-Man; scatter corners are clamped into the grid).
 The pellets are dots.
 
-## Layer -7: the input wires · built (gameplay pass)
-**Verb: pressure plates and a push block.** The joystick's switches as pads on the board, wired to IN0's bits
-(START to IN1). Standing on a pad closes that switch: the bit goes low, the program polls it, and the machine's
-Pac-Man turns. You steer the real game, watching it on a small picture at the top, with IN0 and IN1 shown live.
-A switch chatters for `bounce` s when it closes. **Push block** (Zelda, Sokoban): walk into it to push it one tile;
-on a pad it holds that switch while you walk elsewhere (your own pad wins while you stand on one). The bot is off
-here (and so is the demo switch: deaths cost lives); the START pad starts a new game. **Enemies:** a noise spark
-that crawls after you (`sparkSpeed`, after `sparkDelay` s, and again after it got you), and Pac-Man dying counts as
-a hit. **Objectives:** steer Pac-Man into each of the maze's 4 corners (within `corner` tiles; the picture marks
-the ones left). Every dot Pac-Man eats is a dot.
+## Layer -7: the input wires · decided (Quirin, 2026-10-18: fix the joystick, then play)
+**Environment:** the joystick's base (3x3 tiles) in the middle of the board with a microswitch on each side; big
+wires run from the switches up to IN0's four pins under the machine's small live picture (`DEEP.input.wires`:
+each switch, pin, route and where the cut wire lies). Beside the picture IN0 and IN1 as the CPU reads them, the score and
+the game's phase; above each pin the bit it reads (1 open, 0 pulled low). Code `src/systems/layers/input.js`.
+**Verb: carry and deliver (like the video board), then play.** All four wires are cut, their ends lying on the
+board with a big letter plug. Walk onto a loose end to take it: the wire is laid where you walk (walking back along
+it pulls it in). Bring it to its own pin: the wire snaps onto its route and that direction works. **Until a wire is
+fixed its switch can't pull its bit low:** the machine's Pac-Man (the bot plays meanwhile) can't turn that way;
+when he wants to, a red crossed-out arrow shows it in the picture, the switch and pin flash and the status line
+says `PAC-MAN CAN'T GO LEFT: WIRE CUT`. A fixed wire lights white while its switch is closed.
+**Enemy: noise sparks** that run along the wires from their switches (`sparkSpeed`, each wire one every
+`sparkEvery` s; the switch blinks red `sparkWarn` s before; none on the wire you carry, `sparkDelay` s quiet at
+the start and after a hit). A spark that touches you is a hit, and you drop the end you carry where you stand.
+**Objectives (5):** the 4 wires, then the test game: with all four fixed the sparks stop and the stick blinks;
+walk onto it to grab it. The picture grows over the board (`pictureT` to `playT` px per maze tile in `playGrow` s),
+the machine runs at `playSpeed`, and your swipes are the stick's direction: held on the machine through the
+repaired switches into IN0. Eat `playDots` (20) dots, counted from your first swipe: LAYER CLEAR. The counter
+shows `WIRES n/4`, then `DOTS n/20`.
+**Bot and START (Claude's call):** the in-game bot plays while you repair, through the working switches only;
+the board keeps the demo switch on in this layer the whole time (deaths never cost lives, so no game over here) and
+presses START for you whenever the game waits for it (a halted machine is started again). A death while you play
+is a hit (the dots eaten so far stay). Removed: the pads that steered Pac-Man, the push block, the START pad, the
+corner objectives and the crawling spark. Playtest bot (quick runs): 100% up to noise 0.75 (23 s with no noise, about
+100 s at 0.75), 20% at full noise.
 
 ## Goals vs. what the part does · open (review 2026-10-18)
 Quirin asked that a layer's goals connect to what its component achieves (the screen's adjustments now fix the
 picture). How the other layers do on that, to decide later:
 - **-2 video board:** connected. Carrying an index through the palette to the DAC is what the board does.
-- **-3 video RAM:** disconnected. Eating the 4 power pellet bytes doesn't show what VRAM does (hold the picture the
-  screen shows). Idea: write the right bytes into blanked parts of the picture.
+- **-3 work RAM:** connected (2026-10-18). Flipping bits of the game's variables changes the game (lives, score,
+  Blinky moved or scared); the CPU's writes overwrite them, as in real RAM.
 - **-4 bus:** half. Picking up a byte in a chip room is a read, but it never reaches the CPU. Idea: carry it back.
-- **-5 CPU:** half. Reaching a routine through its CALL pad does nothing in the game. Idea: a routine you reach runs
-  and you see its effect (e.g. the sound routine plays).
+- **-5 CPU:** connected (2026-10-18). Each patch rewrites an instruction in the program and the game shows the
+  effect (dots worth more, faster Pac-Man, slower ghosts, no deaths).
 - **-6 game logic:** half. Standing on a ghost's target tile has no effect. Idea: standing there pulls that ghost
   in the maze (the target is what it chases).
-- **-7 input wires:** connected. Steering the real Pac-Man into the corners through the switches.
-- **Dots** in -3 to -7 are only counted and say nothing about the part.
+- **-7 input wires:** connected. Each repaired wire gives the machine's Pac-Man a direction back; then you play
+  the real game through the switches you fixed.
+- **Dots** in -4 and -6 are only counted and say nothing about the part.
 
 ## Decision log
 - 2026-10-17: One scene for all deep layers with a pure module per layer; first slices of all seven layers
@@ -211,3 +264,15 @@ picture). How the other layers do on that, to decide later:
   (0.6 s) before closing; safer exits: packets can't hit inside a chip room (a read used to spawn on the tile you
   wait on by the door) and a waiting read pulses there. (Quirin asked for longer doors and safer exits; Claude
   picked how)
+- 2026-10-18: Work RAM reworked: poke the game state. Eight variables as big boxes with 8 bit lamps each and a live
+  picture of the game; stepping on a lamp flips the bit in the real RAM, the write head dashes along a variable
+  when the program writes it; objectives are 5 lives, score 10000+, move Blinky, scare Blinky. (Quirin, defaults accepted)
+- 2026-10-18: Input wires reworked: fix the joystick, then play. The 4 wires from the joystick's switches to IN0
+  are cut; carry each loose end to its pin (a cut direction doesn't reach the machine, the bot's Pac-Man can't turn
+  that way); noise sparks run along the wires; with all four fixed, grab the stick and swipe-play the real game
+  until you eat 20 dots. Pads-as-steering, push block, START pad and corners removed; demo switch on and START
+  pressed for you in this layer. (Quirin, defaults accepted)
+- 2026-10-18: CPU reworked: Game Genie patches. One routine per screen in 12 big lines, the PC a glowing cursor
+  replaying a real trace with jump arrows, registers as big boxes; carry 4 patch tokens onto their lines, each
+  really written into the ROM (dots 10x, Pac-Man 2x fast, ghosts half speed, Pac-Man eats any ghost); patches stay
+  for the session, entering the layer reverts them; warp pads and flag blocks removed. (Quirin, defaults accepted)

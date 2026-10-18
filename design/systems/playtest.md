@@ -18,12 +18,11 @@ curve, and a rerun after a balance change shows what the change did.
 - **What's tested** (`--layers`): `maze` (swipes), `cabinet` (held stick), `hall` (collect every coin, tap our
   cabinet), `hall-chase` (read the ghost poster, get out the door), the seven deep layers, the bonus `adder` layer (bot in `tools/playtest/adder.mjs`), and `playthrough`.
 - **Win / loss:** maze and cabinet: clear the maze before game over. Deep layers: all objectives within
-  `PLAYTEST.timeCap.deep` (180 s; hits only cost time, as in the game; the input layer also loses on game over).
+  `PLAYTEST.timeCap.deep` (180 s; hits only cost time, as in the game).
   Hall: coins and tap within 90 s; chase: out the door or outlasted, caught loses.
 - **Full playthrough** (`playthrough`): the outer loop from the menu's first coin. Play the maze until cleared; game
   over costs a coin; out of coins, go up through the cabinet to the hall, collect what's left, play on in the
-  cabinet. Then go down and clear all seven deep layers in order. A game over in the input layer goes back up for
-  a coin. Transitions, text boxes, coin drops and tap reading time all count. Loses on running out of coins, a
+  cabinet. Then go down and clear all seven deep layers in order. Transitions, text boxes, coin drops and tap reading time all count. Loses on running out of coins, a
   stuck layer or 40 minutes.
 - **Bots** see what the player sees (positions, the beam, packets, lit cells, door states), never the machine's
   future. Each deep bot is a target list plus a "blocked at time eta" test; a breadth-first search finds the
