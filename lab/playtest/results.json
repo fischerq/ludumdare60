@@ -10,35 +10,36 @@
   0.75,
   1
  ],
+ "set": [],
  "layers": {
   "maze": [
    {
     "level": 0,
     "winRate": 1,
     "time": {
-     "p25": 61,
-     "median": 61,
-     "p75": 61
+     "p25": 41,
+     "median": 41,
+     "p75": 41
     },
-    "hits": 1,
-    "swipesPerSec": 5.71,
+    "hits": 0,
+    "swipesPerSec": 2.17,
     "results": {
      "win": 20
     }
    },
    {
     "level": 0.25,
-    "winRate": 0.2,
+    "winRate": 0.8,
     "time": {
-     "p25": 71.5,
-     "median": 75.5,
-     "p75": 81.6
+     "p25": 70.8,
+     "median": 85.7,
+     "p75": 93.8
     },
-    "hits": 2.8,
-    "swipesPerSec": 2.59,
+    "hits": 2.4,
+    "swipesPerSec": 2.78,
     "results": {
-     "over": 16,
-     "win": 4
+     "over": 4,
+     "win": 16
     }
    },
    {
@@ -49,8 +50,8 @@
      "median": null,
      "p75": null
     },
-    "hits": 3,
-    "swipesPerSec": 1.53,
+    "hits": 4,
+    "swipesPerSec": 1.75,
     "results": {
      "over": 20
     }
@@ -63,8 +64,8 @@
      "median": null,
      "p75": null
     },
-    "hits": 3,
-    "swipesPerSec": 1.25,
+    "hits": 4,
+    "swipesPerSec": 1.39,
     "results": {
      "over": 20
     }
@@ -77,8 +78,8 @@
      "median": null,
      "p75": null
     },
-    "hits": 3,
-    "swipesPerSec": 0.96,
+    "hits": 4,
+    "swipesPerSec": 0.99,
     "results": {
      "over": 20
     }
@@ -89,29 +90,29 @@
     "level": 0,
     "winRate": 1,
     "time": {
-     "p25": 61,
-     "median": 61,
-     "p75": 61
+     "p25": 41,
+     "median": 41,
+     "p75": 41
     },
-    "hits": 1,
-    "swipesPerSec": 5.71,
+    "hits": 0,
+    "swipesPerSec": 2.17,
     "results": {
      "win": 20
     }
    },
    {
     "level": 0.25,
-    "winRate": 0.3,
+    "winRate": 0.7,
     "time": {
-     "p25": 79.3,
-     "median": 84.6,
-     "p75": 90.8
+     "p25": 63.1,
+     "median": 72.4,
+     "p75": 84.8
     },
-    "hits": 2.7,
-    "swipesPerSec": 2.58,
+    "hits": 2.4,
+    "swipesPerSec": 2.72,
     "results": {
-     "over": 14,
-     "win": 6
+     "win": 14,
+     "over": 6
     }
    },
    {
@@ -122,8 +123,8 @@
      "median": null,
      "p75": null
     },
-    "hits": 3,
-    "swipesPerSec": 1.55,
+    "hits": 4,
+    "swipesPerSec": 1.78,
     "results": {
      "over": 20
     }
@@ -136,8 +137,8 @@
      "median": null,
      "p75": null
     },
-    "hits": 3,
-    "swipesPerSec": 1.25,
+    "hits": 4,
+    "swipesPerSec": 1.36,
     "results": {
      "over": 20
     }
@@ -150,8 +151,8 @@
      "median": null,
      "p75": null
     },
-    "hits": 3,
-    "swipesPerSec": 0.99,
+    "hits": 4,
+    "swipesPerSec": 1.01,
     "results": {
      "over": 20
     }
@@ -310,12 +311,12 @@
     "level": 0,
     "winRate": 1,
     "time": {
-     "p25": 81.4,
-     "median": 91.4,
-     "p75": 111.4
+     "p25": 49.7,
+     "median": 96.5,
+     "p75": 113.9
     },
-    "hits": 1.4,
-    "swipesPerSec": 29.87,
+    "hits": 1.75,
+    "swipesPerSec": 29.9,
     "results": {
      "win": 20
     }
@@ -324,12 +325,12 @@
     "level": 0.25,
     "winRate": 1,
     "time": {
-     "p25": 27,
-     "median": 31.5,
-     "p75": 36.6
+     "p25": 31.3,
+     "median": 41.6,
+     "p75": 51.1
     },
-    "hits": 0.8,
-    "swipesPerSec": 3.37,
+    "hits": 1.7,
+    "swipesPerSec": 3.32,
     "results": {
      "win": 20
     }
@@ -338,12 +339,12 @@
     "level": 0.5,
     "winRate": 1,
     "time": {
-     "p25": 68.8,
-     "median": 84.5,
-     "p75": 108.4
+     "p25": 61.8,
+     "median": 96.4,
+     "p75": 121.2
     },
-    "hits": 7.05,
-    "swipesPerSec": 2.02,
+    "hits": 6.35,
+    "swipesPerSec": 1.98,
     "results": {
      "win": 20
     }
@@ -352,30 +353,30 @@
     "level": 0.75,
     "winRate": 0.65,
     "time": {
-     "p25": 126.7,
-     "median": 131.3,
-     "p75": 141.3
+     "p25": 131.3,
+     "median": 132.2,
+     "p75": 147.3
     },
-    "hits": 12.95,
-    "swipesPerSec": 1.44,
+    "hits": 12.15,
+    "swipesPerSec": 1.38,
     "results": {
-     "win": 13,
-     "timeout": 7
+     "timeout": 7,
+     "win": 13
     }
    },
    {
     "level": 1,
-    "winRate": 0.45,
+    "winRate": 0.35,
     "time": {
-     "p25": 127.2,
-     "median": 151.1,
-     "p75": 171.6
+     "p25": 93.1,
+     "median": 108.6,
+     "p75": 141.5
     },
-    "hits": 16.8,
-    "swipesPerSec": 1.1,
+    "hits": 14.6,
+    "swipesPerSec": 1.08,
     "results": {
-     "timeout": 11,
-     "win": 9
+     "timeout": 13,
+     "win": 7
     }
    }
   ],
@@ -384,12 +385,12 @@
     "level": 0,
     "winRate": 1,
     "time": {
-     "p25": 26.9,
-     "median": 27.1,
-     "p75": 27.9
+     "p25": 27.7,
+     "median": 28.6,
+     "p75": 32.9
     },
     "hits": 0,
-    "swipesPerSec": 2.05,
+    "swipesPerSec": 5.95,
     "results": {
      "win": 20
     }
@@ -398,12 +399,12 @@
     "level": 0.25,
     "winRate": 1,
     "time": {
-     "p25": 29.4,
-     "median": 30,
-     "p75": 31.2
+     "p25": 30.4,
+     "median": 31.4,
+     "p75": 39.4
     },
-    "hits": 0,
-    "swipesPerSec": 1.46,
+    "hits": 0.4,
+    "swipesPerSec": 1.74,
     "results": {
      "win": 20
     }
@@ -412,29 +413,29 @@
     "level": 0.5,
     "winRate": 1,
     "time": {
-     "p25": 53.4,
-     "median": 62.3,
-     "p75": 67
+     "p25": 55.6,
+     "median": 59.8,
+     "p75": 80.5
     },
-    "hits": 1.1,
-    "swipesPerSec": 1.71,
+    "hits": 1.65,
+    "swipesPerSec": 1.72,
     "results": {
      "win": 20
     }
    },
    {
     "level": 0.75,
-    "winRate": 0.5,
+    "winRate": 0.25,
     "time": {
-     "p25": 146.8,
-     "median": 157.2,
-     "p75": 165.1
+     "p25": 133.1,
+     "median": 139.3,
+     "p75": 155
     },
-    "hits": 4.3,
-    "swipesPerSec": 1.47,
+    "hits": 6.2,
+    "swipesPerSec": 1.49,
     "results": {
-     "win": 10,
-     "timeout": 10
+     "timeout": 15,
+     "win": 5
     }
    },
    {
@@ -445,8 +446,8 @@
      "median": null,
      "p75": null
     },
-    "hits": 4.9,
-    "swipesPerSec": 1.17,
+    "hits": 8.3,
+    "swipesPerSec": 1.15,
     "results": {
      "timeout": 20
     }
@@ -458,11 +459,11 @@
     "winRate": 1,
     "time": {
      "p25": 11.4,
-     "median": 11.4,
-     "p75": 12.1
+     "median": 11.6,
+     "p75": 12.7
     },
     "hits": 0,
-    "swipesPerSec": 0.92,
+    "swipesPerSec": 2.13,
     "results": {
      "win": 20
     }
@@ -471,12 +472,12 @@
     "level": 0.25,
     "winRate": 1,
     "time": {
-     "p25": 12.4,
+     "p25": 12.5,
      "median": 12.8,
-     "p75": 13.3
+     "p75": 13.2
     },
     "hits": 0,
-    "swipesPerSec": 0.66,
+    "swipesPerSec": 0.72,
     "results": {
      "win": 20
     }
@@ -485,100 +486,104 @@
     "level": 0.5,
     "winRate": 1,
     "time": {
-     "p25": 15.2,
-     "median": 18.8,
-     "p75": 27.9
+     "p25": 15.5,
+     "median": 21.2,
+     "p75": 27.2
     },
     "hits": 0.3,
-    "swipesPerSec": 1.05,
+    "swipesPerSec": 1.09,
     "results": {
      "win": 20
     }
    },
    {
     "level": 0.75,
-    "winRate": 1,
+    "winRate": 0.85,
     "time": {
-     "p25": 71.9,
-     "median": 103.2,
-     "p75": 123.6
+     "p25": 58.6,
+     "median": 74.2,
+     "p75": 97.6
     },
-    "hits": 0.85,
+    "hits": 1.05,
     "swipesPerSec": 1.33,
     "results": {
-     "win": 20
+     "win": 17,
+     "timeout": 3
     }
    },
    {
     "level": 1,
-    "winRate": 0,
+    "winRate": 0.05,
     "time": {
-     "p25": null,
-     "median": null,
-     "p75": null
+     "p25": 72.7,
+     "median": 72.7,
+     "p75": 72.7
     },
-    "hits": 2,
+    "hits": 1.6,
     "swipesPerSec": 1.13,
     "results": {
-     "timeout": 20
+     "timeout": 19,
+     "win": 1
     }
    }
   ],
   "bus": [
    {
     "level": 0,
-    "winRate": 0,
+    "winRate": 1,
     "time": {
-     "p25": null,
-     "median": null,
-     "p75": null
+     "p25": 37.9,
+     "median": 44.3,
+     "p75": 60.8
     },
-    "hits": 0.2,
-    "swipesPerSec": 56.9,
+    "hits": 0,
+    "swipesPerSec": 43.02,
     "results": {
-     "timeout": 20
+     "win": 20
     }
    },
    {
     "level": 0.25,
-    "winRate": 0,
+    "winRate": 1,
     "time": {
-     "p25": null,
-     "median": null,
-     "p75": null
+     "p25": 41.2,
+     "median": 68.3,
+     "p75": 87.7
     },
-    "hits": 10.65,
-    "swipesPerSec": 4.48,
+    "hits": 3.4,
+    "swipesPerSec": 4.08,
     "results": {
-     "timeout": 20
+     "win": 20
     }
    },
    {
     "level": 0.5,
-    "winRate": 0,
+    "winRate": 0.75,
     "time": {
-     "p25": null,
-     "median": null,
-     "p75": null
+     "p25": 92.6,
+     "median": 113.7,
+     "p75": 132.6
     },
-    "hits": 14.75,
-    "swipesPerSec": 2.23,
+    "hits": 10.65,
+    "swipesPerSec": 2.11,
     "results": {
-     "timeout": 20
+     "win": 15,
+     "timeout": 5
     }
    },
    {
     "level": 0.75,
-    "winRate": 0,
+    "winRate": 0.05,
     "time": {
-     "p25": null,
-     "median": null,
-     "p75": null
+     "p25": 133.6,
+     "median": 133.6,
+     "p75": 133.6
     },
-    "hits": 8.55,
-    "swipesPerSec": 1.7,
+    "hits": 9.3,
+    "swipesPerSec": 1.67,
     "results": {
-     "timeout": 20
+     "timeout": 19,
+     "win": 1
     }
    },
    {
@@ -589,8 +594,8 @@
      "median": null,
      "p75": null
     },
-    "hits": 8.75,
-    "swipesPerSec": 1.29,
+    "hits": 9.3,
+    "swipesPerSec": 1.26,
     "results": {
      "timeout": 20
     }
@@ -603,9 +608,9 @@
     "time": {
      "p25": 38.6,
      "median": 38.6,
-     "p75": 38.7
+     "p75": 42.9
     },
-    "hits": 0.25,
+    "hits": 0.4,
     "swipesPerSec": 0.29,
     "results": {
      "win": 20
@@ -644,10 +649,10 @@
     "winRate": 1,
     "time": {
      "p25": 24.4,
-     "median": 26.4,
+     "median": 25.8,
      "p75": 43.4
     },
-    "hits": 0.1,
+    "hits": 0.05,
     "swipesPerSec": 0.56,
     "results": {
      "win": 20
@@ -659,9 +664,9 @@
     "time": {
      "p25": 23,
      "median": 34.9,
-     "p75": 48
+     "p75": 45.5
     },
-    "hits": 0.05,
+    "hits": 0,
     "swipesPerSec": 0.55,
     "results": {
      "win": 20
@@ -673,12 +678,12 @@
     "level": 0,
     "winRate": 1,
     "time": {
-     "p25": 23.4,
-     "median": 40.2,
-     "p75": 84.1
+     "p25": 17.3,
+     "median": 22.6,
+     "p75": 35.4
     },
     "hits": 0,
-    "swipesPerSec": 29.46,
+    "swipesPerSec": 12.99,
     "results": {
      "win": 20
     }
@@ -687,59 +692,58 @@
     "level": 0.25,
     "winRate": 1,
     "time": {
-     "p25": 46.8,
-     "median": 99,
-     "p75": 113.2
+     "p25": 18.6,
+     "median": 28.3,
+     "p75": 38.5
     },
     "hits": 0.3,
-    "swipesPerSec": 3.62,
+    "swipesPerSec": 2.3,
     "results": {
      "win": 20
     }
    },
    {
     "level": 0.5,
-    "winRate": 0.95,
+    "winRate": 1,
     "time": {
-     "p25": 101.5,
-     "median": 119.5,
-     "p75": 127.4
+     "p25": 24.5,
+     "median": 44.1,
+     "p75": 57.4
     },
-    "hits": 1.75,
-    "swipesPerSec": 1.95,
+    "hits": 0.95,
+    "swipesPerSec": 1.56,
     "results": {
-     "win": 19,
-     "timeout": 1
+     "win": 20
     }
    },
    {
     "level": 0.75,
-    "winRate": 0.95,
+    "winRate": 0.7,
     "time": {
-     "p25": 120,
-     "median": 131.4,
-     "p75": 151.2
+     "p25": 23.6,
+     "median": 39.8,
+     "p75": 108.9
     },
-    "hits": 2.55,
-    "swipesPerSec": 1.3,
+    "hits": 2.5,
+    "swipesPerSec": 1.32,
     "results": {
-     "win": 19,
-     "timeout": 1
+     "timeout": 6,
+     "win": 14
     }
    },
    {
     "level": 1,
-    "winRate": 0.85,
+    "winRate": 0.75,
     "time": {
-     "p25": 137.4,
-     "median": 156.5,
-     "p75": 168.8
+     "p25": 60.1,
+     "median": 90.3,
+     "p75": 134.5
     },
-    "hits": 2.95,
-    "swipesPerSec": 1.02,
+    "hits": 3.85,
+    "swipesPerSec": 1.03,
     "results": {
-     "win": 17,
-     "timeout": 3
+     "timeout": 5,
+     "win": 15
     }
    }
   ],
@@ -748,102 +752,108 @@
     "level": 0,
     "winRate": 0.6,
     "time": {
-     "p25": 55.8,
-     "median": 66.7,
-     "p75": 124.3
+     "p25": 54.6,
+     "median": 85.9,
+     "p75": 102.7
     },
-    "hits": 1.4,
-    "swipesPerSec": 27.53,
+    "hits": 1.45,
+    "swipesPerSec": 25.35,
     "results": {
-     "win": 12,
-     "over": 5,
-     "timeout": 3
+     "timeout": 8,
+     "win": 12
     }
    },
    {
     "level": 0.25,
-    "winRate": 0.75,
+    "winRate": 0.65,
     "time": {
-     "p25": 56,
-     "median": 79.8,
-     "p75": 118.2
+     "p25": 84.6,
+     "median": 117.7,
+     "p75": 145.1
     },
-    "hits": 3.55,
-    "swipesPerSec": 4.04,
+    "hits": 4.75,
+    "swipesPerSec": 3.94,
     "results": {
-     "win": 15,
-     "over": 5
+     "win": 13,
+     "timeout": 6,
+     "over": 1
     }
    },
    {
     "level": 0.5,
-    "winRate": 0.45,
+    "winRate": 0.5,
     "time": {
-     "p25": 59.5,
-     "median": 101.5,
-     "p75": 118.8
+     "p25": 72.3,
+     "median": 85.2,
+     "p75": 134.7
     },
-    "hits": 8.4,
-    "swipesPerSec": 2.21,
+    "hits": 9.85,
+    "swipesPerSec": 2.11,
     "results": {
-     "over": 10,
-     "win": 9,
-     "timeout": 1
+     "win": 10,
+     "timeout": 10
     }
    },
    {
     "level": 0.75,
-    "winRate": 0.2,
+    "winRate": 0.25,
     "time": {
-     "p25": 68.7,
-     "median": 95.7,
-     "p75": 131.8
+     "p25": 106.2,
+     "median": 112.9,
+     "p75": 162.9
     },
-    "hits": 9.1,
-    "swipesPerSec": 1.59,
+    "hits": 13.15,
+    "swipesPerSec": 1.48,
     "results": {
-     "win": 4,
-     "over": 16
+     "win": 5,
+     "over": 6,
+     "timeout": 9
     }
    },
    {
     "level": 1,
-    "winRate": 0,
+    "winRate": 0.05,
     "time": {
-     "p25": null,
-     "median": null,
-     "p75": null
+     "p25": 124.5,
+     "median": 124.5,
+     "p75": 124.5
     },
-    "hits": 7.55,
-    "swipesPerSec": 1.24,
+    "hits": 12.7,
+    "swipesPerSec": 1.19,
     "results": {
-     "over": 20
+     "over": 15,
+     "timeout": 4,
+     "win": 1
     }
    }
   ],
   "playthrough": [
    {
     "level": 0,
-    "winRate": 0,
+    "winRate": 0.85,
     "time": {
-     "p25": null,
-     "median": null,
-     "p75": null
+     "p25": 359.5,
+     "median": 369.9,
+     "p75": 430.7
     },
-    "hits": 1,
-    "swipesPerSec": 34.71,
+    "hits": 0,
+    "swipesPerSec": 20.65,
     "results": {
-     "stuck in bus": 20
+     "win": 17,
+     "stuck in input": 3
     },
     "coinsFound": 0,
     "hallVisits": 0,
     "mazeGames": 1,
     "segmentTime": {
-     "maze": 61,
-     "crt": 151.9,
-     "signals": 26.9,
+     "maze": 41,
+     "crt": 101.3,
+     "signals": 37.7,
      "vram": 11.4,
-     "bus": 180
+     "bus": 64.4,
+     "cpu": 38.6,
+     "logic": 20,
+     "input": 51.8
     }
    },
    {
@@ -854,24 +864,29 @@
      "median": null,
      "p75": null
     },
-    "hits": 10.05,
-    "swipesPerSec": 1.76,
+    "hits": 2.4,
+    "swipesPerSec": 0.95,
     "results": {
-     "stuck in crt": 12,
-     "out of coins": 5,
-     "stuck in bus": 3
+     "out of coins": 3,
+     "stuck in bus": 6,
+     "stuck in input": 1,
+     "stuck in logic": 8,
+     "stuck in crt": 2
     },
-    "coinsFound": 4.25,
-    "hallVisits": 1.1,
-    "mazeGames": 3.75,
+    "coinsFound": 1.5,
+    "hallVisits": 0.45,
+    "mazeGames": 1.1,
     "segmentTime": {
-     "maze": 72.8,
-     "hall": 14.1,
-     "cabinet": 72.6,
-     "crt": 180,
-     "signals": 140.7,
-     "vram": 143.4,
-     "bus": 180
+     "maze": 82.2,
+     "crt": 101.3,
+     "signals": 113.6,
+     "vram": 119.7,
+     "bus": 164.7,
+     "cpu": 145.1,
+     "logic": 180,
+     "input": 133,
+     "hall": 13.9,
+     "cabinet": 89.9
     }
    },
    {
@@ -882,18 +897,20 @@
      "median": null,
      "p75": null
     },
-    "hits": 18,
-    "swipesPerSec": 1.49,
+    "hits": 23.6,
+    "swipesPerSec": 1.69,
     "results": {
-     "out of coins": 20
+     "out of coins": 19,
+     "stuck in crt": 1
     },
     "coinsFound": 5,
-    "hallVisits": 2,
-    "mazeGames": 6,
+    "hallVisits": 1.95,
+    "mazeGames": 5.9,
     "segmentTime": {
-     "maze": 47.8,
-     "hall": 8.8,
-     "cabinet": 49
+     "maze": 79.3,
+     "hall": 15.7,
+     "cabinet": 79.3,
+     "crt": 180
     }
    },
    {
@@ -904,8 +921,8 @@
      "median": null,
      "p75": null
     },
-    "hits": 18,
-    "swipesPerSec": 1.21,
+    "hits": 24,
+    "swipesPerSec": 1.36,
     "results": {
      "out of coins": 20
     },
@@ -913,9 +930,9 @@
     "hallVisits": 2,
     "mazeGames": 6,
     "segmentTime": {
-     "maze": 36.3,
-     "hall": 17.8,
-     "cabinet": 37
+     "maze": 64.5,
+     "hall": 18.3,
+     "cabinet": 63.6
     }
    },
    {
@@ -926,21 +943,21 @@
      "median": null,
      "p75": null
     },
-    "hits": 18,
-    "swipesPerSec": 0.99,
+    "hits": 23.8,
+    "swipesPerSec": 1.03,
     "results": {
      "out of coins": 20
     },
-    "coinsFound": 5,
-    "hallVisits": 2.4,
-    "mazeGames": 6,
+    "coinsFound": 4.95,
+    "hallVisits": 2.15,
+    "mazeGames": 5.95,
     "segmentTime": {
-     "maze": 33.5,
-     "hall": 60.9,
-     "cabinet": 34.7
+     "maze": 48.5,
+     "hall": 39.4,
+     "cabinet": 56.6
     }
    }
   ]
  },
- "seconds": 2015
+ "seconds": 2089
 }
