@@ -70,6 +70,13 @@ right, so each goal visibly does what that part of a real monitor does:
 - **DEGAUSS** (right edge): without it the magnetised shadow mask gives blotches of wrong colors.
 Since the lit cells are the dangerous ones, every fix also moves where the beam can hit you. The status line names
 the adjustments still to set and says what each one fixed.
+**Repairs slip (decided 2026-10-18):** a repair only holds for the rest of the picture it was made in and
+`repairFrames` (2) more, then the beam paints that fault again (the pad shows the pictures left, blinking on its last;
+the status line says when one slipped). Stepping onto a set pad again refreshes it. **The layer is won by one clean
+picture** (`goal: 1`): the beam paints a whole picture, start to flyback, with all four holding. So all four have to
+be set within about two pictures, one after the other; a bonus dot starts a new picture and can spoil a clean one.
+The counter shows `REPAIRS n/4   CLEAN PICTURE 0/1` (an exception to the 3-5 objectives rule: the four repairs are
+the steps). Playtest bot (quick runs): wins 100% in 24 s without noise, 80% in about 85 s at full noise.
 **Bonus dots:** the 4 power pellets, eaten while lit (no other dots to collect). Each one makes the beam start a new
 picture in another scan order for `bonusTime` s: column by column left to right, then bottom to top (`bonusModes`,
 taken in turn). **Feedback:** Pac-Man glows on every pickup (`DEEP.glowTime`, art `assets/deep/crt/pac-glow-0..3`,
@@ -180,3 +187,5 @@ picture). How the other layers do on that, to decide later:
   making the beam paint its part of the frame right; power pellets are bonus dots that switch the beam's scan order
   for a while; Pac-Man glows on pickups. Other layers' goals reviewed for the same link (open). (Quirin asked; Claude
   picked the four adjustments)
+- 2026-10-18: Screen harder: repairs hold only the rest of their picture and 2 more; the layer is won by one whole
+  picture painted with all four holding. (Quirin)

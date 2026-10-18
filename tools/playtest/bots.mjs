@@ -19,14 +19,15 @@ function segDist(px, py, a, b) {
   return Math.hypot(px - a.x - k * dx, py - a.y - k * dy);
 }
 
-// -1 the screen: a beam spot paints the picture cell by cell. Walk to the adjustment pads, never stand where the
+// -1 the screen: a beam spot paints the picture cell by cell. Walk round the adjustment pads, never stand where the
 // spot is about to paint light (a wall, a dot, Pac-Man, as the broken frame shows them).
 const crt = {
   setup(c) {
     const rgb = [0, 0, 0];
     c.lit = (x, y, T) => c.st.pic && c.L.paintAt(c.st, x, y, T, rgb).some((v) => v > 0.02);
   },
-  targets: (c) => DEEP.crt.goals.filter((g) => !c.st.on.has(g.id)).map((g) => g.at),
+  // Every pad not set during this picture, so all four hold through the next one.
+  targets: (c) => DEEP.crt.goals.filter((g) => !c.st.on.has(g.id) || c.st.until[g.id] < c.st.pics + DEEP.crt.repairFrames).map((g) => g.at),
   blocked(c, x, y, eta) {
     const T = c.t + eta;
     return c.L.lastPass(c.st, y * W + x, T + 0.35) >= T - 0.12 && c.lit(x, y, T);

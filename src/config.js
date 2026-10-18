@@ -218,7 +218,8 @@ export const DEEP = {
       { id: 'conv', name: 'CONVERGE', at: { x: 9, y: 0 }, done: 'BEAMS CONVERGE:\nNO MORE COLOR FRINGES' },
       { id: 'degauss', name: 'DEGAUSS', at: { x: 18, y: 12 }, done: 'DEGAUSSED:\nTHE COLORS ARE PURE AGAIN' },
     ],
-    goal: 4,
+    repairFrames: 2,     // pictures a repair holds after the one it was made in (then it breaks again)
+    goal: 1,             // one whole picture painted with all four repairs holding
     rollSpeed: 1.2,      // tiles per second the picture rolls without V-HOLD
     tear: 3,             // tiles the rows wobble sideways without H-HOLD
     misconverge: 1,      // tiles the red and blue beams miss green by without CONVERGE

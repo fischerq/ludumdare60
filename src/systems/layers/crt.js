@@ -6,7 +6,9 @@
 // dark phosphor is safe.
 // The monitor is out of adjustment, so the beam paints a broken frame: the picture rolls (V-HOLD), its rows tear
 // sideways (H-HOLD), red and blue miss green (CONVERGE) and the colors are blotchy (DEGAUSS). The objectives are
-// those four adjustments, pads on the tube's edge: walk onto one and the beam paints that part right from then on.
+// those four adjustments, pads on the tube's edge: walk onto one and the beam paints that part right, but only for
+// the rest of this picture and DEEP.crt.repairFrames more. The layer is won when the beam paints one whole picture
+// with all four holding, so they have to be set quickly one after the other.
 // Bonus dots: the four power pellets, eaten while lit. Each one makes the beam scan another way for a while
 // (column by column, or bottom to top).
 
@@ -32,16 +34,20 @@ const BONUS_TEXT = { columns: 'BONUS: THE BEAM SCANS\nCOLUMN BY COLUMN', up: 'BO
 export default {
   id: 'crt',
   title: 'INSIDE THE SCREEN',
-  subtitle: 'THE PICTURE IS BROKEN: WALK TO\nTHE ADJUSTMENTS, DODGE THE BEAM',
+  subtitle: 'REPAIRS SLIP AFTER 2 PICTURES:\nSET ALL 4 FOR ONE CLEAN PICTURE',
   cols: W, rows: H,
   start: { x: 9, y: 17 },
   goal: C.goal,
   walkSpeed: C.walkSpeed,
-  dots: false, // no dot counter: the objectives are the adjustments
+  dots: false, // no dot counter: the objective is a clean picture
+
+  counter(st) {
+    return `REPAIRS ${st.on.size}/${C.goals.length}   CLEAN PICTURE ${st.clean ? 1 : 0}/1`;
+  },
 
   init() {
     return {
-      on: new Set(), got: new Set(), msg: null,
+      on: new Set(), until: {}, pad: null, pics: 0, cleanPic: -1, clean: false, got: new Set(), msg: null,
       passed: new Float32Array(N).fill(-99), ch: new Float32Array(N * 3), // when the spot last passed, what it painted
       f0: 0, mode: 'rows', bonus: 0, bonusUntil: -1, bonusMode: null, last: null,
     };
@@ -118,9 +124,11 @@ export default {
     const t = env.t;
     if (st.msg && t - st.msg.t < C.msgTime) return st.msg.text;
     if (t < st.bonusUntil) return BONUS_TEXT[st.bonusMode];
+    if (st.cleanPic === st.pics) return 'ALL SET: THE BEAM IS PAINTING\nA CLEAN PICTURE';
     if (this.beam(st, t) === null) return 'VERTICAL BLANK: THE BEAM IS OFF';
     const left = C.goals.filter((g) => !st.on.has(g.id)).map((g) => g.name);
-    return left.length ? `SET: ${left.slice(0, 2).join(' ')}\n${left.slice(2).join(' ')}` : '';
+    if (!left.length) return 'ALL SET: WAIT FOR\nTHE NEXT PICTURE';
+    return `SET: ${left.slice(0, 2).join(' ')}\n${left.slice(2).join(' ')}`;
   },
 
   update(st, env) {
@@ -129,8 +137,7 @@ export default {
     // A new picture starts: in the bonus scan order while it lasts, else row by row.
     if (t - st.f0 >= C.beamPeriod) {
       st.f0 += Math.floor((t - st.f0) / C.beamPeriod) * C.beamPeriod;
-      st.mode = t < st.bonusUntil ? st.bonusMode : 'rows';
-      st.last = null;
+      this.newPicture(st, t < st.bonusUntil ? st.bonusMode : 'rows');
     }
     const px = Math.round(player.x), py = Math.round(player.y), me = py * W + px;
     // Cells the spot passed since the last frame are painted; light painted under you is a hit.
@@ -146,13 +153,24 @@ export default {
         if (i === me && this.lit(st, i)) hit = true;
       }
     }
+    // The beam reached the flyback after a whole picture painted with every repair holding: won.
+    if (b === null && st.last !== null && st.cleanPic === st.pics && !st.clean) {
+      st.clean = true;
+      st.last = b;
+      return 'objective';
+    }
     st.last = b;
     if (hit) return 'hit';
-    const g = C.goals.find((gg) => gg.at.x === px && gg.at.y === py && !st.on.has(gg.id));
-    if (g) {
-      st.on.add(g.id);
-      st.msg = { text: g.done, t };
-      return 'objective';
+    // Stepping onto a pad sets that adjustment (again), for the rest of this picture and repairFrames more.
+    const g = C.goals.find((gg) => gg.at.x === px && gg.at.y === py);
+    if (g?.id !== st.pad) {
+      st.pad = g?.id ?? null;
+      if (g) {
+        if (!st.on.has(g.id)) st.msg = { text: g.done, t };
+        st.on.add(g.id);
+        st.until[g.id] = st.pics + C.repairFrames;
+        return 'pickup';
+      }
     }
     const o = tileOffset(px, py);
     if (PELLETS.includes(o) && !st.got.has(o) && this.lit(st, me) && this.glow(st, me, t) > C.litAbove) {
@@ -160,12 +178,24 @@ export default {
       // The beam starts a fresh picture in the next bonus scan order.
       st.bonusMode = C.bonusModes[st.bonus++ % C.bonusModes.length];
       st.bonusUntil = t + C.bonusTime;
-      st.mode = st.bonusMode;
       st.f0 = t;
-      st.last = null;
+      this.newPicture(st, st.bonusMode);
       return 'bonus';
     }
     return null;
+  },
+
+  // A picture starts: repairs that ran out stop holding; it's a clean picture if all four hold through it.
+  newPicture(st, mode) {
+    st.pics++;
+    st.mode = mode;
+    st.last = null;
+    for (const g of C.goals) {
+      if (!st.on.has(g.id) || st.until[g.id] >= st.pics) continue;
+      st.on.delete(g.id);
+      st.msg = { text: `${g.name} SLIPPED AGAIN`, t: st.f0 };
+    }
+    if (st.on.size === C.goals.length) st.cleanPic = st.pics;
   },
 
   draw(ctx, st, env, S) {
@@ -195,6 +225,9 @@ export default {
       neonBox(ctx, x * S + 2, y * S + 2, S - 4, S - 4, on || pulse ? P.special : P.line, P.glow);
       ctx.fillStyle = css(on ? P.line : pulse ? P.glow : P.bg);
       ctx.fillRect(x * S + 5, y * S + 5, S - 10, S - 10);
+      // Pictures it still holds for, counting this one; blinking on its last.
+      const left = on ? st.until[gl.id] - st.pics + 1 : 0;
+      if (left && (left > 1 || pulse)) { ctx.fillStyle = css(P.bg); tinyText(ctx, String(left), x * S + (S - 5) / 2, y * S + (S - 9) / 2, 2); }
       const k = C.labelScale, w = (gl.name.length * 4 - 1) * k;
       const lx = x === 0 ? S + 3 : x === W - 1 ? x * S - w - 3 : x * S + (S - w) / 2;
       const ly = y === 0 ? S + 3 : y === H - 1 ? y * S - 5 * k - 3 : y * S + (S - 5 * k) / 2;
