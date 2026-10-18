@@ -75,6 +75,11 @@ export const sfx = {
     tone(1400, 0.06, { vol: 0.4 });
     tone(1900, 0.25, { at: 0.07, vol: 0.4 });
   },
+  // The hall ghosts spotting Pac-Man: a sharp double blip under their "!".
+  alert() {
+    tone(1200, 0.06, { vol: 0.4 });
+    tone(1600, 0.12, { at: 0.08, vol: 0.4 });
+  },
   // The joystick's microswitch clicking over.
   click() {
     tone(2400, 0.015, { type: 'square', vol: 0.25 });

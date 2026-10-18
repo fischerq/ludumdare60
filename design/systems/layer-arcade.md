@@ -16,7 +16,8 @@ the arcade as a place.
 - **A small, cozy room** (11x15 tiles with walls) that fits one screen, shown at 4x (`HALL.zoom`; the other
   layers use 2x), so characters are Pokémon-sized. Warm wooden floor, a red rug, a wallpapered back wall with
   windows, a Pac-Man poster, a ghost poster and a clock, plants, five cabinets (our yellow one in the middle), a
-  claw machine, a soda machine, a bin, the counter (owner asleep), the change machine, the door at the bottom.
+  claw machine, a soda machine, a bin, the counter with the shop owner asleep behind it, the change machine, the
+  door at the bottom.
 - **Same movement as Pac-Man, on the grid:** one tile per step, four directions (`HALL.walkSpeed` 4 tiles/s).
   Hold a finger down and drag to keep walking; a short tap talks to or uses whatever Pac-Man faces. Arrow keys +
   Space/Enter on a laptop. Text appears in an RPG text box at the bottom, sized to the text; tap to close.
@@ -24,18 +25,28 @@ the arcade as a place.
   (`src/wallet.js`, shown as COINS n) and stay picked up for the session. With at least one coin (`COINS.perGame`)
   you can play our cabinet, which zooms down into the cabinet layer. *(proposed)*
 - **Talking:** the four ghosts in caps stand at the machines, one line each, hinting at how they hunt in the maze.
-  Every machine and decoration has a line (`HALL.text`, `HALL.cellText`).
-- **The chase:** talking to Blinky (`HALL.angry`) makes him angry: after his line, all four visitors chase
-  Pac-Man with their maze rules (Blinky straight at him, Pinky 2 tiles ahead, Inky mirrored around Blinky, Clyde
-  backs off when close), at 3.2 tiles/s after a 1 s head start, never turning back. Ways out: walk out the
-  **door**, or enter **our cabinet** (needs a coin). Caught: thrown out, back at the start (coins kept).
-  After 20 s they give up. The frightened siren plays during the chase.
+  Every machine and decoration has a line (`HALL.text`, `HALL.cellText`). The **shop owner** sleeps on the tile
+  above the counter's left end (`O` in the map, `arcade/owner-sleep-0/1`, a "z" rising); talking to him only gets
+  snoring. The counter itself shows its sign.
+- **Portraits:** the text box shows a large portrait (48x48, `HALL.portraitSize`) in a frame on its top left edge:
+  ghosts and the owner have their own (`arcade/portrait-<name>.png`, `portrait-ghosts` for the four together),
+  things show their tile at 3x (a machine its top half). Pickup and chase messages have none.
+- **The chase:** reading the **ghost poster** makes the visitors recognize Pac-Man: like Pokémon trainers, a
+  "!" pops over each of them (`arcade/exclaim`, 0.9 s, everyone frozen), then together: "WAIT A MINUTE... WE KNOW
+  YOU!". After that line all four chase Pac-Man with their maze rules (Blinky straight at him, Pinky 2 tiles
+  ahead, Inky mirrored around Blinky, Clyde backs off when close), at 3.2 tiles/s after a 2 s head start (the
+  poster leaves him in a dead end), never turning back. Ways out: walk out the **door**, or enter **our cabinet**
+  (needs a coin). **Caught:** they take every coin and the hall starts over (floor coins back, Pac-Man at the
+  start). After 20 s they give up. Happens every time the poster is read while they're calm. The frightened siren
+  plays during the chase.
 - **Transitions:** from the cabinet (LAYER UP) the hall starts zoomed in on our small cabinet and zooms out; going
   down zooms back into it, then the cabinet layer starts at its full view.
 
 ## Slice scope
 - Build (done): cozy room, grid walking, coins, talking, Blinky's chase with the maze rules, escapes, text box,
   layer transitions both ways.
+- Build (done, polish): the sleeping shop owner, text box portraits, the poster-triggered chase with the "!"
+  moment, losing all coins and resetting the hall when caught.
 - Not now: more dialogue, the mini-gurke, footstep sounds, a street outside.
 
 ## Open questions
@@ -53,3 +64,8 @@ the arcade as a place.
   shown 2x2 tiles big standing on their tile, lower ones in front. See [art](art.md). (Quirin)
 - 2026-10-17: Coins are global (one wallet for all layers), spent one per game in the cabinet; the hall needs one coin, not 3. Start with 1 coin, picked-up coins don't respawn (Claude's defaults, proposed). (Quirin)
 - 2026-10-17: Hall characters now fill exactly one tile (`HALL.charSize` 16), centered on it like a Pokémon game; the 32x32 art is shown at half size. Replaces the 2x2-tile size above. (Quirin)
+- 2026-10-18: Polish: a shop owner who only snores, a large portrait in the text box, and the chase now starts
+  from the ghost poster (a "!" over each ghost, "WAIT A MINUTE... WE KNOW YOU!"); caught costs all coins and resets
+  the hall. Blinky no longer gets angry. Defaults accepted for all eight questions. (Quirin) Claude put the portrait
+  above the box rather than beside the text (the box is too narrow) and raised the head start to 2 s, since the
+  poster spot is a dead end and the playtest bot was always caught with 1 s.

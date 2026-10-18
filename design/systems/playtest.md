@@ -16,7 +16,7 @@ curve, and a rerun after a balance change shows what the change did.
   rules and the wallet; a fixed 60 Hz step. Nothing is reimplemented except the scenes' glue (hits, respawn,
   objectives, as in `DeepScene.update`).
 - **What's tested** (`--layers`): `maze` (swipes), `cabinet` (held stick), `hall` (collect every coin, tap our
-  cabinet), `hall-chase` (talk to the angry ghost, get out the door), the seven deep layers, and `playthrough`.
+  cabinet), `hall-chase` (read the ghost poster, get out the door), the seven deep layers, and `playthrough`.
 - **Win / loss:** maze and cabinet: clear the maze before game over. Deep layers: all objectives within
   `PLAYTEST.timeCap.deep` (180 s; hits only cost time, as in the game; the input layer also loses on game over).
   Hall: coins and tap within 90 s; chase: out the door or outlasted, caught loses.

@@ -84,6 +84,9 @@ Sizes are in image pixels at native resolution. Transparent background.
 | `arcade/pac-<right/up/down>-<f>` | 32x32 | 6 | Pac-Man walking, top-down, two frames each; left is `right` mirrored. The game shows him one tile big (16x16, half size), centered on his tile. |
 | `arcade/ghost-<name>-<dir>-<f>` | 32x32 | 32 files | The ghost visitors with their cap on, per ghost, direction and frame; `up` is seen from behind. |
 | `arcade/coin` | 10x10 | 1 | Coin on the hall floor. |
+| `arcade/owner-sleep-<f>` | 32x32 | 2 | The shop owner asleep behind the counter, head on his arms; a "z" rises between the two frames. Shown one tile big like the others. |
+| `arcade/portrait-<name>` | 48x48 | 6 files | Text box portraits for name = blinky, pinky, inky, clyde, owner, and `ghosts` (all four together). Shown 1x in a frame above the box; things you talk to show their 16x16 tile at 3x instead. |
+| `arcade/exclaim` | 16x16 | 1 | The "!" bubble over a ghost's head when the visitors recognize Pac-Man. |
 | `arcade/floor`, `arcade/rug-tl/tc/tr/ml/mc/mr/bl/bc/br`, `arcade/wall-top`, `arcade/wall-face`, `arcade/window`, `arcade/poster-pac`, `arcade/poster-ghost`, `arcade/clock`, `arcade/counter`, `arcade/plant`, `arcade/bin`, `arcade/door` | 16x16 | 20 files | [Arcade hall](layer-arcade.md) tileset, top-down, cozy. The rug is a 9-slice (t/m/b row, l/c/r column). `wall-face` is the wallpaper on the back wall; window, posters and clock sit on that row. Objects (plant, bin, counter) are drawn over the floor tile with a contact shadow. |
 | `arcade/change-top/bottom`, `arcade/claw-top/bottom`, `arcade/soda-top/bottom` | 16x16 | 6 files | 1x2 machines in the hall. |
 | `arcade/cab-top-<c>`, `arcade/cab-bottom-<c>` | 16x16 | 10 files | Hall cabinets, 1x2 tiles, for c = r, b, g, v, y (y is ours, yellow, with the maze on its screen). The hall is shown at 4x. |

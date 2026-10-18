@@ -18,6 +18,12 @@ export function spendCoin() {
   return true;
 }
 
+// Caught by the hall ghosts: they take every coin, and the hall's floor coins are back for the next try.
+export function loseCoins() {
+  wallet.coins = 0;
+  wallet.taken.clear();
+}
+
 // Back to a fresh page load (the playtest bots run many games in one process).
 export function resetWallet() {
   wallet.coins = COINS.start;
