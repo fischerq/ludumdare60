@@ -61,7 +61,10 @@ export default class GameScene extends Phaser.Scene {
     // ?level=256 (LEVELS.param): every fresh game starts on that level, for testing the kill screen. So does
     // every fresh game while the lobby's 256 switch is on.
     const level = isSwitchOn() ? 256 : Number(new URLSearchParams(window.location.search).get(LEVELS.param));
-    if (!data.continue) {
+    if (data.coined) {
+      // The cabinet's coin switch already started the game through the program's coin bit.
+      if (level > 1) setRound(level);
+    } else if (!data.continue) {
       if (data.free || spendCoin()) { newGame(); if (level > 1) setRound(level); }
       else world.halted = true;
     } else if (['attract', 'cleared'].includes(this.g.phase)) pressStart();
@@ -201,7 +204,12 @@ export default class GameScene extends Phaser.Scene {
     this.time.delayedCall(600, () => {
       // After a clear the machine's own next round starts (START on the cleared maze): same score and lives,
       // the level counter one up. After a game over a new game costs a coin.
-      const again = () => { if (!this.leaving) this.scene.restart(cleared ? { continue: true } : {}); };
+      // A new coin goes in through the cabinet's coin mechanism (the coin minigame).
+      const again = () => {
+        if (this.leaving) return;
+        if (cleared) this.scene.restart({ continue: true });
+        else this.leave('Cabinet', { coin: true });
+      };
       this.input.on('pointerdown', (p, over) => { if (!over.length) again(); });
       this.input.keyboard?.once('keydown-SPACE', again);
       this.input.keyboard?.once('keydown-ENTER', again);
