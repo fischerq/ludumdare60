@@ -19,27 +19,17 @@ function segDist(px, py, a, b) {
   return Math.hypot(px - a.x - k * dx, py - a.y - k * dy);
 }
 
-// -1 the screen: a beam spot paints the picture cell by cell. Eat a pellet while its cell glows, never stand on a
-// lit cell (a wall, a dot, a sprite) when the spot gets there, keep away from the ghosts.
+// -1 the screen: a beam spot paints the picture cell by cell. Walk to the adjustment pads, never stand where the
+// spot is about to paint light (a wall, a dot, Pac-Man, as the broken frame shows them).
 const crt = {
   setup(c) {
-    const C = DEEP.crt, N = W * H;
-    c.lastPass = (i, T) => {
-      const off = (i / N) * (1 - C.vblank) * C.beamPeriod;
-      return Math.floor((T - off) / C.beamPeriod) * C.beamPeriod + off;
-    };
-    c.lit = (x, y) => !!c.st.pic?.[y * W + x];
+    const rgb = [0, 0, 0];
+    c.lit = (x, y, T) => c.st.pic && c.L.paintAt(c.st, x, y, T, rgb).some((v) => v > 0.02);
   },
-  frame(c) { c.ghosts = spritesOf(c.m, SPRITE.ghost, SPRITE.eyes); },
-  targets: (c) => PELLETS.filter((p) => !c.st.got.has(tileOffset(p.x, p.y))),
-  ready(c, x, y, eta) {
-    const T = c.t + eta + 0.05;
-    return Math.pow(1 / 3, (T - c.lastPass(y * W + x, T)) / DEEP.crt.decay) > DEEP.crt.litAbove + 0.08;
-  },
+  targets: (c) => DEEP.crt.goals.filter((g) => !c.st.on.has(g.id)).map((g) => g.at),
   blocked(c, x, y, eta) {
-    if (near(c.ghosts, x, y, 1.6 + eta * ghostSpeed)) return true;
     const T = c.t + eta;
-    return c.lit(x, y) && c.lastPass(y * W + x, T + 0.35) >= T - 0.12;
+    return c.L.lastPass(c.st, y * W + x, T + 0.35) >= T - 0.12 && c.lit(x, y, T);
   },
 };
 
@@ -277,7 +267,7 @@ export function decideDeep(bot, c) {
   const blocked = (x, y, eta) => bot.blocked?.(c, x, y, eta) ?? false;
   const isGoalTile = (x, y) => goals.some((g) => g.x === x && g.y === y);
   const isGoal = (x, y, eta) => isGoalTile(x, y) && (!bot.ready || bot.ready(c, x, y, eta));
-  const base = { from, cols: c.L.cols, speed: DEEP.walkSpeed };
+  const base = { from, cols: c.L.cols, speed: c.L.walkSpeed ?? DEEP.walkSpeed };
   const dist = distanceField(goals, roomy);
   const toward = (x, y) => -Math.min(99, dist(x, y)) + (bot.score?.(c, x, y) ?? 0) * 0.5;
   // Already on a goal it has to hold (a switch): step to another goal tile next to it.
@@ -300,7 +290,7 @@ export function decideDeep(bot, c) {
   const q = plan({ ...base, open: roomy, isGoal: isGoalTile });
   if (q && !blocked(from.x, from.y, 0.15)) {
     const [dx, dy] = STEP[q.dir];
-    if (!open(from.x + dx, from.y + dy) || !blocked(from.x + dx, from.y + dy, 1 / DEEP.walkSpeed)) return q.dir;
+    if (!open(from.x + dx, from.y + dy) || !blocked(from.x + dx, from.y + dy, 1 / (c.L.walkSpeed ?? DEEP.walkSpeed))) return q.dir;
   }
   return evade({ ...base, open, blocked, score: toward });
 }

@@ -181,6 +181,8 @@ export const DEEP = {
   transition: 0.35,      // s of zooming between layers
   trail: 1.2,            // s the light trail behind Pac-Man takes to fade (visual only)
   trailWidth: 2,         // art px
+  glowTime: 0.6,         // s Pac-Man glows after picking something up (layers with pac-glow art)
+  glowPop: 0.2,          // how much bigger Pac-Man is at the start of the glow
   // The Tron look: each layer has its own dark background and neon accent; white and one red are shared.
   // bg: background, grid: the floor grid, line: neon lines of the layer's structures, glow: their dim halo,
   // dot / dot2: the collectibles' two accents, special: the special collectible (power pellet, ...).
@@ -198,16 +200,33 @@ export const DEEP = {
   machineSlowdown: 4,    // the machine runs this many times slower in the deep layers than on the maze
   // Each layer: its own verb and enemy, and goal = the number of objectives (3 to 5) that win it.
   crt: {                 // -1 inside the tube: phosphor triads lit by a raster beam, one pixel at a time
-    beamPeriod: 10,      // s for one picture, cell by cell, row by row (the real one takes 16.5 ms)
+    walkSpeed: 6.5,      // tiles per second here (faster than DEEP.walkSpeed: the beam is the only enemy)
+    beamPeriod: 13,      // s for one picture, cell by cell, row by row (the real one takes 16.5 ms)
     vblank: 0.12,        // share of the period with the beam off (vertical blank: it flies back)
     decay: 1.6,          // s for the phosphor to fade to a third
-    litAbove: 0.35,      // glow above which a dot or pellet can be eaten
+    litAbove: 0.35,      // glow above which a bonus dot can be eaten
     darkFloor: 0.06,     // how much of an unlit triad still shows
     lookAhead: 6,        // cells of the beam's path ahead drawn as a warning
     // Each triad's red, green and blue phosphor (0..1) for what the picture shows there.
-    rgb: { wall: [0.15, 0.15, 1], door: [1, 0.7, 0.85], dot: [1, 0.72, 0.6], pac: [1, 1, 0], ghost: [1, 0.1, 0.1], scared: [0.2, 0.3, 1] },
+    rgb: { wall: [0.15, 0.15, 1], door: [1, 0.7, 0.85], dot: [1, 0.72, 0.6], pac: [1, 1, 0] },
     cornerRadius: 2,     // tiles: the tube's rounded corners can't be walked on
-    goal: 4,             // the four power pellets
+    // The objectives: the monitor's adjustments. Until one is set, the beam paints that fault into the picture.
+    // at: the pad's tile on the tube's edge (its name is drawn next to it, inside); done: the status line once set.
+    goals: [
+      { id: 'vhold', name: 'V-HOLD', at: { x: 0, y: 12 }, done: 'V-HOLD SET:\nTHE PICTURE STOPS ROLLING' },
+      { id: 'hhold', name: 'H-HOLD', at: { x: 9, y: 24 }, done: 'H-HOLD SET:\nTHE LINES STOP TEARING' },
+      { id: 'conv', name: 'CONVERGE', at: { x: 9, y: 0 }, done: 'BEAMS CONVERGE:\nNO MORE COLOR FRINGES' },
+      { id: 'degauss', name: 'DEGAUSS', at: { x: 18, y: 12 }, done: 'DEGAUSSED:\nTHE COLORS ARE PURE AGAIN' },
+    ],
+    goal: 4,
+    rollSpeed: 1.2,      // tiles per second the picture rolls without V-HOLD
+    tear: 3,             // tiles the rows wobble sideways without H-HOLD
+    misconverge: 1,      // tiles the red and blue beams miss green by without CONVERGE
+    // Bonus dots (the power pellets, eaten while lit): the beam scans another way for bonusTime s.
+    bonusTime: 15,
+    bonusModes: ['columns', 'up'], // taken in turn: column by column left to right, row by row bottom to top
+    msgTime: 3,          // s an adjustment's message stays in the status line
+    labelScale: 2,       // art px per font pixel of the pads' names
   },
   signals: {             // -2 the video board: carry a color index from the tile fetcher via the palette to the DAC
     sparkEvery: 1.2,     // s between color indices the tile fetcher sends out (one per dot tile it fetches)

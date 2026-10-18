@@ -51,17 +51,30 @@ slow down or aggregate, but everything comes from the machine's real raw data.
 - Not now: Tron mechanics (a deadly trail, light cycles), free movement, new hazards, art for the structures
   as asset files.
 
-## Layer -1: inside the screen (CRT) · built (environment rework)
+## Layer -1: inside the screen (CRT) · built (polish pass 2026-10-18)
 **Environment:** we stand on the phosphor inside the tube: one RGB phosphor triad per tile of the machine's
 picture (three stripes behind the shadow mask), on black, with rounded tube corners (`cornerRadius`). No walls or
 maze drawn: the picture only exists as light. **The beam paints one pixel at a time** like a raster CRT: a single
 spot runs left to right along a row and row after row (`beamPeriod` for the whole picture, the real one takes
 16.5 ms), then flies back switched off (`vblank`). The three converging beams from the gun and the spot's next
-`lookAhead` cells are drawn as a warning. A triad lights in the picture's color for that spot (`rgb`: walls blue,
-dots peach, Pac-Man yellow, ghosts red) and fades (`decay`, down to `darkFloor`). **Enemies:** the spot fires only
-where the picture is lit, so it's a hit if it passes over you on a lit triad (dark phosphor is safe); the ghost
-sprites hit too. **Objectives:** the 4 power pellets (where the maze layout has them, whether or not the machine's
-Pac-Man ate them), eaten while lit; the other dots are counted.
+`lookAhead` cells are drawn as a warning. A triad lights in the color the beam painted there (`rgb`: walls blue,
+dots peach, Pac-Man yellow) and fades (`decay`, down to `darkFloor`). Pac-Man walks faster here (`walkSpeed`).
+**Enemy:** only the beam spot. It's a hit if it paints light where you stand (dark phosphor is safe). No ghosts:
+they aren't painted and don't hit.
+**Objectives: fix the picture.** The monitor is out of adjustment, so the beam paints a broken frame. Four pads on
+the tube's edge (`goals`) are its adjustments; walking onto one sets it, and from then on the beam paints that part
+right, so each goal visibly does what that part of a real monitor does:
+- **V-HOLD** (left edge): without it the picture rolls (`rollSpeed`), the vertical sync isn't locked.
+- **H-HOLD** (bottom): without it the rows tear sideways (`tear`), the horizontal sync isn't locked.
+- **CONVERGE** (top, under the gun): without it the red and blue beams miss green (`misconverge`): color fringes.
+- **DEGAUSS** (right edge): without it the magnetised shadow mask gives blotches of wrong colors.
+Since the lit cells are the dangerous ones, every fix also moves where the beam can hit you. The status line names
+the adjustments still to set and says what each one fixed.
+**Bonus dots:** the 4 power pellets, eaten while lit (no other dots to collect). Each one makes the beam start a new
+picture in another scan order for `bonusTime` s: column by column left to right, then bottom to top (`bonusModes`,
+taken in turn). **Feedback:** Pac-Man glows on every pickup (`DEEP.glowTime`, art `assets/deep/crt/pac-glow-0..3`,
+and pops bigger by `glowPop`).
+Not in this pass: pellets respawning, pads moving, sound per adjustment.
 
 ## Layer -2: the video board · built (environment rework)
 **Environment:** a circuit board (`DEEP.signals.layout`) with the chips that turn video RAM into a signal: VRAM, the
@@ -127,6 +140,20 @@ that crawls after you (`sparkSpeed`, after `sparkDelay` s, and again after it go
 a hit. **Objectives:** steer Pac-Man into each of the maze's 4 corners (within `corner` tiles; the picture marks
 the ones left). Every dot Pac-Man eats is a dot.
 
+## Goals vs. what the part does · open (review 2026-10-18)
+Quirin asked that a layer's goals connect to what its component achieves (the screen's adjustments now fix the
+picture). How the other layers do on that, to decide later:
+- **-2 video board:** connected. Carrying an index through the palette to the DAC is what the board does.
+- **-3 video RAM:** disconnected. Eating the 4 power pellet bytes doesn't show what VRAM does (hold the picture the
+  screen shows). Idea: write the right bytes into blanked parts of the picture.
+- **-4 bus:** half. Picking up a byte in a chip room is a read, but it never reaches the CPU. Idea: carry it back.
+- **-5 CPU:** half. Reaching a routine through its CALL pad does nothing in the game. Idea: a routine you reach runs
+  and you see its effect (e.g. the sound routine plays).
+- **-6 game logic:** half. Standing on a ghost's target tile has no effect. Idea: standing there pulls that ghost
+  in the maze (the target is what it chases).
+- **-7 input wires:** connected. Steering the real Pac-Man into the corners through the switches.
+- **Dots** in -3 to -7 are only counted and say nothing about the part.
+
 ## Decision log
 - 2026-10-17: One scene for all deep layers with a pure module per layer; first slices of all seven layers
   from the Gemini chat's mapping, adapted so each is playable on a phone. (Claude)
@@ -148,3 +175,8 @@ the ones left). Every dot Pac-Man eats is a dot.
   it came out through the one-tile approach the moment the door opened, so ROM (never written) and VRAM (about 1%
   writes) were nearly impossible to enter; playtest bots won 0% at every noise level. (Quirin asked to make the bus
   easier; Claude picked the fix from the [playtest](playtest.md) runs)
+- 2026-10-18: Screen polish: beam slower (13 s), Pac-Man faster there (6.5 tiles/s), no ghosts (the beam is the only
+  enemy), no dots to collect; the objectives are four monitor adjustments (V-HOLD, H-HOLD, CONVERGE, DEGAUSS), each
+  making the beam paint its part of the frame right; power pellets are bonus dots that switch the beam's scan order
+  for a while; Pac-Man glows on pickups. Other layers' goals reviewed for the same link (open). (Quirin asked; Claude
+  picked the four adjustments)
