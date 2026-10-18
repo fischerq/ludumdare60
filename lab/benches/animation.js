@@ -107,7 +107,7 @@ const height = (rows) => rows.reduce((h, r) => h + r.h + (r.strip ? stripHeight(
 
 // The exported 1x PNGs, the same files the game loads.
 const KEYS = [
-  ...[0, 1, 2, 3].map((i) => `maze/pac-${i}`),
+  ...[0, 1, 2, 3, 4, 5, 6].map((i) => `maze/pac-${i}`),
   ...Array.from({ length: 10 }, (_, i) => `maze/pac-die-${i}`),
   ...['right', 'up', 'down'].flatMap((d) => [`arcade/pac-${d}-0`, `arcade/pac-${d}-1`]),
   ...GHOSTS.flatMap((g) => DIRS.flatMap((d) => [0, 1].flatMap((f) => [`maze/ghost-${g}-${d}-${f}`, `arcade/ghost-${g}-${d}-${f}`]))),

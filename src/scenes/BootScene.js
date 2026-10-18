@@ -288,10 +288,10 @@ export default class BootScene extends Phaser.Scene {
     }
   }
 
-  // The maze level's Pac-Man: maze/pac-0 (closed) .. pac-3 (wide open) facing right (the game flips it for left
+  // The maze level's Pac-Man: maze/pac-0 .. pac-6, the chomp's 7 frames facing right (the game flips it for left
   // and turns it for up and down), maze/pac-die-0..9 facing up, maze/life (a spare life, facing left).
   makePac() {
-    [0, 0.3, 0.6, 0.9].forEach((m, i) => this.pixels(`maze/pac-${i}`, S, S, (set) => this.chomper(set, COLORS.pac, 13.2, m)));
+    [0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9].forEach((m, i) => this.pixels(`maze/pac-${i}`, S, S, (set) => this.chomper(set, COLORS.pac, 13.2, m)));
     for (let i = 0; i < 10; i++) {
       this.pixels(`maze/pac-die-${i}`, S, S, (set) => this.chomper(set, COLORS.pac, 13.2, 0.3 + (i / 9) * (Math.PI - 0.3), -Math.PI / 2));
     }

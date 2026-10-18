@@ -551,7 +551,7 @@ export const UI = {
   legalSize: 22,
   // Start screen cast: game frames (at 60 per second) each animation frame is shown. Slower than in the maze,
   // where Pac-Man's chomp runs at animation.json speed only while he moves.
-  menuPacAnim: 6,
+  menuPacAnim: 3, // the chomp has 12 steps (7 frames there and back), so 3 keeps the old 6 with 6 steps
   menuGhostAnim: 15,
 };
 
@@ -571,7 +571,7 @@ export const ARCADE = {
 // These defaults are only used if the file can't be loaded.
 const ANIM_FALLBACK = {
   fps: 60,
-  characters: { pac: 2, blinky: 10, pinky: 10, inky: 10, clyde: 10, owner: 40 }, // owner: the hall's sleeping shop owner
+  characters: { pac: 7, blinky: 10, pinky: 10, inky: 10, clyde: 10, owner: 40 }, // owner: the hall's sleeping shop owner
   effects: { pacDeath: 8, powerPellet: 12, frightFlash: 10, mazeClear: 12, coinBob: 20, insertCoin: 30, tapPrompt: 30 },
 };
 const ANIM_URL = new URL('./settings/animation.json', import.meta.url);
