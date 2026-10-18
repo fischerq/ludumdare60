@@ -328,7 +328,7 @@ export const DEEP = {
     vectorColors: { blinky: 0xff2a3a, pinky: 0xff6a8a, inky: 0xff8a5a, clyde: 0xffb0a0 },
     goal: 4,             // stand on each ghost's target tile
   },
-  input: {               // -7 pressure plates and a push block; a noise spark crawls after you
+  input: {               // removed for now (not in DEEP_LAYERS); -7 pressure plates and a push block; a noise spark crawls after you
     bounce: 0.25,        // s a switch chatters on and off after you step on it
     sparkSpeed: 1.6,     // tiles per second
     sparkDelay: 4,       // s before the spark starts crawling (at the start and after it got you)

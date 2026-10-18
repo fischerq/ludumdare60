@@ -17,7 +17,7 @@ const TRACE_EVERY = 1; // s between profiles of a frame's instructions
 const TRACE_MAX = 6000;
 
 export const livePage = {
-  title: '10. The live page',
+  title: '9. The live page',
   html: `<p><i>Hold the page still and watch: the ink moves with the machine. Everything below is read from the
     running board, ${MANUAL.liveHz} times a second.</i></p>
     <p><button class="manual-btn live-hold" style="width:100%;font-size:16px">HOLD THE INK</button></p>
@@ -34,7 +34,7 @@ export const livePage = {
     <div class="live-regions"></div>
     <h2>The bus, latest cycles</h2><div class="live-bus mono"></div>
     <h2>Sprites</h2><div class="live-sprites"></div>
-    <h2>The input wires</h2><div class="live-input"></div>
+    <h2>Input ports</h2><div class="live-input"></div>
     <h2>Sound commands</h2><div class="live-sound mono"></div>`,
   mount(body) {
     const q = (s) => body.querySelector(s);

@@ -123,3 +123,5 @@ survives only as the movement lab bench.
 - 2026-10-17: Playtest bots: a bot plays every layer (and the whole outer loop) with structured human noise;
   `node tools/playtest.mjs` measures win rate and time to solve per noise level. See [playtest](systems/playtest.md). (Quirin)
 - 2026-10-18: Every layer gets its own synthesized background sound in the style of its tech; see [audio](systems/audio.md).
+- 2026-10-18: The input-wires layer (-7) is removed from the game and the manual for now; it needs a bigger
+  rework. Six deep layers, game logic at the bottom. See [deep layers](systems/layer-deep.md). (Quirin)

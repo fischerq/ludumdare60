@@ -16,7 +16,7 @@ Marauder's-Map-style live view of the machine's state, detailed enough to debug 
   yellowed paper with stains and smudges, a worn typewriter face (Special Elite) for headings, Courier Prime for
   the text, both from pinned jsdelivr URLs in `index.html`.
 - **Pages:** cover, contents, then one page per machine layer top to bottom: cabinet, maze game, inside the CRT,
-  video board, video RAM, system bus, CPU (Z80), game logic, input wires; the live page last. The hall gets no
+  video board, video RAM, system bus, CPU (Z80), game logic; the live page last (the input-wires page is removed for now, with its layer). The hall gets no
   page (it isn't part of the machine). Every page explains all concepts the layer uses, with one or two static
   figures drawn as inline SVG.
 - **Reading:** swipe sideways or the big arrow buttons to turn pages, vertical scroll within a page, a big X to
@@ -39,3 +39,4 @@ Marauder's-Map-style live view of the machine's state, detailed enough to debug 
 - 2026-10-18: The Pac-Man booklet on the hall's table opens a fullscreen service manual: old paper, a page per
   layer explaining its technical system with static figures, and a live Marauder's-Map page of the machine state
   at the end. Defaults accepted (HTML overlay, page list, live page contents, read-only). (Quirin)
+- 2026-10-18: The input-wires page is removed with its layer; the live page keeps its input-port readout. (Quirin)

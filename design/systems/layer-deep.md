@@ -11,7 +11,7 @@
 
 ## Purpose
 Going down from the maze game, each layer is a view of the one emulated machine that runs it (see
-[emulator](emulator.md)), from the picture tube down to the input wires. Gameplay in a layer may stylize,
+[emulator](emulator.md)), from the picture tube down to the game logic. Gameplay in a layer may stylize,
 slow down or aggregate, but everything comes from the machine's real raw data.
 
 ## Shared rules · decided (Claude, defaults accepted by Quirin)
@@ -140,7 +140,10 @@ s; touching it is a hit. Frightened ghosts have no vector and see nothing. **Obj
 the 4 ghosts' target tiles (they move with the mode and with Pac-Man; scatter corners are clamped into the grid).
 The pellets are dots.
 
-## Layer -7: the input wires · built (gameplay pass)
+## Layer -7: the input wires · removed for now (needs a bigger rework)
+Taken out of the game and the manual on 2026-10-18: no good idea yet to make it nicely playable. The module
+(`src/systems/layers/input.js`, `DEEP.input` in config) stays in the repo for the rework; it isn't in
+`DEEP_LAYERS`. What it was:
 **Verb: pressure plates and a push block.** The joystick's switches as pads on the board, wired to IN0's bits
 (START to IN1). Standing on a pad closes that switch: the bit goes low, the program polls it, and the machine's
 Pac-Man turns. You steer the real game, watching it on a small picture at the top, with IN0 and IN1 shown live.
@@ -162,7 +165,7 @@ picture). How the other layers do on that, to decide later:
   and you see its effect (e.g. the sound routine plays).
 - **-6 game logic:** half. Standing on a ghost's target tile has no effect. Idea: standing there pulls that ghost
   in the maze (the target is what it chases).
-- **-7 input wires:** connected. Steering the real Pac-Man into the corners through the switches.
+- **-7 input wires:** (removed for now) was connected: steering the real Pac-Man into the corners through the switches.
 - **Dots** in -3 to -7 are only counted and say nothing about the part.
 
 ## Decision log
@@ -199,3 +202,5 @@ picture). How the other layers do on that, to decide later:
   (0.6 s) before closing; safer exits: packets can't hit inside a chip room (a read used to spawn on the tile you
   wait on by the door) and a waiting read pulses there. (Quirin asked for longer doors and safer exits; Claude
   picked how)
+- 2026-10-18: Layer -7 (input wires) removed from the game and the manual for now; it needs a bigger rework to be
+  nicely playable. The game logic (-6) is the bottom layer. (Quirin)

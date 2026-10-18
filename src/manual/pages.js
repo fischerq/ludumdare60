@@ -1,7 +1,7 @@
 // The manual's pages: { title, html } with figures as inline SVG drawn here, and `mount(body)` for the live page.
 // Numbers come from the config and the memory map, so the manual stays true when they're tuned.
 import { ARCADE, MAZE, RULES, SPEED, CONTROL, COINS, GAME_TITLE } from '../config.js';
-import { MAP, IN0, IN1, DSW, CELL, SOUND, VRAM_STRIDE } from '../systems/arcade/memmap.js';
+import { MAP, CELL, SOUND, VRAM_STRIDE } from '../systems/arcade/memmap.js';
 import { SPRITE, PALETTE } from '../systems/arcade/video.js';
 import { livePage } from './live.js';
 
@@ -192,23 +192,10 @@ const targetFig = (() => {
   'Fig. 10 — chase targets. The ghost turns toward its target at every tile center (circle not to scale).');
 })();
 
-const switchFig = svg(340, 190, `
-  ${t(30, 22, '+5 V', { bold: true })}<path d="M30 28 L30 40"/>
-  <path d="M30 40 L24 46 L36 52 L24 58 L36 64 L24 70 L30 74"/>${t(44, 60, 'pull-up', { a: 'start', size: 9 })}
-  <path d="M30 74 L30 100 L130 100"/>${t(86, 94, 'IN0 bit 0 (up)', { size: 9 })}
-  <circle cx="30" cy="100" r="2.5" style="fill:currentColor"/>
-  <path d="M30 100 L30 120"/><path d="M30 120 L46 112"/><path d="M30 132 L30 150"/>${t(56, 126, 'switch', { a: 'start', size: 9 })}
-  <path d="M18 150 L42 150 M22 155 L38 155 M26 160 L34 160"/>${t(30, 176, 'ground', { size: 9 })}
-  ${box(130, 86, 70, 28, '74LS', 'buffer')}${arrow(200, 100, 230, 100, 'D0')}
-  ${[...'76543210'].map((b, i) => `<rect x="${230 + (i % 4) * 26}" y="${30 + Math.floor(i / 4) * 66}" width="26" height="26"/>${t(243 + (i % 4) * 26, 47 + Math.floor(i / 4) * 66, b, { size: 10 })}`).join('')}
-  ${t(282, 72, 'IN0, read at', { size: 9 })}${t(282, 84, hex(MAP.in0), { size: 9, bold: true })}
-  ${t(282, 148, 'open = 1', { size: 9 })}${t(282, 160, 'pressed = 0', { size: 9, bold: true })}`,
-'Fig. 11 — one joystick switch: active low');
-
 // ---- the pages ----------------------------------------------------------------------------------------------------
 const toc = [
   ['The cabinet', 2], ['The maze game', 3], ['Inside the CRT', 4], ['The video board', 5], ['Video RAM', 6],
-  ['The system bus', 7], ['The CPU (Z80)', 8], ['The game logic', 9], ['The input wires', 10], ['The live page', 11],
+  ['The system bus', 7], ['The CPU (Z80)', 8], ['The game logic', 9], ['The live page', 10],
 ];
 
 export const pages = [
@@ -217,7 +204,7 @@ export const pages = [
     html: `${coverFig}
       <p style="text-align:center"><b>Upright video game · Model LP-60</b><br>Operator's and service manual</p>
       <p>This machine is a complete small computer. Every layer of it is described on its own page, from the cabinet
-      you stand in front of down to the wires behind the joystick. The last page shows the machine as it is right now.</p>
+      you stand in front of down to the game logic in its memory. The last page shows the machine as it is right now.</p>
       <p style="font-size:13px">Keep this manual with the machine. Do not open the cabinet while it is switched on.
       The picture tube keeps a dangerous charge after power-off.</p>`,
   },
@@ -237,8 +224,8 @@ export const pages = [
       The program compares the switch with the last frame (COIN_LAST) and starts a fresh game on the edge. One coin
       buys one game of ${RULES.lives} lives (COINS.perGame = ${COINS.perGame}).</p>
       <p>After GAME OVER this machine stops running frames until a coin goes in: the picture stands still with
-      INSERT COIN. While nobody holds the joystick, an <b>autopilot</b> plays on through the very same input port
-      (see <i>The input wires</i>), and a dip switch (DEMO) makes its deaths free.</p>
+      INSERT COIN. While nobody holds the joystick, an <b>autopilot</b> plays on through the very same input port,
+      and a dip switch (DEMO) makes its deaths free.</p>
       <h2>Controls</h2>
       <p>The joystick is four switches, one per direction; pushing it closes one or two of them. START is one more switch on IN1.</p>`,
   },
@@ -366,26 +353,6 @@ export const pages = [
       <h2>Collisions</h2>
       <p>check_hits compares positions: closer than ${RULES.hitDistance} tiles is a touch. A frightened ghost is eaten, any
       other ghost costs a life.</p>`,
-  },
-  {
-    title: '9. The input wires',
-    html: `${switchFig}
-      <p>Each switch pulls its line to ground when closed. A <b>pull-up</b> resistor holds the line at 1 otherwise, so the
-      inputs are <b>active low</b>: 0 means pressed. A buffer chip puts all eight lines on the data bus when the CPU reads
-      the port.</p>
-      ${table(['Port', 'Bit', 'Switch'], [
-        ...Object.entries(IN0).map(([k, v]) => [`IN0 ${hex(MAP.in0)}`, Math.log2(v), k]),
-        ...Object.entries(IN1).map(([k, v]) => [`IN1 ${hex(MAP.in1)}`, Math.log2(v), k]),
-        ...Object.entries(DSW).map(([k, v]) => [`DSW ${hex(MAP.dsw)}`, Math.log2(v), `${k} (dip switch, 1 = on)`]),
-      ])}
-      <h2>Polling</h2>
-      <p>The program reads IN0 once per frame (read_input): it inverts the byte (CPL), keeps the four direction bits, and
-      the lowest pressed bit wins (up, left, down, right). That direction is stored as Pac-Man's NEXT. Nothing happens
-      between two reads: a press shorter than a frame can be missed.</p>
-      <h2>Bounce</h2>
-      <p>A metal contact closing doesn't close once: it chatters for a few milliseconds. Reading once per frame is slow
-      enough to ignore most of it.</p>
-      <p>The autopilot presses the switches through the same port, bit by bit, like a hand on the stick.</p>`,
   },
   livePage,
 ];
