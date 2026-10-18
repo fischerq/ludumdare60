@@ -44,6 +44,7 @@ Requested by Quirin, details waiting on answers:
 - Once every subsystem is won, a **bonus layer** appears: the physical 8-bit add of the round counter, played like
   Crossy Road. Winning it overflows the counter ([map 256 glitch](https://pacman.fandom.com/wiki/Map_256_Glitch)),
   flips a switch next to it in the lobby and makes the switch usable; while it's on, the maze shows level 256.
+  The bonus layer itself is built (first slice, not yet wired into the lobby): see [layer-adder](layer-adder.md).
 
 ## Layer ideas · open (brainstorm, nothing decided)
 Rough order from outside to inside; we pick a few, not all.
@@ -101,3 +102,5 @@ minigame, a counter on the layer map, no unlock.*
 - 2026-10-18: Outer loop idea: a board lobby inside the cabinet with locked subsystems that unlock one at a time, video
   RAM swapped for another memory, the logic as a brain with the ghosts, and a Crossy Road bonus layer for the round
   counter's 8-bit add that triggers the level 256 glitch. Questions open. (Quirin)
+- 2026-10-18: Bonus layer built as its own scene: the round counter's +1 as a ripple-carry adder, Crossy Road style;
+  it reports the win to whoever started it. See [layer-adder](layer-adder.md). (Quirin, defaults accepted)
