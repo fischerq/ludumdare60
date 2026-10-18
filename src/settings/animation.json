@@ -2,7 +2,7 @@
   "_readme": "Animation speeds: how many game frames (at 60 per second) each animation frame is shown. Higher is slower. characters: walk/chomp and skirt wobble. effects: blinks, flashes and the death animation (blinks are on for one tick, off for one). Tune in the lab (/lab/bench.html?b=animation), press Download, and save the file over this one.",
   "fps": 60,
   "characters": {
-    "pac": 2,
+    "pac": 7,
     "blinky": 10,
     "pinky": 10,
     "inky": 10,

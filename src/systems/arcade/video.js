@@ -22,16 +22,16 @@ export const PALETTE = {
   7: 0x00ffde,                 // points
 };
 
-// Sprite codes (our sprite ROM). 0 is an empty slot. Pac-Man: pac + dir*4 + frame. Ghosts have their own art
+// Sprite codes (our sprite ROM). 0 is an empty slot. Pac-Man: pac + dir*8 + frame (7 chomp frames). Ghosts have their own art
 // per ghost and direction: ghost + ghost*8 + dir*2 + skirt.
-export const SPRITE = { pac: 1, pacDie: 17, ghost: 32, fright: 64, flash: 66, eyes: 68, points: 72 };
+export const SPRITE = { pac: 1, pacDie: 33, ghost: 48, fright: 80, flash: 82, eyes: 84, points: 88 };
 const POINTS = ['200', '400', '800', '1600'];
 
 // What a sprite code shows: { key, angle, flipX } or { text }. Pure, so tests and the deeper layers can use it.
 export function spriteArt(code) {
-  if (code >= SPRITE.pac && code < SPRITE.pac + 16) {
-    const d = DIR_NAMES[(code - 1) >> 2];
-    return { key: `maze/pac-${(code - 1) & 3}`, angle: ANGLE[d], flipX: d === 'left' };
+  if (code >= SPRITE.pac && code < SPRITE.pac + 32) {
+    const d = DIR_NAMES[(code - 1) >> 3];
+    return { key: `maze/pac-${(code - 1) & 7}`, angle: ANGLE[d], flipX: d === 'left' };
   }
   if (code >= SPRITE.pacDie && code < SPRITE.pacDie + 10) return { key: `maze/pac-die-${code - SPRITE.pacDie}` };
   if (code >= SPRITE.ghost && code < SPRITE.ghost + 32) {

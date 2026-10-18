@@ -716,7 +716,7 @@ move_pac:
         ld (ix+A_ANIM_T), 0
         ld a, (ix+A_ANIM_F)
         inc a
-        cp 6
+        cp 12
         jr c, .frame
         xor a
 .frame: ld (ix+A_ANIM_F), a
@@ -1440,13 +1440,14 @@ pac_sprite:
         ld a, 1
 .dir:   add a, a
         add a, a
+        add a, a
         add a, (hl)
         add a, SPR_PAC
         ret
 .none:  xor a
         ret
 
-PAC_CYCLE: db 0, 1, 2, 3, 2, 1
+PAC_CYCLE: db 0, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1
 
 ; Sprite code for ghost IX in A (B = its sprite slot), palette in C.
 ghost_sprite:

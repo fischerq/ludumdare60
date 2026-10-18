@@ -2,7 +2,7 @@
 // of playing, when each animation frame is held for `framesPerTick` game frames (src/settings/animation.json).
 import { ANIM } from '../config.js';
 
-export const PAC_CYCLE = [0, 1, 2, 3, 2, 1];
+export const PAC_CYCLE = [0, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1];
 
 export function animFrame(seconds, framesPerTick, length, fps = ANIM.fps) {
   return Math.floor((seconds * fps) / Math.max(1, framesPerTick)) % length;
