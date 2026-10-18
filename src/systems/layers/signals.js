@@ -180,9 +180,10 @@ export default {
     for (const mk of marks) {
       const x = Math.round((T.x + 1) * S + (mk.k % TP) * q), y = Math.round((T.y + 1) * S + Math.floor(mk.k / TP) * q);
       if (mk.taken) { ctx.fillStyle = '#000'; ctx.fillRect(x, y, Math.ceil(q), Math.ceil(q)); continue; }
-      neonBox(ctx, mk.cx * S + 1, mk.cy * S + 1, S - 2, S - 2, blink ? 0xffffff : P.line, P.glow);
       ctx.strokeStyle = blink ? '#ffffff' : '#000000';
-      ctx.strokeRect(x - 1.5, y - 1.5, q + 3, q + 3);
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x - 2, y - 2, q + 4, q + 4);
+      ctx.lineWidth = 1;
     }
     // The palette: every entry as a swatch, lit while a pixel you carry still needs it.
     const PB = BOX.P;
@@ -237,8 +238,12 @@ export default {
         ctx.strokeStyle = '#ffffff';
         ctx.strokeRect(Math.round(x) + 0.5, Math.round(y) + 0.5, sz - 1, sz - 1);
       });
-    } else if (st.carry.length === C.pixels && st.carry.every((cc) => cc.color)) {
-      neonBox(ctx, (D.x + 1) * S + 1, (D.y + 1) * S + 1, (D.x1 - D.x - 1) * S - 2, (D.y1 - D.y - 1) * S - 2, blink ? 0xffffff : P.line, P.glow);
+    } else {
+      // The drop-off: a muted outline, lit and blinking once you carry 3 colors.
+      const ready = st.carry.length === C.pixels && st.carry.every((cc) => cc.color);
+      const dx = (D.x + 1) * S + 1, dy = (D.y + 1) * S + 1, dw = (D.x1 - D.x - 1) * S - 2, dh = (D.y1 - D.y - 1) * S - 2;
+      if (ready) neonBox(ctx, dx, dy, dw, dh, blink ? 0xffffff : P.line, P.glow);
+      else { ctx.strokeStyle = css(P.line, 0.3); ctx.strokeRect(dx + 0.5, dy + 0.5, dw - 1, dh - 1); }
     }
     // The frame timer: seconds left and a bar running down, red near the end; flashes when it dropped your pixels.
     const F = BOX.F, left = this.left(st, t), k = left / C.frameTime;
@@ -250,14 +255,27 @@ export default {
     ctx.fillRect(fx, fy + fh * (1 - k), fw, fh * k);
     ctx.fillStyle = '#ffffff';
     tinyText(ctx, t - st.dropped < 1 ? 'DROP' : String(Math.ceil(left)).padStart(2, '0'), fx + 2, fy + 2);
-    // What you carry follows one tile behind you: the pixels, then their colors.
+    // What you carry follows one tile behind you: each pixel a block (gray with its palette entry), split into its
+    // red, green and blue parts once the palette made it a color.
     if (st.carry.length && st.follow) {
+      const w = Math.round(S * 0.75), gap = 2, n = st.carry.length;
+      const x0 = Math.round(st.follow.x * S + S / 2 - (n * w + (n - 1) * gap) / 2), y = Math.round(st.follow.y * S + (S - w) / 2);
       st.carry.forEach((cc, i) => {
-        const x = st.follow.x * S + 3 + i * Math.floor((S - 6) / 3), y = st.follow.y * S + Math.floor(S / 2) - 4;
-        const w = Math.floor((S - 6) / 3) - 1;
-        ctx.fillStyle = cc.color ? rgb(palette[cc.e]) : '#808080';
-        ctx.fillRect(x, y, w, 8);
-        if (!cc.color) { ctx.fillStyle = '#ffffff'; tinyText(ctx, String(cc.e), x + 1, y + 2); }
+        const x = x0 + i * (w + gap);
+        ctx.fillStyle = '#000';
+        ctx.fillRect(x - 1, y - 1, w + 2, w + 2);
+        if (cc.color) {
+          const col = palette[cc.e], pw = Math.floor(w / 3);
+          for (let ch = 0; ch < 3; ch++) {
+            ctx.fillStyle = rgb(col.map((v, j) => (j === ch ? v : 0)));
+            ctx.fillRect(x + ch * pw, y, ch === 2 ? w - 2 * pw : pw - 1, w);
+          }
+        } else {
+          ctx.fillStyle = '#808080';
+          ctx.fillRect(x, y, w, w);
+          ctx.fillStyle = '#ffffff';
+          tinyText(ctx, String(cc.e), x + Math.floor(w / 2) - 2, y + Math.floor(w / 2) - 3);
+        }
       });
     }
   },
