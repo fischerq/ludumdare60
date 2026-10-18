@@ -144,3 +144,6 @@ minigame, a counter on the layer map, no unlock.*
   every layer; sound button moved to the top-right, maze HIGH SCORE to top center. (Quirin)
 - 2026-10-18: The lobby uses the standard layer button (LAYER UP bottom left); the room moved to the top of the view with
   the title in the strip under it. The adder's LAYER UP moved to the same corner. (Claude, after the button standardization)
+- 2026-10-18: Lobby art calmer: muted, plain PCB floor; all lines (traces, harness, ghost wires) in one copper; each
+  subsystem (and the adder/switch) sits on its own island in its layer's colors (grey while locked), portraits use the
+  layer's background. (Quirin)

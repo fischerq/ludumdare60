@@ -632,17 +632,16 @@ export const LOBBY = {
   highlightRate: 6,      // blinks per second
   clearDelay: 2.5,       // s the LAYER CLEAR callout shows in a deep layer before going back to the lobby
   colors: {
-    pcb: 0x1d6a3c, pcbDark: 0x15522d, pcbLight: 0x2a8a4e, via: 0xc8a050,
-    copper: 0xd8a040, copperDark: 0x8a5e1e, copperLight: 0xffd27a,
+    pcb: 0x24382c, pcbDark: 0x1f3126,
+    copper: 0xb08a50, copperDark: 0x7a5e34,
+    pad: 0x101418, padEdge: 0x3a4048,  // a locked subsystem's island (an unlocked one takes its layer's colors)
     wall: 0x1a1210, wallEdge: 0x3a2a20, wallLight: 0x4a382a,
-    harness: [0xd03030, 0xf0d040, 0x3060d0, 0x303030], harnessTie: 0xe8e8e8,
     chip: 0x1c1c22, chipLight: 0x3a3a46, leg: 0xc8c8d0, chipOff: 0x34343a, legOff: 0x7a7a80,
     eye: 0xffffff, pupil: 0x101018, sleep: 0x9aa0b0, cheek: 0xff7aa0,
     brain: 0xff9ac8, brainDark: 0xc0608e, brainOff: 0x8a6a7a, brainOffDark: 0x5a4450,
     monitor: 0x18181c, bezel: 0x2a2a30, tube: 0x3a0c30, tubeLight: 0xff3cc8,
     stick: 0xd02020, panel: 0x2a2a6a, speaker: 0x2a2a2a, grill: 0x707070,
     door: 0x8a8a96, slot: 0xff3020, power: 0x5a5a62, warn: 0xf0d040, edge: 0xd8b040,
-    portraitBg: 0x0a2414,
   },
   // Who each subsystem is (its accent is the layer's own DEEP.style line color).
   names: {
