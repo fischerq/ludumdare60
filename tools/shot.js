@@ -2,7 +2,7 @@
 // Dev tool only: uses the Playwright that comes preinstalled in the cloud container (global npm), the game
 // itself stays build-free.
 //
-//   node tools/shot.js <session8>-<turn>-c<n> [page] [--scene Key] [--wait ms] [--at rev | --root dir] [--full]
+//   node tools/shot.js <session8>-<turn>-c<n> [page] [--scene Key [--data json]] [--wait ms] [--at rev | --root dir] [--full]
 //   node tools/shot.js commit-<sha8>-before-<n> [page] --at <sha>^ ...   (before/after shots of an art commit)
 //   node tools/shot.js commit-<sha8>-after-<n> [page] --at <sha> ...
 //
@@ -19,12 +19,12 @@ const repo = path.resolve(__dirname, '..');
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf(k); return i < 0 ? d : args.splice(i, 2)[1]; };
 const flag = (k) => { const i = args.indexOf(k); return i >= 0 && args.splice(i, 1).length > 0; };
-const scene = opt('--scene'), wait = Number(opt('--wait', 2500)), at = opt('--at');
+const scene = opt('--scene'), data = JSON.parse(opt('--data', '{}')), wait = Number(opt('--wait', 2500)), at = opt('--at');
 let root = path.resolve(opt('--root', repo));
 const full = flag('--full');
 const [name, page = ''] = args;
 if (!name || !/^([0-9a-f]{8}-\d+-c\d+|commit-[0-9a-f]{8}-(before|after)-\d+)$/.test(name)) {
-  console.error('usage: node tools/shot.js <session8>-<turn>-c<n> | commit-<sha8>-<before|after>-<n> [page] [--scene Key] [--wait ms] [--at rev | --root dir] [--full]');
+  console.error('usage: node tools/shot.js <session8>-<turn>-c<n> | commit-<sha8>-<before|after>-<n> [page] [--scene Key [--data json]] [--wait ms] [--at rev | --root dir] [--full]');
   process.exit(1);
 }
 
@@ -49,11 +49,11 @@ const server = spawn('python3', ['-m', 'http.server', String(port)], { cwd: root
   await pg.goto(`http://localhost:${port}/${page}`);
   await pg.waitForTimeout(scene ? 2500 : wait);
   if (scene) {
-    await pg.evaluate((k) => {
+    await pg.evaluate(([k, d]) => {
       const g = window.game;
       g.scene.getScenes(true).forEach((s) => g.scene.stop(s.scene.key));
-      g.scene.start(k);
-    }, scene);
+      g.scene.start(k, d);
+    }, [scene, data]);
     await pg.waitForTimeout(wait);
   }
   const png = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'shot-')), 'shot.png');
