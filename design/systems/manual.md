@@ -28,7 +28,7 @@ Marauder's-Map-style live view of the machine's state, detailed enough to debug 
 - `?manual` opens it straight away (with `?scene=...` for the machine state of any layer).
 
 ## Slice scope
-- Build: step 1 the overlay and the booklet (done); step 2 the static pages; step 3 the live page.
+- Build: step 1 the overlay and the booklet (done); step 2 the static pages (done); step 3 the live page.
 - Not now: stepping the machine instruction by instruction from the live page, editing memory.
 
 ## Decision log
