@@ -58,8 +58,9 @@ on a phone, or a gate row that looks like it should be passable when it isn't.
 - Build: the board with 8 stages, lanes, gate rows with real gate outputs, tap/swipe hops, the camera, hits back
   to the stage's checkpoint, the live byte readout, the overflow moment, the win callback/event and return,
   LAYER UP, the art, a playtest bot.
-- Not now: wiring into the lobby (the other slice: it starts the scene with `returnTo` and listens for the
-  win), reading the real round counter from the machine, a background sound bed (`setBed('adder')` has none yet),
+- Built (2026-10-18): wired into the lobby, which starts it with `returnTo: 'Lobby'` and an `onWin` that flips
+  the 256 switch.
+- Not now: reading the real round counter from the machine, a background sound bed (`setBed('adder')` has none yet),
   a lab bench.
 
 ## Playtest
@@ -78,3 +79,5 @@ lanes (`speed` 1.4 to 3.0, `gap` at bit 7 from 2.2): noise 0 wins 100% in 19 s; 
   stages bottom to top, pulses on the wires as traffic, gates at 1 let you through, a hit sends you back to the
   stage's start (no game over), the overflow ends it with a callback for the lobby. (Quirin, defaults accepted)
 - 2026-10-18: Tuned with the bot: top lanes a bit slower and wider (speed 1.4 to 3.0 tiles/s, gap at bit 7 2.2 to 4.5). (Claude)
+- 2026-10-18: Wired into the board lobby: entered from the adder chip there, returns to the lobby, the win flips the
+  256 switch and puts the machine on level 256. See [layers](layers.md). (Quirin, defaults accepted)

@@ -53,13 +53,13 @@ const signals = {
   score: (c, x, y) => Math.min(9, ...c.ghosts.map((g) => manhattan(g, { x, y }))),
 };
 
-// -3 video RAM: the four pellet bytes; keep out of the row the write head is about to dash along.
-const vram = {
-  targets: (c) => PELLETS.map((p) => ({ x: p.x, y: p.y })).filter((p) => !c.st.got.has(p.y * 32 + p.x)),
+// -3 work RAM: the game state bytes; keep out of the row the write head is about to dash along.
+const ram = {
+  targets: (c) => c.st.goals.filter((g) => !c.st.got.has(g.a)).map((g) => ({ x: g.a % 32, y: Math.floor(g.a / 32) })),
   blocked(c, x, y, eta) {
     const h = c.st.head;
     if (!h) return false;
-    const row = Math.floor(h.a / 32), to = h.a % 32, C = DEEP.vram;
+    const row = Math.floor(h.a / 32), to = h.a % 32, C = DEEP.ram;
     const end = h.t + C.waitTime + to / C.dashSpeed + 0.15;
     return y === row && x <= to + 1 && c.t + eta < end;
   },
@@ -240,7 +240,7 @@ export function mazeBot(m, S, react, safety) {
   }, react, safety);
 }
 
-export const DEEP_BOTS = { crt, signals, vram, bus, cpu, logic, input };
+export const DEEP_BOTS = { crt, signals, ram, bus, cpu, logic, input };
 
 // Walking distance to the nearest goal from every tile (breadth-first out of the goals), for scoring.
 function distanceField(goals, open) {

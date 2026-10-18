@@ -2,6 +2,7 @@ import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KE
 import { createSwipe, swipeInput } from '../systems/swipe.js';
 import { sfx, unlockAudio, setAudioPaused, setBed, setSiren } from '../sound.js';
 import { addLayerButtonAt } from '../layerButton.js';
+import { isSwitchOn } from '../progress.js';
 import { showCallout } from '../callout.js';
 import { coins, spendCoin } from '../wallet.js';
 import { world, onFrame, pressDir, pressStart, setDriver, newGame, setRound } from '../systems/arcade/world.js';
@@ -57,8 +58,9 @@ export default class GameScene extends Phaser.Scene {
     setBed('maze');
     setSiren(-1);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setSiren(-1));
-    // ?level=256 (LEVELS.param): every fresh game starts on that level, for testing the kill screen.
-    const level = Number(new URLSearchParams(window.location.search).get(LEVELS.param));
+    // ?level=256 (LEVELS.param): every fresh game starts on that level, for testing the kill screen. So does
+    // every fresh game while the lobby's 256 switch is on.
+    const level = isSwitchOn() ? 256 : Number(new URLSearchParams(window.location.search).get(LEVELS.param));
     if (!data.continue) {
       if (data.free || spendCoin()) { newGame(); if (level > 1) setRound(level); }
       else world.halted = true;
@@ -171,10 +173,10 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  // The layer buttons, always there: up zooms out to the cabinet, down goes into the screen (DeepScene).
+  // The layer buttons, always there: up zooms out to the cabinet, down goes inside it (the board lobby).
   addLayerButtons() {
     addLayerButtonAt(this, 'up', () => this.leave('Cabinet'), { zoom: PIXEL.zoom });
-    addLayerButtonAt(this, 'down', () => this.leave('Deep', { layer: 0 }), { zoom: PIXEL.zoom });
+    addLayerButtonAt(this, 'down', () => this.leave('Lobby', { from: 'maze' }), { zoom: PIXEL.zoom });
   }
 
   leave(scene, data) {

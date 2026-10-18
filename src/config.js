@@ -194,7 +194,7 @@ export const DEEP = {
   style: {
     crt:     { bg: 0x12040e, grid: 0x2a0c22, line: 0xff3cc8, glow: 0x4a0e3a, dot: 0xff8ae0, dot2: 0xffd0f4, special: 0xffffff },
     signals: { bg: 0x02100f, grid: 0x07302c, line: 0x2af0e0, glow: 0x0a3a36, dot: 0x8afff4, dot2: 0xffe08a, special: 0xffffff },
-    vram:    { bg: 0x050620, grid: 0x10144a, line: 0x4a6aff, glow: 0x141c5a, dot: 0x9ab0ff, dot2: 0xffffff, special: 0xffffff },
+    ram:     { bg: 0x02101a, grid: 0x0a2c40, line: 0x5ac8ff, glow: 0x0c3048, dot: 0xb0e4ff, dot2: 0xffffff, special: 0xffffff },
     bus:     { bg: 0x140c02, grid: 0x34220a, line: 0xffa82a, glow: 0x4a2e08, dot: 0xffd88a, dot2: 0xffffff, special: 0xffffff },
     cpu:     { bg: 0x02120a, grid: 0x08321a, line: 0x2aff7a, glow: 0x0a3a1c, dot: 0x9affc0, dot2: 0x8ad8ff, special: 0xffffff },
     logic:   { bg: 0x0c0418, grid: 0x220e40, line: 0xa45aff, glow: 0x2a1250, dot: 0xd0b0ff, dot2: 0xffffff, special: 0xffffff },
@@ -273,11 +273,18 @@ export const DEEP = {
     ],
     goal: 4,             // colors delivered
   },
-  vram: {                // -3 blade trap: the write head dashes along a row to the address it writes
+  ram: {                 // -3 work RAM, blade trap: the write head dashes along a row to the address it writes
     waitTime: 0.7,       // s it waits at the row's start (telegraph)
     dashSpeed: 24,       // bytes per second along the row
     queue: 3,            // writes waiting at most; older ones are skipped
-    goal: 4,             // the power pellet bytes
+    nameReach: 31,       // bytes past a symbol the status line still names it by (GHOST0+4)
+    // The objectives: game state bytes, by the program's symbol (+ add bytes), with the name shown over them.
+    goals: [
+      { sym: 'SCORE', name: 'SCORE' },
+      { sym: 'LIVES_LEFT', name: 'LIVES' },
+      { sym: 'PAC', name: 'PAC X' },
+      { sym: 'GHOST0', name: 'BLINKY X' },
+    ],
   },
   bus: {                 // -4 the spatial bus: chip rooms behind decoder doors, packets on the lanes
     cycleTime: 1.1,      // s between bus cycles shown
@@ -490,6 +497,109 @@ export const HALL = {
   },
 };
 
+// Inside the cabinet: the board lobby (src/scenes/LobbyScene.js), built like the hall. Pac-Man walks on the
+// floor of the cabinet, the PCB, and talks to the machine's parts; each subsystem enters its deep layer. Unlocks
+// in src/progress.js. 16 px tiles at 4x (assets/board/), characters 32x32 shown one tile big.
+// # cabinet wall, . PCB floor, = wiring harness, - copper trace, ~ a ghost's wire to the brain (all walkable).
+// M/m the monitor (3x2, top front), K speaker, J joystick (control panel), D coin door, W power supply,
+// E edge connector (the harness plugs into the board), S start. On the board stack: V video board, R work RAM,
+// B bus, C CPU, L the logic brain with the four ghosts 1-4 (blinky, pinky, inky, clyde) on wires to it.
+// A the round counter's adder and Z its 256 switch: plain floor at LOBBY.reserved until every subsystem is won.
+export const LOBBY = {
+  layout: [
+    '###########',
+    '#.MMM...K.#',
+    '#.mmm...=.#',
+    '#..=....=.#',
+    '#..=..J.=.#',
+    '#..=..=.=.#',
+    '#..=..=.D.#',
+    '#W.=.S=.=.#',
+    '#=.=..=.=.#',
+    '#===E====.#',
+    '#.V--.....#',
+    '#...-..1..#',
+    '#.R--..~..#',
+    '#...-2~L~3#',
+    '#.C--..~..#',
+    '#...-..4..#',
+    '#...B.....#',
+    '###########',
+  ],
+  solid: '#MmKJDWEVRBCL1234AZ',
+  reserved: { adder: { x: 8, y: 16 }, switch: { x: 9, y: 16 } },
+  // Map character -> deep layer id (src/systems/layers/). The monitor is all six of its tiles.
+  subsystems: { M: 'crt', m: 'crt', V: 'signals', R: 'ram', B: 'bus', C: 'cpu', L: 'logic', J: 'input' },
+  ghosts: { 1: 'blinky', 2: 'pinky', 3: 'inky', 4: 'clyde' },
+  zoom: 4,               // screen px per art px, like the hall
+  walkSpeed: 4,          // tiles per second
+  charSize: 16,          // art px a character is shown at (one tile)
+  dragDeadzone: 24,      // screen px a finger moves before it counts as walking, not a tap
+  tapTime: 350,          // ms; a shorter touch that didn't move is a tap (talk / use)
+  choiceLine: 14,        // art px per choice line in the text box (56 px tall tap targets at 4x)
+  portraitSize: 48,      // art px of a portrait (board/portrait-*.png); other tiles are shown 3x
+  introZoom: 24,         // camera zoom at the start of zooming out of a part (the monitor or a subsystem)
+  introTime: 1.2,        // s
+  outroTime: 0.8,        // s of zooming into the part you enter
+  highlightTime: 2.4,    // s a newly unlocked subsystem blinks lit
+  highlightRate: 6,      // blinks per second
+  clearDelay: 2.5,       // s the LAYER CLEAR callout shows in a deep layer before going back to the lobby
+  colors: {
+    pcb: 0x1d6a3c, pcbDark: 0x15522d, pcbLight: 0x2a8a4e, via: 0xc8a050,
+    copper: 0xd8a040, copperDark: 0x8a5e1e, copperLight: 0xffd27a,
+    wall: 0x1a1210, wallEdge: 0x3a2a20, wallLight: 0x4a382a,
+    harness: [0xd03030, 0xf0d040, 0x3060d0, 0x303030], harnessTie: 0xe8e8e8,
+    chip: 0x1c1c22, chipLight: 0x3a3a46, leg: 0xc8c8d0, chipOff: 0x34343a, legOff: 0x7a7a80,
+    eye: 0xffffff, pupil: 0x101018, sleep: 0x9aa0b0, cheek: 0xff7aa0,
+    brain: 0xff9ac8, brainDark: 0xc0608e, brainOff: 0x8a6a7a, brainOffDark: 0x5a4450,
+    monitor: 0x18181c, bezel: 0x2a2a30, tube: 0x3a0c30, tubeLight: 0xff3cc8,
+    stick: 0xd02020, panel: 0x2a2a6a, speaker: 0x2a2a2a, grill: 0x707070,
+    door: 0x8a8a96, slot: 0xff3020, power: 0x5a5a62, warn: 0xf0d040, edge: 0xd8b040,
+    portraitBg: 0x0a2414,
+  },
+  // Who each subsystem is (its accent is the layer's own DEEP.style line color).
+  names: {
+    crt: 'THE MONITOR', signals: 'THE VIDEO BOARD', ram: 'THE WORK RAM', bus: 'THE BUS', cpu: 'THE CPU',
+    logic: 'THE BRAIN', input: 'THE JOYSTICK',
+  },
+  text: {
+    crt: "I'M THE MONITOR, UP FRONT. A BEAM PAINTS MY PICTURE, ONE DOT AT A TIME.",
+    signals: 'VIDEO BOARD. I TURN TILES AND COLORS INTO THE SIGNAL THAT RUNS UP THE HARNESS TO THE MONITOR.',
+    ram: 'WORK RAM. I REMEMBER THE GAME: YOUR SCORE, YOUR LIVES, WHERE EVERYONE IS.',
+    bus: 'THE BUS. EVERY BYTE BETWEEN THE CPU AND THE CHIPS RIDES ON MY LINES.',
+    cpu: 'Z80 CPU. I RUN THE PROGRAM, ONE INSTRUCTION AFTER ANOTHER. THREE MILLION TICKS A SECOND.',
+    logic: 'THE BRAIN: THE GAME LOGIC. I TELL THE FOUR GHOSTS WHERE TO GO.',
+    input: 'THE JOYSTICK. FOUR SWITCHES ON WIRES DOWN TO THE BOARD. PUSH ME AND A BIT GOES LOW.',
+    locked: '{name} IS ASLEEP. ZZZ... WAKE {prev} FIRST.',
+    won: 'ALL DONE IN THERE.',
+    woke: '{name} WOKE UP!',
+    allWon: 'EVERY PART OF THE MACHINE IS AWAKE.',
+    adderAppears: 'BY THE BUS, THE ADDER LIGHTS UP: THE ROUND COUNTER.',
+    enter: 'ENTER',
+    notNow: 'NOT NOW',
+    speaker: 'THE SPEAKER. THE WAKKA-WAKKA COMES OUT HERE.',
+    door: 'THE COIN DOOR. A COIN TRIPS A SWITCH ON THE HARNESS: ONE MORE CREDIT.',
+    power: "THE POWER SUPPLY. MAINS IN, 5 VOLTS OUT FOR THE CHIPS. DON'T TOUCH.",
+    edge: 'THE EDGE CONNECTOR. THE WHOLE HARNESS PLUGS INTO THE BOARD HERE.',
+    wall: 'THE INSIDE OF THE CABINET. DUSTY.',
+    blinky: "BLINKY: THE BRAIN SAYS AIM RIGHT AT PAC-MAN'S TILE.",
+    pinky: 'PINKY: THE BRAIN SAYS AIM FOUR TILES AHEAD OF HIM.',
+    inky: 'INKY: MY TARGET DEPENDS ON WHERE BLINKY IS.',
+    clyde: 'CLYDE: CLOSE TO PAC-MAN I RUN TO MY CORNER.',
+    adder: "THE ADDER. EVERY CLEARED MAZE I ADD 1 TO THE ROUND COUNTER. IT'S ONLY 8 BITS: 255 IS 11111111.",
+    adderWon: 'ADD 1 TO 255 AND THE CARRY FALLS OFF THE END. THE COUNTER WRAPS TO 0.',
+    switchStuck: "A SWITCH MARKED 256. IT WON'T BUDGE. THE ADDER NEXT TO IT HOLDS IT DOWN.",
+    switchFlipped: 'OVERFLOW! THE 256 SWITCH FLIPPED ON. THE MAZE IS ON LEVEL 256 NOW.',
+    switchOn: 'THE 256 SWITCH IS ON: THE MAZE PLAYS LEVEL 256.',
+    switchOff: 'THE 256 SWITCH IS OFF: THE MAZE PLAYS FROM LEVEL 1.',
+    flipOn: 'FLIP ON',
+    flipOff: 'FLIP OFF',
+    leave: 'LEAVE IT',
+  },
+  // Which text a tile shows when you face it and tap (keys into `text`); subsystems and ghosts are handled apart.
+  cellText: { K: 'speaker', D: 'door', W: 'power', E: 'edge', '#': 'wall' },
+};
+
 // The service manual (src/manual/), opened from the booklet on the hall's table: an HTML overlay of old paper.
 export const MANUAL = {
   font: '"Courier Prime", "Courier New", monospace',
@@ -591,7 +701,7 @@ export const MUSIC = {
       ],
       textures: [{ type: 'ticks', every: 1, freq: 9000, vol: 0.05 }],
     },
-    vram: {
+    ram: {
       bpm: 100, root: 45, // A: slow organ steps over the memory's refresh pulse
       tracks: [
         { wave: 'square', vol: 0.22, oct: -12, notes: '0 . . 0 . . 0 . -4 . . -4 . . -4 .' },

@@ -9,11 +9,13 @@ export const DIRS = {
 };
 const SOLID = '#RBGVYrbgvy=MmD1234%!CcQq|^*+@Okjsunp';
 
-export function createHall(layout = HALL.layout) {
-  const h = { rows: layout, w: layout[0].length, h: layout.length, coins: new Set(), npcs: [], got: 0, pac: null, chase: null };
+// The same rules walk other rooms too (the board lobby): opts.solid are its blocking map characters, opts.speed
+// its walk speed in tiles per second, opts.ghosts its visitor characters.
+export function createHall(layout = HALL.layout, { solid = SOLID, speed = HALL.walkSpeed, ghosts = HALL.ghosts } = {}) {
+  const h = { rows: layout, w: layout[0].length, h: layout.length, coins: new Set(), npcs: [], got: 0, pac: null, chase: null, solid, speed };
   layout.forEach((row, y) => [...row].forEach((c, x) => {
     if (c === 'o') h.coins.add(`${x},${y}`);
-    if (HALL.ghosts[c]) h.npcs.push({ name: HALL.ghosts[c], x, y, home: { x, y }, dir: 'up', moving: false, from: null, t: 0 });
+    if (ghosts[c]) h.npcs.push({ name: ghosts[c], x, y, home: { x, y }, dir: 'up', moving: false, from: null, t: 0 });
     if (c === 'S') h.pac = { x, y, dir: 'up', moving: false, from: null, t: 0, steps: 0 };
   }));
   return h;
@@ -29,7 +31,7 @@ export function npcAt(h, x, y) {
 
 // Walls and furniture; standing visitors block too, but not while they chase (touching one then means caught).
 export function blocked(h, x, y) {
-  return SOLID.includes(cellAt(h, x, y)) || (!h.chase && !!npcAt(h, x, y));
+  return h.solid.includes(cellAt(h, x, y)) || (!h.chase && !!npcAt(h, x, y));
 }
 
 // What Pac-Man faces: { x, y, cell, npc } for the tile in front of him.
@@ -44,7 +46,7 @@ export function facing(h) {
 export function stepHall(h, dt, held) {
   const p = h.pac;
   const events = [];
-  let left = dt * HALL.walkSpeed; // tiles of movement available this frame
+  let left = dt * h.speed; // tiles of movement available this frame
   while (left > 0) {
     if (!p.moving) {
       if (!held) break;

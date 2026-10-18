@@ -4,7 +4,7 @@
 //
 //   node tools/playtest.mjs                       every layer + the full playthrough, PLAYTEST.runs runs per level
 //   node tools/playtest.mjs --quick               PLAYTEST.quickRuns runs per level
-//   node tools/playtest.mjs --layers maze,crt     only these (names: maze cabinet hall hall-chase crt signals vram
+//   node tools/playtest.mjs --layers maze,crt     only these (names: maze cabinet hall hall-chase crt signals ram
 //                                                 bus cpu logic input playthrough)
 //   node tools/playtest.mjs --levels 0,0.5,1      noise levels (default PLAYTEST.levels)
 //   node tools/playtest.mjs --knob reaction       sweep one knob only: reaction, slip, lapse (default all)

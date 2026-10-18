@@ -15,10 +15,14 @@ Going down from the maze game, each layer is a view of the one emulated machine 
 slow down or aggregate, but everything comes from the machine's real raw data.
 
 ## Shared rules · decided (Claude, defaults accepted by Quirin)
+- **Entered from the board lobby** inside the cabinet ([layers](layers.md#inside-the-cabinet-board-lobby-and-subsystems--decided-built-quirin-defaults-accepted-2026-10-18)):
+  each layer is a subsystem there, unlocked one at a time in this order. A layer has only LAYER UP (back to the
+  lobby); winning it shows LAYER CLEAR and goes back to the lobby, where the next subsystem wakes up
+  (`markWon` in `src/progress.js`). The title shows the layer's name, no more "LAYER -n".
 - Same controls as the maze: swipe to walk a grid one tile at a time (`DEEP.walkSpeed`).
 - **Each layer has its own verb and its own enemy, and 3 to 5 objectives** (`goal`); doing them all wins the
   layer (LAYER CLEAR). Dots are still everywhere to eat, but they're only counted. The counter shows
-  `GOALS n/goal   DOTS n`, a line under it says what to do next. LAYER UP and LAYER DOWN always work.
+  `GOALS n/goal   DOTS n`, a line under it says what to do next. LAYER UP always works.
 - Only the screen layer has a sweeping beam; every other layer's danger moves differently. Mechanics come from
   the [top-down mechanics survey](topdown-mechanics.md). Enemies that hunt you use `src/systems/layers/chaser.js`
   (shortest path on the grid).
@@ -32,7 +36,7 @@ slow down or aggregate, but everything comes from the machine's real raw data.
   floor grid, the layer's structures as thin neon lines or blocks with a 1 px halo, a neon edge around the arena.
 - **Every layer has its own colors** (`DEEP.style` in config): a dark background (also behind the whole screen),
   one neon accent for its structures, and up to two dot accents. Going down: -1 screen magenta, -2 signals cyan,
-  -3 video RAM blue, -4 bus amber, -5 CPU green, -6 logic violet, -7 wires orange. White and one red for
+  -3 work RAM sky blue (was video RAM blue), -4 bus amber, -5 CPU green, -6 logic violet, -7 wires orange. White and one red for
   everything deadly (`DEEP.hazard`) are shared.
 - **Collectibles are dots** in the layer's dot accents (`dot`, `dot2`); only special collectibles get more
   detail (`special`, e.g. the power pellets). Pac-Man is a neon outline in the layer's colors.
@@ -96,14 +100,19 @@ the DAC's three slots, their R/G/B levels rise over them, then they leave one af
 wire off the board (`dropTime`, `convertTime`, `sendTime`, `sendGap`). **The frame timer** counts down `frameTime` s; at zero the pixels you carry are dropped and the
 fetcher moves on to a new tile. **Objectives:** 4 deliveries.
 
-## Layer -3: video RAM · built (gameplay pass)
-**Verb: dodge the blade trap.** VRAM as it sits in memory, 32 bytes per row in hex. **Area:** all of VRAM, including
-the 13 unused bytes at the end of each row. **Enemy:** the CPU's write head, a Zelda blade trap: it replays the
-program's real VRAM writes from the bus log (at most `queue` waiting, older ones skipped). For each write it waits
-`waitTime` at the start of that row (the row glows red: telegraph), then dashes along the row at `dashSpeed` to the
-address and writes; anything in its way is hit. No read sweep any more. Every byte that changed since the layer last
-looked is dirty and can be eaten as a dot (in practice, the dots the bot's Pac-Man eats). **Objectives:** the 4
-power pellet bytes (where the maze layout has its `o`s).
+## Layer -3: work RAM · built (replaces video RAM, 2026-10-18)
+**Verb: dodge the blade trap.** The program's work RAM (`MAP.ram`, 0x4c00-0x4fef) as it sits in memory, 32 bytes
+per row in hex (the last row is half: the sprite registers follow). Code `src/systems/layers/ram.js`, numbers in
+`DEEP.ram`. **Enemy:** the CPU's write head, a Zelda blade trap: it replays the program's real work RAM writes from
+the bus log (at most `queue` waiting, older ones skipped). For each write it waits `waitTime` at the start of that
+row (the row glows red: telegraph), then dashes along the row at `dashSpeed` to the address and writes; anything in
+its way is hit. The status line names what it writes by the program's own symbols (`SCORE`, `GHOST0+4`, the stack
+at the top). Every byte that changed since the layer last looked is dirty and can be eaten as a dot.
+**Objectives:** game state bytes found by symbol (`DEEP.ram.goals`): the score, the lives, Pac-Man's x and Blinky's
+x; the status line lists the ones left.
+
+Before (until 2026-10-18) this layer was **video RAM**: the same blade trap over VRAM with the 4 power pellet bytes
+as objectives. Replaced because there were already many video layers.
 
 ## Layer -4: the system bus · built (gameplay pass, spatial; polish 2026-10-18)
 **Verb: rooms behind decoder doors.** A spatial bus (`DEEP.bus.layout`): the Z80 on the left, bus lanes from its
@@ -195,6 +204,9 @@ picture). How the other layers do on that, to decide later:
   picture painted with all four holding. (Quirin)
 - 2026-10-18: Video board polish: enemies removed (sprites, sound chip), it is a race against the frame timer (`frameTime`, drops what you carry at zero). Pickup and dropoff moved into big walk-in TILES / PALETTE / DAC boxes; the tile box shows the real fetched tile, you take 3 of its pixels, the palette box shows the palette and lights their entries.
 - 2026-10-18: Delivering in the DAC is animated: the pixels drop into its slots, show their R/G/B levels, then are sent out one by one along the video-out wire.
+- 2026-10-18: Work RAM replaces video RAM (same blade trap over 0x4c00-0x4fef, objectives are game state bytes by
+  symbol, own sky-blue colors, art in `assets/deep/ram/`). The deep layers are entered from the board lobby, unlock
+  one at a time, have only LAYER UP and go back to the lobby when won. (Quirin, defaults accepted)
 - 2026-10-18: Bus polish: doors stay open `doorHold` (1.6 s) after their chip's cycle and flicker for `doorWarn`
   (0.6 s) before closing; safer exits: packets can't hit inside a chip room (a read used to spawn on the tile you
   wait on by the door) and a waiting read pulses there. (Quirin asked for longer doors and safer exits; Claude

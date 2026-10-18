@@ -1,8 +1,9 @@
-import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP, LEVELS, ADDER } from '../config.js';
+import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP, LOBBY, LEVELS, ADDER } from '../config.js';
 import { tinyText } from '../systems/layers/font.js';
 import { mazeTiles, tileKey } from '../systems/tiles.js';
 import { world } from '../systems/arcade/world.js';
 import { openManual } from '../manual/index.js';
+import { setWonCount } from '../progress.js';
 
 const hex = (c) => `#${c.toString(16).padStart(6, '0')}`;
 
@@ -44,6 +45,7 @@ export default class BootScene extends Phaser.Scene {
     this.makeHall();
     this.makeHallCharacters();
     this.makeDeep();
+    this.makeBoard();
     this.makeAdder();
     // Wait for the arcade font so text doesn't render in the fallback first (give up after 2 s).
     const font = document.fonts?.load(`8px ${UI.arcadeFont}`) ?? Promise.resolve();
@@ -52,6 +54,8 @@ export default class BootScene extends Phaser.Scene {
     // ?scene=Deep&layer=2 picks a deep layer.
     const params = new URLSearchParams(window.location.search), start = params.get('scene');
     const data = params.has('layer') ? { layer: Number(params.get('layer')) } : undefined;
+    // ?won=n: the first n subsystems inside the cabinet count as won (for testing the unlocks).
+    if (params.has('won')) setWonCount(Number(params.get('won')));
     const target = start && this.scene.get(start) ? start : 'Menu';
     // The emulated arcade machine has to be running too: the maze level is its picture.
     const machine = (world.ready ?? Promise.resolve()).catch((e) => console.error('arcade machine failed', e));
@@ -637,6 +641,249 @@ export default class BootScene extends Phaser.Scene {
       rect(set, 5, 1, 6, 12, 0xffffff); rect(set, 4, 2, 8, 10, 0xffffff);
       rect(set, 7, 2, 2, 6, K.exclaim); rect(set, 7, 9, 2, 2, K.exclaim);
       set(7, 14, 0x000000); set(8, 14, 0x000000); set(7, 15, 0x000000);
+    });
+  }
+
+  // Inside the cabinet: the board lobby's tileset, assets/board/ (16x16 each, see LobbyScene). The PCB floor, the
+  // cabinet wall, auto-joined copper traces and wiring harness (trace-<mask>, harness-<mask>: up 1, right 2, down
+  // 4, left 8), the ghosts' wires to the brain, the cabinet's parts, and the subsystems with faces: <id>-on
+  // (awake), <id>-off (locked, asleep), <id>-lit (just unlocked, glowing), each with a 48x48 portrait.
+  makeBoard() {
+    const T = PIXEL.tile, K = LOBBY.colors, P = LOBBY.portraitSize;
+    const rect = (set, x, y, w, h, c) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) set(i, j, c); };
+    const tile = (name, paint, w = T, h = T) => this.pixels(tileKey('board', name), w, h, paint);
+    const ellipse = (set, cx, cy, rx, ry, c) => {
+      for (let y = Math.floor(cy - ry); y < Math.ceil(cy + ry); y++) {
+        for (let x = Math.floor(cx - rx); x < Math.ceil(cx + rx); x++) {
+          if (((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 <= 1) set(x, y, c);
+        }
+      }
+    };
+    // The green solder mask with a few vias.
+    const floor = (set) => {
+      rect(set, 0, 0, T, T, K.pcb);
+      for (let x = 0; x < T; x += 4) set(x, 15, K.pcbDark);
+      set(3, 4, K.via); set(12, 10, K.via); set(11, 2, K.pcbLight); set(5, 12, K.pcbLight);
+    };
+    tile('floor', floor);
+    // The inside of the cabinet: dark plywood with a lighter edge.
+    tile('wall', (set) => {
+      rect(set, 0, 0, T, T, K.wall);
+      rect(set, 0, 0, T, 1, K.wallLight);
+      for (let y = 3; y < T; y += 5) rect(set, (y * 3) % 7, y, 6, 1, K.wallEdge);
+    });
+    // Copper traces: 2 px wide from the center to each joined side, a pad where they meet.
+    for (let mask = 1; mask < 16; mask++) {
+      tile(`trace-${mask}`, (set) => {
+        floor(set);
+        const arm = (c) => {
+          if (mask & 1) rect(set, 7, 0, 2, 8, c);
+          if (mask & 2) rect(set, 8, 7, 8, 2, c);
+          if (mask & 4) rect(set, 7, 8, 2, 8, c);
+          if (mask & 8) rect(set, 0, 7, 8, 2, c);
+        };
+        arm(K.copper);
+        if (![5, 10].includes(mask)) { rect(set, 6, 6, 4, 4, K.copper); rect(set, 7, 7, 2, 2, K.copperDark); }
+        if (mask & 1) set(7, 2, K.copperLight);
+        if (mask & 2) set(13, 7, K.copperLight);
+      });
+    }
+    // The wiring harness: four colored wires side by side, tied with white cable ties.
+    for (let mask = 1; mask < 16; mask++) {
+      tile(`harness-${mask}`, (set) => {
+        floor(set);
+        const wires = K.harness;
+        const v = (y0, y1) => wires.forEach((c, i) => rect(set, 6 + i, y0, 1, y1 - y0, c));
+        const hz = (x0, x1) => wires.forEach((c, i) => rect(set, x0, 6 + i, x1 - x0, 1, c));
+        if (mask & 1) v(0, 10);
+        if (mask & 4) v(6, 16);
+        if (mask & 8) hz(0, 10);
+        if (mask & 2) hz(6, 16);
+        if (![5, 10].includes(mask)) rect(set, 6, 6, 4, 4, wires[3]);
+        if (mask & 1) rect(set, 5, 2, 6, 1, K.harnessTie);
+        if (mask & 4) rect(set, 5, 13, 6, 1, K.harnessTie);
+        if (mask & 8) rect(set, 2, 5, 1, 6, K.harnessTie);
+        if (mask & 2) rect(set, 13, 5, 1, 6, K.harnessTie);
+      });
+    }
+    // Each ghost's wire to the brain, in its own color.
+    for (const [name, c] of Object.entries(COLORS.ghosts)) {
+      tile(`wire-${name}-h`, (set) => { floor(set); rect(set, 0, 7, T, 2, c); set(4, 7, 0xffffff); });
+      tile(`wire-${name}-v`, (set) => { floor(set); rect(set, 7, 0, 2, T, c); set(7, 4, 0xffffff); });
+    }
+
+    // The monitor, 3x2 tiles at the top front: a black bezel, the tube glowing magenta with a sleepy-happy face.
+    const monitor = (set, k, ox, oy) => {
+      const r = (x, y, w, h, c) => rect(set, ox + Math.round(x * k), oy + Math.round(y * k), Math.round(w * k), Math.round(h * k), c);
+      r(1, 2, 46, 29, K.monitor);
+      r(2, 3, 44, 27, K.bezel);
+      ellipse((x, y, c) => set(x, y, c), ox + 24 * k, oy + 16 * k, 19 * k, 12 * k, K.tube);
+      for (let i = 0; i < 4; i++) r(9 + i * 8, 9, 5, 1, K.tubeLight); // a maze row, faintly
+      r(15, 13, 4, 4, 0xffffff); r(29, 13, 4, 4, 0xffffff);
+      r(16, 14, 2, 2, K.pupil); r(30, 14, 2, 2, K.pupil);
+      r(19, 21, 10, 1, K.tubeLight); r(18, 20, 1, 1, K.tubeLight); r(29, 20, 1, 1, K.tubeLight);
+      r(1, 30, 46, 1, 0x000000);
+    };
+    const parts = [['tl', 0, 0], ['tc', 1, 0], ['tr', 2, 0], ['bl', 0, 1], ['bc', 1, 1], ['br', 2, 1]];
+    for (const [n, tx, ty] of parts) {
+      tile(`monitor-${n}`, (set) => {
+        floor(set);
+        monitor((x, y, c) => { if (x >= tx * T && x < tx * T + T && y >= ty * T && y < ty * T + T) set(x - tx * T, y - ty * T, c); }, 1, 0, 0);
+      });
+    }
+    // The cabinet's other parts, on the floor.
+    tile('speaker', (set) => {
+      ellipse(set, 8, 8, 7, 7, K.speaker);
+      ellipse(set, 8, 8, 5, 5, K.grill);
+      for (let y = 4; y < 13; y += 2) for (let x = 4; x < 13; x += 2) set(x, y, K.speaker);
+      ellipse(set, 8, 8, 1.5, 1.5, K.speaker);
+    });
+    tile('coin-door', (set) => {
+      rect(set, 2, 1, 12, 14, K.door); rect(set, 2, 1, 12, 1, 0xffffff);
+      rect(set, 4, 3, 2, 5, K.slot); rect(set, 10, 3, 2, 5, K.slot);
+      rect(set, 5, 11, 6, 2, 0x000000);
+    });
+    tile('power', (set) => {
+      rect(set, 1, 2, 14, 13, K.power); rect(set, 1, 2, 14, 1, 0xa0a0a8);
+      for (let y = 4; y < 14; y += 2) rect(set, 2, y, 3, 1, 0x2a2a30);
+      this.bitmap(set, ['..##', '.##.', '####', '.##.', '##..'], K.warn, 8, 5);
+    });
+    tile('edge', (set) => {
+      rect(set, 0, 4, T, 8, K.chip);
+      for (let x = 1; x < T; x += 2) rect(set, x, 9, 1, 4, K.edge);
+      wiresAcross(set);
+    });
+    function wiresAcross(set) { K.harness.forEach((c, i) => rect(set, 0, 5 + i, T, 1, c)); }
+
+    // The subsystems with faces. paint(set, k, mood) draws one at k px per unit of a 16 unit square.
+    const face = (set, k, cx, cy, mood) => {
+      const r = (x, y, w, h, c) => rect(set, Math.round(cx + x * k), Math.round(cy + y * k), Math.max(1, Math.round(w * k)), Math.max(1, Math.round(h * k)), c);
+      if (mood === 'off') {
+        r(-4, -1, 3, 1, K.sleep); r(1, -1, 3, 1, K.sleep);
+        r(-1, 2, 2, 1, K.sleep);
+        return;
+      }
+      r(-4, -2, 3, 3, K.eye); r(1, -2, 3, 3, K.eye);
+      r(-3, -1, 1.5, 1.5, K.pupil); r(2, -1, 1.5, 1.5, K.pupil);
+      r(-2, 2, 4, 1, K.eye);
+      if (mood === 'lit') { r(-3, 1, 1, 1, K.eye); r(2, 1, 1, 1, K.eye); r(-5, 1, 1, 1, K.cheek); r(4, 1, 1, 1, K.cheek); }
+    };
+    const chipBody = (set, k, x, y, w, h, mood, legs) => {
+      const r = (a, b, ww, hh, c) => rect(set, Math.round(a * k), Math.round(b * k), Math.max(1, Math.round(ww * k)), Math.max(1, Math.round(hh * k)), c);
+      const leg = mood === 'off' ? K.legOff : K.leg;
+      for (const side of legs) {
+        const n = side === 'top' || side === 'bottom' ? w : h;
+        for (let i = 1; i < n; i += 2) {
+          if (side === 'top') r(x + i, y - 1, 1, 1, leg);
+          if (side === 'bottom') r(x + i, y + h, 1, 1, leg);
+          if (side === 'left') r(x - 1, y + i, 1, 1, leg);
+          if (side === 'right') r(x + w, y + i, 1, 1, leg);
+        }
+      }
+      r(x, y, w, h, mood === 'off' ? K.chipOff : K.chip);
+      r(x, y, w, 1 / k, mood === 'off' ? K.chipOff : K.chipLight);
+      r(x + 0.5, y + 0.5, 1, 1, mood === 'off' ? K.legOff : K.leg); // pin 1
+    };
+    const accent = (id, mood) => (mood === 'off' ? K.chipOff : DEEP.style[id].line);
+    const SUBS = {
+      signals: (set, k, mood) => {
+        chipBody(set, k, 1, 4, 14, 9, mood, ['top', 'bottom']);
+        rect(set, Math.round(3 * k), Math.round(11 * k), Math.round(10 * k), Math.max(1, Math.round(k)), accent('signals', mood));
+        face(set, k, 8 * k, 8 * k, mood);
+      },
+      ram: (set, k, mood) => {
+        chipBody(set, k, 4, 1, 8, 14, mood, ['left', 'right']);
+        rect(set, Math.round(5 * k), Math.round(12 * k), Math.round(6 * k), Math.max(1, Math.round(k)), accent('ram', mood));
+        face(set, k, 8 * k, 7 * k, mood);
+      },
+      bus: (set, k, mood) => {
+        chipBody(set, k, 0, 5, 16, 7, mood, ['top', 'bottom']);
+        for (let i = 0; i < 16; i += 3) rect(set, Math.round(i * k), Math.round(10 * k), Math.max(1, Math.round(2 * k)), Math.max(1, Math.round(k)), accent('bus', mood));
+        face(set, k, 8 * k, 8 * k, mood);
+      },
+      cpu: (set, k, mood) => {
+        chipBody(set, k, 2, 2, 12, 12, mood, ['top', 'bottom', 'left', 'right']);
+        rect(set, Math.round(4 * k), Math.round(12 * k), Math.round(8 * k), Math.max(1, Math.round(k)), accent('cpu', mood));
+        face(set, k, 8 * k, 7.5 * k, mood);
+      },
+      logic: (set, k, mood) => {
+        const off = mood === 'off', c = off ? K.brainOff : K.brain, d = off ? K.brainOffDark : K.brainDark;
+        ellipse(set, 8 * k, 8 * k, 7.5 * k, 6.5 * k, c);
+        for (let i = 0; i < 3; i++) rect(set, Math.round((3 + i * 4) * k), Math.round((3 + (i % 2) * 1.5) * k), Math.max(1, Math.round(2.5 * k)), Math.max(1, Math.round(k * 0.6)), d);
+        rect(set, Math.round(8 * k), Math.round(2 * k), Math.max(1, Math.round(k * 0.6)), Math.round(3 * k), d);
+        face(set, k, 8 * k, 9 * k, mood);
+      },
+      input: (set, k, mood) => {
+        const off = mood === 'off';
+        rect(set, Math.round(2 * k), Math.round(12 * k), Math.round(12 * k), Math.round(3 * k), off ? K.chipOff : K.panel);
+        rect(set, Math.round(7.5 * k), Math.round(9 * k), Math.max(1, Math.round(k)), Math.round(3 * k), off ? K.legOff : K.leg);
+        ellipse(set, 8 * k, 6.5 * k, 5.5 * k, 5.5 * k, off ? K.chipOff : K.stick);
+        face(set, k, 8 * k, 6.5 * k, mood);
+      },
+    };
+    // A glowing outline in the layer's accent around everything drawn (the lit state).
+    const withGlow = (set, size, color, draw) => {
+      const px = new Map();
+      draw((x, y, c) => { if (x >= 0 && y >= 0 && x < size && y < size) px.set(y * size + x, c); });
+      for (const key of [...px.keys()]) {
+        const x = key % size, y = Math.floor(key / size);
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = x + dx, ny = y + dy, nk = ny * size + nx;
+          if (nx >= 0 && ny >= 0 && nx < size && ny < size && !px.has(nk)) px.set(nk, -color - 1);
+        }
+      }
+      for (const [key, c] of px) set(key % size, Math.floor(key / size), c < 0 ? -c - 1 : c);
+    };
+    for (const [id, paint] of Object.entries(SUBS)) {
+      for (const mood of ['on', 'off', 'lit']) {
+        tile(`${id}-${mood}`, (set) => {
+          if (mood === 'lit') withGlow(set, T, DEEP.style[id].line, (s2) => paint(s2, 1, mood));
+          else paint(set, 1, mood);
+        });
+      }
+      for (const mood of ['on', 'off']) {
+        this.pixels(`board/portrait-${id}${mood === 'off' ? '-off' : ''}`, P, P, (set) => {
+          rect(set, 0, 0, P, P, mood === 'off' ? 0x101418 : K.portraitBg);
+          paint((x, y, c) => set(x + 4, y + 4, c), 2.5, mood);
+        });
+      }
+    }
+    this.pixels('board/portrait-crt', P, P, (set) => {
+      rect(set, 0, 0, P, P, K.portraitBg);
+      monitor(set, 1, 0, 8);
+    });
+    // The round counter's adder (the bonus layer): a chip with "+1" in the adder layer's yellow.
+    const A = ADDER.style;
+    const adder = (set, k, mood) => {
+      chipBody(set, k, 1, 2, 14, 12, mood, ['top', 'bottom']);
+      const r = (x, y, w, h, c) => rect(set, Math.round(x * k), Math.round(y * k), Math.max(1, Math.round(w * k)), Math.max(1, Math.round(h * k)), c);
+      r(3, 11, 3, 1, A.line); r(4, 10, 1, 3, A.line);  // +
+      r(9, 10, 1, 3, A.line); r(8, 10, 1, 1, A.line);  // 1
+      face(set, k, 8 * k, 6.5 * k, mood);
+    };
+    tile('adder-on', (set) => adder(set, 1, 'on'));
+    tile('adder-lit', (set) => withGlow(set, T, A.line, (s2) => adder(s2, 1, 'lit')));
+    this.pixels('board/portrait-adder', P, P, (set) => {
+      rect(set, 0, 0, P, P, K.portraitBg);
+      adder((x, y, c) => set(x + 4, y + 4, c), 2.5, 'on');
+    });
+    // The 256 switch: a toggle on a plate. Stuck (held down by the adder, grey), off (lever down), on (up, lit).
+    const toggle = (set, k, state) => {
+      const r = (x, y, w, h, c) => rect(set, Math.round(x * k), Math.round(y * k), Math.max(1, Math.round(w * k)), Math.max(1, Math.round(h * k)), c);
+      const stuck = state === 'stuck', on = state === 'on';
+      r(3, 3, 10, 11, stuck ? K.chipOff : K.chip);
+      r(3, 3, 10, 1, stuck ? K.chipOff : K.chipLight);
+      r(4, 4, 8, 3, stuck ? K.legOff : on ? A.line : A.wire); // the 256 label plate
+      r(5, 5, 1, 1, K.chip); r(7.5, 5, 1, 1, K.chip); r(10, 5, 1, 1, K.chip);
+      r(6, 9, 4, 3, K.legOff); // the toggle's collar
+      if (on) { r(7, 7, 2, 3, K.leg); r(6.5, 6.5, 3, 1, K.eye); }
+      else { r(7, 11, 2, 3, stuck ? K.legOff : K.leg); r(6.5, 13.5, 3, 1, stuck ? K.legOff : K.eye); }
+      if (on) { r(12, 12, 1, 1, A.line); } else if (!stuck) { r(12, 12, 1, 1, K.slot); }
+    };
+    for (const state of ['stuck', 'off', 'on']) tile(`switch-${state}`, (set) => toggle(set, 1, state));
+    this.pixels('board/portrait-switch', P, P, (set) => {
+      rect(set, 0, 0, P, P, K.portraitBg);
+      toggle((x, y, c) => set(x + 4, y + 4, c), 2.5, 'on');
     });
   }
 
