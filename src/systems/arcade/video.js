@@ -3,10 +3,12 @@
 // `art(key)` (the source canvas or image of a texture), so Max's art is the board's graphics ROM.
 
 import { COLORS, MAZE } from '../../config.js';
-import { CELL, tileOffset } from './memmap.js';
+import { CELL, FRUITS, tileOffset, knownCell } from './memmap.js';
 import { mazeTiles, tileKey } from '../tiles.js';
 
 export const W = MAZE.layout[0].length, H = MAZE.layout.length;
+// The screen has one more tile row under the maze: the level shelf (fruits), like the original's bottom row.
+export const SCREEN_H = H + 1;
 
 // Directions in the program's order. Sprite angles for Pac-Man, whose art faces right.
 export const DIR_NAMES = ['up', 'left', 'down', 'right'];
@@ -74,6 +76,30 @@ function tint(src, color) {
 }
 const paint = (src, pal) => (PALETTE[pal] === 'art' || PALETTE[pal] == null ? src : tint(src, PALETTE[pal]));
 
+// Art key of a fruit cell code, or null.
+export const fruitArt = (c) => (c >= CELL.cherry && c <= CELL.key ? `maze/fruit-${FRUITS[c - CELL.cherry]}` : null);
+
+// A cell code the graphics ROM has no picture for (garbage, e.g. the level 256 overflow) still shows something,
+// like a real tile ROM read at a wrong index: an 8x8 pattern made from the code's bits, in a color made from the
+// palette byte, both deterministic. 16x16 px, cached per (code, palette).
+const junk = new Map();
+export function junkTile(code, pal) {
+  const key = code << 8 | pal;
+  if (!junk.has(key)) {
+    const c = document.createElement('canvas');
+    c.width = c.height = 16;
+    const x = c.getContext('2d');
+    x.fillStyle = `hsl(${(pal * 47) % 360}, ${pal & 1 ? 90 : 60}%, ${55 + (pal & 6) * 3}%)`;
+    let v = code * 0x9e + 0x3b & 0xff;
+    for (let r = 0; r < 8; r++) {
+      v = (v * 5 + code + r) & 0xff;      // a row of 8 pixels per step
+      for (let b = 0; b < 8; b++) if (v >> b & 1) x.fillRect(b * 2, r * 2, 2, 2);
+    }
+    junk.set(key, c);
+  }
+  return junk.get(key);
+}
+
 // The walls only change when VRAM's wall cells do, so they're drawn once per layout into a cached canvas.
 let wallCache = { sig: '', canvas: null };
 function wallCanvas(rows, art) {
@@ -91,26 +117,30 @@ function wallCanvas(rows, art) {
 }
 
 // Draws the playfield with its top-left at (ox, oy), T px per tile; sprites are 2x2 tiles like the original.
-// Sprites outside the maze (the tunnel) are clipped.
-export function drawPlayfield(ctx, m, art, { T = 16, ox = 0, oy = 0 } = {}) {
+// rows: H for the maze alone, SCREEN_H to include the level shelf below it. Sprites outside the maze (the
+// tunnel) are clipped.
+export function drawPlayfield(ctx, m, art, { T = 16, ox = 0, oy = 0, rows = H } = {}) {
   const k = T / 16;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.beginPath();
-  ctx.rect(ox, oy, W * T, H * T);
+  ctx.rect(ox, oy, W * T, rows * T);
   ctx.clip();
   ctx.fillStyle = '#000';
-  ctx.fillRect(ox, oy, W * T, H * T);
+  ctx.fillRect(ox, oy, W * T, rows * T);
 
   const walls = wallCanvas(layoutFromVram(m.vram), art);
   ctx.drawImage(paint(walls, m.cram[tileOffset(0, 0)]), ox, oy, W * T, H * T);
 
-  for (let y = 0; y < H; y++) {
+  for (let y = 0; y < rows; y++) {
     for (let x = 0; x < W; x++) {
-      const i = tileOffset(x, y), c = m.vram[i];
-      if (c !== CELL.dot && c !== CELL.power) continue;
-      if (!PALETTE[m.cram[i]]) continue;
-      const src = paint(art(c === CELL.dot ? 'maze/dot' : 'maze/power'), m.cram[i]);
+      const i = tileOffset(x, y), c = m.vram[i], pal = m.cram[i];
+      if (!pal) continue;                 // palette 0 is black
+      let src;
+      if (c === CELL.dot || c === CELL.power) src = paint(art(c === CELL.dot ? 'maze/dot' : 'maze/power'), pal);
+      else if (fruitArt(c)) src = paint(art(fruitArt(c)), pal);
+      else if (!knownCell(c)) src = junkTile(c, pal);
+      else continue;                      // floor, walls and the door are in the wall picture
       const s = src.width * k;
       ctx.drawImage(src, Math.round(ox + x * T + T / 2 - s / 2), Math.round(oy + y * T + T / 2 - s / 2), s, s);
     }
