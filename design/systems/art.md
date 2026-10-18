@@ -91,6 +91,14 @@ Sizes are in image pixels at native resolution. Transparent background.
 | `arcade/floor`, `arcade/rug-tl/tc/tr/ml/mc/mr/bl/bc/br`, `arcade/wall-top`, `arcade/wall-face`, `arcade/window`, `arcade/poster-pac`, `arcade/poster-ghost`, `arcade/clock`, `arcade/counter`, `arcade/plant`, `arcade/bin`, `arcade/door` | 16x16 | 20 files | [Arcade hall](layer-arcade.md) tileset, top-down, cozy. The rug is a 9-slice (t/m/b row, l/c/r column). `wall-face` is the wallpaper on the back wall; window, posters and clock sit on that row. Objects (plant, bin, counter) are drawn over the floor tile with a contact shadow. |
 | `arcade/change-top/bottom`, `arcade/claw-top/bottom`, `arcade/soda-top/bottom` | 16x16 | 6 files | 1x2 machines in the hall. |
 | `arcade/cab-top-<c>`, `arcade/cab-bottom-<c>` | 16x16 | 10 files | Hall cabinets, 1x2 tiles, for c = r, b, g, v, y (y is ours, yellow, with the maze on its screen; the others show Space Invaders, Asteroids, Donkey Kong and Galaxian). The hall is shown at 4x. |
+| **Inside the cabinet: board lobby** (`assets/board/`) | | | Shown at 4x like the hall; Pac-Man reuses `arcade/pac-*`, the ghosts by the brain reuse `maze/ghost-*` (both 32x32 shown one tile big). |
+| `board/floor`, `board/wall` | 16x16 | 2 | The PCB's green solder mask (the lobby's floor) and the cabinet's dark plywood around it. |
+| `board/trace-<mask>`, `board/harness-<mask>` | 16x16 | 30 files | Copper traces between the chips and the four-color wiring harness, auto-joined: mask = the sides it joins, up 1, right 2, down 4, left 8 (1..15). |
+| `board/wire-<ghost>-<h/v>` | 16x16 | 8 files | Each ghost's wire to the brain in its color, horizontal or vertical. |
+| `board/monitor-<tl/tc/tr/bl/bc/br>` | 16x16 | 6 files | The monitor at the top front (3x2 tiles, one picture): the screen subsystem, with its face on the tube. |
+| `board/speaker`, `board/coin-door`, `board/power`, `board/edge` | 16x16 | 4 files | The cabinet's other parts on the floor; `edge` is the edge connector where the harness plugs into the board. |
+| `board/<id>-<on/off/lit>` | 16x16 | 18 files | The subsystems with faces, id = signals (video board), ram (work RAM), bus, cpu, logic (the brain), input (the joystick): `on` awake (unlocked), `off` asleep (locked, dim, eyes shut), `lit` just unlocked (outlined in its layer's accent, blinks with `on`). |
+| `board/portrait-<id>`, `board/portrait-<id>-off` | 48x48 | 13 files | Text box portraits of the subsystems, awake and asleep (`crt` is the monitor, never asleep). The other parts show their tile at 3x. |
 
 Characters are 32x32; tiles and pellets stay at tile resolution. Text uses the Press Start 2P pixel font.
 
@@ -148,3 +156,4 @@ Characters are 32x32; tiles and pellets stay at tile resolution. Text uses the P
 - 2026-10-17: Animation speed is set per character in game frames per animation frame, in `src/settings/animation.json`, tuned and exported from the lab. (Quirin)
 - 2026-10-17: All animations are tunable like this: blinks, flashes, the death animation and the prompt fade under `effects` in the same file. (Quirin)
 - 2026-10-18: The maze chomp gets an in-between after each frame: 7 frames (Max's 4 at 0, 2, 4, 6), cycle 0..6..1, held 7 game frames each. (Quirin)
+- 2026-10-18: New tileset `assets/board/` for the board lobby inside the cabinet: PCB floor, auto-joined traces and harness, the cabinet's parts, and every subsystem with a face in three states (awake, asleep, lit) plus portraits; work RAM's layer art is `assets/deep/ram/` (video RAM's `assets/deep/vram/` is gone). (Quirin, defaults accepted)

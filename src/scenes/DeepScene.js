@@ -76,7 +76,7 @@ export default class DeepScene extends Phaser.Scene {
 
     const by = vh - 42;
     // Only up: back out into the board lobby inside the cabinet (each layer is entered from its subsystem there).
-    addLayerButton(this, 8, by, 'LAYER\nUP', () => this.go({ from: this.L.id }));
+    addLayerButton(this, vw - 64, by, 'LAYER\nUP', () => this.go({ from: this.L.id })); // right: the sound button sits bottom left
 
     this.setupInput();
     this.setupPauseOnHide();

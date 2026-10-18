@@ -21,7 +21,8 @@ The two layers next to the maze game come first:
 
 ## Outer game loop · decided
 The game starts at the maze layer, so it's instantly recognisable as Pac-Man. Every layer always has its
-LAYER UP and LAYER DOWN buttons (no unlocking, no cheat buttons). Layer buttons: `src/layerButton.js`, callouts:
+LAYER UP and LAYER DOWN buttons (no unlocking, no cheat buttons). Since 2026-10-18 the deep layers below the maze are entered from the
+[board lobby](#inside-the-cabinet-board-lobby-and-subsystems--decided-built-quirin-defaults-accepted-2026-10-18), unlock one at a time and only have LAYER UP. Layer buttons: `src/layerButton.js`, callouts:
 `src/callout.js`.
 - **Coins run the machine** (`src/wallet.js`, `COINS` in config). Every fresh game costs a coin, on the maze or
   through the cabinet's coin door; the first game from the menu uses the coin you start with.
@@ -33,17 +34,38 @@ LAYER UP and LAYER DOWN buttons (no unlocking, no cheat buttons). Layer buttons:
 - **Deep layers run the machine slower** than the maze, by `DEEP.machineSlowdown` (4x): down there we play with
   the signals that make each frame. Cabinet and hall run at normal speed.
 
-## Inside the cabinet: board lobby and subsystems · open (questions asked 2026-10-18)
-Requested by Quirin, details waiting on answers:
-- LAYER DOWN from the maze goes to a **lobby inside the arcade machine**, built like the [hall](layer-arcade.md):
-  the floor shows the PCB and how the parts are wired (the monitor far from the board, joined by the harness).
-- Every subsystem is something to talk to that enters its deep layer. All are locked except the first; winning one
-  unlocks the next.
-- Video RAM gets replaced by a different memory component (there are already many video layers).
-- The game logic is shown as a small brain with the four ghosts wired to it.
-- Once every subsystem is won, a **bonus layer** appears: the physical 8-bit add of the round counter, played like
-  Crossy Road. Winning it overflows the counter ([map 256 glitch](https://pacman.fandom.com/wiki/Map_256_Glitch)),
-  flips a switch next to it in the lobby and makes the switch usable; while it's on, the maze shows level 256.
+## Inside the cabinet: board lobby and subsystems · decided, built (Quirin, defaults accepted 2026-10-18)
+LAYER DOWN from the maze goes to a **lobby inside the arcade machine** (`src/scenes/LobbyScene.js`, `?scene=Lobby`,
+numbers and texts in `LOBBY` in config), built like the [hall](layer-arcade.md) with the same engine
+(`src/systems/hall.js`: drag to walk the grid, tap to talk to what Pac-Man faces, the RPG text box with
+portraits, one screen at 4x). Wire auto-joining and lookups in `src/systems/lobby.js` (no Phaser).
+- **The floor is the PCB**, laid out like the real Pac-Man upright: the board stack sits low in the cabinet, the
+  wiring harness runs up the floor from the edge connector to the monitor at the top front (far from the board),
+  with branches to the joystick (control panel), the coin door, the speaker and the power supply. On the board,
+  copper traces join the chips. Speaker, coin door, power supply and edge connector have one line each.
+- **Subsystems are things to talk to**, one per deep layer, each a part with a face and a 48x48 portrait: the
+  monitor (screen), video board, work RAM, bus, CPU, the logic brain and the joystick (input wires). Talking gives
+  one line about what it does; an unlocked one then offers ENTER / NOT NOW, and ENTER zooms into it and starts
+  its deep layer.
+- **The logic is a small pixel brain** with the four ghosts (their own colors, the maze ghost sprites) on wires
+  in their colors to it; each ghost says its targeting rule.
+- **Locks** (`src/progress.js`, session only, no localStorage): order outside in = `DEEP_LAYERS` order, screen →
+  video board → work RAM → bus → CPU → logic → input wires. All locked except the first; a layer's LAYER CLEAR
+  unlocks the next. A locked subsystem sleeps (separate art state `-off`, eyes shut) and says it's asleep and
+  which one to wake first. API: `isWon(id)`, `isUnlocked(id)`, `allWon()`, `markWon(id)` (returns the id it
+  unlocked), `ORDER`; `?won=n` marks the first n won for testing.
+- **Navigation:** Maze LAYER DOWN → lobby (zooming out of the monitor). Lobby: only LAYER UP → maze (the
+  machine's game continues). Deep layers: only LAYER UP, back to the lobby in front of their subsystem (no
+  deep → deep). Winning a layer: the LAYER CLEAR callout (naming the subsystem that woke up), then back to the
+  lobby after `LOBBY.clearDelay`, where the newly unlocked subsystem blinks lit (`-lit` art) and says it woke up.
+- **Reserved for the bonus layer:** the adder at (8, 16) and its switch at (9, 16) in `LOBBY.layout` (plain floor
+  for now, `LOBBY.reserved`). Once every subsystem is won (`allWon()`), a **bonus layer** appears: the physical
+  8-bit add of the round counter, played like Crossy Road. Winning it overflows the counter
+  ([map 256 glitch](https://pacman.fandom.com/wiki/Map_256_Glitch)), flips the switch next to it in the lobby and
+  makes the switch usable; while it's on, the maze shows level 256. (Built separately.)
+- **Video RAM is replaced by work RAM** (see [layer-deep](layer-deep.md)): there were already many video layers.
+- Not in this slice: the bonus layer and the switch, saving progress, sounds of their own for the lobby (it uses
+  the cabinet's bed), animated subsystems beyond the blink.
 
 ## Layer ideas · open (brainstorm, nothing decided)
 Rough order from outside to inside; we pick a few, not all.
@@ -101,3 +123,7 @@ minigame, a counter on the layer map, no unlock.*
 - 2026-10-18: Outer loop idea: a board lobby inside the cabinet with locked subsystems that unlock one at a time, video
   RAM swapped for another memory, the logic as a brain with the ghosts, and a Crossy Road bonus layer for the round
   counter's 8-bit add that triggers the level 256 glitch. Questions open. (Quirin)
+- 2026-10-18: Board lobby built: LAYER DOWN from the maze goes inside the cabinet, a hall-style room on the PCB with
+  the harness to the monitor and the cabinet's parts; every deep layer is a subsystem with a face, locked outside in
+  (session only) and unlocked by winning the one before; deep layers only go LAYER UP back to the lobby; work RAM
+  replaces video RAM; the logic is a brain with the ghosts on wires. (Quirin, defaults accepted)

@@ -49,6 +49,7 @@ bonus. See [movement](systems/movement.md).
 | Layer: the arcade hall (zoom out further) | decided, first slice built | [layer-arcade](systems/layer-arcade.md) | none yet |
 | Layer: the cabinet (zoom out) | decided, first slice built | [layer-cabinet](systems/layer-cabinet.md) | none yet |
 | Layer: inside the screen (zoom in) | first slice built | [layer-crt](systems/layer-crt.md) | none yet |
+| Board lobby inside the cabinet (subsystems, unlocks) | decided, first slice built | [layers](systems/layers.md#inside-the-cabinet-board-lobby-and-subsystems--decided-built-quirin-defaults-accepted-2026-10-18) | none yet |
 | Deep layers (screen → wires), on the emulator | first slices built | [layer-deep](systems/layer-deep.md) | none yet |
 | Emulated arcade machine (runs the maze game, feeds every layer) | built (plan steps 1-9) | [emulator](systems/emulator.md) | none yet |
 | Playtest bots (difficulty per layer, full playthrough) | built | [playtest](systems/playtest.md) | `/lab/playtest.html` |
@@ -122,3 +123,5 @@ survives only as the movement lab bench.
 - 2026-10-17: Playtest bots: a bot plays every layer (and the whole outer loop) with structured human noise;
   `node tools/playtest.mjs` measures win rate and time to solve per noise level. See [playtest](systems/playtest.md). (Quirin)
 - 2026-10-18: Every layer gets its own synthesized background sound in the style of its tech; see [audio](systems/audio.md).
+- 2026-10-18: LAYER DOWN from the maze goes to a board lobby inside the cabinet; the deep layers are its subsystems,
+  unlocked one at a time; work RAM replaces video RAM. See [layers](systems/layers.md). (Quirin, defaults accepted)
