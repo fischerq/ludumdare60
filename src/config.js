@@ -343,6 +343,36 @@ export const DEEP = {
   },
 };
 
+// Bonus layer: the adder (src/scenes/AdderScene.js, rules in src/systems/layers/adder.js). The round counter's +1
+// as an 8-bit ripple-carry adder, played like Crossy Road: you are the carry bit and hop up through 8 full-adder
+// stages (bit 0 at the bottom), dodging signal pulses on the wires. See design/systems/layer-adder.md.
+export const ADDER = {
+  bits: 8,               // full-adder stages
+  cols: 11,              // tiles across the board
+  tile: 32,              // art px per tile (the camera shows art px at 2x)
+  hopTime: 0.13,         // s one hop takes
+  hitPause: 0.8,         // s of flashing after a hit, then back to the start of the stage
+  lanes: [2, 2, 3, 3, 3, 4, 4, 4], // wire lanes per stage, bit 0 first
+  speed: [1.4, 3.0],     // tiles per second of a lane's pulses at bit 0 and at bit 7 (in between: linear)
+  speedJitter: 0.25,     // each lane's speed is off by up to this share, up or down
+  pulse: [1, 3],         // tiles: shortest and longest pulse
+  gap: [[3, 6], [2.2, 4.5]], // tiles of free wire between two pulses, min and max: at bit 0, at bit 7
+  hitbox: 0.6,           // tiles: the carry bit's width for hits
+  startCol: 5,           // column you start each stage in
+  camLead: 0.62,         // the camera keeps you at this share of the screen height
+  camEase: 8,            // how fast the camera catches up (per s)
+  overflowTime: 2.8,     // s of the OVERFLOW moment before the layer ends
+  transition: 0.35,      // s of zooming in and out
+  // Tron look like the deep layers (bg, floor grid, neon line and its halo); pulses use DEEP.hazard (deadly).
+  style: {
+    bg: 0x0c0a02, grid: 0x2a2408, line: 0xffe02a, glow: 0x4a400a,
+    wire: 0x6a5a14,      // an idle wire lane
+    wall: 0x1c1806,      // the chip between the gates (blocks)
+    one: 0xffe02a, zero: 0x2af0e0, // the byte readout: bits still 1, bits flipped to 0
+    carry: 0xffffff,     // the carry bit's core
+  },
+};
+
 // Layer 3: the arcade hall (zoom out further). A small, cozy room seen top-down like a Pokémon game: Pac-Man
 // walks one tile per step. 16 px tiles shown at 4x, characters 32x32 art shown one tile big; the room fits one screen.
 // # wall (dark trim), back wall row: | wallpaper, ^ window, * Pac-Man poster, + ghost poster, @ clock.
