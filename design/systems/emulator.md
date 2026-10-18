@@ -37,6 +37,13 @@ view of the same running machine, so what happens in one layer is visible in all
 | 6 Game logic | work RAM variables (positions, targets, timers) at addresses our program defines |
 | 7 Input | `in0`/`in1` bits, and bus reads of `0x5000`/`0x5040` (the polling moment) |
 
+## Levels and the level 256 overflow · decided (built 2026-10-18)
+Work RAM holds the round counter `LEVEL` (one byte, 0 = level 1). VRAM row 25, under the maze, is the level shelf
+(fruit tiles, cell codes `0x20..0x27`). Its drawing loop (`draw_fruit`) overflows on level 256 for real: the 8-bit
+level number wraps to 0, DJNZ runs 256 times, reading ROM past the fruit table and writing VRAM/CRAM up the right
+half of the maze. Cell codes from `0x10` up block actors, so garbage acts like the original's. Every layer sees the
+same garbage because it's in VRAM. Details: [arcade-maze](arcade-maze.md#levels-and-the-kill-screen--decided-built-2026-10-18).
+
 ## Corrections to the layer notes (hardware facts)
 - The vblank interrupt is the maskable INT in IM 2 (vector byte written with `OUT (0),A`), not the NMI. It
   vectors through a table, not to `0x0066`.
@@ -158,3 +165,6 @@ All eight defaults accepted by Quirin on 2026-10-17.
 - 2026-10-17: While the cabinet shows, the machine is frozen (`setFrozen`), not driven by the bot; unlike `halted` it keeps the running game. (Quirin's cabinet rework)
 - 2026-10-17: No freezing after all: the bot plays on while the cabinet shows; a coin goes in only when the machine is halted. (Quirin)
 - 2026-10-17: `world.paidGame` marks a game started with a coin (`newGame`); the bot's own game from attract mode isn't one, so the cabinet halts it and asks for a coin. (Claude)
+- 2026-10-18: The level 256 glitch is a real overflow in `game.asm`: round counter byte `LEVEL` in work RAM, the level
+  shelf in VRAM row 25, its 8-bit loop count wraps on level 256 and writes garbage over the right half; host API
+  `setRound(n)` / `setLevel256(on)` in `world.js` pokes the counter and lets the program start the round. (Quirin)
