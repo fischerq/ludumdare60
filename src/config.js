@@ -331,7 +331,7 @@ export const HALL = {
     '#c3~~~~~4q#',
     '#..~~~~~..#',
     '#o.......o#',
-    '#.......!.#',
+    '#O......!.#',
     '#====..oM.#',
     '#..o....m.#',
     '#.........#',
@@ -352,16 +352,21 @@ export const HALL = {
     counter: 0x7a4a2a, counterTop: 0xc89058, change: 0x8a8a96, door: 0x6a4020, mat: 0x5a7a3a,
     plantPot: 0xb0603a, leaf: 0x3a9a48, leafLight: 0x6ac860, coin: 0xffd23f, cap: 0x2040c0, sky: 0x8ad0ff,
     shoe: 0xc03020, pacFace: 0x3a2a10, // Pac-Man's shoes and face in the hall
+    ownerSkin: 0xf0b888, ownerHair: 0x8a8a8a, ownerShirt: 0x4a7a50, ownerApron: 0xe8e0c8, snore: 0xffffff,
+    portraitBg: 0x2a2440, exclaim: 0xe02020,
     cabinets: { r: 0xd03030, b: 0x3060d0, g: 0x30a050, v: 0x8040c0, y: 0xf2c200 },
   },
   ghosts: { 1: 'blinky', 2: 'pinky', 3: 'inky', 4: 'clyde' },
-  // Talking to the angry one makes all visitors chase Pac-Man with their maze rules, until he gets out the door,
-  // into our cabinet (needs the coins), gets caught, or they give up.
-  angry: 'blinky',
+  // Reading the ghost poster makes the visitors recognize Pac-Man: a "!" over each of them, one line together,
+  // then they chase him with their maze rules until he gets out the door, into our cabinet (needs a coin), gets
+  // caught (all coins lost, the hall starts over) or they give up.
+  noticeCell: '+',
+  noticeTime: 0.9,       // s the "!" shows before the ghosts speak
+  portraitSize: 48,      // art px of a text box portrait (arcade/portrait-*.png); tiles are shown 3x to fill it
   chase: {
     speed: 3.2,          // tiles per second (Pac-Man walks 4)
     time: 20,            // s until they give up
-    headStart: 1,        // s the ghosts wait before they start moving
+    headStart: 2,        // s the ghosts wait before they start moving (the poster leaves Pac-Man in a dead end)
     pinkyAhead: 2,       // tiles; the maze values scaled down for a small room
     inkyAhead: 1,
     clydeShy: 3,
@@ -372,12 +377,13 @@ export const HALL = {
   cellText: {
     R: 'r', r: 'r', B: 'b', b: 'b', G: 'g', g: 'g', V: 'v', v: 'v', '=': 'counter', M: 'change', m: 'change',
     D: 'door', '%': 'plant', '!': 'bin', C: 'claw', c: 'claw', Q: 'soda', q: 'soda', '^': 'door', '*': 'posterPac',
-    '+': 'posterGhost', '@': 'clock',
+    '+': 'posterGhost', '@': 'clock', O: 'owner',
   },
   text: {
     blinky: "I'M NOT A GHOST. I'M JUST... VERY PALE.",
-    angry: 'WHAT DID YOU SAY?! GET HIM, GUYS!',
-    caught: 'CAUGHT! THEY THROW YOU OUT... YOU SNEAK BACK IN.',
+    weKnowYou: 'WAIT A MINUTE... WE KNOW YOU!',
+    caught: 'CAUGHT! THEY TAKE ALL YOUR COINS AND THROW YOU OUT... YOU SNEAK BACK IN.',
+    owner: 'ZZZ... ZZZZZ... *SNORT* ...ZZZ.',
     escaped: 'YOU SLIP OUT THE DOOR. WHEN YOU COME BACK, THEY HAVE CALMED DOWN.',
     calm: 'THE GHOSTS LOST INTEREST. FOR NOW.',
     pinky: 'I ALWAYS TRY TO GET AHEAD OF YOU.',
@@ -388,7 +394,7 @@ export const HALL = {
     g: 'THE SCREEN IS BURNED IN. YOU CAN STILL SEE A MAZE.',
     v: 'IT ONLY TAKES TOKENS FROM A DIFFERENT ARCADE.',
     yNeedCoins: 'LAYERS OF PAC. INSERT COIN. YOU HAVE {n} OF {need} COINS.',
-    counter: 'THE OWNER IS ASLEEP. A SIGN SAYS: BACK IN 5 MIN.',
+    counter: 'A SIGN ON THE COUNTER: BACK IN 5 MIN.',
     change: "CHANGE MACHINE. IT'S EMPTY. COINS MUST BE ON THE FLOOR SOMEWHERE.",
     door: "IT'S RAINING OUTSIDE. BETTER STAY IN.",
     plant: 'A PLANT. SOMEONE WATERS IT EVERY DAY.',
@@ -439,7 +445,7 @@ export const ARCADE = {
 // These defaults are only used if the file can't be loaded.
 const ANIM_FALLBACK = {
   fps: 60,
-  characters: { pac: 2, blinky: 10, pinky: 10, inky: 10, clyde: 10 },
+  characters: { pac: 2, blinky: 10, pinky: 10, inky: 10, clyde: 10, owner: 40 }, // owner: the hall's sleeping shop owner
   effects: { pacDeath: 8, powerPellet: 12, frightFlash: 10, mazeClear: 12, coinBob: 20, insertCoin: 30, tapPrompt: 30 },
 };
 const ANIM_URL = new URL('./settings/animation.json', import.meta.url);
