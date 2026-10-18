@@ -652,9 +652,10 @@ export default class BootScene extends Phaser.Scene {
   }
 
   // Inside the cabinet: the board lobby's tileset, assets/board/ (16x16 each, see LobbyScene). The PCB floor, the
-  // cabinet wall, auto-joined copper traces and wiring harness (trace-<mask>, harness-<mask>: up 1, right 2, down
-  // 4, left 8), the ghosts' wires to the brain, the cabinet's parts, and the subsystems with faces: <id>-on
-  // (awake), <id>-off (locked, asleep), <id>-lit (just unlocked, glowing), each with a 48x48 portrait.
+  // cabinet wall, auto-joined copper traces and the wider harness (trace-<mask>, harness-<mask>: up 1, right 2,
+  // down 4, left 8), the ghosts' wires to the brain (all lines in the same copper), the cabinet's parts, and the
+  // subsystems with faces, each on its own island in its layer's colors: <id>-on (awake), <id>-off (locked,
+  // asleep, grey island), <id>-lit (just unlocked, glowing), each with a 48x48 portrait.
   makeBoard() {
     const T = PIXEL.tile, K = LOBBY.colors, P = LOBBY.portraitSize;
     const rect = (set, x, y, w, h, c) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) set(i, j, c); };
@@ -666,11 +667,16 @@ export default class BootScene extends Phaser.Scene {
         }
       }
     };
-    // The green solder mask with a few vias.
+    // The muted green solder mask, one faint dot per tile.
     const floor = (set) => {
       rect(set, 0, 0, T, T, K.pcb);
-      for (let x = 0; x < T; x += 4) set(x, 15, K.pcbDark);
-      set(3, 4, K.via); set(12, 10, K.via); set(11, 2, K.pcbLight); set(5, 12, K.pcbLight);
+      set(0, 0, K.pcbDark);
+    };
+    // A subsystem's island: its layer's dark ground with a 1 px border in its line color (grey while locked).
+    const island = (set, id, mood, w = T, h = T) => {
+      const st = id === 'adder' ? ADDER.style : DEEP.style[id], off = mood === 'off';
+      rect(set, 0, 0, w, h, off ? K.padEdge : st.line);
+      rect(set, 1, 1, w - 2, h - 2, off ? K.pad : mood === 'lit' ? st.glow : st.grid);
     };
     tile('floor', floor);
     // The inside of the cabinet: dark plywood with a lighter edge.
@@ -691,32 +697,25 @@ export default class BootScene extends Phaser.Scene {
         };
         arm(K.copper);
         if (![5, 10].includes(mask)) { rect(set, 6, 6, 4, 4, K.copper); rect(set, 7, 7, 2, 2, K.copperDark); }
-        if (mask & 1) set(7, 2, K.copperLight);
-        if (mask & 2) set(13, 7, K.copperLight);
       });
     }
-    // The wiring harness: four colored wires side by side, tied with white cable ties.
+    // The wiring harness: the same copper, two lines side by side.
     for (let mask = 1; mask < 16; mask++) {
       tile(`harness-${mask}`, (set) => {
         floor(set);
-        const wires = K.harness;
-        const v = (y0, y1) => wires.forEach((c, i) => rect(set, 6 + i, y0, 1, y1 - y0, c));
-        const hz = (x0, x1) => wires.forEach((c, i) => rect(set, x0, 6 + i, x1 - x0, 1, c));
+        const v = (y0, y1) => [6, 9].forEach((x) => rect(set, x, y0, 1, y1 - y0, K.copper));
+        const hz = (x0, x1) => [6, 9].forEach((y) => rect(set, x0, y, x1 - x0, 1, K.copper));
         if (mask & 1) v(0, 10);
         if (mask & 4) v(6, 16);
         if (mask & 8) hz(0, 10);
         if (mask & 2) hz(6, 16);
-        if (![5, 10].includes(mask)) rect(set, 6, 6, 4, 4, wires[3]);
-        if (mask & 1) rect(set, 5, 2, 6, 1, K.harnessTie);
-        if (mask & 4) rect(set, 5, 13, 6, 1, K.harnessTie);
-        if (mask & 8) rect(set, 2, 5, 1, 6, K.harnessTie);
-        if (mask & 2) rect(set, 13, 5, 1, 6, K.harnessTie);
+        if (![5, 10].includes(mask)) { rect(set, 6, 6, 4, 4, K.copper); rect(set, 7, 7, 2, 2, K.copperDark); }
       });
     }
-    // Each ghost's wire to the brain, in its own color.
-    for (const [name, c] of Object.entries(COLORS.ghosts)) {
-      tile(`wire-${name}-h`, (set) => { floor(set); rect(set, 0, 7, T, 2, c); set(4, 7, 0xffffff); });
-      tile(`wire-${name}-v`, (set) => { floor(set); rect(set, 7, 0, 2, T, c); set(7, 4, 0xffffff); });
+    // Each ghost's wire to the brain: a plain copper trace like the rest (one file per ghost so Max can tell them apart).
+    for (const name of Object.keys(COLORS.ghosts)) {
+      tile(`wire-${name}-h`, (set) => { floor(set); rect(set, 0, 7, T, 2, K.copper); });
+      tile(`wire-${name}-v`, (set) => { floor(set); rect(set, 7, 0, 2, T, K.copper); });
     }
 
     // The monitor, 3x2 tiles at the top front: a black bezel, the tube glowing magenta with a sleepy-happy face.
@@ -734,7 +733,7 @@ export default class BootScene extends Phaser.Scene {
     const parts = [['tl', 0, 0], ['tc', 1, 0], ['tr', 2, 0], ['bl', 0, 1], ['bc', 1, 1], ['br', 2, 1]];
     for (const [n, tx, ty] of parts) {
       tile(`monitor-${n}`, (set) => {
-        floor(set);
+        island((x, y, c) => { if (x >= tx * T && x < tx * T + T && y >= ty * T && y < ty * T + T) set(x - tx * T, y - ty * T, c); }, 'crt', 'on', 3 * T, 2 * T);
         monitor((x, y, c) => { if (x >= tx * T && x < tx * T + T && y >= ty * T && y < ty * T + T) set(x - tx * T, y - ty * T, c); }, 1, 0, 0);
       });
     }
@@ -760,7 +759,7 @@ export default class BootScene extends Phaser.Scene {
       for (let x = 1; x < T; x += 2) rect(set, x, 9, 1, 4, K.edge);
       wiresAcross(set);
     });
-    function wiresAcross(set) { K.harness.forEach((c, i) => rect(set, 0, 5 + i, T, 1, c)); }
+    function wiresAcross(set) { [6, 9].forEach((y) => rect(set, 0, y, T, 1, K.copper)); }
 
     // The subsystems with faces. paint(set, k, mood) draws one at k px per unit of a 16 unit square.
     const face = (set, k, cx, cy, mood) => {
@@ -844,19 +843,20 @@ export default class BootScene extends Phaser.Scene {
     for (const [id, paint] of Object.entries(SUBS)) {
       for (const mood of ['on', 'off', 'lit']) {
         tile(`${id}-${mood}`, (set) => {
+          island(set, id, mood);
           if (mood === 'lit') withGlow(set, T, DEEP.style[id].line, (s2) => paint(s2, 1, mood));
           else paint(set, 1, mood);
         });
       }
       for (const mood of ['on', 'off']) {
         this.pixels(`board/portrait-${id}${mood === 'off' ? '-off' : ''}`, P, P, (set) => {
-          rect(set, 0, 0, P, P, mood === 'off' ? 0x101418 : K.portraitBg);
+          rect(set, 0, 0, P, P, mood === 'off' ? K.pad : DEEP.style[id].bg);
           paint((x, y, c) => set(x + 4, y + 4, c), 2.5, mood);
         });
       }
     }
     this.pixels('board/portrait-crt', P, P, (set) => {
-      rect(set, 0, 0, P, P, K.portraitBg);
+      rect(set, 0, 0, P, P, DEEP.style.crt.bg);
       monitor(set, 1, 0, 8);
     });
     // The round counter's adder (the bonus layer): a chip with "+1" in the adder layer's yellow.
@@ -868,10 +868,10 @@ export default class BootScene extends Phaser.Scene {
       r(9, 10, 1, 3, A.line); r(8, 10, 1, 1, A.line);  // 1
       face(set, k, 8 * k, 6.5 * k, mood);
     };
-    tile('adder-on', (set) => adder(set, 1, 'on'));
-    tile('adder-lit', (set) => withGlow(set, T, A.line, (s2) => adder(s2, 1, 'lit')));
+    tile('adder-on', (set) => { island(set, 'adder', 'on'); adder(set, 1, 'on'); });
+    tile('adder-lit', (set) => { island(set, 'adder', 'lit'); withGlow(set, T, A.line, (s2) => adder(s2, 1, 'lit')); });
     this.pixels('board/portrait-adder', P, P, (set) => {
-      rect(set, 0, 0, P, P, K.portraitBg);
+      rect(set, 0, 0, P, P, A.bg);
       adder((x, y, c) => set(x + 4, y + 4, c), 2.5, 'on');
     });
     // The 256 switch: a toggle on a plate. Stuck (held down by the adder, grey), off (lever down), on (up, lit).
@@ -887,9 +887,9 @@ export default class BootScene extends Phaser.Scene {
       else { r(7, 11, 2, 3, stuck ? K.legOff : K.leg); r(6.5, 13.5, 3, 1, stuck ? K.legOff : K.eye); }
       if (on) { r(12, 12, 1, 1, A.line); } else if (!stuck) { r(12, 12, 1, 1, K.slot); }
     };
-    for (const state of ['stuck', 'off', 'on']) tile(`switch-${state}`, (set) => toggle(set, 1, state));
+    for (const state of ['stuck', 'off', 'on']) tile(`switch-${state}`, (set) => { island(set, 'adder', state === 'stuck' ? 'off' : 'on'); toggle(set, 1, state); });
     this.pixels('board/portrait-switch', P, P, (set) => {
-      rect(set, 0, 0, P, P, K.portraitBg);
+      rect(set, 0, 0, P, P, A.bg);
       toggle((x, y, c) => set(x + 4, y + 4, c), 2.5, 'on');
     });
   }
