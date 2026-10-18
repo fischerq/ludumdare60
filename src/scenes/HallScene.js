@@ -5,6 +5,7 @@ import { PAC_CYCLE, charFrame, animFrame } from '../systems/anim.js';
 import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 import { coins, addCoin, coinTaken, loseCoins } from '../wallet.js';
+import { openManual } from '../manual/index.js';
 
 const T = PIXEL.tile;
 const KEYS = {
@@ -15,7 +16,7 @@ const KEYS = {
 const DECOR = { '|': 'wall-face', '^': 'window', '*': 'poster-pac', '+': 'poster-ghost', '@': 'clock' };
 const ON_FLOOR = {
   '=': 'counter', M: 'change-top', m: 'change-bottom', C: 'claw-top', c: 'claw-bottom', Q: 'soda-top',
-  q: 'soda-bottom', '%': 'plant', '!': 'bin',
+  q: 'soda-bottom', '%': 'plant', '!': 'bin', k: 'counter-gurke', j: 'counter-jar', u: 'mini-gurke', t: 'manual-table',
 };
 
 // The text box portrait for a map character: the owner's own, otherwise the thing's tile (a machine's top half).
@@ -130,15 +131,26 @@ export default class HallScene extends Phaser.Scene {
     // Who's talking: a large portrait in a frame sitting on the box's top left edge.
     this.portraitFrame = fixed(this.add.graphics());
     this.portrait = fixed(this.add.image(0, 0, 'arcade/portrait-owner').setOrigin(0));
+    // Choices under the text (the manuals): tap one, or arrows + Enter.
+    this.choiceTexts = [0, 1, 2, 3, 4].map(() => fixed(this.add.text(11, 0, '', {
+      fontFamily: UI.arcadeFont, fontSize: 8, color: COLORS.textReady, resolution: 1,
+    })));
     this.closeText(true);
   }
 
   // Show `text` in the box; `portrait` is a texture key (a 48x48 portrait or a 16x16 tile, shown 3x) or none.
-  say(text, portrait = null) {
+  // `choices`: [{ label, act }] listed under the text; picking one closes the box and runs `act`.
+  say(text, portrait = null, choices = null) {
     sfx.click();
     this.boxText.setText(text);
-    const bh = this.boxText.height + 14, by = this.viewH - bh - 4, bw = this.viewW - 8;
+    this.choices = choices;
+    this.choiceIdx = 0;
+    const L = HALL.choiceLine, n = choices?.length ?? 0;
+    const bh = this.boxText.height + 14 + n * L, by = this.viewH - bh - 4, bw = this.viewW - 8;
     this.boxText.setY(by + 7);
+    this.choiceTexts.forEach((t, i) => t.setVisible(i < n).setY(by + 7 + this.boxText.height + 4 + i * L + (L - 8) / 2));
+    this.choiceTop = by + 7 + this.boxText.height + 4;
+    this.showChoices();
     this.box.clear().fillStyle(0x000000, 0.92).fillRect(4, by, bw, bh).lineStyle(1, 0xffffff, 1).strokeRect(4.5, by + 0.5, bw - 1, bh - 1);
     this.box.setVisible(true);
     this.boxText.setVisible(true);
@@ -151,7 +163,22 @@ export default class HallScene extends Phaser.Scene {
     this.talking = true;
   }
 
+  showChoices() {
+    this.choices?.forEach((c, i) => this.choiceTexts[i].setText(`${i === this.choiceIdx ? '>' : ' '} ${c.label}`));
+  }
+
+  // A tap at screen y (or the keyboard's pick when y is null) on a choice: run it.
+  pickChoice(y) {
+    const i = y == null ? this.choiceIdx : Math.floor((y / HALL.zoom - this.choiceTop) / HALL.choiceLine);
+    const c = this.choices[i];
+    if (!c) return;
+    this.closeText();
+    c.act?.();
+  }
+
   closeText(silent) {
+    this.choices = null;
+    this.choiceTexts.forEach((t) => t.setVisible(false));
     this.box.setVisible(false);
     this.boxText.setVisible(false);
     this.portraitFrame.setVisible(false);
@@ -181,9 +208,10 @@ export default class HallScene extends Phaser.Scene {
     this.say(text);
   }
 
-  // Tap: close the text box, or use whatever Pac-Man faces.
-  interact() {
+  // Tap (at screen y, null from the keyboard): pick a choice or close the text box, or use whatever Pac-Man faces.
+  interact(y = null) {
     if (this.mode !== 'walk' || this.notice > 0) return;
+    if (this.talking && this.choices) { this.pickChoice(y); return; }
     if (this.talking) { this.closeText(); return; }
     const f = facing(this.h);
     const tx = HALL.text;
@@ -192,11 +220,23 @@ export default class HallScene extends Phaser.Scene {
     if (f.cell.toLowerCase() === 'y') {
       if (coins() >= COINS.perGame) this.goDown();
       else this.say(tx.yNeedCoins.replace('{n}', coins()).replace('{need}', COINS.perGame), portrait);
+    } else if (HALL.cellText[f.cell] === 'manuals') {
+      this.say(tx.manuals, portrait, HALL.manuals.map((m) => ({ label: m.title, act: () => this.readManual(m, portrait) })));
     } else if (HALL.cellText[f.cell]) {
       this.say(tx[HALL.cellText[f.cell]], portrait);
       // The ghost poster: the visitors look at it, then at Pac-Man...
       if (f.cell === HALL.noticeCell && !this.h.chase) this.pendingNotice = true;
     }
+  }
+
+  // One manual's blurb; ours offers READ MORE: the full service manual over the game, the hall paused under it.
+  readManual(m, portrait) {
+    if (!m.more) { this.say(m.text, portrait); return; }
+    const read = () => {
+      this.scene.pause();
+      openManual(() => this.scene.resume());
+    };
+    this.say(m.text, portrait, [{ label: HALL.menu.readMore, act: read }, { label: HALL.menu.close }]);
   }
 
   goDown() {
@@ -221,6 +261,7 @@ export default class HallScene extends Phaser.Scene {
       const dx = p.x - a.x, dy = p.y - a.y;
       if (Math.max(Math.abs(dx), Math.abs(dy)) < HALL.dragDeadzone) { this.held = null; return; }
       a.moved = true;
+      if (this.choices) return; // a choice is waiting: no walking away from it
       if (this.talking) this.closeText();
       this.held = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
     });
@@ -229,12 +270,19 @@ export default class HallScene extends Phaser.Scene {
       if (!a || p.id !== a.id) return;
       this.anchor = null;
       this.held = null;
-      if (!a.moved && this.time.now - a.at < HALL.tapTime) this.interact();
+      if (!a.moved && this.time.now - a.at < HALL.tapTime) this.interact(p.y);
     });
 
     this.input.keyboard?.on('keydown', (e) => {
       unlockAudio();
       if (e.code === 'Space' || e.code === 'Enter') this.interact();
+      if (this.choices && (KEYS[e.code] === 'up' || KEYS[e.code] === 'down')) {
+        const n = this.choices.length;
+        this.choiceIdx = (this.choiceIdx + (KEYS[e.code] === 'up' ? n - 1 : 1)) % n;
+        this.showChoices();
+        return;
+      }
+      if (this.choices) return;
       if (KEYS[e.code]) { this.keyDir = KEYS[e.code]; if (this.talking) this.closeText(); }
     });
     this.input.keyboard?.on('keyup', (e) => { if (KEYS[e.code] === this.keyDir) this.keyDir = null; });
@@ -272,7 +320,7 @@ export default class HallScene extends Phaser.Scene {
     // Screen-fixed UI would scale with the zoom; show it only at the normal zoom.
     const showUi = this.mode === 'walk';
     this.coinText.setVisible(showUi);
-    const textBox = [this.box, this.boxText, this.coinText, this.portraitFrame, this.portrait];
+    const textBox = [this.box, this.boxText, this.coinText, this.portraitFrame, this.portrait, ...this.choiceTexts];
     this.children.list.filter((o) => o.scrollFactorX === 0 && !textBox.includes(o))
       .forEach((o) => o.setVisible(showUi));
   }

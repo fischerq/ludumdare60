@@ -209,40 +209,43 @@ export const DEEP = {
     cornerRadius: 2,     // tiles: the tube's rounded corners can't be walked on
     goal: 4,             // the four power pellets
   },
-  signals: {             // -2 the video board: carry a color index from the tile fetcher via the palette to the DAC
-    sparkEvery: 1.2,     // s between color indices the tile fetcher sends out (one per dot tile it fetches)
-    sparkLife: 6,        // s one waits on a fetcher pin to be picked up
-    maxSparks: 4,
-    pulseTime: 0.6,      // s the sound chip's area is deadly after a sound command
-    pulseRadius: 2,      // tiles around the sound chip
-    // . board, - | + traces (walkable); chips (solid): V video RAM, T tile fetcher, L sprite line buffer,
-    // P palette PROM, D DAC, S sound chip. Pins (walkable): f fetcher outputs, p palette inputs, d DAC inputs,
-    // o video out. The hardware sprites move over the board at their register positions (scaled to it).
+  signals: {             // -2 the video board: a race against the frame timer, tile pixels via the palette to the DAC
+    frameTime: 12,       // s on the frame timer; at zero the pixels you carry are dropped and a new tile is fetched
+    pixels: 3,           // pixels taken from the fetched tile per delivery
+    paletteSize: 8,      // palette entries: the most common colors of the picture, every pixel maps to the nearest
+    dropTime: 0.4,       // s delivered pixels take to drop from you into the DAC's slots
+    convertTime: 0.6,    // s the DAC shows their red, green and blue levels rising
+    sendTime: 0.7,       // s each pixel takes along the video-out wire, one after the other
+    sendGap: 0.3,        // s between pixels leaving the DAC
+    // . board, - | traces (walkable). Boxes: an uppercase letter is the box's solid frame, the same letter in
+    // lowercase is floor inside it (lowercase on the frame is a doorway). V video RAM and F frame timer are solid;
+    // T tile fetcher (its inside shows the fetched tile, 2x2 pixels per cell), P palette (its inside shows the
+    // entries as 2x2-cell swatches), D the DAC (deliver inside). o video out.
     layout: [
       '...................',
-      '.VVVVV.....TTTTTT..',
-      '.VVVVV-----TTTTTT..',
-      '.VVVVV.....TTTTTT..',
-      '...........ffffff..',
-      '...........|....|..',
-      '...........|....|..',
-      '.LLLL......|....|..',
-      '.LLLL------+....|..',
-      '.LLLL......|....|..',
-      '...........|....|..',
-      '...........|....|..',
-      '...........+-pp-+..',
-      '.........PPPPPPP...',
-      '.........PPPPPPP...',
-      '...........|.|.....',
-      '...........dd......',
-      '..........DDDD.....',
-      '..........DDDD.....',
+      '.VVVV..TTTTTTTTTT..',
+      '.VVVV..TttttttttT..',
+      '.VVVV--tttttttttT..',
+      '.VVVV..TttttttttT..',
+      '.......TttttttttT..',
+      '.......TttttttttT..',
+      '.......TttttttttT..',
+      '.......TttttttttT..',
+      '.......TttttttttT..',
+      '.......TTTTttTTTT..',
       '...........||......',
+      '.FFFFF.PPPPppPPPP..',
+      '.FFFFF.PppppppppP..',
+      '.FFFFF.PppppppppP..',
+      '.FFFFF.PppppppppP..',
+      '.FFFFF.PppppppppP..',
+      '.......PPPPppPPPP..',
       '...........||......',
-      '.SSS.......oo......',
-      '.SSS...............',
-      '...................',
+      '.........DDddDD....',
+      '.........DddddD....',
+      '.........DddddDoooo',
+      '.........DddddD....',
+      '.........DDDDDD....',
       '...................',
     ],
     goal: 4,             // colors delivered
@@ -332,9 +335,9 @@ export const HALL = {
     '#..~~~~~..#',
     '#o.......o#',
     '#O......!.#',
-    '#====..oM.#',
+    '#=kj=..oM.#',
     '#..o....m.#',
-    '#.........#',
+    '#......t.u#',
     '#####D#####',
   ],
   zoom: 4,               // screen px per art px in the hall (the other layers use 2): cozier, bigger characters
@@ -354,6 +357,8 @@ export const HALL = {
     shoe: 0xc03020, pacFace: 0x3a2a10, // Pac-Man's shoes and face in the hall
     ownerSkin: 0xf0b888, ownerHair: 0x8a8a8a, ownerShirt: 0x4a7a50, ownerApron: 0xe8e0c8, snore: 0xffffff,
     portraitBg: 0x2a2440, exclaim: 0xe02020,
+    gurke: 0x3a8a30, gurkeLight: 0x6ab850, gurkeDark: 0x2a6020, gurkeInside: 0xd8e8a0, // the pickles
+    jarGlass: 0xc8e0c8, jarLid: 0xc0a040, table: 0x9a6a3a,
     cabinets: { r: 0xd03030, b: 0x3060d0, g: 0x30a050, v: 0x8040c0, y: 0xf2c200 },
   },
   ghosts: { 1: 'blinky', 2: 'pinky', 3: 'inky', 4: 'clyde' },
@@ -362,6 +367,7 @@ export const HALL = {
   // caught (all coins lost, the hall starts over) or they give up.
   noticeCell: '+',
   noticeTime: 0.9,       // s the "!" shows before the ghosts speak
+  choiceLine: 14,        // art px per choice line in the text box (a 56 px tall tap target at 4x)
   portraitSize: 48,      // art px of a text box portrait (arcade/portrait-*.png); tiles are shown 3x to fill it
   chase: {
     speed: 3.2,          // tiles per second (Pac-Man walks 4)
@@ -377,7 +383,7 @@ export const HALL = {
   cellText: {
     R: 'r', r: 'r', B: 'b', b: 'b', G: 'g', g: 'g', V: 'v', v: 'v', '=': 'counter', M: 'change', m: 'change',
     D: 'door', '%': 'plant', '!': 'bin', C: 'claw', c: 'claw', Q: 'soda', q: 'soda', '^': 'door', '*': 'posterPac',
-    '+': 'posterGhost', '@': 'clock', O: 'owner',
+    '+': 'posterGhost', '@': 'clock', O: 'owner', k: 'gurke', j: 'jar', u: 'miniGurke', t: 'manuals',
   },
   text: {
     blinky: "I'M NOT A GHOST. I'M JUST... VERY PALE.",
@@ -389,10 +395,11 @@ export const HALL = {
     pinky: 'I ALWAYS TRY TO GET AHEAD OF YOU.',
     inky: 'WHERE I GO DEPENDS ON WHERE THE RED GUY GOES.',
     clyde: 'I LIKE YOU. UNTIL YOU GET TOO CLOSE.',
-    r: 'OUT OF ORDER.',
-    b: 'HIGH SCORE: AAA 999990. NOBODY BEATS AAA.',
-    g: 'THE SCREEN IS BURNED IN. YOU CAN STILL SEE A MAZE.',
-    v: 'IT ONLY TAKES TOKENS FROM A DIFFERENT ARCADE.',
+    // The other cabinets play other famous games of the time (only named in the text, no logos in the art).
+    r: 'SPACE INVADERS, 1978. THE FEWER INVADERS ARE LEFT, THE FASTER THEY MOVE. THE MACHINE HAS LESS TO DRAW.',
+    b: 'ASTEROIDS, 1979. NO PIXELS AT ALL: THE BEAM DRAWS EVERY ROCK AS LINES. HIGH SCORE: AAA 99990.',
+    g: 'DONKEY KONG, 1981. A CARPENTER CALLED JUMPMAN CLIMBS GIRDERS. THE BARRELS NEVER STOP.',
+    v: 'GALAXIAN, 1979. OUT OF ORDER: THE COIN SLOT IS JAMMED. THE FIRST GAME WITH EVERY SPRITE IN COLOR.',
     yNeedCoins: 'LAYERS OF PAC. INSERT COIN. YOU HAVE {n} OF {need} COINS.',
     counter: 'A SIGN ON THE COUNTER: BACK IN 5 MIN.',
     change: "CHANGE MACHINE. IT'S EMPTY. COINS MUST BE ON THE FLOOR SOMEWHERE.",
@@ -405,6 +412,36 @@ export const HALL = {
     posterGhost: 'A POSTER OF FOUR GHOSTS. THEY LOOK FAMILIAR.',
     clock: "THE CLOCK SAYS IT'S ALMOST CLOSING TIME.",
     coin: 'FOUND A COIN!',
+    gurke: "THAT'S A... GURKE! SOMEONE TOOK A BITE. I THINK THE OWNER LIKES THEM.",
+    jar: 'A JAR OF CORNICHONS. TINY PICKLES, FLOATING.',
+    miniGurke: 'THAT JUST REALLY LOOKS LIKE A... MINI-GURKE!',
+    manuals: 'FOUR MANUALS ON A TABLE. WHICH ONE?',
+  },
+  // The manuals on the table (Galaxian's is lost, its machine is out of order). `more`: offers READ MORE, which
+  // opens the full service manual (src/manual/).
+  manuals: [
+    { title: 'SPACE INVADERS', text: "SPACE INVADERS OPERATOR'S MANUAL. THE DIP SWITCHES SET 3 TO 6 BASES AND A BONUS BASE AT 1000 OR 1500 POINTS." },
+    { title: 'ASTEROIDS', text: 'ASTEROIDS MANUAL. CHAPTER 1: ADJUSTING THE VECTOR MONITOR. CHAPTER 2: PLEASE DO NOT ADJUST THE VECTOR MONITOR.' },
+    { title: 'DONKEY KONG', text: 'DONKEY KONG MANUAL. A WHOLE PAGE ON HOW TO CLEAN THE JOYSTICK. SOMEONE SPILLED COLA ON IT.' },
+    { title: 'LAYERS OF PAC', text: 'LAYERS OF PAC: SERVICE MANUAL. EVERY LAYER OF THIS MACHINE, FROM THE CABINET DOWN TO THE WIRES.', more: true },
+  ],
+  menu: {
+    readMore: 'READ MORE',
+    close: 'CLOSE',
+  },
+};
+
+// The service manual (src/manual/), opened from the booklet on the hall's table: an HTML overlay of old paper.
+export const MANUAL = {
+  font: '"Courier Prime", "Courier New", monospace',
+  heading: '"Special Elite", "Courier New", monospace',
+  mono: '"Courier Prime", "Courier New", monospace',
+  swipe: 60,             // CSS px a sideways swipe needs to turn the page
+  liveHz: 10,            // updates per second of the live page
+  colors: {
+    desk: '#2a1d14', paper: '#efe2bd', paperEdge: '#c9ad74', stain: 'rgba(120, 80, 30, 0.18)',
+    smudge: 'rgba(90, 60, 30, 0.12)', ink: '#2b2117', rule: '#8a7550', cover: '#5a3a22',
+    accent: '#9a2a1a', blue: '#24477a', green: '#2f6a32',
   },
 };
 

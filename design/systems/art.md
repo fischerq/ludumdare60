@@ -86,10 +86,11 @@ Sizes are in image pixels at native resolution. Transparent background.
 | `arcade/coin` | 10x10 | 1 | Coin on the hall floor. |
 | `arcade/owner-sleep-<f>` | 32x32 | 2 | The shop owner asleep behind the counter, head on his arms; a "z" rises between the two frames. Shown one tile big like the others. |
 | `arcade/portrait-<name>` | 48x48 | 6 files | Text box portraits for name = blinky, pinky, inky, clyde, owner, and `ghosts` (all four together). Shown 1x in a frame above the box; things you talk to show their 16x16 tile at 3x instead. |
+| `arcade/counter-gurke`, `arcade/counter-jar`, `arcade/mini-gurke`, `arcade/manual-table` | 16x16 | 4 files | Hall details: the counter with the owner's bitten Gurke, the counter with a cornichon jar, a tiny pickle on the floor, the table with four booklets (colors of their cabinets, ours yellowed). |
 | `arcade/exclaim` | 16x16 | 1 | The "!" bubble over a ghost's head when the visitors recognize Pac-Man. |
 | `arcade/floor`, `arcade/rug-tl/tc/tr/ml/mc/mr/bl/bc/br`, `arcade/wall-top`, `arcade/wall-face`, `arcade/window`, `arcade/poster-pac`, `arcade/poster-ghost`, `arcade/clock`, `arcade/counter`, `arcade/plant`, `arcade/bin`, `arcade/door` | 16x16 | 20 files | [Arcade hall](layer-arcade.md) tileset, top-down, cozy. The rug is a 9-slice (t/m/b row, l/c/r column). `wall-face` is the wallpaper on the back wall; window, posters and clock sit on that row. Objects (plant, bin, counter) are drawn over the floor tile with a contact shadow. |
 | `arcade/change-top/bottom`, `arcade/claw-top/bottom`, `arcade/soda-top/bottom` | 16x16 | 6 files | 1x2 machines in the hall. |
-| `arcade/cab-top-<c>`, `arcade/cab-bottom-<c>` | 16x16 | 10 files | Hall cabinets, 1x2 tiles, for c = r, b, g, v, y (y is ours, yellow, with the maze on its screen). The hall is shown at 4x. |
+| `arcade/cab-top-<c>`, `arcade/cab-bottom-<c>` | 16x16 | 10 files | Hall cabinets, 1x2 tiles, for c = r, b, g, v, y (y is ours, yellow, with the maze on its screen; the others show Space Invaders, Asteroids, Donkey Kong and Galaxian). The hall is shown at 4x. |
 
 Characters are 32x32; tiles and pellets stay at tile resolution. Text uses the Press Start 2P pixel font.
 
