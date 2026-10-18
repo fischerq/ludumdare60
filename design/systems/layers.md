@@ -129,3 +129,5 @@ minigame, a counter on the layer map, no unlock.*
   the harness to the monitor and the cabinet's parts; every deep layer is a subsystem with a face, locked outside in
   (session only) and unlocked by winning the one before; deep layers only go LAYER UP back to the lobby; work RAM
   replaces video RAM; the logic is a brain with the ghosts on wires. (Quirin, defaults accepted)
+- 2026-10-18: Bonus layer built as its own scene: the round counter's +1 as a ripple-carry adder, Crossy Road style;
+  it reports the win to whoever started it. See [layer-adder](layer-adder.md). (Quirin, defaults accepted)

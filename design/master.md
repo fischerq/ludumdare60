@@ -51,6 +51,7 @@ bonus. See [movement](systems/movement.md).
 | Layer: inside the screen (zoom in) | first slice built | [layer-crt](systems/layer-crt.md) | none yet |
 | Board lobby inside the cabinet (subsystems, unlocks) | decided, first slice built | [layers](systems/layers.md#inside-the-cabinet-board-lobby-and-subsystems--decided-built-quirin-defaults-accepted-2026-10-18) | none yet |
 | Deep layers (screen → wires), on the emulator | first slices built | [layer-deep](systems/layer-deep.md) | none yet |
+| Bonus layer: the adder (the round counter's +1, Crossy Road) | decided, first slice built | [layer-adder](systems/layer-adder.md) | none yet |
 | Emulated arcade machine (runs the maze game, feeds every layer) | built (plan steps 1-9) | [emulator](systems/emulator.md) | none yet |
 | Playtest bots (difficulty per layer, full playthrough) | built | [playtest](systems/playtest.md) | `/lab/playtest.html` |
 | Audio (background sound per layer) | decided, first slice built | [audio](systems/audio.md) | none yet |

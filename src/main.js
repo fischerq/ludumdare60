@@ -6,6 +6,7 @@ import CabinetScene from './scenes/CabinetScene.js';
 import HallScene from './scenes/HallScene.js';
 import DeepScene from './scenes/DeepScene.js';
 import LobbyScene from './scenes/LobbyScene.js';
+import AdderScene from './scenes/AdderScene.js';
 import { world, startWorld, tickWorld, pauseWorld } from './systems/arcade/world.js';
 import { loadProgram } from './systems/arcade/program.js';
 import { unlockAudio, toggleMute, isMuted } from './sound.js';
@@ -24,7 +25,7 @@ const config = {
   input: {
     activePointers: 2,
   },
-  scene: [BootScene, MenuScene, GameScene, CabinetScene, HallScene, LobbyScene, DeepScene],
+  scene: [BootScene, MenuScene, GameScene, CabinetScene, HallScene, LobbyScene, DeepScene, AdderScene],
 };
 
 window.game = new Phaser.Game(config);

@@ -14,6 +14,7 @@ import { spendCoin, addCoin, resetWallet, coins } from '../../src/wallet.js';
 import { DEEP_BOTS, decideDeep, mazeBot } from './bots.mjs';
 import { plan, evade, manhattan } from './plan.mjs';
 import { rng, createHand } from './noise.mjs';
+import { runAdder } from './adder.mjs';
 
 const DT = 1 / 60;
 
@@ -241,7 +242,7 @@ export function runPlaythrough(s) {
   return { win: true, result: 'win', time: s.t, coinsLeft: coins(), ...log };
 }
 
-export const LAYERS = ['maze', 'cabinet', 'hall', 'hall-chase', ...DEEP_LAYERS.map((L) => L.id)];
+export const LAYERS = ['maze', 'cabinet', 'hall', 'hall-chase', ...DEEP_LAYERS.map((L) => L.id), 'adder'];
 
 // One run of a layer by name.
 export function runLayer(name, s) {
@@ -250,5 +251,6 @@ export function runLayer(name, s) {
   if (name === 'hall') return runHall(s, { scenario: 'coins' });
   if (name === 'hall-chase') return runHall(s, { scenario: 'chase' });
   if (name === 'playthrough') return runPlaythrough(s);
+  if (name === 'adder') return runAdder(s);
   return runDeep(s, DEEP_LAYERS.findIndex((L) => L.id === name));
 }
