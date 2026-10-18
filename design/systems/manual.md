@@ -1,6 +1,6 @@
 # The service manual
 
-**Status:** decided, being built 2026-10-18
+**Status:** decided, built 2026-10-18
 **Parent:** [layer-arcade](layer-arcade.md) · [master](../master.md)
 **Lab bench:** none (the live page is its own debugging view: `?manual`)
 **Code:** `src/manual/` (`index.js` the overlay, `pages.js` the pages and figures, `live.js` the live page),
@@ -24,11 +24,15 @@ Marauder's-Map-style live view of the machine's state, detailed enough to debug 
 - **The live page:** the machine's real state, about 10 updates a second (`MANUAL.liveHz`): Z80 registers and
   flags, the code around the PC, a memory map lighting up on reads and writes, tile and sprite VRAM drawn out,
   the latest bus accesses, input port bits, and the game logic state from RAM. Read-only, with a freeze-view
-  toggle that holds the picture without pausing the machine.
+  toggle that holds the picture without pausing the machine. As built: an ink map of the maze from VRAM with
+  every actor at its RAM position, footprints and each ghost's target (the rules of `ghost_target`), the game state,
+  the registers with the source lines around PC, a once-a-second profile of one frame's instructions by routine
+  (`requestTrace`), a 16x16 heat map of the address space in 256-byte pages for the last frame, the latest bus
+  cycles, the 8 sprite slots, IN0/IN1/DSW bit by bit and the latest sound commands.
 - `?manual` opens it straight away (with `?scene=...` for the machine state of any layer).
 
 ## Slice scope
-- Build: step 1 the overlay and the booklet (done); step 2 the static pages (done); step 3 the live page.
+- Build: step 1 the overlay and the booklet (done); step 2 the static pages (done); step 3 the live page (done).
 - Not now: stepping the machine instruction by instruction from the live page, editing memory.
 
 ## Decision log

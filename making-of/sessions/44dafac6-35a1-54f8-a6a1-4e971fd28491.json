@@ -225,15 +225,16 @@
    "seq": 73,
    "date": "2026-10-18",
    "time": "11:39",
-   "duration_s": 902,
+   "duration_s": 1067,
    "prompt": "yes, build",
    "followups": [],
    "images": [],
    "claude_images": [
     "media/44dafac6-4-c1.jpg",
-    "media/44dafac6-4-c2.jpg"
+    "media/44dafac6-4-c2.jpg",
+    "media/44dafac6-4-c3.jpg"
    ],
-   "reply": "Step 2 looks right. Committing it, then the live page.",
+   "reply": "The live page works against the running machine: map, game state, registers with the source around the PC, routine profile, memory heat, bus, sprites and inputs. Finishing docs and committing.",
    "progress_notes": [
     "PR 56 is already merged, so I'm restarting the branch from the latest main before building.",
     "Branch restarted from main. Step 1: arcade games, pickles and the manuals table. Reading the current hall code:",
@@ -243,30 +244,33 @@
     "Collecting the facts the manual pages need (memory map, program structure, game rules) before writing them.",
     "I have the facts. Writing the manual pages now: 11 pages with SVG figures, all numbers pulled from `config.js` and the memory map so they stay accurate.",
     "The replace didn't apply; fixing the test script with a direct edit.",
-    "A few figure fixes: a clipped CRT caption, squashed memory-map labels, and the VRAM example pointing at the wrong tile."
+    "A few figure fixes: a clipped CRT caption, squashed memory-map labels, and the VRAM example pointing at the wrong tile.",
+    "Step 2 looks right. Committing it, then the live page.",
+    "Usage is at 3% of the 5-hour window and 24% weekly, so I'm going ahead with step 3, the live page. Checking the machine APIs it will read:",
+    "Writing the live page: a \"magic map\" of the maze in ink with footprints and targets, plus the CPU, memory heat, bus, sprites, inputs and game-state panels, refreshed 10 times a second."
    ],
    "tools": {
-    "Bash": 36,
-    "Read": 5,
-    "mcp__claude-code-remote__list_events": 2,
+    "Bash": 44,
+    "Read": 6,
+    "mcp__claude-code-remote__list_events": 4,
+    "Write": 2,
     "ToolSearch": 1,
     "mcp__github__create_pull_request": 1,
-    "Write": 1,
     "Edit": 1
    },
-   "api_requests": 46,
+   "api_requests": 57,
    "usage": {
     "claude-opus-5-5": {
-     "input": 92,
+     "input": 114,
      "cache_write_5m": 0,
-     "cache_write_1h": 219805,
-     "cache_read": 9761282,
-     "output": 53377,
-     "thinking": 12337,
-     "cost_usd": 4.778604
+     "cache_write_1h": 241119,
+     "cache_read": 12801249,
+     "output": 67913,
+     "thinking": 15519,
+     "cost_usd": 5.847918
     }
    },
-   "cost_usd": 4.778604,
+   "cost_usd": 5.847918,
    "commits": [
     {
      "sha": "53153c77ad3d9f3dce516b6ac289821991707463",
@@ -283,6 +287,10 @@
     {
      "sha": "8ec12aabe0471960dad1d5ae792a8065198fac4e",
      "subject": "Arcade hall: other famous games on the cabinets, pickles, a manuals table with choices"
+    },
+    {
+     "sha": "2c3481edcd9b7cb8ddcfe09c78193da9fba51362",
+     "subject": "Service manual: cover, contents and a page per machine layer with figures"
     }
    ],
    "entrypoint": "remote",
@@ -290,22 +298,22 @@
    "plan_usage": {
     "five_hour": {
      "start": 0,
-     "end": 0,
-     "delta": 0
+     "end": 0.03,
+     "delta": 0.03
     },
     "seven_day": {
      "start": 0.23,
-     "end": 0.23,
-     "delta": 0.0
+     "end": 0.24,
+     "delta": 0.01
     }
    }
   }
  ],
  "totals": {
   "prompts": 4,
-  "cost_usd": 7.826406,
-  "output_tokens": 90564,
-  "input_tokens": 17149144
+  "cost_usd": 8.89572,
+  "output_tokens": 105100,
+  "input_tokens": 20210447
  },
  "reported_by_claude_code": {
   "total_usd": 3.1597418,
