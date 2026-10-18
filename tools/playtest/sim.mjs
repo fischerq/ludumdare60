@@ -103,7 +103,7 @@ export function runDeep(s, index, { fresh = true } = {}) {
       Object.assign(c, { env, t });
       const want = decideDeep(bot, c);
       for (const d of s.hand.update(t, DT, want, (dd) => player.next === dd || player.dir === dd)) steerWalker(player, d);
-      stepWalker(player, DEEP.walkSpeed * DT, open);
+      stepWalker(player, (L.walkSpeed ?? DEEP.walkSpeed) * DT, open);
       const r = L.update(st, env);
       if (r === 'dot') dots++;
       if (r === 'objective' && ++got >= L.goal) { result = 'win'; break; }

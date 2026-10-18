@@ -1,6 +1,7 @@
 # Layer: inside the screen (zoom in)
 
-**Status:** first slice built 2026-10-17, see [layer-deep](layer-deep.md)
+**Status:** first slice built 2026-10-17, polished 2026-10-18 (goals are the monitor's adjustments), see
+[layer-deep](layer-deep.md#layer--1-inside-the-screen-crt--built-polish-pass-2026-10-18)
 **Parent:** [layers](layers.md) · [master](../master.md)
 **Lab bench:** none yet
 **Code:** none yet
@@ -72,3 +73,5 @@ To be written once the questions are answered.
   above lights the pixels; dots only edible while lit; avoid the refresh beam. Research how arcade screens
   work first. (Quirin)
 - 2026-10-17: First slice built as deep layer -1 in [layer-deep](layer-deep.md): same swipe controls, the whole maze magnified, a line beam, dots edible while they glow, the beam deadly only on lit cells. (Claude)
+- 2026-10-18: Polish pass, rules now in [layer-deep](layer-deep.md): walk to four adjustment pads that fix the
+  broken frame the beam paints; the beam is the only enemy; power pellets change its scan order. (Quirin)

@@ -337,6 +337,18 @@ export default class BootScene extends Phaser.Scene {
           set(x, y, !inside(x, y, 1) ? 0xffffff : !inside(x, y, 2) ? P.line : !inside(x, y, 3) ? P.glow : P.bg);
         }
       }));
+      // The screen layer's pickup glow: the same chomp lit up, filled bright, with a two-pixel halo around it.
+      if (id === 'crt') [0, 0.3, 0.6, 0.9].forEach((m, i) => this.pixels(`deep/${id}/pac-glow-${i}`, S, S, (set) => {
+        const on = new Set();
+        this.chomper((x, y) => on.add(y * S + x), 0, 13.2, m);
+        const near = (x, y, d) => { for (let dy = -d; dy <= d; dy++) for (let dx = -d; dx <= d; dx++) if (on.has((y + dy) * S + x + dx)) return true; return false; };
+        for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+          const edge = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => !on.has((y + dy) * S + x + dx));
+          if (on.has(y * S + x)) set(x, y, edge ? 0xffffff : P.dot2);
+          else if (near(x, y, 1)) set(x, y, P.line);
+          else if (near(x, y, 2)) set(x, y, P.glow);
+        }
+      }));
       for (const [key, c] of [['dot', P.dot], ['dot2', P.dot2]]) {
         this.pixels(`deep/${id}/${key}`, 6, 6, (set) => {
           this.disc(set, 6, 3, c);
