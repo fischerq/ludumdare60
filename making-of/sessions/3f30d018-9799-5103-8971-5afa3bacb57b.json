@@ -84,7 +84,8 @@
    "followups": [],
    "images": [],
    "claude_images": [
-    "media/3f30d018-2-c3.jpg"
+    "media/3f30d018-2-c3.jpg",
+    "media/3f30d018-2-c4.jpg"
    ],
    "reply": "Merge with main is done. Now I'm starting three agents in parallel, each with its own PR: the lobby, the level-256 overflow in the Z80 program, and the adder layer.",
    "progress_notes": [],

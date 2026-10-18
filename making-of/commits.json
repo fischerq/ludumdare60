@@ -259,6 +259,55 @@
      "url": "https://github.com/fischerq/ludumdare60/commit/00061f7fe9dc90b6d67e4d122aeee34839680e40"
     }
    ]
+  },
+  {
+   "sha": "351238d77dd53bd713a10b6e87277aa4e56ddf23",
+   "date": "2026-10-18",
+   "time": "12:49",
+   "seq": 79.5,
+   "kind": "commit",
+   "author": "Max",
+   "title": "update sprites",
+   "body": "Changed 6 art files.",
+   "art": [
+    {
+     "name": "arcade/pac-down-0.png",
+     "before": "media/art/351238d7/arcade__pac-down-0.before.png",
+     "after": "media/art/351238d7/arcade__pac-down-0.after.png"
+    },
+    {
+     "name": "arcade/pac-down-1.png",
+     "before": "media/art/351238d7/arcade__pac-down-1.before.png",
+     "after": "media/art/351238d7/arcade__pac-down-1.after.png"
+    },
+    {
+     "name": "arcade/pac-right-0.png",
+     "before": "media/art/351238d7/arcade__pac-right-0.before.png",
+     "after": "media/art/351238d7/arcade__pac-right-0.after.png"
+    },
+    {
+     "name": "arcade/pac-right-1.png",
+     "before": "media/art/351238d7/arcade__pac-right-1.before.png",
+     "after": "media/art/351238d7/arcade__pac-right-1.after.png"
+    },
+    {
+     "name": "arcade/pac-up-0.png",
+     "before": "media/art/351238d7/arcade__pac-up-0.before.png",
+     "after": "media/art/351238d7/arcade__pac-up-0.after.png"
+    },
+    {
+     "name": "arcade/pac-up-1.png",
+     "before": "media/art/351238d7/arcade__pac-up-1.before.png",
+     "after": "media/art/351238d7/arcade__pac-up-1.after.png"
+    }
+   ],
+   "shots": [],
+   "links": [
+    {
+     "label": "Commit 351238d",
+     "url": "https://github.com/fischerq/ludumdare60/commit/351238d77dd53bd713a10b6e87277aa4e56ddf23"
+    }
+   ]
   }
  ]
 }
