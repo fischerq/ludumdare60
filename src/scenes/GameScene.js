@@ -1,7 +1,7 @@
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY, COINS, MUSIC, LEVELS } from '../config.js';
 import { createSwipe, swipeInput } from '../systems/swipe.js';
 import { sfx, unlockAudio, setAudioPaused, setBed, setSiren } from '../sound.js';
-import { addLayerButton } from '../layerButton.js';
+import { addLayerButtonAt } from '../layerButton.js';
 import { showCallout } from '../callout.js';
 import { coins, spendCoin } from '../wallet.js';
 import { world, onFrame, pressDir, pressStart, setDriver, newGame, setRound } from '../systems/arcade/world.js';
@@ -90,8 +90,9 @@ export default class GameScene extends Phaser.Scene {
     let best = 0;
     try { best = Number(localStorage.getItem(BEST_KEY)) || 0; } catch (e) { /* private mode */ }
     this.best = best;
-    this.text(this.viewW - 32, 24, 'HIGH SCORE', COLORS.text).setOrigin(1, 0);
-    this.bestText = this.text(this.viewW - 32, 44, String(best || '00'), COLORS.text).setOrigin(1, 0);
+    // Top center like the arcade original; the top-right corner is the sound button's.
+    this.text(this.viewW / 2, 24, 'HIGH SCORE', COLORS.text).setOrigin(0.5, 0);
+    this.bestText = this.text(this.viewW / 2, 44, String(best || '00'), COLORS.text).setOrigin(0.5, 0);
 
     const mazeBottom = this.oy + H * T;
     this.readyText = this.text(this.sx(MAZE.houseExit.x), this.oy + 13 * T + 2, 'READY!', COLORS.textReady)
@@ -172,9 +173,8 @@ export default class GameScene extends Phaser.Scene {
 
   // The layer buttons, always there: up zooms out to the cabinet, down goes into the screen (DeepScene).
   addLayerButtons() {
-    const y = this.mazeBottom + T + 8, upX = this.viewW - 24 - 112;
-    addLayerButton(this, upX, y, 'LAYER\nUP', () => this.leave('Cabinet'), 2);
-    addLayerButton(this, upX - 116, y, 'LAYER\nDOWN', () => this.leave('Deep', { layer: 0 }), 2);
+    addLayerButtonAt(this, 'up', () => this.leave('Cabinet'), { zoom: PIXEL.zoom });
+    addLayerButtonAt(this, 'down', () => this.leave('Deep', { layer: 0 }), { zoom: PIXEL.zoom });
   }
 
   leave(scene, data) {

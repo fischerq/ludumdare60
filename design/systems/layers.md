@@ -21,7 +21,8 @@ The two layers next to the maze game come first:
 
 ## Outer game loop · decided
 The game starts at the maze layer, so it's instantly recognisable as Pac-Man. Every layer always has its
-LAYER UP and LAYER DOWN buttons (no unlocking, no cheat buttons). Layer buttons: `src/layerButton.js`, callouts:
+LAYER UP and LAYER DOWN buttons (no unlocking, no cheat buttons), the same size and in the same spot everywhere:
+bottom corners, UP left, DOWN right; the sound button sits top-right. Layer buttons: `src/layerButton.js`, callouts:
 `src/callout.js`.
 - **Coins run the machine** (`src/wallet.js`, `COINS` in config). Every fresh game costs a coin, on the maze or
   through the cabinet's coin door; the first game from the menu uses the coin you start with.
@@ -106,3 +107,5 @@ minigame, a counter on the layer map, no unlock.*
   counter's 8-bit add that triggers the level 256 glitch. Questions open. (Quirin)
 - 2026-10-18: Bonus layer built as its own scene: the round counter's +1 as a ripple-carry adder, Crossy Road style;
   it reports the win to whoever started it. See [layer-adder](layer-adder.md). (Quirin, defaults accepted)
+- 2026-10-18: Layer buttons standardized like the deep layers: bottom corners (UP left, DOWN right), deep-layer size on
+  every layer; sound button moved to the top-right, maze HIGH SCORE to top center. (Quirin)

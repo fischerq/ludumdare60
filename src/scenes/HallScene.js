@@ -3,7 +3,7 @@ import { createHall, stepHall, facing, pacPos, actorPos, noticePac, startChase, 
 import { tileKey } from '../systems/tiles.js';
 import { PAC_CYCLE, charFrame, animFrame } from '../systems/anim.js';
 import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
-import { addLayerButton } from '../layerButton.js';
+import { addLayerButtonAt } from '../layerButton.js';
 import { coins, addCoin, coinTaken, loseCoins } from '../wallet.js';
 import { openManual } from '../manual/index.js';
 
@@ -121,9 +121,9 @@ export default class HallScene extends Phaser.Scene {
     this.ui = [];
     this.coinText = fixed(this.add.text(6, 14, '', { fontFamily: UI.arcadeFont, fontSize: 8, color: COLORS.textReady, resolution: 1 }));
     this.ui.push(this.coinText);
-    this.layerBtn = addLayerButton(this, this.viewW - 4 - 56, 4, 'LAYER\nDOWN', () => this.goDown(), 1, true);
+    this.layerBtn = addLayerButtonAt(this, 'down', () => this.goDown(), { zoom: HALL.zoom, scale: 2 / HALL.zoom, fixed: true });
 
-    // RPG text box at the bottom, sized to its text: tap to close.
+    // RPG text box at the bottom, just above the layer button, sized to its text: tap to close.
     this.box = fixed(this.add.graphics());
     this.boxText = fixed(this.add.text(11, 0, '', {
       fontFamily: UI.arcadeFont, fontSize: 8, color: COLORS.text, resolution: 1, wordWrap: { width: this.viewW - 22 }, lineSpacing: 4,
@@ -146,7 +146,7 @@ export default class HallScene extends Phaser.Scene {
     this.choices = choices;
     this.choiceIdx = 0;
     const L = HALL.choiceLine, n = choices?.length ?? 0;
-    const bh = this.boxText.height + 14 + n * L, by = this.viewH - bh - 4, bw = this.viewW - 8;
+    const bh = this.boxText.height + 14 + n * L, by = this.layerBtn.y - bh - 2, bw = this.viewW - 8;
     this.boxText.setY(by + 7);
     this.choiceTexts.forEach((t, i) => t.setVisible(i < n).setY(by + 7 + this.boxText.height + 4 + i * L + (L - 8) / 2));
     this.choiceTop = by + 7 + this.boxText.height + 4;
