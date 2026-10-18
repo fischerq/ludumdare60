@@ -28,6 +28,14 @@ the arcade as a place.
   Every machine and decoration has a line (`HALL.text`, `HALL.cellText`). The **shop owner** sleeps on the tile
   above the counter's left end (`O` in the map, `arcade/owner-sleep-0/1`, a "z" rising); talking to him only gets
   snoring. The counter itself shows its sign.
+- **The other cabinets** play famous games of the time (named only in the text, a tiny picture on each screen, no
+  logos): red Space Invaders (1978), blue Asteroids (1979), green Donkey Kong (1981), violet Galaxian (1979, out of
+  order). Each has one line with a fact about how it worked.
+- **Pickles:** the owner's bitten Gurke and a jar of cornichons on the counter next to him (`k`, `j`), a mini-Gurke
+  on the floor in the bottom right corner (`u`). Details to talk to, nothing to collect.
+- **Manuals:** a table with four booklets near the door (`t`). Tapping it lists them as choices in the text box
+  (tap one, or arrows + Enter); three give a one-line blurb, ours offers READ MORE, which opens the
+  [service manual](manual.md) over the paused hall.
 - **Portraits:** the text box shows a large portrait (48x48, `HALL.portraitSize`) in a frame on its top left edge:
   ghosts and the owner have their own (`arcade/portrait-<name>.png`, `portrait-ghosts` for the four together),
   things show their tile at 3x (a machine its top half). Pickup and chase messages have none.
@@ -47,7 +55,8 @@ the arcade as a place.
   layer transitions both ways.
 - Build (done, polish): the sleeping shop owner, text box portraits, the poster-triggered chase with the "!"
   moment, losing all coins and resetting the hall when caught.
-- Not now: more dialogue, the mini-gurke, footstep sounds, a street outside.
+- Build (done, details): the other cabinets as other games, the pickles, the manuals table with choices.
+- Not now: more dialogue, collecting the mini-gurke, footstep sounds, a street outside.
 
 ## Open questions
 - Should entering the machine work as an escape even without a coin? *Default now: no, a coin is needed.*
@@ -69,3 +78,6 @@ the arcade as a place.
   the hall. Blinky no longer gets angry. Defaults accepted for all eight questions. (Quirin) Claude put the portrait
   above the box rather than beside the text (the box is too narrow) and raised the head start to 2 s, since the
   poster spot is a dead end and the playtest bot was always caught with 1 s.
+- 2026-10-18: The other cabinets become other famous games of the time; the owner's bitten Gurke, a cornichon jar
+  and a mini-Gurke; a table with four manuals, ours opening the full service manual. Defaults accepted for all eight
+  questions (game picks and names, placement, choices in the text box, the manual as an HTML overlay). (Quirin)

@@ -83,16 +83,18 @@ taken in turn). **Feedback:** Pac-Man glows on every pickup (`DEEP.glowTime`, ar
 and pops bigger by `glowPop`).
 Not in this pass: pellets respawning, pads moving, sound per adjustment.
 
-## Layer -2: the video board · built (environment rework)
-**Environment:** a circuit board (`DEEP.signals.layout`) with the chips that turn video RAM into a signal: VRAM, the
-tile fetcher (TILES), the sprite line buffer (SPRITES), the palette PROM, the DAC and the sound chip, joined by
-traces. Chips are solid, each with a live readout (the VRAM bytes being fetched, the fetch position, sprite codes,
-the index going into the palette, the DAC's RGB, the last sound). **Verb: carry and deliver.** Every `sparkEvery` s
-the fetcher reads a real dot tile and puts its color index (from color RAM) out on one of its pins (it waits
-`sparkLife`); grab one and it follows one tile behind you. Take it to the palette's input pins (it becomes a color),
-then to the DAC's input pins: one objective. **Enemies:** the 8 hardware sprites move over the board at their real
-register positions (touching a ghost sprite is a hit and drops what you carry), and the sound chip's area is deadly
-for `pulseTime` after every sound command but the chomp. **Objectives:** 4 colors delivered.
+## Layer -2: the video board · built (race against time)
+**Environment:** a circuit board (`DEEP.signals.layout`) with boxes for the chips that turn video RAM into a signal:
+VRAM and the FRAME timer (solid), and three big boxes you walk into through doorways: TILES, PALETTE and the DAC.
+**Verb: carry and deliver, against the clock. No enemies.** Every frame the tile fetcher shows one real tile of the
+current picture (a tile with as many colors as possible), magnified in its box at 2x2 pixels per cell, each pixel
+already mapped to the palette. 3 of its pixels are marked (different palette entries where the tile has them); walk
+onto each to take it. The PALETTE box shows the palette itself (`paletteSize` entries: the picture's most common
+colors, as 2x2-cell swatches) and lights the entries of the pixels you carry; step on a lit entry and that pixel
+becomes its color. With all 3 colored, walk into the DAC: one objective, and a new frame starts. The pixels drop from you into
+the DAC's three slots, their R/G/B levels rise over them, then they leave one after the other along the video-out
+wire off the board (`dropTime`, `convertTime`, `sendTime`, `sendGap`). **The frame timer** counts down `frameTime` s; at zero the pixels you carry are dropped and the
+fetcher moves on to a new tile. **Objectives:** 4 deliveries.
 
 ## Layer -3: video RAM · built (gameplay pass)
 **Verb: dodge the blade trap.** VRAM as it sits in memory, 32 bytes per row in hex. **Area:** all of VRAM, including
@@ -189,3 +191,5 @@ picture). How the other layers do on that, to decide later:
   picked the four adjustments)
 - 2026-10-18: Screen harder: repairs hold only the rest of their picture and 2 more; the layer is won by one whole
   picture painted with all four holding. (Quirin)
+- 2026-10-18: Video board polish: enemies removed (sprites, sound chip), it is a race against the frame timer (`frameTime`, drops what you carry at zero). Pickup and dropoff moved into big walk-in TILES / PALETTE / DAC boxes; the tile box shows the real fetched tile, you take 3 of its pixels, the palette box shows the palette and lights their entries.
+- 2026-10-18: Delivering in the DAC is animated: the pixels drop into its slots, show their R/G/B levels, then are sent out one by one along the video-out wire.

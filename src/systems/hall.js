@@ -7,7 +7,7 @@ import { HALL } from '../config.js';
 export const DIRS = {
   up: { x: 0, y: -1 }, left: { x: -1, y: 0 }, down: { x: 0, y: 1 }, right: { x: 1, y: 0 },
 };
-const SOLID = '#RBGVYrbgvy=MmD1234%!CcQq|^*+@O';
+const SOLID = '#RBGVYrbgvy=MmD1234%!CcQq|^*+@Okjut';
 
 export function createHall(layout = HALL.layout) {
   const h = { rows: layout, w: layout[0].length, h: layout.length, coins: new Set(), npcs: [], got: 0, pac: null, chase: null };
