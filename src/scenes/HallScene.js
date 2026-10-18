@@ -2,7 +2,7 @@ import { GAME_WIDTH, GAME_HEIGHT, COLORS, HALL, PIXEL, UI, COINS, ANIM } from '.
 import { createHall, stepHall, facing, pacPos, actorPos, noticePac, startChase, endChase, stepGhosts } from '../systems/hall.js';
 import { tileKey } from '../systems/tiles.js';
 import { PAC_CYCLE, charFrame, animFrame } from '../systems/anim.js';
-import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
+import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 import { coins, addCoin, coinTaken, loseCoins } from '../wallet.js';
 
@@ -41,6 +41,7 @@ export default class HallScene extends Phaser.Scene {
   }
 
   create() {
+    setBed('hall');
     this.h = createHall();
     // Coins picked up on an earlier visit stay gone (they're in the wallet).
     for (const k of [...this.h.coins]) if (coinTaken(k)) this.h.coins.delete(k);

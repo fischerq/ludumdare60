@@ -1,12 +1,14 @@
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY, COINS } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY, COINS, MUSIC } from '../config.js';
 import { createSwipe, swipeInput } from '../systems/swipe.js';
-import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
+import { sfx, unlockAudio, setAudioPaused, setBed, setSiren } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 import { showCallout } from '../callout.js';
 import { coins, spendCoin } from '../wallet.js';
 import { world, onFrame, pressDir, pressStart, setDriver, newGame } from '../systems/arcade/world.js';
 import { drawPlayfield, W, H } from '../systems/arcade/video.js';
 import { readState } from '../systems/arcade/state.js';
+
+const PELLETS = MAZE.layout.join('').replace(/[^.o]/g, '').length;
 
 const T = PIXEL.tile;
 const KEYS = {
@@ -52,6 +54,9 @@ export default class GameScene extends Phaser.Scene {
     // The player steers while this layer shows; the bot takes over when it closes. Coming back from another
     // layer continues the machine's game (the bot may have played on); otherwise a fresh game.
     setDriver('player');
+    setBed('maze');
+    setSiren(-1);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setSiren(-1));
     if (!data.continue) {
       if (data.free || spendCoin()) newGame();
       else world.halted = true;
@@ -141,6 +146,10 @@ export default class GameScene extends Phaser.Scene {
 
   update(time) {
     this.render(time / 1000);
+    // The siren plays while Pac-Man is on the move and no ghost is frightened, faster as the dots go.
+    const g = this.g, stages = MUSIC.beds.maze.textures[0].stages.length;
+    setSiren(g.phase === 'play' && !(g.fright > 0) && !world.halted
+      ? Math.floor((1 - g.pellets / PELLETS) * stages) : -1);
   }
 
   // Sound commands the program wrote to the sound latch this frame.

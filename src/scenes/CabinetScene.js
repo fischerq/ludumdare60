@@ -2,7 +2,7 @@ import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, CABINET, MAZE, PIXEL, UI, 
 import { world, setDriver } from '../systems/arcade/world.js';
 import { readState } from '../systems/arcade/state.js';
 import { drawScreen, screenSize } from '../systems/screenImage.js';
-import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
+import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 import { coins, spendCoin } from '../wallet.js';
 import { showCallout } from '../callout.js';
@@ -22,6 +22,7 @@ export default class CabinetScene extends Phaser.Scene {
   }
 
   create() {
+    setBed('cabinet');
     const C = CABINET;
     // Coming down from the arcade hall: start at the whole cabinet, no zoom from the maze level.
     this.mode = this.fromAbove ? 'insert' : 'intro';
