@@ -276,3 +276,5 @@ picture). How the other layers do on that, to decide later:
   replaying a real trace with jump arrows, registers as big boxes; carry 4 patch tokens onto their lines, each
   really written into the ROM (dots 10x, Pac-Man 2x fast, ghosts half speed, Pac-Man eats any ghost); patches stay
   for the session, entering the layer reverts them; warp pads and flag blocks removed. (Quirin, defaults accepted)
+- 2026-10-18: CPU harder: the program counter steps 4.5 lines/s (was 3.2), stays away 0.5 s (was 0.7), grace 0.6 s (was 1).
+  Playtest quick runs: 100% at noise 0, 60-80% at 0.5-1 with many more hits. (Quirin asked; Claude picked the numbers)

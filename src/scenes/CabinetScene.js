@@ -1,5 +1,5 @@
 import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, CABINET, MAZE, PIXEL, UI, BEST_KEY, LAYERS, COINS } from '../config.js';
-import { world, setDriver } from '../systems/arcade/world.js';
+import { world, setDriver, insertCoin as coinPulse } from '../systems/arcade/world.js';
 import { readState } from '../systems/arcade/state.js';
 import { drawScreen, screenSize } from '../systems/screenImage.js';
 import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
@@ -21,6 +21,8 @@ export default class CabinetScene extends Phaser.Scene {
 
   init(data) {
     this.fromAbove = data?.from === 'above';
+    // From the maze's game over (TAP TO INSERT COIN): open the coin mechanism as soon as the zoom-out ends.
+    this.coinNext = !!data?.coin;
   }
 
   create() {
@@ -259,7 +261,7 @@ export default class CabinetScene extends Phaser.Scene {
       this.showCoins();
       this.tweens.add({ targets: this.counter, scale: 1.4, duration: 90, yoyo: true });
       // The coin is paid here, so the maze level starts its game without taking another.
-      this.time.delayedCall(COINS.startDelay * 1000, () => this.layerDown({ free: true }));
+      this.time.delayedCall(COINS.startDelay * 1000, () => this.layerDown({ coined: true }));
     });
   }
 
@@ -268,6 +270,10 @@ export default class CabinetScene extends Phaser.Scene {
     const P = CABINET.coinMech;
     if (!spendCoin()) { this.closeMech(false); return; }
     sfx.coin();
+    // The real coin bit: the program sees IN0's COIN go low and starts a fresh game itself (new_game in
+    // game.asm). No power cycle, so whatever the deep layers changed in the machine stays.
+    coinPulse();
+    world.paidGame = true;
     this.mechSwitch.setTexture('cabinet/coinmech-switch-down');
     const pts = P.wire.map(([x, y]) => ({ x: P.originX + x, y }));
     const lens = pts.slice(1).map((q, i) => Math.hypot(q.x - pts[i].x, q.y - pts[i].y)), total = lens.reduce((a, b) => a + b, 0);
@@ -324,7 +330,11 @@ export default class CabinetScene extends Phaser.Scene {
     if (this.mode === 'intro') {
       this.introT += dt / CABINET.introTime;
       this.setIntro(Math.min(1, this.introT));
-      if (this.introT >= 1) this.mode = 'insert';
+      if (this.introT >= 1) {
+        this.mode = 'insert';
+        if (this.coinNext && this.waiting()) this.insertCoin();
+        this.coinNext = false;
+      }
     }
     if (this.mode === 'mech') this.updateMech(dt);
     if (this.mode === 'outro') {
