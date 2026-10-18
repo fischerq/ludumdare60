@@ -694,6 +694,9 @@ export const MANUAL = {
   mono: '"Courier Prime", "Courier New", monospace',
   swipe: 60,             // CSS px a sideways swipe needs to turn the page
   liveHz: 10,            // updates per second of the live page
+  // Wear on the paper, different on every page (seeded by the page number): chance of a coffee ring, how many
+  // smudges and foxing specks (min, max). The live page stays clean apart from the yellowed edges.
+  wear: { ring: 0.3, smudges: [0, 2], specks: [0, 4], seed: 60 },
   colors: {
     desk: '#2a1d14', paper: '#efe2bd', paperEdge: '#c9ad74', stain: 'rgba(120, 80, 30, 0.18)',
     smudge: 'rgba(90, 60, 30, 0.12)', ink: '#2b2117', rule: '#8a7550', cover: '#5a3a22',

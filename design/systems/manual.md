@@ -24,11 +24,17 @@ Marauder's-Map-style live view of the machine's state, detailed enough to debug 
 - **The live page:** the machine's real state, about 10 updates a second (`MANUAL.liveHz`): Z80 registers and
   flags, the code around the PC, a memory map lighting up on reads and writes, tile and sprite VRAM drawn out,
   the latest bus accesses, input port bits, and the game logic state from RAM. Read-only, with a freeze-view
-  toggle that holds the picture without pausing the machine. As built: an ink map of the maze from VRAM with
-  every actor at its RAM position, footprints and each ghost's target (the rules of `ghost_target`), the game state,
-  the registers with the source lines around PC, a once-a-second profile of one frame's instructions by routine
+  toggle that holds the picture without pausing the machine. As built: a map of the maze from VRAM with
+  every actor at its RAM position, a few short footprints and each ghost's target as the program last wrote it
+  (TGT_X/TGT_Y, caught with a bus hook in `ghost_target`), the game variables (one row each: symbol, address, raw
+  hex, decoded value), the actors (one cell per field), the registers (main and shadow set, PC/SP/IX/IY/I/R, each
+  flag, IM/IFF) from a sample taken at a random cycle inside the frame's work (`machine.sampleAt`; between frames the
+  CPU always sits on the same HALT) with the routine and the source lines around PC, a once-a-second profile of one frame's instructions by routine
   (`requestTrace`), a 16x16 heat map of the address space in 256-byte pages for the last frame, the latest bus
-  cycles, the 8 sprite slots, IN0/IN1/DSW bit by bit and the latest sound commands.
+  cycles, the 8 sprite slots, IN0/IN1/DSW bit by bit and the latest sound commands, all as tables with one cell per
+  value. Plain wording, few ink metaphors.
+- **Paper wear:** different on every page, seeded by the page number (`MANUAL.wear`): sometimes a coffee ring, a
+  smudge or two, foxing specks; the live page only has yellowed edges.
 - `?manual` opens it straight away (with `?scene=...` for the machine state of any layer).
 
 ## Slice scope
@@ -39,3 +45,7 @@ Marauder's-Map-style live view of the machine's state, detailed enough to debug 
 - 2026-10-18: The Pac-Man booklet on the hall's table opens a fullscreen service manual: old paper, a page per
   layer explaining its technical system with static figures, and a live Marauder's-Map page of the machine state
   at the end. Defaults accepted (HTML overlay, page list, live page contents, read-only). (Quirin)
+- 2026-10-18: Live page tidied for debugging: fewer ink references and footprints, one table cell per value, the Z80
+  sampled mid-frame (it looked static because it was read on the HALT between frames), ghost targets read from
+  the emulated program instead of recomputed in JS. Paper wear varies per page instead of the same coffee ring on
+  every page. (Quirin)

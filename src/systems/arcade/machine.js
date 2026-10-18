@@ -26,6 +26,10 @@ export function createMachine(Z80, { rom = new Uint8Array(0x4000) } = {}) {
     cycle: 0, frameCycle: 0, frame: 0, halted: false,
     busy: 0,                             // cycles the last frame ran before it HALTed (load = busy / frameCycles)
     hooks: [],                           // fn(addr, value, kind) for every access, e.g. a layer watching writes
+    // A look at the CPU in the middle of its work (the live page): set sampleAt to a cycle of the next frame and
+    // the CPU's state after the first instruction that ends there lands in sample ({ frame, cycle, cpu }). Between
+    // frames the CPU always sits on the same HALT, so reading it there shows nothing moving.
+    sampleAt: null, sample: null,
   };
   m.rom.set(rom.subarray(0, 0x4000));
 
@@ -80,6 +84,10 @@ export function createMachine(Z80, { rom = new Uint8Array(0x4000) } = {}) {
       const before = m.busCount;
       m.frameCycle += m.cpu.run_instruction();
       if (onStep) onStep(m);
+      if (m.sampleAt != null && m.frameCycle >= m.sampleAt) {
+        m.sample = { frame: m.frame, cycle: m.frameCycle, cpu: m.cpu.getState() };
+        m.sampleAt = null;
+      }
       if (m.busCount === before) { m.halted = true; break; }
     }
     m.busy = m.halted ? m.frameCycle : frameCycles;
