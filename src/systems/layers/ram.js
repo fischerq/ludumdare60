@@ -46,10 +46,12 @@ export default {
     return x >= 0 && x < COLS && y >= 0 && y * COLS + x < SIZE;
   },
 
+  // The objectives left, and what the write head is doing (with the symbol it writes, e.g. GHOST0+4).
   info(st) {
-    if (!st.head) return 'WAITING FOR A WRITE';
-    const n = st.name(st.head.a);
-    return `CPU WRITES ${hex2(st.head.v)} TO ${(BASE + st.head.a).toString(16).toUpperCase()}${n ? ` ${n}` : ''}`;
+    const left = st.goals.filter((g) => !st.got.has(g.a)).map((g) => g.name).join(', ');
+    const n = st.head && st.name(st.head.a);
+    const head = st.head ? `CPU WRITES ${hex2(st.head.v)} TO ${(BASE + st.head.a).toString(16).toUpperCase()}${n ? ` ${n}` : ''}` : 'WAITING FOR A WRITE';
+    return left ? `GET ${left}\n${head}` : head;
   },
 
   // Where the head is: { x, y, dashing } (x in bytes along the row).
@@ -99,13 +101,6 @@ export default {
       if (st.dirty.has(i)) { dot(ctx, env, 'dot', x, y, S); continue; }
       ctx.fillStyle = css(v ? P.dot : P.grid);
       tinyText(ctx, hex2(v), x * S + Math.floor((S - 8) / 2), y * S + Math.floor((S - 5) / 2));
-    }
-    // The objectives' names over their bytes (under the row when there's no room above).
-    ctx.fillStyle = css(P.line);
-    for (const g of st.goals) {
-      if (!goal.has(g.a)) continue;
-      const x = g.a % COLS, y = Math.floor(g.a / COLS);
-      tinyText(ctx, g.name, Math.min(x * S, COLS * S - g.name.length * 4), y > 0 ? y * S - 6 : (y + 1) * S + 1);
     }
     if (st.head) {
       const p = this.headPos(st, t), x = Math.round(p.x * S), y = p.y * S;

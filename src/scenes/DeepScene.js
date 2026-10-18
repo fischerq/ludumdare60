@@ -1,4 +1,4 @@
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, UI, INPUT, DEEP } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, UI, INPUT, DEEP, LOBBY } from '../config.js';
 import { DEEP_LAYERS } from '../systems/layers/index.js';
 import { createWalker, steerWalker, stepWalker } from '../systems/layers/walker.js';
 import { createSwipe, swipeInput } from '../systems/swipe.js';
@@ -7,6 +7,7 @@ import { world, setDriver, holdDir, onFrame, setSpeed } from '../systems/arcade/
 import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 import { showCallout } from '../callout.js';
+import { markWon } from '../progress.js';
 
 const KEYS = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
@@ -68,36 +69,32 @@ export default class DeepScene extends Phaser.Scene {
     const text = (x, y, s, color = COLORS.text, size = 8) => this.add.text(x, y, s, {
       fontFamily: UI.arcadeFont, fontSize: size, color, align: 'center', resolution: 1,
     }).setOrigin(0.5, 0).setLineSpacing(4);
-    text(vw / 2, 12, `LAYER -${this.index + 1}: ${this.L.title}`, css(this.P.line));
+    text(vw / 2, 12, this.L.title, css(this.P.line));
     text(vw / 2, 30, this.L.subtitle, COLORS.textDim);
     this.counter = text(vw / 2, vh - BOTTOM + 8, '');
     this.info = text(vw / 2, vh - BOTTOM + 22, '', COLORS.textDim);
 
     const by = vh - 42;
-    addLayerButton(this, 8, by, 'LAYER\nUP', () => this.go(this.index === 0 ? 'Game' : this.index - 1, 'up'));
-    if (this.index < DEEP_LAYERS.length - 1) {
-      addLayerButton(this, vw - 64, by, 'LAYER\nDOWN', () => this.go(this.index + 1, 'down'));
-    }
+    // Only up: back out into the board lobby inside the cabinet (each layer is entered from its subsystem there).
+    addLayerButton(this, 8, by, 'LAYER\nUP', () => this.go({ from: this.L.id }));
 
     this.setupInput();
     this.setupPauseOnHide();
-    // Arriving: zoom out of the layer above (or in from the layer below).
+    // Arriving from the lobby: zoom out of the subsystem.
     const cam = this.cameras.main;
-    cam.setZoom(ZOOM * (data.from === 'down' ? 0.6 : 2.5));
+    cam.setZoom(ZOOM * 2.5);
     cam.zoomTo(ZOOM, DEEP.transition * 1000, 'Sine.easeOut');
     cam.fadeIn(DEEP.transition * 1000);
   }
 
-  go(target, way) {
+  // Back up to the board lobby (lobby: its scene data), zooming out and fading.
+  go(lobby) {
     if (this.leaving) return;
     this.leaving = true;
     const cam = this.cameras.main, ms = DEEP.transition * 1000;
-    cam.zoomTo(ZOOM * (way === 'down' ? 2.5 : 0.6), ms, 'Sine.easeIn');
+    cam.zoomTo(ZOOM * 0.6, ms, 'Sine.easeIn');
     cam.fadeOut(ms);
-    this.time.delayedCall(ms, () => {
-      if (target === 'Game') this.scene.start('Game', { continue: true });
-      else this.scene.start('Deep', { layer: target, from: way === 'down' ? 'up' : 'down' });
-    });
+    this.time.delayedCall(ms, () => this.scene.start('Lobby', lobby));
   }
 
   setupInput() {
@@ -182,11 +179,12 @@ export default class DeepScene extends Phaser.Scene {
     }
   }
 
-  // Goal reached.
+  // Goal reached: the layer is won (src/progress.js), which wakes the next subsystem; back to the lobby.
   cleared() {
     sfx.clear();
-    const last = this.index >= DEEP_LAYERS.length - 1;
-    const c = showCallout(this, GAME_WIDTH / ZOOM / 2, this.oy + 40, last ? 'LAYER CLEAR!\nYOU REACHED\nTHE BOTTOM' : 'LAYER CLEAR!\nGO DEEPER?', 1);
-    this.time.delayedCall(2500, () => c.destroy());
+    const next = markWon(this.L.id);
+    const woke = next ? `\n${LOBBY.names[next]}\nWOKE UP` : '';
+    showCallout(this, GAME_WIDTH / ZOOM / 2, this.oy + 40, `LAYER CLEAR!${woke}`, 1);
+    this.time.delayedCall(LOBBY.clearDelay * 1000, () => this.go({ from: this.L.id, won: true }));
   }
 }

@@ -168,11 +168,11 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  // The layer buttons, always there: up zooms out to the cabinet, down goes into the screen (DeepScene).
+  // The layer buttons, always there: up zooms out to the cabinet, down goes inside it (the board lobby).
   addLayerButtons() {
     const y = this.mazeBottom + 8, upX = this.viewW - 24 - 112;
     addLayerButton(this, upX, y, 'LAYER\nUP', () => this.leave('Cabinet'), 2);
-    addLayerButton(this, upX - 116, y, 'LAYER\nDOWN', () => this.leave('Deep', { layer: 0 }), 2);
+    addLayerButton(this, upX - 116, y, 'LAYER\nDOWN', () => this.leave('Lobby', { from: 'maze' }), 2);
   }
 
   leave(scene, data) {
