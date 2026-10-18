@@ -36,6 +36,7 @@ export default class DeepScene extends Phaser.Scene {
     this.dots = 0;     // dots eaten (just counted)
     this.hits = 0;
     this.hitT = 0;
+    this.glowT = 0;    // Pac-Man glows after a pickup (layers with pac-glow art)
     this.leaving = false;
     this.player = createWalker(this.L.start.x, this.L.start.y);
     this.trail = [];   // light trail: { x, y, t } in tiles, visual only
@@ -63,7 +64,10 @@ export default class DeepScene extends Phaser.Scene {
       .lineStyle(1, this.P.line).strokeRect(this.ox - 2.5, this.oy - 2.5, w + 5, h + 5);
     this.trailG = this.add.graphics();
     this.pacKey = (i) => `deep/${this.L.id}/pac-${i}`;
-    this.pac = this.add.image(0, 0, this.pacKey(0)).setScale((this.cell * 1.4) / this.textures.get(this.pacKey(0)).getSourceImage().width);
+    this.glowKey = (i) => `deep/${this.L.id}/pac-glow-${i}`;
+    this.hasGlow = this.textures.exists(this.glowKey(0));
+    this.pacScale = (this.cell * 1.4) / this.textures.get(this.pacKey(0)).getSourceImage().width;
+    this.pac = this.add.image(0, 0, this.pacKey(0)).setScale(this.pacScale);
 
     const text = (x, y, s, color = COLORS.text, size = 8) => this.add.text(x, y, s, {
       fontFamily: UI.arcadeFont, fontSize: size, color, align: 'center', resolution: 1,
@@ -141,11 +145,14 @@ export default class DeepScene extends Phaser.Scene {
       this.hitT -= dt;
       if (this.hitT <= 0) { Object.assign(this.player, createWalker(this.L.start.x, this.L.start.y)); this.trail = []; this.L.onRespawn?.(this.st, env); }
     } else {
-      stepWalker(this.player, DEEP.walkSpeed * dt, open);
-      // A layer's update returns 'dot', 'objective', 'hit' or nothing for this frame.
+      stepWalker(this.player, (this.L.walkSpeed ?? DEEP.walkSpeed) * dt, open);
+      // A layer's update returns 'dot', 'objective', 'bonus', 'pickup' (feedback only), 'hit' or nothing for this frame.
       const r = this.L.update(this.st, env);
       if (r === 'dot') { this.dots++; sfx.dot(); }
       if (r === 'objective') { this.got++; sfx.power(); if (this.got === this.L.goal) this.cleared(); }
+      if (r === 'bonus') sfx.ghost();
+      if (r === 'pickup') sfx.power();
+      if (r === 'dot' || r === 'objective' || r === 'bonus' || r === 'pickup') this.glowT = DEEP.glowTime;
       if (r === 'hit') { this.hits++; this.hitT = DEEP.hitPause; sfx.death(); this.L.onHit?.(this.st, env); }
     }
     if (this.L.drive) holdDir(this.L.drive(this.st, env));
@@ -157,12 +164,16 @@ export default class DeepScene extends Phaser.Scene {
 
     const p = this.player, c = this.cell;
     const dir = p.dir ?? 'right';
+    this.glowT = Math.max(0, this.glowT - dt);
+    const glowing = this.hasGlow && this.glowT > 0, frame = [0, 1, 2, 3, 2, 1][Math.floor(this.t * 12) % 6];
     this.pac.setPosition(Math.round(this.ox + (p.x + 0.5) * c), Math.round(this.oy + (p.y + 0.5) * c))
-      .setTexture(this.pacKey([0, 1, 2, 3, 2, 1][Math.floor(this.t * 12) % 6]))
+      .setTexture(glowing ? this.glowKey(frame) : this.pacKey(frame))
+      .setScale(this.pacScale * (1 + (glowing ? DEEP.glowPop * (this.glowT / DEEP.glowTime) : 0)))
       .setAngle({ right: 0, down: 90, left: 0, up: 270 }[dir]).setFlipX(dir === 'left')
       .setVisible(this.hitT <= 0 || Math.floor(this.t * 10) % 2 === 0);
     this.drawTrail();
-    this.counter.setText(`GOALS ${Math.min(this.got, this.L.goal)}/${this.L.goal}   DOTS ${this.dots}${this.hits ? `   HITS ${this.hits}` : ''}`);
+    const count = this.L.counter?.(this.st, env) ?? `GOALS ${Math.min(this.got, this.L.goal)}/${this.L.goal}${this.L.dots === false ? '' : `   DOTS ${this.dots}`}`;
+    this.counter.setText(`${count}${this.hits ? `   HITS ${this.hits}` : ''}`);
     this.info.setText(this.L.info?.(this.st, env) ?? '');
   }
 
