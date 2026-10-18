@@ -2,7 +2,7 @@
 // raw data a player sees (VRAM for the maze and pellets, RAM for where everyone is) and holds the joystick.
 // Simple and readable: head for the nearest pellet, keep away from ghosts that hunt, chase frightened ones.
 
-import { CELL, tileOffset } from './memmap.js';
+import { CELL, tileOffset, blocksActors } from './memmap.js';
 import { W, H, DIR_NAMES } from './video.js';
 import { readState } from './state.js';
 
@@ -12,8 +12,7 @@ const DANGER = 3;                                   // tiles: stay this far from
 const wrap = (x) => ((x % W) + W) % W;
 const open = (vram, x, y) => {
   if (y < 0 || y >= H) return false;
-  const c = vram[tileOffset(wrap(x), y)];
-  return c !== CELL.wall && c !== CELL.door && c !== CELL.house;
+  return !blocksActors(vram[tileOffset(wrap(x), y)]);   // the program's own rule (game.asm can_enter)
 };
 
 // The direction to hold this frame, or null to let go.

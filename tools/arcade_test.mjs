@@ -109,5 +109,39 @@ const Z80 = await loadZ80();
   check('demo play keeps the lives', st.lives === RULES.lives);
 }
 
+{ // Levels: a clear starts the next round with the counter one up; level 256 overflows the fruit shelf loop.
+  const prog = await loadProgram();
+  const S = prog.symbols, PH = (name) => ['attract', 'ready', 'play', 'dying', 'clearing', 'cleared', 'over'].indexOf(name);
+  const start = (m) => { m.setInput(1, IN1.start, true); m.runFrame(); m.setInput(1, IN1.start, false); m.runFrame(); };
+  const onLevel = (counter) => {
+    const m = createMachine(Z80, { rom: prog.rom });
+    for (let i = 0; i < 3; i++) m.runFrame();
+    start(m);
+    m.ram[S.SCORE - 0x4c00] = 0x34;
+    m.ram[S.LEVEL - 0x4c00] = (counter - 1) & 0xff;
+    m.ram[S.PHASE - 0x4c00] = PH('cleared');
+    start(m);
+    return m;
+  };
+  const shelf = (m) => [...m.vram.subarray(tileOffset(0, MAZE.layout.length), tileOffset(19, MAZE.layout.length))];
+  const m2 = onLevel(1);
+  check('next round counts the level up', m2.read(S.LEVEL) === 1 && readState(m2, S).phase === 'ready' && m2.read(S.SCORE) === 0x34
+    && readState(m2, S).pellets === MAZE.layout.join('').replace(/[^.o]/g, '').length, `level byte ${m2.read(S.LEVEL)}`);
+  check('level 2 shelf: strawberry, cherry', shelf(m2).slice(17).join() === [CELL.strawberry, CELL.cherry].join());
+  check('maze refilled', layoutFromVram(m2.vram).join() === MAZE.layout.join().replace(/o/g, '.'));
+  const m9 = onLevel(8);
+  check('level 9 shows 7 fruits', shelf(m9).filter((c) => c).length === 7);
+  const k = onLevel(255);
+  let right = 0, left = 0, dots = 0;
+  MAZE.layout.forEach((row, y) => [...row].forEach((ch, x) => {
+    const c = k.vram[tileOffset(x, y)];
+    const was = { '#': CELL.wall, '-': CELL.door, T: CELL.tunnel, G: CELL.house, '.': CELL.dot, o: CELL.power }[ch] ?? CELL.empty;
+    if (c !== was) { if (x > 9) right++; else left++; }
+    if (c === CELL.dot || c === CELL.power) dots++;
+  }));
+  check('level 256 garbles the right half only', k.read(S.LEVEL) === 255 && right > 150 && left === 0, `right ${right} left ${left}`);
+  check('level 256 can\'t be cleared', dots < readState(k, S).pellets, `${dots} dots on screen, ${readState(k, S).pellets} to go`);
+}
+
 if (failed) { console.error(`${failed} failed`); process.exit(1); }
 console.log('all ok');
