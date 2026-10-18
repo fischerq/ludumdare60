@@ -3,7 +3,7 @@ import { world, setDriver } from '../systems/arcade/world.js';
 import { readState } from '../systems/arcade/state.js';
 import { drawScreen, screenSize } from '../systems/screenImage.js';
 import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
-import { addLayerButton } from '../layerButton.js';
+import { addLayerButtonAt } from '../layerButton.js';
 import { coins, spendCoin } from '../wallet.js';
 import { showCallout } from '../callout.js';
 import { fxOn } from '../systems/anim.js';
@@ -64,13 +64,13 @@ export default class CabinetScene extends Phaser.Scene {
     this.makePrompt();
     this.makeCounter();
     // Down one layer: zoom back into the screen and go on with the machine's game on the maze level.
-    this.layerBtn = addLayerButton(this, 8, 8, 'LAYER\nDOWN', () => {
+    this.layerBtn = addLayerButtonAt(this, 'down', () => {
       if (this.mode !== 'outro' && this.mode !== 'coin') { sfx.frightOff(); this.layerDown({ continue: true }); }
-    });
+    }, { zoom: CABINET.zoom });
     // Up one layer: the arcade hall this cabinet stands in, where the coins are.
-    this.layerUpBtn = addLayerButton(this, 360 - 8 - 56, 8, 'LAYER\nUP', () => {
+    this.layerUpBtn = addLayerButtonAt(this, 'up', () => {
       if (this.mode !== 'outro' && this.mode !== 'gone' && this.mode !== 'coin') { sfx.frightOff(); this.mode = 'gone'; this.scene.start('Hall', { from: 'cabinet' }); }
-    });
+    }, { zoom: CABINET.zoom });
 
     this.cam = this.cameras.main.setOrigin(0, 0).setRoundPixels(true);
     this.setIntro(this.introT);
@@ -94,7 +94,7 @@ export default class CabinetScene extends Phaser.Scene {
     }).setOrigin(0.5).setLineSpacing(6);
   }
 
-  // Coins held (shared with the hall), top center between the layer buttons.
+  // Coins held (shared with the hall), top center.
   makeCounter() {
     const x = 180, y = 23;
     this.add.graphics().fillStyle(0x000000, 1).fillRect(x - 40, y - 15, 80, 30);

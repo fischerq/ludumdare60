@@ -170,6 +170,11 @@ export const COINS = {
 export const LAYERS = {
   outroTime: 1.2,        // s of zooming back in from the cabinet to the maze level
 };
+// Where the layer buttons sit on every layer: bottom corners, UP left, DOWN right (src/layerButton.js).
+export const LAYER_BUTTONS = {
+  marginX: 16,           // screen px from the left/right edge
+  marginBottom: 24,      // screen px from the bottom edge
+};
 
 // Cheat buttons at the bottom of the maze and cabinet layers that fire the win/lose events, for testing the
 // unlocks. Turn off for the release.
