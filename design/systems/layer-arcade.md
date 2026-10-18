@@ -32,9 +32,12 @@ the arcade as a place.
   logos): red Space Invaders (1978), blue Asteroids (1979), green Donkey Kong (1981), violet Galaxian (1979, out of
   order). Each has one line with a fact about how it worked.
 - **Pickles:** the owner's bitten Gurke and a jar of cornichons on the counter next to him (`k`, `j`), a mini-Gurke
-  on the floor in the bottom right corner (`u`). Details to talk to, nothing to collect.
-- **Manuals:** a table with four booklets near the door (`t`). Tapping it lists them as choices in the text box
-  (tap one, or arrows + Enter); three give a one-line blurb, ours offers READ MORE, which opens the
+  in the top right corner where a plant stood (`u`). Details to talk to, nothing to collect.
+- **The counter** is three tiles wide (Gurke, paper sign, jar) with the owner centered behind it. Only the paper sign
+  (`s`) shows "BACK IN 5 MIN".
+- **Manuals:** a two-tile table near the door. The stack (`n`) lists four booklets as choices in the text box (tap
+  one, or arrows + Enter): three give a one-line blurb, Galaxian's was ripped out. Ours lies on its own next to it
+  (`p`, a yellowed booklet with Pac-Man on the cover) and offers READ MORE, which opens the
   [service manual](manual.md) over the paused hall.
 - **Portraits:** the text box shows a large portrait (48x48, `HALL.portraitSize`) in a frame on its top left edge:
   ghosts and the owner have their own (`arcade/portrait-<name>.png`, `portrait-ghosts` for the four together),
@@ -81,3 +84,6 @@ the arcade as a place.
 - 2026-10-18: The other cabinets become other famous games of the time; the owner's bitten Gurke, a cornichon jar
   and a mini-Gurke; a table with four manuals, ours opening the full service manual. Defaults accepted for all eight
   questions (game picks and names, placement, choices in the text box, the manual as an HTML overlay). (Quirin)
+- 2026-10-18: The counter is three tiles (Gurke, a paper sign that alone says BACK IN 5 MIN, jar) with the owner
+  centered behind; our manual gets its own tile next to the stack on one table, the stack's fourth booklet is ripped
+  out; the mini-Gurke moves to the top right plant's spot. (Quirin)

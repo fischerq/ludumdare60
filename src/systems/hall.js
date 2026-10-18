@@ -7,7 +7,7 @@ import { HALL } from '../config.js';
 export const DIRS = {
   up: { x: 0, y: -1 }, left: { x: -1, y: 0 }, down: { x: 0, y: 1 }, right: { x: 1, y: 0 },
 };
-const SOLID = '#RBGVYrbgvy=MmD1234%!CcQq|^*+@Okjut';
+const SOLID = '#RBGVYrbgvy=MmD1234%!CcQq|^*+@Okjsunp';
 
 // The same rules walk other rooms too (the board lobby): opts.solid are its blocking map characters, opts.speed
 // its walk speed in tiles per second, opts.ghosts its visitor characters.

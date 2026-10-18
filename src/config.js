@@ -287,6 +287,8 @@ export const DEEP = {
     cycleTime: 1.1,      // s between bus cycles shown
     packetSpeed: 7,      // tiles per second along the lanes
     readDelay: 1.3,      // s a read's packet waits in the chip before it heads out through the door
+    doorHold: 1.6,       // s a door stays open after its chip's cycle ends (so other doors can be open at once)
+    doorWarn: 0.6,       // s a door blinks before it closes
     // # wall, . floor, = bus lane (packets run here), C the CPU; chip rooms: interior r a v i, door R A V I
     // (open while the decoder selects that chip): ROM, RAM, VRAM, I/O.
     layout: [
@@ -353,7 +355,7 @@ export const HALL = {
   layout: [
     '###########',
     '#^|^*@+^|^#',
-    '#%RB.Y.VG%#',
+    '#%RB.Y.VGu#',
     '#.rb.y.vg.#',
     '#.1.oS..2.#',
     '#.........#',
@@ -361,10 +363,10 @@ export const HALL = {
     '#c3~~~~~4q#',
     '#..~~~~~..#',
     '#o.......o#',
-    '#O......!.#',
-    '#=kj=..oM.#',
+    '#.O.....!.#',
+    '#ksj...oM.#',
     '#..o....m.#',
-    '#......t.u#',
+    '#.....np..#',
     '#####D#####',
   ],
   zoom: 4,               // screen px per art px in the hall (the other layers use 2): cozier, bigger characters
@@ -386,6 +388,7 @@ export const HALL = {
     portraitBg: 0x2a2440, exclaim: 0xe02020,
     gurke: 0x3a8a30, gurkeLight: 0x6ab850, gurkeDark: 0x2a6020, gurkeInside: 0xd8e8a0, // the pickles
     jarGlass: 0xc8e0c8, jarLid: 0xc0a040, table: 0x9a6a3a,
+    signPaper: 0xf2e6c0, signEdge: 0xb89a60, signInk: 0x3a2a18, // the sign and our yellowed manual
     cabinets: { r: 0xd03030, b: 0x3060d0, g: 0x30a050, v: 0x8040c0, y: 0xf2c200 },
   },
   ghosts: { 1: 'blinky', 2: 'pinky', 3: 'inky', 4: 'clyde' },
@@ -410,7 +413,7 @@ export const HALL = {
   cellText: {
     R: 'r', r: 'r', B: 'b', b: 'b', G: 'g', g: 'g', V: 'v', v: 'v', '=': 'counter', M: 'change', m: 'change',
     D: 'door', '%': 'plant', '!': 'bin', C: 'claw', c: 'claw', Q: 'soda', q: 'soda', '^': 'door', '*': 'posterPac',
-    '+': 'posterGhost', '@': 'clock', O: 'owner', k: 'gurke', j: 'jar', u: 'miniGurke', t: 'manuals',
+    '+': 'posterGhost', '@': 'clock', O: 'owner', k: 'gurke', j: 'jar', u: 'miniGurke', s: 'sign', n: 'manuals', p: 'pacManual',
   },
   text: {
     blinky: "I'M NOT A GHOST. I'M JUST... VERY PALE.",
@@ -428,7 +431,8 @@ export const HALL = {
     g: 'DONKEY KONG, 1981. A CARPENTER CALLED JUMPMAN CLIMBS GIRDERS. THE BARRELS NEVER STOP.',
     v: 'GALAXIAN, 1979. OUT OF ORDER: THE COIN SLOT IS JAMMED. THE FIRST GAME WITH EVERY SPRITE IN COLOR.',
     yNeedCoins: 'LAYERS OF PAC. INSERT COIN. YOU HAVE {n} OF {need} COINS.',
-    counter: 'A SIGN ON THE COUNTER: BACK IN 5 MIN.',
+    counter: 'THE COUNTER. SCRATCHED, STICKY, LOVED.',
+    sign: 'A PAPER SIGN: BACK IN 5 MIN.',
     change: "CHANGE MACHINE. IT'S EMPTY. COINS MUST BE ON THE FLOOR SOMEWHERE.",
     door: "IT'S RAINING OUTSIDE. BETTER STAY IN.",
     plant: 'A PLANT. SOMEONE WATERS IT EVERY DAY.',
@@ -442,16 +446,18 @@ export const HALL = {
     gurke: "THAT'S A... GURKE! SOMEONE TOOK A BITE. I THINK THE OWNER LIKES THEM.",
     jar: 'A JAR OF CORNICHONS. TINY PICKLES, FLOATING.',
     miniGurke: 'THAT JUST REALLY LOOKS LIKE A... MINI-GURKE!',
-    manuals: 'FOUR MANUALS ON A TABLE. WHICH ONE?',
+    manuals: 'A STACK OF MANUALS. WHICH ONE?',
+    rippedOut: 'HUH, THIS ONE WAS RIPPED OUT.',
   },
-  // The manuals on the table (Galaxian's is lost, its machine is out of order). `more`: offers READ MORE, which
-  // opens the full service manual (src/manual/).
+  // The stack of manuals on the table: Galaxian's pages were ripped out (its machine is out of order).
+  // Ours lies on its own next to the stack (`pacManual`) and offers READ MORE: the full service manual (src/manual/).
   manuals: [
     { title: 'SPACE INVADERS', text: "SPACE INVADERS OPERATOR'S MANUAL. THE DIP SWITCHES SET 3 TO 6 BASES AND A BONUS BASE AT 1000 OR 1500 POINTS." },
     { title: 'ASTEROIDS', text: 'ASTEROIDS MANUAL. CHAPTER 1: ADJUSTING THE VECTOR MONITOR. CHAPTER 2: PLEASE DO NOT ADJUST THE VECTOR MONITOR.' },
     { title: 'DONKEY KONG', text: 'DONKEY KONG MANUAL. A WHOLE PAGE ON HOW TO CLEAN THE JOYSTICK. SOMEONE SPILLED COLA ON IT.' },
-    { title: 'LAYERS OF PAC', text: 'LAYERS OF PAC: SERVICE MANUAL. EVERY LAYER OF THIS MACHINE, FROM THE CABINET DOWN TO THE WIRES.', more: true },
+    { title: 'GALAXIAN', ripped: true },
   ],
+  pacManual: 'LAYERS OF PAC: SERVICE MANUAL. EVERY LAYER OF THIS MACHINE, FROM THE CABINET DOWN TO THE WIRES.',
   menu: {
     readMore: 'READ MORE',
     close: 'CLOSE',
@@ -721,6 +727,18 @@ export const ARCADE = {
   busLogSize: 1 << 17,  // bus accesses kept for the lower layers (a power of two; a frame has ~10 000)
   framesKept: 8,        // frames the recorder can replay
   maxFramesPerTick: 4,  // after a hitch, catch up at most this many frames at once
+};
+
+// Levels and the level 256 glitch (design/systems/arcade-maze.md, "Levels and the kill screen"). The round counter is a
+// byte in the machine's work RAM; the fruit shelf under the maze shows one fruit per level, drawn by game.asm.
+export const LEVELS = {
+  shelfCols: 9,          // shelf width in tiles, right-aligned under the maze (cols 10..18, the right half)
+  param: 'level',        // ?level=256 starts the maze on that level (1..256), for testing
+  // Fruit tile colors (art maze/fruit-<name>, drawn in BootScene).
+  colors: {
+    red: 0xff2020, darkRed: 0xa00010, green: 0x30c030, brown: 0xa06030, white: 0xffffff, orange: 0xffa020,
+    melon: 0x40d060, melonDark: 0x107020, yellow: 0xffe040, blue: 0x3060ff, cyan: 0x40e0ff, grey: 0xc0c0c0,
+  },
 };
 
 // Animation speeds (characters and effects), in game frames per animation frame. Lives in a JSON file so the lab can

@@ -114,15 +114,17 @@ x; the status line lists the ones left.
 Before (until 2026-10-18) this layer was **video RAM**: the same blade trap over VRAM with the 4 power pellet bytes
 as objectives. Replaced because there were already many video layers.
 
-## Layer -4: the system bus · built (gameplay pass, spatial)
+## Layer -4: the system bus · built (gameplay pass, spatial; polish 2026-10-18)
 **Verb: rooms behind decoder doors.** A spatial bus (`DEEP.bus.layout`): the Z80 on the left, bus lanes from its
 port to four chip rooms (ROM, RAM, VRAM, I/O), each behind a door. Every `cycleTime` s a bus cycle is picked from a
 real frame's bus log (first a chip at random among those the frame touched, then one of its cycles; video and color
 RAM count as VRAM, sprite registers as RAM / I/O). The **address decoder** opens only that chip's door (Zelda
-keys and locked doors, keyed by the address); a door that closes on you is a hit, and inside a room you wait for
-its chip to be addressed again. **Enemy:** each cycle sends a packet along the lanes (`packetSpeed`): a write
+keys and locked doors, keyed by the address). A door stays open `doorHold` s after its chip's cycle (so two
+doors can be open at once) and flickers for `doorWarn` s before it closes; a door that closes on you is a hit, and
+inside a room you wait for its chip to be addressed again. **Enemy:** each cycle sends a packet along the lanes (`packetSpeed`): a write
 from the CPU into the chip, a read from the chip back to the CPU, leaving the chip only after `readDelay` (its access
-time, so the door can be slipped through before the read comes out); touching one is a hit. A read drops up to 3 of
+time, so the door can be slipped through before the read comes out; a waiting read pulses by the door); touching
+one on the lanes or in a doorway is a hit, inside a chip room packets are harmless. A read drops up to 3 of
 its 1 bits on its lane as dots. **Objectives:** the data byte in each of the 4 chip rooms.
 
 ## Layer -5: the CPU · built (gameplay pass)
@@ -205,3 +207,7 @@ picture). How the other layers do on that, to decide later:
 - 2026-10-18: Work RAM replaces video RAM (same blade trap over 0x4c00-0x4fef, objectives are game state bytes by
   symbol, own sky-blue colors, art in `assets/deep/ram/`). The deep layers are entered from the board lobby, unlock
   one at a time, have only LAYER UP and go back to the lobby when won. (Quirin, defaults accepted)
+- 2026-10-18: Bus polish: doors stay open `doorHold` (1.6 s) after their chip's cycle and flicker for `doorWarn`
+  (0.6 s) before closing; safer exits: packets can't hit inside a chip room (a read used to spawn on the tile you
+  wait on by the door) and a waiting read pulses there. (Quirin asked for longer doors and safer exits; Claude
+  picked how)

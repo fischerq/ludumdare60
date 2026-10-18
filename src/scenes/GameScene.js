@@ -1,11 +1,11 @@
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY, COINS, MUSIC } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY, COINS, MUSIC, LEVELS } from '../config.js';
 import { createSwipe, swipeInput } from '../systems/swipe.js';
 import { sfx, unlockAudio, setAudioPaused, setBed, setSiren } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 import { showCallout } from '../callout.js';
 import { coins, spendCoin } from '../wallet.js';
-import { world, onFrame, pressDir, pressStart, setDriver, newGame } from '../systems/arcade/world.js';
-import { drawPlayfield, W, H } from '../systems/arcade/video.js';
+import { world, onFrame, pressDir, pressStart, setDriver, newGame, setRound } from '../systems/arcade/world.js';
+import { drawPlayfield, W, H, SCREEN_H } from '../systems/arcade/video.js';
 import { readState } from '../systems/arcade/state.js';
 
 const PELLETS = MAZE.layout.join('').replace(/[^.o]/g, '').length;
@@ -41,9 +41,9 @@ export default class GameScene extends Phaser.Scene {
     this.cameras.main.setOrigin(0, 0).setZoom(PIXEL.zoom).setRoundPixels(true);
 
     // The playfield is the arcade machine's picture: its video chip draws VRAM and the sprites into this
-    // canvas every frame (and clips the tunnel like the arcade screen).
+    // canvas every frame (and clips the tunnel like the arcade screen), with the level shelf row under the maze.
     this.screen = this.textures.exists('arcade-screen') ? this.textures.get('arcade-screen')
-      : this.textures.createCanvas('arcade-screen', W * T, H * T);
+      : this.textures.createCanvas('arcade-screen', W * T, SCREEN_H * T);
     this.add.image(this.ox, this.oy, 'arcade-screen').setOrigin(0);
     this.art = (key) => this.textures.get(key).getSourceImage();
 
@@ -57,8 +57,10 @@ export default class GameScene extends Phaser.Scene {
     setBed('maze');
     setSiren(-1);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setSiren(-1));
+    // ?level=256 (LEVELS.param): every fresh game starts on that level, for testing the kill screen.
+    const level = Number(new URLSearchParams(window.location.search).get(LEVELS.param));
     if (!data.continue) {
-      if (data.free || spendCoin()) newGame();
+      if (data.free || spendCoin()) { newGame(); if (level > 1) setRound(level); }
       else world.halted = true;
     } else if (['attract', 'cleared'].includes(this.g.phase)) pressStart();
     else if (this.g.fright > 0) sfx.frightOn();
@@ -170,7 +172,7 @@ export default class GameScene extends Phaser.Scene {
 
   // The layer buttons, always there: up zooms out to the cabinet, down goes inside it (the board lobby).
   addLayerButtons() {
-    const y = this.mazeBottom + 8, upX = this.viewW - 24 - 112;
+    const y = this.mazeBottom + T + 8, upX = this.viewW - 24 - 112;
     addLayerButton(this, upX, y, 'LAYER\nUP', () => this.leave('Cabinet'), 2);
     addLayerButton(this, upX - 116, y, 'LAYER\nDOWN', () => this.leave('Lobby', { from: 'maze' }), 2);
   }
@@ -195,7 +197,9 @@ export default class GameScene extends Phaser.Scene {
     if (broke) return;
     // Short delay so the swipe that ended the round doesn't restart it at once.
     this.time.delayedCall(600, () => {
-      const again = () => { if (!this.leaving) this.scene.restart({ free: cleared }); };
+      // After a clear the machine's own next round starts (START on the cleared maze): same score and lives,
+      // the level counter one up. After a game over a new game costs a coin.
+      const again = () => { if (!this.leaving) this.scene.restart(cleared ? { continue: true } : {}); };
       this.input.on('pointerdown', (p, over) => { if (!over.length) again(); });
       this.input.keyboard?.once('keydown-SPACE', again);
       this.input.keyboard?.once('keydown-ENTER', again);
@@ -215,7 +219,7 @@ export default class GameScene extends Phaser.Scene {
     this.readyText.setVisible(g.phase === 'ready');
     this.lifeIcons.forEach((icon, i) => icon.setVisible(i < g.lives - 1));
 
-    drawPlayfield(this.screen.getContext(), this.machine, this.art);
+    drawPlayfield(this.screen.getContext(), this.machine, this.art, { rows: SCREEN_H });
     this.screen.refresh();
   }
 }

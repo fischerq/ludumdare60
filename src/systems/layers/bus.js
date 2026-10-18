@@ -3,7 +3,9 @@
 // one door at a time: the door of the chip the current bus cycle addresses (cycles come from a real frame's
 // bus log, slowed to one per DEEP.bus.cycleTime). Each cycle sends a packet along the lanes (the enemy): a write
 // runs from the CPU into the chip, a read from the chip back to the CPU and drops its 1 bits on the lanes as dots.
-// A door that closes on you is a hit. Objectives: the data byte in each chip room.
+// A door stays open DEEP.bus.doorHold s after its chip's cycle and blinks before it closes; a door that closes on
+// you is a hit. Packets are only deadly on the lanes, never inside a chip room, so you can wait by the door to get
+// out. Objectives: the data byte in each chip room.
 
 import { DEEP } from '../../config.js';
 import { BUS } from '../arcade/machine.js';
@@ -52,6 +54,7 @@ function lanePath(chip) {
   return [PORT];
 }
 const PATHS = Object.fromEntries(Object.keys(DOORS).map((chip) => [chip, lanePath(chip)]));
+const doorOpen = (st, chip, t) => t < (st.openUntil[chip] ?? 0);
 
 export default {
   id: 'bus',
@@ -62,13 +65,13 @@ export default {
   goal: C.goal,
 
   init() {
-    return { next: 0, selected: null, cycle: null, packets: [], drops: new Map(), done: new Set() };
+    return { next: 0, selected: null, cycle: null, packets: [], drops: new Map(), done: new Set(), openUntil: {}, wasOpen: new Set() };
   },
 
   open(st, env, x, y) {
     const ch = at(x, y);
     if (ch === '#' || ch === 'C') return false;
-    return CHIPS[ch] ? st.selected === CHIPS[ch] : true;
+    return CHIPS[ch] ? doorOpen(st, CHIPS[ch], env.t) : true;
   },
 
   info(st) {
@@ -100,15 +103,20 @@ export default {
       st.next = t + C.cycleTime;
       const c = this.pick(m);
       if (c) {
-        // The decoder switches: a door closing on you is a hit.
-        const was = st.selected;
+        // The decoder selects the chip: its door opens for this cycle and doorHold s more.
         st.cycle = c;
         st.selected = c.chip;
+        st.openUntil[c.chip] = t + C.cycleTime + C.doorHold;
         const path = c.write ? PATHS[c.chip] : [...PATHS[c.chip]].reverse();
         // A read leaves the chip only after its access time, so there's a moment to slip in through the open door.
         st.packets.push({ path, t: c.write ? t : t + C.readDelay, value: c.value, write: c.write });
-        if (was && was !== c.chip && DOORS[was].x === px && DOORS[was].y === py) return 'hit';
       }
+    }
+    // A door closing on you is a hit.
+    for (const [chip, d] of Object.entries(DOORS)) {
+      const open = doorOpen(st, chip, t);
+      if (!open && st.wasOpen.delete(chip) && d.x === px && d.y === py) return 'hit';
+      if (open) st.wasOpen.add(chip);
     }
     // Packets run along the lanes; a read drops its 1 bits on its lane when it reaches the CPU.
     for (const p of st.packets) {
@@ -126,7 +134,7 @@ export default {
       }
       for (const back of [0, 1]) {
         const c = p.path[Math.floor(k) - back];
-        if (!p.over && c && Math.abs(player.x - c.x) + Math.abs(player.y - c.y) < 0.8) return 'hit';
+        if (!p.over && c && !ROOM[at(c.x, c.y)] && Math.abs(player.x - c.x) + Math.abs(player.y - c.y) < 0.8) return 'hit';
       }
     }
     st.packets = st.packets.filter((p) => !p.over);
@@ -161,15 +169,28 @@ export default {
     tinyText(ctx, 'Z80', cpu.x * S + Math.floor((3 * S - 11) / 2), PORT.y * S + Math.floor((S - 5) / 2));
     // Doors: open (a gap) while the decoder selects their chip; room labels and their data byte.
     for (const [chip, d] of Object.entries(DOORS)) {
-      const open = st.selected === chip;
-      if (!open) neonBlock(ctx, d.x * S + 1, d.y * S, S - 2, S, P.line, P.glow);
-      else { ctx.fillStyle = css(0xffffff, 0.15 + 0.1 * Math.sin(t * 10)); ctx.fillRect(d.x * S, d.y * S, S, S); }
+      const open = doorOpen(st, chip, t), left = (st.openUntil[chip] ?? 0) - t;
+      // Closing soon: the door flickers shut.
+      const closing = open && left < C.doorWarn && Math.floor(t * 8) % 2 === 0;
+      if (!open || closing) {
+        ctx.globalAlpha = closing ? 0.5 : 1;
+        neonBlock(ctx, d.x * S + 1, d.y * S, S - 2, S, P.line, P.glow);
+        ctx.globalAlpha = 1;
+      } else { ctx.fillStyle = css(0xffffff, 0.15 + 0.1 * Math.sin(t * 10)); ctx.fillRect(d.x * S, d.y * S, S, S); }
       ctx.fillStyle = css(open ? 0xffffff : P.dot);
       tinyText(ctx, NAMES[chip], (d.x + 1) * S + 2, (d.y - 2) * S + 2);
       if (!st.done.has(chip)) dot(ctx, env, 'special', CENTERS[chip].x, CENTERS[chip].y, S);
     }
     for (const k of st.drops.keys()) { const [x, y] = k.split(',').map(Number); dot(ctx, env, 'dot', x, y, S); }
     for (const p of st.packets) {
+      if (t < p.t) {
+        // A read still waiting in its chip: a faint pulse by the door shows it's about to come out.
+        const c = p.path[0];
+        ctx.globalAlpha = 0.25 + 0.2 * Math.sin(t * 12);
+        neonBlock(ctx, c.x * S + 3, c.y * S + 3, S - 6, S - 6, DEEP.hazard, DEEP.hazardGlow);
+        ctx.globalAlpha = 1;
+        continue;
+      }
       for (const back of [2, 1, 0]) {
         const c = p.path[Math.floor(p.pos) - back];
         if (!c) continue;
