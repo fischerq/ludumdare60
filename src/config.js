@@ -379,12 +379,12 @@ export const DEEP = {
     goal: 4,             // one data byte from each chip room
   },
   cpu: {                 // -5 Game Genie: carry a patch onto a line of the real program; the PC steps through it
-    rate: 3.2,           // lines per second the program counter steps while it's in the routine on screen
-    awayTime: 0.7,       // s the PC stays out of view between two visits (a CALL out, the rest of the frame)
+    rate: 4.5,           // lines per second the program counter steps while it's in the routine on screen
+    awayTime: 0.5,       // s the PC stays out of view between two visits (a CALL out, the rest of the frame)
     arrowTime: 0.7,      // s a branch arrow stays on screen
     trace: 16000,        // instructions recorded from the start of a frame (a busy frame has about 10 000)
     retry: 0.35,         // s between trace requests while the routine doesn't run (e.g. no dot eaten that frame)
-    grace: 1,            // s after a respawn or a new routine before the PC can hit you
+    grace: 0.6,          // s after a respawn or a new routine before the PC can hit you
     nextDelay: 1.8,      // s the patched line shows before the next routine comes up
     lines: 12,           // lines of source on screen
     // The four patches, in order: routine, the line to replace (as written in game.asm, label and comment
