@@ -181,6 +181,8 @@ export const DEEP = {
   transition: 0.35,      // s of zooming between layers
   trail: 1.2,            // s the light trail behind Pac-Man takes to fade (visual only)
   trailWidth: 2,         // art px
+  glowTime: 0.6,         // s Pac-Man glows after picking something up (layers with pac-glow art)
+  glowPop: 0.2,          // how much bigger Pac-Man is at the start of the glow
   // The Tron look: each layer has its own dark background and neon accent; white and one red are shared.
   // bg: background, grid: the floor grid, line: neon lines of the layer's structures, glow: their dim halo,
   // dot / dot2: the collectibles' two accents, special: the special collectible (power pellet, ...).
@@ -198,16 +200,34 @@ export const DEEP = {
   machineSlowdown: 4,    // the machine runs this many times slower in the deep layers than on the maze
   // Each layer: its own verb and enemy, and goal = the number of objectives (3 to 5) that win it.
   crt: {                 // -1 inside the tube: phosphor triads lit by a raster beam, one pixel at a time
-    beamPeriod: 10,      // s for one picture, cell by cell, row by row (the real one takes 16.5 ms)
+    walkSpeed: 6.5,      // tiles per second here (faster than DEEP.walkSpeed: the beam is the only enemy)
+    beamPeriod: 13,      // s for one picture, cell by cell, row by row (the real one takes 16.5 ms)
     vblank: 0.12,        // share of the period with the beam off (vertical blank: it flies back)
     decay: 1.6,          // s for the phosphor to fade to a third
-    litAbove: 0.35,      // glow above which a dot or pellet can be eaten
+    litAbove: 0.35,      // glow above which a bonus dot can be eaten
     darkFloor: 0.06,     // how much of an unlit triad still shows
     lookAhead: 6,        // cells of the beam's path ahead drawn as a warning
     // Each triad's red, green and blue phosphor (0..1) for what the picture shows there.
-    rgb: { wall: [0.15, 0.15, 1], door: [1, 0.7, 0.85], dot: [1, 0.72, 0.6], pac: [1, 1, 0], ghost: [1, 0.1, 0.1], scared: [0.2, 0.3, 1] },
+    rgb: { wall: [0.15, 0.15, 1], door: [1, 0.7, 0.85], dot: [1, 0.72, 0.6], pac: [1, 1, 0] },
     cornerRadius: 2,     // tiles: the tube's rounded corners can't be walked on
-    goal: 4,             // the four power pellets
+    // The objectives: the monitor's adjustments. Until one is set, the beam paints that fault into the picture.
+    // at: the pad's tile on the tube's edge (its name is drawn next to it, inside); done: the status line once set.
+    goals: [
+      { id: 'vhold', name: 'V-HOLD', at: { x: 0, y: 12 }, done: 'V-HOLD SET:\nTHE PICTURE STOPS ROLLING' },
+      { id: 'hhold', name: 'H-HOLD', at: { x: 9, y: 24 }, done: 'H-HOLD SET:\nTHE LINES STOP TEARING' },
+      { id: 'conv', name: 'CONVERGE', at: { x: 9, y: 0 }, done: 'BEAMS CONVERGE:\nNO MORE COLOR FRINGES' },
+      { id: 'degauss', name: 'DEGAUSS', at: { x: 18, y: 12 }, done: 'DEGAUSSED:\nTHE COLORS ARE PURE AGAIN' },
+    ],
+    repairFrames: 2,     // pictures a repair holds after the one it was made in (then it breaks again)
+    goal: 1,             // one whole picture painted with all four repairs holding
+    rollSpeed: 1.2,      // tiles per second the picture rolls without V-HOLD
+    tear: 3,             // tiles the rows wobble sideways without H-HOLD
+    misconverge: 1,      // tiles the red and blue beams miss green by without CONVERGE
+    // Bonus dots (the power pellets, eaten while lit): the beam scans another way for bonusTime s.
+    bonusTime: 15,
+    bonusModes: ['columns', 'up'], // taken in turn: column by column left to right, row by row bottom to top
+    msgTime: 3,          // s an adjustment's message stays in the status line
+    labelScale: 2,       // art px per font pixel of the pads' names
   },
   signals: {             // -2 the video board: a race against the frame timer, tile pixels via the palette to the DAC
     frameTime: 12,       // s on the frame timer; at zero the pixels you carry are dropped and a new tile is fetched
@@ -260,6 +280,8 @@ export const DEEP = {
     cycleTime: 1.1,      // s between bus cycles shown
     packetSpeed: 7,      // tiles per second along the lanes
     readDelay: 1.3,      // s a read's packet waits in the chip before it heads out through the door
+    doorHold: 1.6,       // s a door stays open after its chip's cycle ends (so other doors can be open at once)
+    doorWarn: 0.6,       // s a door blinks before it closes
     // # wall, . floor, = bus lane (packets run here), C the CPU; chip rooms: interior r a v i, door R A V I
     // (open while the decoder selects that chip): ROM, RAM, VRAM, I/O.
     layout: [
@@ -316,6 +338,36 @@ export const DEEP = {
   },
 };
 
+// Bonus layer: the adder (src/scenes/AdderScene.js, rules in src/systems/layers/adder.js). The round counter's +1
+// as an 8-bit ripple-carry adder, played like Crossy Road: you are the carry bit and hop up through 8 full-adder
+// stages (bit 0 at the bottom), dodging signal pulses on the wires. See design/systems/layer-adder.md.
+export const ADDER = {
+  bits: 8,               // full-adder stages
+  cols: 11,              // tiles across the board
+  tile: 32,              // art px per tile (the camera shows art px at 2x)
+  hopTime: 0.13,         // s one hop takes
+  hitPause: 0.8,         // s of flashing after a hit, then back to the start of the stage
+  lanes: [2, 2, 3, 3, 3, 4, 4, 4], // wire lanes per stage, bit 0 first
+  speed: [1.4, 3.0],     // tiles per second of a lane's pulses at bit 0 and at bit 7 (in between: linear)
+  speedJitter: 0.25,     // each lane's speed is off by up to this share, up or down
+  pulse: [1, 3],         // tiles: shortest and longest pulse
+  gap: [[3, 6], [2.2, 4.5]], // tiles of free wire between two pulses, min and max: at bit 0, at bit 7
+  hitbox: 0.6,           // tiles: the carry bit's width for hits
+  startCol: 5,           // column you start each stage in
+  camLead: 0.62,         // the camera keeps you at this share of the screen height
+  camEase: 8,            // how fast the camera catches up (per s)
+  overflowTime: 2.8,     // s of the OVERFLOW moment before the layer ends
+  transition: 0.35,      // s of zooming in and out
+  // Tron look like the deep layers (bg, floor grid, neon line and its halo); pulses use DEEP.hazard (deadly).
+  style: {
+    bg: 0x0c0a02, grid: 0x2a2408, line: 0xffe02a, glow: 0x4a400a,
+    wire: 0x6a5a14,      // an idle wire lane
+    wall: 0x1c1806,      // the chip between the gates (blocks)
+    one: 0xffe02a, zero: 0x2af0e0, // the byte readout: bits still 1, bits flipped to 0
+    carry: 0xffffff,     // the carry bit's core
+  },
+};
+
 // Layer 3: the arcade hall (zoom out further). A small, cozy room seen top-down like a Pokémon game: Pac-Man
 // walks one tile per step. 16 px tiles shown at 4x, characters 32x32 art shown one tile big; the room fits one screen.
 // # wall (dark trim), back wall row: | wallpaper, ^ window, * Pac-Man poster, + ghost poster, @ clock.
@@ -326,7 +378,7 @@ export const HALL = {
   layout: [
     '###########',
     '#^|^*@+^|^#',
-    '#%RB.Y.VG%#',
+    '#%RB.Y.VGu#',
     '#.rb.y.vg.#',
     '#.1.oS..2.#',
     '#.........#',
@@ -334,10 +386,10 @@ export const HALL = {
     '#c3~~~~~4q#',
     '#..~~~~~..#',
     '#o.......o#',
-    '#O......!.#',
-    '#=kj=..oM.#',
+    '#.O.....!.#',
+    '#ksj...oM.#',
     '#..o....m.#',
-    '#......t.u#',
+    '#.....np..#',
     '#####D#####',
   ],
   zoom: 4,               // screen px per art px in the hall (the other layers use 2): cozier, bigger characters
@@ -359,6 +411,7 @@ export const HALL = {
     portraitBg: 0x2a2440, exclaim: 0xe02020,
     gurke: 0x3a8a30, gurkeLight: 0x6ab850, gurkeDark: 0x2a6020, gurkeInside: 0xd8e8a0, // the pickles
     jarGlass: 0xc8e0c8, jarLid: 0xc0a040, table: 0x9a6a3a,
+    signPaper: 0xf2e6c0, signEdge: 0xb89a60, signInk: 0x3a2a18, // the sign and our yellowed manual
     cabinets: { r: 0xd03030, b: 0x3060d0, g: 0x30a050, v: 0x8040c0, y: 0xf2c200 },
   },
   ghosts: { 1: 'blinky', 2: 'pinky', 3: 'inky', 4: 'clyde' },
@@ -383,7 +436,7 @@ export const HALL = {
   cellText: {
     R: 'r', r: 'r', B: 'b', b: 'b', G: 'g', g: 'g', V: 'v', v: 'v', '=': 'counter', M: 'change', m: 'change',
     D: 'door', '%': 'plant', '!': 'bin', C: 'claw', c: 'claw', Q: 'soda', q: 'soda', '^': 'door', '*': 'posterPac',
-    '+': 'posterGhost', '@': 'clock', O: 'owner', k: 'gurke', j: 'jar', u: 'miniGurke', t: 'manuals',
+    '+': 'posterGhost', '@': 'clock', O: 'owner', k: 'gurke', j: 'jar', u: 'miniGurke', s: 'sign', n: 'manuals', p: 'pacManual',
   },
   text: {
     blinky: "I'M NOT A GHOST. I'M JUST... VERY PALE.",
@@ -401,7 +454,8 @@ export const HALL = {
     g: 'DONKEY KONG, 1981. A CARPENTER CALLED JUMPMAN CLIMBS GIRDERS. THE BARRELS NEVER STOP.',
     v: 'GALAXIAN, 1979. OUT OF ORDER: THE COIN SLOT IS JAMMED. THE FIRST GAME WITH EVERY SPRITE IN COLOR.',
     yNeedCoins: 'LAYERS OF PAC. INSERT COIN. YOU HAVE {n} OF {need} COINS.',
-    counter: 'A SIGN ON THE COUNTER: BACK IN 5 MIN.',
+    counter: 'THE COUNTER. SCRATCHED, STICKY, LOVED.',
+    sign: 'A PAPER SIGN: BACK IN 5 MIN.',
     change: "CHANGE MACHINE. IT'S EMPTY. COINS MUST BE ON THE FLOOR SOMEWHERE.",
     door: "IT'S RAINING OUTSIDE. BETTER STAY IN.",
     plant: 'A PLANT. SOMEONE WATERS IT EVERY DAY.',
@@ -415,16 +469,18 @@ export const HALL = {
     gurke: "THAT'S A... GURKE! SOMEONE TOOK A BITE. I THINK THE OWNER LIKES THEM.",
     jar: 'A JAR OF CORNICHONS. TINY PICKLES, FLOATING.',
     miniGurke: 'THAT JUST REALLY LOOKS LIKE A... MINI-GURKE!',
-    manuals: 'FOUR MANUALS ON A TABLE. WHICH ONE?',
+    manuals: 'A STACK OF MANUALS. WHICH ONE?',
+    rippedOut: 'HUH, THIS ONE WAS RIPPED OUT.',
   },
-  // The manuals on the table (Galaxian's is lost, its machine is out of order). `more`: offers READ MORE, which
-  // opens the full service manual (src/manual/).
+  // The stack of manuals on the table: Galaxian's pages were ripped out (its machine is out of order).
+  // Ours lies on its own next to the stack (`pacManual`) and offers READ MORE: the full service manual (src/manual/).
   manuals: [
     { title: 'SPACE INVADERS', text: "SPACE INVADERS OPERATOR'S MANUAL. THE DIP SWITCHES SET 3 TO 6 BASES AND A BONUS BASE AT 1000 OR 1500 POINTS." },
     { title: 'ASTEROIDS', text: 'ASTEROIDS MANUAL. CHAPTER 1: ADJUSTING THE VECTOR MONITOR. CHAPTER 2: PLEASE DO NOT ADJUST THE VECTOR MONITOR.' },
     { title: 'DONKEY KONG', text: 'DONKEY KONG MANUAL. A WHOLE PAGE ON HOW TO CLEAN THE JOYSTICK. SOMEONE SPILLED COLA ON IT.' },
-    { title: 'LAYERS OF PAC', text: 'LAYERS OF PAC: SERVICE MANUAL. EVERY LAYER OF THIS MACHINE, FROM THE CABINET DOWN TO THE WIRES.', more: true },
+    { title: 'GALAXIAN', ripped: true },
   ],
+  pacManual: 'LAYERS OF PAC: SERVICE MANUAL. EVERY LAYER OF THIS MACHINE, FROM THE CABINET DOWN TO THE WIRES.',
   menu: {
     readMore: 'READ MORE',
     close: 'CLOSE',
@@ -601,6 +657,18 @@ export const ARCADE = {
   busLogSize: 1 << 17,  // bus accesses kept for the lower layers (a power of two; a frame has ~10 000)
   framesKept: 8,        // frames the recorder can replay
   maxFramesPerTick: 4,  // after a hitch, catch up at most this many frames at once
+};
+
+// Levels and the level 256 glitch (design/systems/arcade-maze.md, "Levels and the kill screen"). The round counter is a
+// byte in the machine's work RAM; the fruit shelf under the maze shows one fruit per level, drawn by game.asm.
+export const LEVELS = {
+  shelfCols: 9,          // shelf width in tiles, right-aligned under the maze (cols 10..18, the right half)
+  param: 'level',        // ?level=256 starts the maze on that level (1..256), for testing
+  // Fruit tile colors (art maze/fruit-<name>, drawn in BootScene).
+  colors: {
+    red: 0xff2020, darkRed: 0xa00010, green: 0x30c030, brown: 0xa06030, white: 0xffffff, orange: 0xffa020,
+    melon: 0x40d060, melonDark: 0x107020, yellow: 0xffe040, blue: 0x3060ff, cyan: 0x40e0ff, grey: 0xc0c0c0,
+  },
 };
 
 // Animation speeds (characters and effects), in game frames per animation frame. Lives in a JSON file so the lab can

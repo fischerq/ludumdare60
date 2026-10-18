@@ -16,7 +16,7 @@ const KEYS = {
 const DECOR = { '|': 'wall-face', '^': 'window', '*': 'poster-pac', '+': 'poster-ghost', '@': 'clock' };
 const ON_FLOOR = {
   '=': 'counter', M: 'change-top', m: 'change-bottom', C: 'claw-top', c: 'claw-bottom', Q: 'soda-top',
-  q: 'soda-bottom', '%': 'plant', '!': 'bin', k: 'counter-gurke', j: 'counter-jar', u: 'mini-gurke', t: 'manual-table',
+  q: 'soda-bottom', '%': 'plant', '!': 'bin', k: 'counter-gurke', j: 'counter-jar', u: 'mini-gurke', s: 'counter-sign', n: 'manual-stack', p: 'manual-pac',
 };
 
 // The text box portrait for a map character: the owner's own, otherwise the thing's tile (a machine's top half).
@@ -221,7 +221,9 @@ export default class HallScene extends Phaser.Scene {
       if (coins() >= COINS.perGame) this.goDown();
       else this.say(tx.yNeedCoins.replace('{n}', coins()).replace('{need}', COINS.perGame), portrait);
     } else if (HALL.cellText[f.cell] === 'manuals') {
-      this.say(tx.manuals, portrait, HALL.manuals.map((m) => ({ label: m.title, act: () => this.readManual(m, portrait) })));
+      this.say(tx.manuals, portrait, HALL.manuals.map((m) => ({ label: m.title, act: () => this.say(m.ripped ? tx.rippedOut : m.text, portrait) })));
+    } else if (HALL.cellText[f.cell] === 'pacManual') {
+      this.readPacManual(portrait);
     } else if (HALL.cellText[f.cell]) {
       this.say(tx[HALL.cellText[f.cell]], portrait);
       // The ghost poster: the visitors look at it, then at Pac-Man...
@@ -229,14 +231,13 @@ export default class HallScene extends Phaser.Scene {
     }
   }
 
-  // One manual's blurb; ours offers READ MORE: the full service manual over the game, the hall paused under it.
-  readManual(m, portrait) {
-    if (!m.more) { this.say(m.text, portrait); return; }
+  // Our manual offers READ MORE: the full service manual over the game, the hall paused under it.
+  readPacManual(portrait) {
     const read = () => {
       this.scene.pause();
       openManual(() => this.scene.resume());
     };
-    this.say(m.text, portrait, [{ label: HALL.menu.readMore, act: read }, { label: HALL.menu.close }]);
+    this.say(HALL.pacManual, portrait, [{ label: HALL.menu.readMore, act: read }, { label: HALL.menu.close }]);
   }
 
   goDown() {

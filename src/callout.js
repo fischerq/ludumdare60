@@ -11,5 +11,5 @@ export function showCallout(scene, x, y, text, scale = 2) {
   const left = Math.round(x - w / 2), top = Math.round(y - h / 2);
   const box = scene.add.graphics().setDepth(10).fillStyle(0x000000, 0.9).fillRect(left, top, w, h)
     .lineStyle(scale, 0xffff00, 1).strokeRect(left + scale / 2, top + scale / 2, w - scale, h - scale);
-  return { destroy() { t.destroy(); box.destroy(); } };
+  return { objects: [box, t], destroy() { t.destroy(); box.destroy(); } };
 }

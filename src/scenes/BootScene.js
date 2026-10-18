@@ -1,4 +1,5 @@
-import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP } from '../config.js';
+import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP, LEVELS, ADDER } from '../config.js';
+import { tinyText } from '../systems/layers/font.js';
 import { mazeTiles, tileKey } from '../systems/tiles.js';
 import { world } from '../systems/arcade/world.js';
 import { openManual } from '../manual/index.js';
@@ -33,6 +34,7 @@ export default class BootScene extends Phaser.Scene {
 
   create() {
     this.makePellets();
+    this.makeFruit();
     this.makePac();
     this.makeGhosts();
     this.makeTileset();
@@ -42,6 +44,7 @@ export default class BootScene extends Phaser.Scene {
     this.makeHall();
     this.makeHallCharacters();
     this.makeDeep();
+    this.makeAdder();
     // Wait for the arcade font so text doesn't render in the fallback first (give up after 2 s).
     const font = document.fonts?.load(`8px ${UI.arcadeFont}`) ?? Promise.resolve();
     const timeout = new Promise((r) => setTimeout(r, 2000));
@@ -287,14 +290,34 @@ export default class BootScene extends Phaser.Scene {
       rect(set, 6, 10, 5, 1, 0x5a3a20);
       rect(set, 6, 8, 4, 2, K.gurke); set(10, 9, K.gurke); set(7, 8, K.gurkeLight); set(9, 9, K.gurkeDark);
     });
-    tile('manual-table', (set) => {
-      rect(set, 1, 4, 14, 7, K.table); rect(set, 1, 4, 14, 1, 0xc89058);
-      rect(set, 2, 11, 2, 3, K.counter); rect(set, 12, 11, 2, 3, K.counter);
-      shadow(set);
-      // Four booklets: Space Invaders, Asteroids, Donkey Kong, and ours (yellowed).
-      [[2, 0xd03030], [5, 0x3060d0], [8, 0x30a050], [11, 0xe8d890]].forEach(([x, c], i) => {
-        rect(set, x, 5 + (i % 2), 3, 4, c); set(x, 5 + (i % 2), 0xffffff);
+    // The paper sign on the counter in front of the owner.
+    tile('counter-sign', (set) => {
+      counter(set);
+      rect(set, 3, 0, 10, 8, K.signPaper); rect(set, 3, 0, 10, 1, K.signEdge); rect(set, 3, 7, 10, 1, K.signEdge);
+      rect(set, 3, 0, 1, 8, K.signEdge); rect(set, 12, 0, 1, 8, K.signEdge);
+      rect(set, 5, 2, 6, 1, K.signInk); rect(set, 5, 4, 4, 1, K.signInk); rect(set, 10, 4, 1, 1, K.signInk);
+    });
+    // The manuals table, two tiles: the stack (Space Invaders, Asteroids, Donkey Kong, Galaxian's torn one) on the
+    // left, ours on its own on the right.
+    const table = (set, left) => {
+      rect(set, left ? 1 : 0, 4, 15, 7, K.table); rect(set, left ? 1 : 0, 4, 15, 1, 0xc89058);
+      rect(set, left ? 2 : 12, 11, 2, 3, K.counter);
+      rect(set, left ? 1 : 0, 14, 15, 2, 0x5a3a20);
+    };
+    tile('manual-stack', (set) => {
+      table(set, true);
+      [[0x8040c0, 9], [0x30a050, 7], [0x3060d0, 5], [0xd03030, 3]].forEach(([c, y], i) => {
+        rect(set, 4 + (i % 2), y - 2, 8, 4, c); rect(set, 4 + (i % 2), y + 2, 8, 1, 0xf0f0e0);
       });
+      set(11, 7, K.table); set(12, 8, K.table); // Galaxian's, torn at the corner
+    });
+    tile('manual-pac', (set) => {
+      table(set, false);
+      rect(set, 3, 1, 10, 10, K.signPaper); rect(set, 3, 10, 10, 1, K.signEdge); rect(set, 12, 1, 1, 10, K.signEdge);
+      this.disc((x, y, c) => set(x + 4, y + 2, c), 7, 2.8, COLORS.pac);
+      set(9, 5, K.signPaper); set(10, 5, K.signPaper); set(10, 4, K.signPaper); // mouth
+      rect(set, 4, 9, 7, 1, K.signInk);
+      set(5, 8, 0xa08050); set(11, 2, 0xa08050); // coffee stains
     });
     this.pixels('arcade/coin', 10, 10, (set) => {
       this.disc(set, 10, 4.6, 0xa07010);
@@ -307,6 +330,54 @@ export default class BootScene extends Phaser.Scene {
   makePellets() {
     this.pixels('maze/dot', 4, 4, (set) => this.disc(set, 4, 2.1, COLORS.dot));
     this.pixels('maze/power', 16, 16, (set) => this.disc(set, 16, 7.6, COLORS.dot));
+  }
+
+  // The level shelf's fruits (one 16x16 tile each, maze/fruit-<name>, cell codes in memmap.js), colors drawn in.
+  makeFruit() {
+    const C = LEVELS.colors;
+    const legend = {
+      r: C.red, d: C.darkRed, g: C.green, b: C.brown, w: C.white, o: C.orange, m: C.melon, n: C.melonDark,
+      y: C.yellow, u: C.blue, c: C.cyan, s: C.grey,
+    };
+    const art = {
+      cherry: [
+        '..........bb....', '.........b.b....', '........b...b...', '.......b....b...', '......b.....b...',
+        '.....b......b...', '..rrrb.....rrr..', '.rrrrr....rrrrr.', '.rwrrr....rwrrr.', '.rrrrr....rrrrr.',
+        '.rrrrd....rrrrd.', '..rdd......rdd..', '................', '................', '................', '................'],
+      strawberry: [
+        '................', '......gggg......', '.....gggggg.....', '...rrrrrrrrrr...', '..rrwrrrrrwrrr..',
+        '..rrrrrwrrrrrr..', '..rwrrrrrrrwrr..', '...rrrwrrrrrr...', '...rrrrrrwrr....', '....rwrrrrrr....',
+        '.....rrrrwr.....', '......rrrr......', '.......rr.......', '................', '................', '................'],
+      orange: [
+        '.......b........', '.......bgg......', '......gggg......', '....oooooooo....', '...oooooooooo...',
+        '..oowooooooooo..', '..owoooooooooo..', '..oooooooooooo..', '..oooooooooooo..', '..oooooooooooo..',
+        '...oooooooooo...', '....oooooooo....', '................', '................', '................', '................'],
+      apple: [
+        '.......b........', '.......b.gg.....', '...rrrrbrrrr....', '..rrrrrrrrrrr...', '.rrwwrrrrrrrrr..',
+        '.rrwrrrrrrrrrr..', '.rrrrrrrrrrrrr..', '.rrrrrrrrrrrrr..', '.rrrrrrrrrrrrr..', '..rrrrrrrrrrd...',
+        '..rrrrrrrrrdd...', '...rrdrrrddd....', '................', '................', '................', '................'],
+      melon: [
+        '.......bb.......', '......gg........', '....mmnmmnmm....', '...mnmmnmmnmm...', '..mnmmnmmnmmnm..',
+        '..mnmwnmmnmmnm..', '..mnmmnmmnmmnm..', '..mnmmnmmnmmnm..', '..mnmmnmmnmmnm..', '...mnmmnmmnmm...',
+        '....mmnmmnmm....', '......nnn.......', '................', '................', '................', '................'],
+      ship: [
+        '.......y........', '.......y........', '......yyy.......', '......uyu.......', '.r...uuyuu...r..',
+        '.r..uuuyuuu..r..', '.rr.uuyyyuu.rr..', '.rruuyyyyyuurr..', '.rruyyyyyyyurr..', '.r..yyy.yyy..r..',
+        '....rr...rr.....', '................', '................', '................', '................', '................'],
+      bell: [
+        '.......yy.......', '......yyyy......', '.....yyyyyy.....', '....yywyyyyy....', '....ywyyyyyy....',
+        '....ywyyyyyy....', '...yyyyyyyyyy...', '...yyyyyyyyyy...', '..yyyyyyyyyyyy..', '..yyyyyyyyyyyy..',
+        '...cccccccccc...', '.......ww.......', '................', '................', '................', '................'],
+      key: [
+        '.....cccccc.....', '....cc....cc....', '....c..uu..c....', '....cc....cc....', '.....cccccc.....',
+        '.......ss.......', '.......ss.......', '.......ssss.....', '.......ss.......', '.......sss......',
+        '.......ss.......', '.......ssss.....', '.......ss.......', '................', '................', '................'],
+    };
+    for (const [name, rows] of Object.entries(art)) {
+      this.pixels(`maze/fruit-${name}`, 16, 16, (set) => rows.forEach((row, y) => [...row].forEach((ch, x) => {
+        if (legend[ch] != null) set(x, y + 2, legend[ch]);
+      })));
+    }
   }
 
   // Lit where pixel (x, y) of an S x S sprite is inside a circle of radius r around (cx, cy), outside the mouth: a
@@ -337,6 +408,18 @@ export default class BootScene extends Phaser.Scene {
           set(x, y, !inside(x, y, 1) ? 0xffffff : !inside(x, y, 2) ? P.line : !inside(x, y, 3) ? P.glow : P.bg);
         }
       }));
+      // The screen layer's pickup glow: the same chomp lit up, filled bright, with a two-pixel halo around it.
+      if (id === 'crt') [0, 0.3, 0.6, 0.9].forEach((m, i) => this.pixels(`deep/${id}/pac-glow-${i}`, S, S, (set) => {
+        const on = new Set();
+        this.chomper((x, y) => on.add(y * S + x), 0, 13.2, m);
+        const near = (x, y, d) => { for (let dy = -d; dy <= d; dy++) for (let dx = -d; dx <= d; dx++) if (on.has((y + dy) * S + x + dx)) return true; return false; };
+        for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+          const edge = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => !on.has((y + dy) * S + x + dx));
+          if (on.has(y * S + x)) set(x, y, edge ? 0xffffff : P.dot2);
+          else if (near(x, y, 1)) set(x, y, P.line);
+          else if (near(x, y, 2)) set(x, y, P.glow);
+        }
+      }));
       for (const [key, c] of [['dot', P.dot], ['dot2', P.dot2]]) {
         this.pixels(`deep/${id}/${key}`, 6, 6, (set) => {
           this.disc(set, 6, 3, c);
@@ -349,6 +432,69 @@ export default class BootScene extends Phaser.Scene {
         this.disc(set, 12, 2.6, P.special);
       });
     }
+  }
+
+  // The adder layer (assets/deep/adder/, 32x32 each): the carry bit (carry-0, carry-1 idle glow, carry-hop, carry-hit),
+  // a signal pulse in tiles (pulse-single, pulse-body, pulse-head-<dir> at its front, pulse-tail-<dir> at its back,
+  // for pulses moving left and right), the gates with their output drawn in (gate-<xor|and|or>-<0|1>: 1 lets the
+  // carry through, 0 blocks) and the chip between them (chip).
+  makeAdder() {
+    const A = ADDER.style, red = DEEP.hazard, redGlow = DEEP.hazardGlow;
+    const text = (set, str, x, y, k, color) => tinyText({ fillRect: (fx, fy, w, h) => {
+      for (let yy = fy; yy < fy + h; yy++) for (let xx = fx; xx < fx + w; xx++) set(xx, yy, color);
+    } }, str, x, y, k);
+    // The carry: a round chip with a big 1 on it.
+    const carry = (key, { line = A.line, glow = A.glow, core = A.carry, ring = 0, sx = 1, sy = 1 } = {}) => this.pixels(`deep/adder/${key}`, S, S, (set) => {
+      for (let y = 0; y < S; y++) {
+        for (let x = 0; x < S; x++) {
+          const dx = (x + 0.5 - 16) / sx, dy = (y + 0.5 - 16) / sy, d = Math.sqrt(dx * dx + dy * dy);
+          if (d <= 11) set(x, y, glow);
+          else if (d <= 12.5) set(x, y, line);
+          else if (d <= 13.6) set(x, y, 0xffffff);
+          else if (ring && d <= 15.5 && d > 14.4) set(x, y, line);
+        }
+      }
+      text(set, '1', 12, 9, 3, core);
+    });
+    carry('carry-0');
+    carry('carry-1', { ring: 1 });
+    carry('carry-hop', { sx: 0.88, sy: 1.12 });
+    carry('carry-hit', { line: red, glow: redGlow, core: 0xffffff, ring: 1 });
+    // Pulses: a band across the tile's middle, white core, rounded ends.
+    const pulse = (key, round) => this.pixels(`deep/adder/${key}`, S, S, (set) => {
+      for (let y = 9; y < 23; y++) {
+        for (let x = 0; x < S; x++) {
+          const dy = Math.abs(y + 0.5 - 16);
+          const cut = (end) => { const dx = end === 'left' ? 7 - x - 0.5 : x + 0.5 - 25; return dx > 0 && dx * dx + dy * dy > 49; };
+          if (round.some(cut)) continue;
+          set(x, y, dy < 2.5 ? 0xffffff : dy < 5 ? red : redGlow);
+        }
+      }
+    });
+    pulse('pulse-single', ['left', 'right']);
+    pulse('pulse-body', []);
+    pulse('pulse-head-right', ['right']);
+    pulse('pulse-tail-right', ['left']);
+    pulse('pulse-head-left', ['left']);
+    pulse('pulse-tail-left', ['right']);
+    // Gates: a chip box with its pins, the gate's name and its output.
+    for (const g of ['xor', 'and', 'or']) {
+      for (const out of [0, 1]) {
+        const line = out ? A.line : 0x6a6a6a, fill = out ? A.glow : A.wall, ink = out ? 0xffffff : 0x8a8a8a;
+        this.pixels(`deep/adder/gate-${g}-${out}`, S, S, (set) => {
+          for (let y = 3; y < 29; y++) for (let x = 3; x < 29; x++) set(x, y, x === 3 || x === 28 || y === 3 || y === 28 ? line : fill);
+          for (const px of [10, 21]) for (let y = 29; y < 32; y++) set(px, y, line); // two inputs below
+          for (let y = 0; y < 3; y++) set(16, y, line); // the output on top
+          const name = g.toUpperCase(), w = name.length * 8 - 2;
+          text(set, name, Math.floor((S - w) / 2), 7, 2, ink);
+          text(set, String(out), 13, 18, 2, out ? A.line : red);
+        });
+      }
+    }
+    this.pixels('deep/adder/chip', S, S, (set) => {
+      for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) set(x, y, (x + y) % 8 === 0 ? A.grid : A.wall);
+      for (let x = 0; x < S; x++) { set(x, 0, A.glow); set(x, S - 1, A.glow); }
+    });
   }
 
   // The maze level's Pac-Man: maze/pac-0 .. pac-6, the chomp's 7 frames facing right (the game flips it for left
