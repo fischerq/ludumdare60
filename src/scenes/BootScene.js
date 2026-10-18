@@ -24,6 +24,9 @@ export default class BootScene extends Phaser.Scene {
   }
 
   preload() {
+    window.bootScreen?.step('ROM', 0.4);
+    // The art fills the boot bar from 40 to 85 %.
+    this.load.on('progress', (p) => window.bootScreen?.progress(0.4 + p * 0.45));
     if (new URLSearchParams(window.location.search).has('codeart')) return;
     // Over plain http (a local server) always fetch fresh files, so an edited PNG shows on the next reload.
     const bust = window.location.protocol === 'http:' ? `?t=${Date.now()}` : '';
@@ -60,7 +63,10 @@ export default class BootScene extends Phaser.Scene {
     // The emulated arcade machine has to be running too: the maze level is its picture.
     const machine = (world.ready ?? Promise.resolve()).catch((e) => console.error('arcade machine failed', e));
     // ?manual opens the service manual over it (for debugging the emulator on the live page).
+    window.bootScreen?.step('VIDEO', 0.85);
+    machine.then(() => window.bootScreen?.step('CPU', 0.95));
     Promise.all([Promise.race([font, timeout]).catch(() => {}), machine]).finally(() => {
+      window.bootScreen?.done();
       this.scene.start(target, data);
       if (params.has('manual')) openManual();
     });
