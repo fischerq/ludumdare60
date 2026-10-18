@@ -11,7 +11,7 @@ const HORIZON = 80, AHEAD = 7, BEHIND = 2, MARGIN = 0.15;
 const MOVES = [['up', 0, 1], ['left', -1, 0], ['right', 1, 0], ['down', 0, -1]];
 
 // The first hop of the best plan from the carry's tile, or null to wait. t0: when a swipe would land.
-function plan(st, t0, reaction) {
+export function plan(st, t0, reaction) {
   const { x: px, y: py } = st.p, C = st.C, y0 = Math.max(0, py - BEHIND), y1 = Math.min(st.rows.length - 1, py + AHEAD);
   const half = C.hitbox / 2 + MARGIN, hopK = Math.ceil(C.hopTime / Q), restK = Math.max(1, Math.round(reaction / Q));
   // safe[y][x][k]: no pulse on tile (x, y) during step k.
@@ -61,16 +61,15 @@ function plan(st, t0, reaction) {
 export function runAdder(s) {
   const st = createAdder(s.seed);
   const reaction = s.noise.reaction; // its mean (the hand jitters it by +-50%)
-  let result = 'timeout', hops = 0, wanted = null;
+  let result = 'timeout', hops = 0;
   const t0 = s.t;
   while (st.t < PLAYTEST.timeCap.deep) {
     let want = null;
     if (st.hitT <= 0 && st.p.hop <= 0 && !s.hand.pending.length) want = plan(st, st.t + reaction, reaction);
-    wanted = want;
     for (const d of s.hand.update(st.t, DT, want, () => false)) { hop(st, d); hops++; s.hand.intent = null; }
     for (const e of stepAdder(st, DT)) if (e.type === 'overflow') result = 'win';
     s.t += DT;
     if (result === 'win') break;
   }
-  return { win: result === 'win', result, time: s.t - t0, hits: st.hits, goals: st.stage, hops, wanted };
+  return { win: result === 'win', result, time: s.t - t0, hits: st.hits, goals: st.stage, hops };
 }

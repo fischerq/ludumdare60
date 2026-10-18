@@ -1,7 +1,7 @@
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, UI, INPUT, DEEP, ADDER } from '../config.js';
 import { createAdder, stepAdder, hop, carryPos, pulsesAt, gateOut, cinOf, byteString, byteValue } from '../systems/layers/adder.js';
 import { css, floor, neonLine } from '../systems/layers/tron.js';
-import { setDriver } from '../systems/arcade/world.js';
+import { setDriver, setSpeed } from '../systems/arcade/world.js';
 import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 import { showCallout } from '../callout.js';
@@ -34,7 +34,10 @@ export default class AdderScene extends Phaser.Scene {
     this.leaving = false;
     this.overT = 0;
     setBed('adder');
-    setDriver('bot'); // nobody at the maze while we're in here: the bot plays on
+    // Nobody at the maze while we're in here: the bot plays on, slowed down like in the deep layers.
+    setDriver('bot');
+    setSpeed(1 / DEEP.machineSlowdown);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setSpeed(1));
 
     const T = ADDER.tile, N = this.st.rows.length, vw = GAME_WIDTH / ZOOM, vh = GAME_HEIGHT / ZOOM;
     this.T = T;
@@ -265,7 +268,7 @@ export default class AdderScene extends Phaser.Scene {
     this.refreshHud();
     this.cameras.main.shake(400, 0.006);
     const c = showCallout(this, GAME_WIDTH / ZOOM / 2, this.vh / 2, 'OVERFLOW!\n11111111 + 1\n= 00000000\nLEVEL 256', 1);
-    this.children.list.slice(-2).forEach((o) => o.setScrollFactor(0).setDepth(30)); // the callout's box and text
+    c.objects.forEach((o, i) => o.setScrollFactor(0).setDepth(30 + i));
     const result = { hits: this.st.hits, time: +this.st.t.toFixed(1) };
     this.time.delayedCall(ADDER.overflowTime * 1000, () => {
       this.data0.onWin?.(result);

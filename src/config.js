@@ -346,10 +346,10 @@ export const ADDER = {
   hopTime: 0.13,         // s one hop takes
   hitPause: 0.8,         // s of flashing after a hit, then back to the start of the stage
   lanes: [2, 2, 3, 3, 3, 4, 4, 4], // wire lanes per stage, bit 0 first
-  speed: [1.5, 3.2],     // tiles per second of a lane's pulses at bit 0 and at bit 7 (in between: linear)
+  speed: [1.4, 3.0],     // tiles per second of a lane's pulses at bit 0 and at bit 7 (in between: linear)
   speedJitter: 0.25,     // each lane's speed is off by up to this share, up or down
   pulse: [1, 3],         // tiles: shortest and longest pulse
-  gap: [[3, 6], [2, 4.5]], // tiles of free wire between two pulses, min and max: at bit 0, at bit 7
+  gap: [[3, 6], [2.2, 4.5]], // tiles of free wire between two pulses, min and max: at bit 0, at bit 7
   hitbox: 0.6,           // tiles: the carry bit's width for hits
   startCol: 5,           // column you start each stage in
   camLead: 0.62,         // the camera keeps you at this share of the screen height
