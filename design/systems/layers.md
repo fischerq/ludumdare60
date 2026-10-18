@@ -21,7 +21,8 @@ The two layers next to the maze game come first:
 
 ## Outer game loop · decided
 The game starts at the maze layer, so it's instantly recognisable as Pac-Man. Every layer always has its
-LAYER UP and LAYER DOWN buttons (no unlocking, no cheat buttons). Since 2026-10-18 the deep layers below the maze are entered from the
+LAYER UP and LAYER DOWN buttons (no unlocking, no cheat buttons), the same size and in the same spot everywhere:
+bottom corners, UP left, DOWN right; the sound button sits top-right. Since 2026-10-18 the deep layers below the maze are entered from the
 [board lobby](#inside-the-cabinet-board-lobby-and-subsystems--decided-built-quirin-defaults-accepted-2026-10-18), unlock one at a time and only have LAYER UP. Layer buttons: `src/layerButton.js`, callouts:
 `src/callout.js`.
 - **Coins run the machine** (`src/wallet.js`, `COINS` in config). Every fresh game costs a coin, on the maze or
@@ -139,3 +140,7 @@ minigame, a counter on the layer map, no unlock.*
 - 2026-10-18: The adder bonus layer is wired into the lobby: it appears with its 256 switch once every subsystem is won;
   winning it flips the switch on and puts the machine on level 256 (the real overflow); after that the switch toggles
   level 256 / level 1, and fresh games follow it. (Quirin, defaults accepted)
+- 2026-10-18: Layer buttons standardized like the deep layers: bottom corners (UP left, DOWN right), deep-layer size on
+  every layer; sound button moved to the top-right, maze HIGH SCORE to top center. (Quirin)
+- 2026-10-18: The lobby uses the standard layer button (LAYER UP bottom left); the room moved to the top of the view with
+  the title in the strip under it. The adder's LAYER UP moved to the same corner. (Claude, after the button standardization)

@@ -7,7 +7,7 @@ import { DEEP_LAYERS } from '../systems/layers/index.js';
 import { ORDER, isUnlocked, isWon, allWon, isAdderWon, isSwitchOn, markAdderWon, setSwitch } from '../progress.js';
 import { setLevel256 } from '../systems/arcade/world.js';
 import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
-import { addLayerButton } from '../layerButton.js';
+import { addLayerButtonAt } from '../layerButton.js';
 
 const T = PIXEL.tile;
 const KEYS = {
@@ -49,9 +49,10 @@ export default class LobbyScene extends Phaser.Scene {
     this.h = createHall(this.layout(), { solid: LOBBY.solid, speed: LOBBY.walkSpeed, ghosts: {} });
     this.viewW = GAME_WIDTH / LOBBY.zoom;
     this.viewH = GAME_HEIGHT / LOBBY.zoom;
-    // The room sits at the bottom of the view: the LAYER UP button gets the strip above it.
+    // The room sits at the top of the view: the LAYER UP button (bottom left, like every layer) and the title get
+    // the strip under it.
     this.ox = Math.floor((this.viewW - this.h.w * T) / 2);
-    this.oy = Math.max(0, this.viewH - this.h.h * T);
+    this.oy = 0;
     this.held = null;
     this.keyDir = null;
     this.t = 0;
@@ -147,10 +148,10 @@ export default class LobbyScene extends Phaser.Scene {
 
   makeUi() {
     const fixed = (o) => o.setScrollFactor(0);
-    this.layerBtn = addLayerButton(this, this.viewW - 4 - 56, 2, 'LAYER\nUP', () => this.leave('Game'), 1, true);
-    this.title = fixed(this.add.text(6, 8, 'INSIDE THE\nCABINET', {
-      fontFamily: UI.arcadeFont, fontSize: 8, color: COLORS.textReady, resolution: 1, lineSpacing: 4,
-    }));
+    this.layerBtn = addLayerButtonAt(this, 'up', () => this.leave('Game'), { zoom: LOBBY.zoom, scale: 2 / LOBBY.zoom, fixed: true });
+    this.title = fixed(this.add.text(this.viewW - 6, this.viewH - 8, 'INSIDE THE\nCABINET', {
+      fontFamily: UI.arcadeFont, fontSize: 8, color: COLORS.textReady, resolution: 1, lineSpacing: 4, align: 'right',
+    }).setOrigin(1, 1));
     // RPG text box, sized to its text: at the bottom, or at the top while Pac-Man is in the lower half.
     this.box = fixed(this.add.graphics());
     this.boxText = fixed(this.add.text(11, 0, '', {

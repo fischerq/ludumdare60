@@ -3,7 +3,7 @@ import { createAdder, stepAdder, hop, carryPos, pulsesAt, gateOut, cinOf, byteSt
 import { css, floor, neonLine } from '../systems/layers/tron.js';
 import { setDriver, setSpeed } from '../systems/arcade/world.js';
 import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
-import { addLayerButton } from '../layerButton.js';
+import { addLayerButtonAt } from '../layerButton.js';
 import { showCallout } from '../callout.js';
 
 const KEYS = {
@@ -79,7 +79,7 @@ export default class AdderScene extends Phaser.Scene {
     this.valueText = text(vw / 2, 50, '', COLORS.textDim);
     this.info = text(vw / 2 - 34, vh - BAR + 10, 'TAP: HOP UP\nSWIPE: HOP THAT WAY', COLORS.textDim);
     this.hitText = text(vw / 2 - 34, vh - BAR + 34, '', COLORS.textDim);
-    this.upZone = addLayerButton(this, vw - 64, vh - 42, 'LAYER\nUP', () => this.leave(), 1, true);
+    this.upZone = addLayerButtonAt(this, 'up', () => this.leave(), { zoom: ZOOM, fixed: true });
     this.children.list.slice(-3).forEach((o) => o.setDepth(21));
 
     this.setupInput();

@@ -5,7 +5,7 @@ import { createSwipe, swipeInput } from '../systems/swipe.js';
 import { css } from '../systems/layers/tron.js';
 import { world, setDriver, holdDir, onFrame, setSpeed } from '../systems/arcade/world.js';
 import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
-import { addLayerButton } from '../layerButton.js';
+import { addLayerButtonAt } from '../layerButton.js';
 import { showCallout } from '../callout.js';
 import { markWon } from '../progress.js';
 
@@ -73,14 +73,15 @@ export default class DeepScene extends Phaser.Scene {
     const text = (x, y, s, color = COLORS.text, size = 8) => this.add.text(x, y, s, {
       fontFamily: UI.arcadeFont, fontSize: size, color, align: 'center', resolution: 1,
     }).setOrigin(0.5, 0).setLineSpacing(4);
-    text(vw / 2, 12, this.L.title, css(this.P.line));
-    text(vw / 2, 30, this.L.subtitle, COLORS.textDim);
+    // Centered in the space left of the sound button (top-right corner); long subtitles wrap.
+    const tw = vw - 68, tx = 8 + tw / 2;
+    text(tx, 12, this.L.title, css(this.P.line));
+    text(tx, 30, this.L.subtitle, COLORS.textDim).setWordWrapWidth(tw);
     this.counter = text(vw / 2, vh - BOTTOM + 8, '');
     this.info = text(vw / 2, vh - BOTTOM + 22, '', COLORS.textDim);
 
-    const by = vh - 42;
     // Only up: back out into the board lobby inside the cabinet (each layer is entered from its subsystem there).
-    addLayerButton(this, vw - 64, by, 'LAYER\nUP', () => this.go({ from: this.L.id })); // right: the sound button sits bottom left
+    addLayerButtonAt(this, 'up', () => this.go({ from: this.L.id }), { zoom: ZOOM });
 
     this.setupInput();
     this.setupPauseOnHide();
