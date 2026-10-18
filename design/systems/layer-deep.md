@@ -71,8 +71,9 @@ current picture (a tile with as many colors as possible), magnified in its box a
 already mapped to the palette. 3 of its pixels are marked (different palette entries where the tile has them); walk
 onto each to take it. The PALETTE box shows the palette itself (`paletteSize` entries: the picture's most common
 colors, as 2x2-cell swatches) and lights the entries of the pixels you carry; step on a lit entry and that pixel
-becomes its color. With all 3 colored, walk into the DAC: one objective (it shows the colors as R/G/B levels), and a
-new frame starts. **The frame timer** counts down `frameTime` s; at zero the pixels you carry are dropped and the
+becomes its color. With all 3 colored, walk into the DAC: one objective, and a new frame starts. The pixels drop from you into
+the DAC's three slots, their R/G/B levels rise over them, then they leave one after the other along the video-out
+wire off the board (`dropTime`, `convertTime`, `sendTime`, `sendGap`). **The frame timer** counts down `frameTime` s; at zero the pixels you carry are dropped and the
 fetcher moves on to a new tile. **Objectives:** 4 deliveries.
 
 ## Layer -3: video RAM · built (gameplay pass)
@@ -150,3 +151,4 @@ the ones left). Every dot Pac-Man eats is a dot.
   writes) were nearly impossible to enter; playtest bots won 0% at every noise level. (Quirin asked to make the bus
   easier; Claude picked the fix from the [playtest](playtest.md) runs)
 - 2026-10-18: Video board polish: enemies removed (sprites, sound chip), it is a race against the frame timer (`frameTime`, drops what you carry at zero). Pickup and dropoff moved into big walk-in TILES / PALETTE / DAC boxes; the tile box shows the real fetched tile, you take 3 of its pixels, the palette box shows the palette and lights their entries.
+- 2026-10-18: Delivering in the DAC is animated: the pixels drop into its slots, show their R/G/B levels, then are sent out one by one along the video-out wire.

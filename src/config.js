@@ -213,6 +213,10 @@ export const DEEP = {
     frameTime: 12,       // s on the frame timer; at zero the pixels you carry are dropped and a new tile is fetched
     pixels: 3,           // pixels taken from the fetched tile per delivery
     paletteSize: 8,      // palette entries: the most common colors of the picture, every pixel maps to the nearest
+    dropTime: 0.4,       // s delivered pixels take to drop from you into the DAC's slots
+    convertTime: 0.6,    // s the DAC shows their red, green and blue levels rising
+    sendTime: 0.7,       // s each pixel takes along the video-out wire, one after the other
+    sendGap: 0.3,        // s between pixels leaving the DAC
     // . board, - | traces (walkable). Boxes: an uppercase letter is the box's solid frame, the same letter in
     // lowercase is floor inside it (lowercase on the frame is a doorway). V video RAM and F frame timer are solid;
     // T tile fetcher (its inside shows the fetched tile, 2x2 pixels per cell), P palette (its inside shows the
@@ -239,7 +243,7 @@ export const DEEP = {
       '...........||......',
       '.........DDddDD....',
       '.........DddddD....',
-      '.........DddddDooo.',
+      '.........DddddDoooo',
       '.........DddddD....',
       '.........DDDDDD....',
       '...................',

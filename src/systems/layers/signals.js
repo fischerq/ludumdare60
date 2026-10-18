@@ -25,6 +25,8 @@ const inside = (b, x, y) => x > b.x && x < b.x1 && y > b.y && y < b.y1;
 const TP = 16; // pixels per tile side; the tile fetcher shows 2x2 pixels per cell
 const SW = 2;  // palette swatches are SW x SW cells
 const SWROW = Math.floor((BOX.P.x1 - BOX.P.x - 1) / SW);
+// The video-out wire's row: where the DAC's pixels leave the board.
+const OUT = { y: MAP.findIndex((r) => r.includes('o')) };
 
 const rgb = (c) => `rgb(${c[0]},${c[1]},${c[2]})`;
 const dist = (a, b) => (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2;
@@ -128,7 +130,7 @@ export default {
     const sw = swatchAt(px, py);
     if (sw >= 0) for (const c of st.carry) if (c.e === sw && !c.color) c.color = true;
     if (inside(BOX.D, px, py) && st.carry.length === C.pixels && st.carry.every((c) => c.color)) {
-      st.out = { t, colors: st.carry.map((c) => st.frame.palette[c.e]) };
+      st.out = { t, from: st.follow ?? { x: px, y: py }, colors: st.carry.map((c) => st.frame.palette[c.e]) };
       this.newFrame(st, env);
       return 'objective';
     }
@@ -195,15 +197,45 @@ export default {
       ctx.fillStyle = css(want ? 0xffffff : P.dot, want || done ? 1 : 0.6);
       tinyText(ctx, hex2(e), x + 5, y + w - 10);
     });
-    // The DAC: the colors it turned into a signal last, as red, green and blue levels.
-    const D = BOX.D;
-    if (st.out && t - st.out.t < 2.5) {
-      st.out.colors.forEach((col, k) => {
-        for (let ch = 0; ch < 3; ch++) {
-          const h = Math.round((col[ch] / 255) * (3 * S - 4));
-          ctx.fillStyle = ['#ff4040', '#40ff40', '#4080ff'][ch];
-          ctx.fillRect((D.x + 1) * S + k * (4 * S / 3) + ch * 6 + 2, (D.y1) * S - 2 - h, 5, h);
+    // The DAC: delivered pixels drop from you into its slots, their red, green and blue levels rise, then they
+    // leave one after the other along the video-out wire.
+    const D = BOX.D, out = st.out, sz = Math.round(S * 0.6);
+    const slot = (k) => ({ x: (D.x + 1) * S + k * (4 * S / 3) + 4, y: D.y1 * S - sz - 4 });
+    const ease = (u) => 1 - (1 - Math.min(1, Math.max(0, u))) ** 2;
+    const sendAt = (k) => C.dropTime + C.convertTime + k * C.sendGap;
+    if (out && t - out.t < sendAt(out.colors.length - 1) + C.sendTime) {
+      const u = t - out.t, wy = OUT.y * S + Math.floor((S - sz) / 2);
+      out.colors.forEach((col, k) => {
+        const s0 = slot(k), sent = u - sendAt(k);
+        if (sent < 0) {
+          // Its levels as three bars over its slot, rising while the DAC converts.
+          const lv = ease((u - C.dropTime) / C.convertTime);
+          for (let ch = 0; ch < 3; ch++) {
+            const h = Math.round((col[ch] / 255) * (2 * S - 8) * lv);
+            ctx.fillStyle = ['#ff4040', '#40ff40', '#4080ff'][ch];
+            ctx.fillRect(s0.x + ch * Math.floor(sz / 3), s0.y - 2 - h, Math.floor(sz / 3) - 1, h);
+          }
         }
+        let x, y;
+        if (u < C.dropTime) {
+          const d = ease(u / C.dropTime), fx = out.from.x * S + (S - sz) / 2, fy = out.from.y * S + (S - sz) / 2;
+          x = fx + (s0.x - fx) * d; y = fy + (s0.y - fy) * d;
+        } else if (sent < 0) {
+          x = s0.x; y = s0.y;
+        } else {
+          // Out through the DAC's right side to the wire, then along it off the board.
+          const down = Math.abs(wy - s0.y), p = (sent / C.sendTime) * (down + COLS * S - s0.x);
+          if (p < down) { x = s0.x; y = s0.y + Math.sign(wy - s0.y) * p; } else { x = s0.x + p - down; y = wy; }
+          ctx.globalAlpha = 0.35;
+          ctx.fillStyle = rgb(col);
+          ctx.fillRect(x - sz, y + sz / 4, sz, sz / 2);
+          ctx.globalAlpha = 1;
+        }
+        if (x >= COLS * S) return;
+        ctx.fillStyle = rgb(col);
+        ctx.fillRect(Math.round(x), Math.round(y), sz, sz);
+        ctx.strokeStyle = '#ffffff';
+        ctx.strokeRect(Math.round(x) + 0.5, Math.round(y) + 0.5, sz - 1, sz - 1);
       });
     } else if (st.carry.length === C.pixels && st.carry.every((cc) => cc.color)) {
       neonBox(ctx, (D.x + 1) * S + 1, (D.y + 1) * S + 1, (D.x1 - D.x - 1) * S - 2, (D.y1 - D.y - 1) * S - 2, blink ? 0xffffff : P.line, P.glow);
