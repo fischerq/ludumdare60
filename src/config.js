@@ -209,40 +209,43 @@ export const DEEP = {
     cornerRadius: 2,     // tiles: the tube's rounded corners can't be walked on
     goal: 4,             // the four power pellets
   },
-  signals: {             // -2 the video board: carry a color index from the tile fetcher via the palette to the DAC
-    sparkEvery: 1.2,     // s between color indices the tile fetcher sends out (one per dot tile it fetches)
-    sparkLife: 6,        // s one waits on a fetcher pin to be picked up
-    maxSparks: 4,
-    pulseTime: 0.6,      // s the sound chip's area is deadly after a sound command
-    pulseRadius: 2,      // tiles around the sound chip
-    // . board, - | + traces (walkable); chips (solid): V video RAM, T tile fetcher, L sprite line buffer,
-    // P palette PROM, D DAC, S sound chip. Pins (walkable): f fetcher outputs, p palette inputs, d DAC inputs,
-    // o video out. The hardware sprites move over the board at their register positions (scaled to it).
+  signals: {             // -2 the video board: a race against the frame timer, tile pixels via the palette to the DAC
+    frameTime: 12,       // s on the frame timer; at zero the pixels you carry are dropped and a new tile is fetched
+    pixels: 3,           // pixels taken from the fetched tile per delivery
+    paletteSize: 8,      // palette entries: the most common colors of the picture, every pixel maps to the nearest
+    dropTime: 0.4,       // s delivered pixels take to drop from you into the DAC's slots
+    convertTime: 0.6,    // s the DAC shows their red, green and blue levels rising
+    sendTime: 0.7,       // s each pixel takes along the video-out wire, one after the other
+    sendGap: 0.3,        // s between pixels leaving the DAC
+    // . board, - | traces (walkable). Boxes: an uppercase letter is the box's solid frame, the same letter in
+    // lowercase is floor inside it (lowercase on the frame is a doorway). V video RAM and F frame timer are solid;
+    // T tile fetcher (its inside shows the fetched tile, 2x2 pixels per cell), P palette (its inside shows the
+    // entries as 2x2-cell swatches), D the DAC (deliver inside). o video out.
     layout: [
       '...................',
-      '.VVVVV.....TTTTTT..',
-      '.VVVVV-----TTTTTT..',
-      '.VVVVV.....TTTTTT..',
-      '...........ffffff..',
-      '...........|....|..',
-      '...........|....|..',
-      '.LLLL......|....|..',
-      '.LLLL------+....|..',
-      '.LLLL......|....|..',
-      '...........|....|..',
-      '...........|....|..',
-      '...........+-pp-+..',
-      '.........PPPPPPP...',
-      '.........PPPPPPP...',
-      '...........|.|.....',
-      '...........dd......',
-      '..........DDDD.....',
-      '..........DDDD.....',
+      '.VVVV..TTTTTTTTTT..',
+      '.VVVV..TttttttttT..',
+      '.VVVV--tttttttttT..',
+      '.VVVV..TttttttttT..',
+      '.......TttttttttT..',
+      '.......TttttttttT..',
+      '.......TttttttttT..',
+      '.......TttttttttT..',
+      '.......TttttttttT..',
+      '.......TTTTttTTTT..',
       '...........||......',
+      '.FFFFF.PPPPppPPPP..',
+      '.FFFFF.PppppppppP..',
+      '.FFFFF.PppppppppP..',
+      '.FFFFF.PppppppppP..',
+      '.FFFFF.PppppppppP..',
+      '.......PPPPppPPPP..',
       '...........||......',
-      '.SSS.......oo......',
-      '.SSS...............',
-      '...................',
+      '.........DDddDD....',
+      '.........DddddD....',
+      '.........DddddDoooo',
+      '.........DddddD....',
+      '.........DDDDDD....',
       '...................',
     ],
     goal: 4,             // colors delivered
