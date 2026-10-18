@@ -55,7 +55,7 @@ export default {
     const pic = new Array(N).fill(null);
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       const i = y * W + x, o = tileOffset(x, y), c = m.vram[o];
-      if (c === CELL.wall) pic[i] = 'wall';
+      if (c >= CELL.wall) pic[i] = 'wall';   // like the program: every code from the wall up blocks (fruit, garbage)
       else if (c === CELL.door) pic[i] = 'door';
       else if (PELLETS.includes(o) ? !st.got.has(o) : (c === CELL.dot || c === CELL.power) && !st.eaten.has(o)) pic[i] = 'dot';
     }

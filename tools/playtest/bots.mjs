@@ -189,7 +189,7 @@ const input = {
 function mazeRace(m, g, isGoal, react, safety) {
   const wall = (x, y) => {
     if (y < 0 || y >= H) return true;
-    return m.vram[tileOffset(((x % W) + W) % W, y)] === CELL.wall;
+    return m.vram[tileOffset(((x % W) + W) % W, y)] >= CELL.wall;   // walls and anything above (game.asm can_enter)
   };
   const pacOpen = (x, y) => {
     if (wall(x, y)) return false;
