@@ -4,7 +4,7 @@ import { createWalker, steerWalker, stepWalker } from '../systems/layers/walker.
 import { createSwipe, swipeInput } from '../systems/swipe.js';
 import { css } from '../systems/layers/tron.js';
 import { world, setDriver, holdDir, onFrame, setSpeed } from '../systems/arcade/world.js';
-import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
+import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 import { showCallout } from '../callout.js';
 
@@ -27,6 +27,7 @@ export default class DeepScene extends Phaser.Scene {
     this.index = Phaser.Math.Clamp(data.layer ?? 0, 0, DEEP_LAYERS.length - 1);
     this.L = DEEP_LAYERS[this.index];
     this.P = DEEP.style[this.L.id];
+    setBed(this.L.id);
     this.machine = world.machine;
     this.S = world.program.symbols;
     this.st = this.L.init({ m: this.machine, S: this.S });

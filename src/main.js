@@ -7,6 +7,7 @@ import HallScene from './scenes/HallScene.js';
 import DeepScene from './scenes/DeepScene.js';
 import { world, startWorld, tickWorld, pauseWorld } from './systems/arcade/world.js';
 import { loadProgram } from './systems/arcade/program.js';
+import { unlockAudio, toggleMute, isMuted } from './sound.js';
 
 const config = {
   type: Phaser.AUTO,
@@ -38,3 +39,9 @@ window.game.events.on(Phaser.Core.Events.VISIBLE, () => pauseWorld(false));
 // comes back, and on a local server (plain http) also every second while the game runs.
 document.addEventListener('visibilitychange', () => { if (!document.hidden) reloadAnim(); });
 if (location.protocol === 'http:') setInterval(() => { if (!document.hidden) reloadAnim(); }, 1000);
+
+// Sound on/off: one button over every scene (an HTML button, so no scene has to make room for it).
+const muteButton = document.getElementById('mute');
+const showMute = () => { muteButton.textContent = isMuted() ? '\u00d7' : '\u266a'; };
+muteButton.addEventListener('click', () => { unlockAudio(); toggleMute(); showMute(); });
+showMute();

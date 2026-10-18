@@ -52,6 +52,7 @@ bonus. See [movement](systems/movement.md).
 | Deep layers (screen → wires), on the emulator | first slices built | [layer-deep](systems/layer-deep.md) | none yet |
 | Emulated arcade machine (runs the maze game, feeds every layer) | built (plan steps 1-9) | [emulator](systems/emulator.md) | none yet |
 | Playtest bots (difficulty per layer, full playthrough) | built | [playtest](systems/playtest.md) | `/lab/playtest.html` |
+| Audio (background sound per layer) | decided, first slice built | [audio](systems/audio.md) | none yet |
 | Mini-gurke easter egg | proposed | [layers](systems/layers.md#mini-gurke-easter-egg--proposed) | none |
 
 ## Vertical slice · decided
@@ -66,6 +67,7 @@ if cheap. Max makes the pixel art; the list of sprites and how they get into the
 [art](systems/art.md). The maze game runs full screen with no cabinet frame; clearing the first level changes that.
 **Pixel art throughout, no real 3D:** depth is simulated in pixel art (oblique views). Zooming between layers
 changes the pixel size by whole factors so every layer stays crisp. Deeper layers can change look to match the tech they show (schematics, hex dumps, assembly listings).
+Audio is synthesized like the era's hardware, with its own background bed per layer (decided, see [audio](systems/audio.md)).
 
 ## Current prototype
 The arcade maze game: menu, one maze, 4 ghosts, swipe to turn, sound. Clearing the maze shows a placeholder
@@ -119,3 +121,4 @@ survives only as the movement lab bench.
   until a coin goes in; deep layers run the machine 4x slower. See [layers](systems/layers.md). (Quirin)
 - 2026-10-17: Playtest bots: a bot plays every layer (and the whole outer loop) with structured human noise;
   `node tools/playtest.mjs` measures win rate and time to solve per noise level. See [playtest](systems/playtest.md). (Quirin)
+- 2026-10-18: Every layer gets its own synthesized background sound in the style of its tech; see [audio](systems/audio.md).

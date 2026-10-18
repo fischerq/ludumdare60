@@ -414,6 +414,132 @@ export const SOUND = {
   volume: 0.25,
 };
 
+// Background sound, one bed per layer (design/systems/audio.md). Everything is synthesized like the tech of the
+// time: the machine's layers use wavetable voices like Pac-Man's Namco sound chip (32 steps of 4 bits, written
+// as hex below), the hall radio plays 80s FM synth-pop (two operators, like a DX7) through a small speaker.
+// Patterns: one token per 16th step, '.' a rest, numbers are semitones above the bed's root (MIDI note), '0,3,7'
+// plays a chord, drums are k (kick), s (snare), h (hat). Tracks loop on their own length, so they can drift.
+const RADIO_SONG = {
+  bpm: 112, root: 45, // A minor: Am F C G, one chord a bar
+  tracks: [
+    { synth: 'fm', ratio: 1, index: 2.5, decay: 0.12, sustain: 0.2, vol: 0.5, notes:
+      '0 . 0 . 12 . 0 . 0 . 0 . 12 . 0 . -4 . -4 . 8 . -4 . -4 . -4 . 8 . -4 . ' +
+      '3 . 3 . 15 . 3 . 3 . 3 . 15 . 3 . -2 . -2 . 10 . -2 . -2 . -2 . 10 . -2 .' },
+    { synth: 'fm', ratio: 14, index: 0.6, decay: 0.5, sustain: 0.15, len: 3, vol: 0.18, oct: 12, notes:
+      '12,15,19 . . . . . 12,15,19 . . . 12,15,19 . . . . . 8,12,15 . . . . . 8,12,15 . . . 8,12,15 . . . . . ' +
+      '15,19,22 . . . . . 15,19,22 . . . 15,19,22 . . . . . 10,14,17 . . . . . 10,14,17 . . . 10,14,17 . . . . .' },
+    { synth: 'fm', ratio: 2, index: 1.2, decay: 0.3, sustain: 0.4, len: 2, vol: 0.22, oct: 12, notes:
+      '24 . . 27 . 24 . 22 . . 19 . . . . . 20 . . 24 . 27 . . 29 . 27 . 24 . . . ' +
+      '27 . . 31 . 27 . 24 . . 22 . . . . . 22 . 24 . 26 . . 24 . . 22 . 19 . . .' },
+    { synth: 'drum', vol: 0.5, notes: 'k . h . s . h . k . k h s . h h' },
+  ],
+};
+
+export const MUSIC = {
+  volume: 0.55,      // all beds, relative to the sound effects
+  fade: 0.6,         // s, crossfade when the layer changes
+  lookahead: 0.12,   // s of notes scheduled ahead
+  waves: {           // 32 samples, 0 to f
+    sine: '89acdeefffeedca98653211000112356',
+    organ: '8aceffedcbaa99888776655432100135',
+    tri: '0123456789abcdeffedcba9876543210',
+    saw: '00112233445566778899aabbccddeeff',
+    pulse: 'ffffffff000000000000000000000000',
+    square: 'ffffffffffffffff0000000000000000',
+  },
+  beds: {
+    // Quiet arcade: the radio behind the counter, now and then a bleep from one of the machines.
+    hall: {
+      ...RADIO_SONG, vol: 0.9,
+      filter: { type: 'bandpass', freq: 1400, q: 0.6 }, // the radio's small speaker
+      textures: [
+        { type: 'noise', filter: 'highpass', freq: 4000, vol: 0.012 },
+        { type: 'blips', chance: 0.025, lo: 72, hi: 96, len: 1, wave: 'square', vol: 0.05, lp: 2500 },
+      ],
+    },
+    // In front of the machine: its mains hum and fan, the radio muffled behind you.
+    cabinet: {
+      ...RADIO_SONG, vol: 0.45,
+      filter: { type: 'lowpass', freq: 500, q: 0.5 },
+      textures: [
+        { type: 'tone', wave: 'saw', freq: 50, vol: 0.05 },
+        { type: 'noise', filter: 'lowpass', freq: 350, vol: 0.12 },
+      ],
+    },
+    // The original has no music: just the siren, a little higher and faster every stage of dots eaten.
+    maze: {
+      textures: [
+        { type: 'siren', wave: 'sine', vol: 0.14, stages: [
+          { lo: 380, hi: 700, period: 0.42 }, { lo: 430, hi: 780, period: 0.39 }, { lo: 480, hi: 860, period: 0.36 },
+          { lo: 540, hi: 950, period: 0.33 }, { lo: 600, hi: 1050, period: 0.30 },
+        ] },
+      ],
+    },
+    // The deep layers: the machine's own sound chip playing Tron. Each layer its own key, tempo and texture.
+    crt: {
+      bpm: 90, root: 50, // D: slow and wide, the tube's flyback whine and high-voltage buzz
+      tracks: [
+        { wave: 'tri', len: 14, vol: 0.4, oct: -12, notes: '0 . . . . . . . . . . . . . . . -2 . . . . . . . . . . . . . . .' },
+        { wave: 'organ', len: 2, vol: 0.12, oct: 12, notes: '0 . 7 . 12 . 7 . 3 . 10 . 15 . 10 .' },
+      ],
+      textures: [
+        { type: 'tone', wave: 'sine', freq: 15734, vol: 0.006 },
+        { type: 'tone', wave: 'saw', freq: 50, vol: 0.03 },
+      ],
+    },
+    signals: {
+      bpm: 120, root: 48, // C: the video board's pixel clock ticking under a pulsing bass
+      tracks: [
+        { wave: 'pulse', vol: 0.3, oct: -12, notes: '0 . 0 . 0 . 0 . -5 . -5 . -2 . -2 .' },
+        { wave: 'saw', vol: 0.1, oct: 12, notes: '0 3 7 3 0 3 7 10' },
+      ],
+      textures: [{ type: 'ticks', every: 1, freq: 9000, vol: 0.05 }],
+    },
+    vram: {
+      bpm: 100, root: 45, // A: slow organ steps over the memory's refresh pulse
+      tracks: [
+        { wave: 'square', vol: 0.22, oct: -12, notes: '0 . . 0 . . 0 . -4 . . -4 . . -4 .' },
+        { wave: 'organ', len: 3, vol: 0.16, oct: 12, notes: '0 . . . 7 . . . 5 . . . 3 . . . 0 . . . 7 . . . 10 . . . 8 . . .' },
+      ],
+      textures: [{ type: 'blips', every: 4, lo: 96, hi: 96, len: 0.5, wave: 'sine', vol: 0.04 }],
+    },
+    bus: {
+      bpm: 132, root: 52, // E: driving bass, data chattering across the bus
+      tracks: [
+        { wave: 'saw', vol: 0.3, oct: -12, notes: '0 0 . 0 0 . 0 . 3 3 . 3 5 . 3 .' },
+      ],
+      textures: [{ type: 'blips', chance: 0.35, lo: 76, hi: 100, len: 1, wave: 'pulse', vol: 0.05 }],
+    },
+    cpu: {
+      bpm: 144, root: 49, // C#: a fast arpeggio on the clock
+      tracks: [
+        { wave: 'tri', len: 6, vol: 0.4, oct: -12, notes: '0 . . . . . . . -4 . . . -2 . . .' },
+        { wave: 'pulse', vol: 0.12, oct: 12, notes: '0 7 12 15 12 7 0 7 3 10 15 19 15 10 3 10' },
+      ],
+      textures: [{ type: 'ticks', every: 2, freq: 6000, vol: 0.06 }],
+    },
+    logic: {
+      bpm: 108, root: 47, // B: a step sequencer walking its rules
+      tracks: [
+        { wave: 'square', len: 2, vol: 0.2, oct: -12, notes: '0 . . . 0 . . . 0 . . . 0 . . .' },
+        { wave: 'organ', vol: 0.16, notes: '0 . 3 . 7 . 3 . 0 . 5 . 8 . 5 .' },
+      ],
+      textures: [{ type: 'blips', every: 8, lo: 83, hi: 83, len: 0.5, wave: 'sine', vol: 0.05 }],
+    },
+    input: {
+      bpm: 80, root: 40, // E: low and tense, the wires hum and the switches click
+      tracks: [
+        { wave: 'saw', len: 14, vol: 0.3, notes: '0 . . . . . . . . . . . . . . . 1 . . . . . . . . . . . . . . .' },
+        { wave: 'tri', len: 6, vol: 0.2, oct: 12, notes: '. . . . 12 . . . . . . . . . . . . . . . 13 . . . . . . . . . . .' },
+      ],
+      textures: [
+        { type: 'tone', wave: 'tri', freq: 50, vol: 0.12 },
+        { type: 'ticks', chance: 0.06, freq: 3000, vol: 0.12 },
+      ],
+    },
+  },
+};
+
 export const UI = {
   fontFamily: 'system-ui, -apple-system, sans-serif',
   arcadeFont: '"Press Start 2P", "Courier New", monospace',

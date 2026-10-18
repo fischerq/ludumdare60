@@ -1,5 +1,5 @@
 import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, PIXEL, UI } from '../config.js';
-import { unlockAudio } from '../sound.js';
+import { unlockAudio, setBed } from '../sound.js';
 import { fxSeconds, animFrame, PAC_CYCLE } from '../systems/anim.js';
 
 export default class MenuScene extends Phaser.Scene {
@@ -8,6 +8,7 @@ export default class MenuScene extends Phaser.Scene {
   }
 
   create() {
+    setBed(null);
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;
 
