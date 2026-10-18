@@ -8,11 +8,11 @@
   <meta name="theme-color" content="#000000">
   <title>Layers of Pac</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/press-start-2p@5.0.20/index.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/press-start-2p@5.0.20/index.css" media="print" onload="this.media='all'">
   <!-- The service manual (src/manual/): a worn typewriter face for headings, Courier Prime for the text. -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/special-elite@5.2.8/index.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/courier-prime@5.2.8/index.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/courier-prime@5.2.8/700.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/special-elite@5.2.8/index.css" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/courier-prime@5.2.8/index.css" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/courier-prime@5.2.8/700.css" media="print" onload="this.media='all'">
   <style>
     html, body {
       margin: 0;
@@ -46,12 +46,69 @@
       position: fixed;
       inset: 0;
     }
+    /* Boot screen: an arcade power-on self test, plain HTML so it shows before Phaser has downloaded. */
+    #boot {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      background: #000;
+      color: #fff;
+      font: 20px/1.6 "Press Start 2P", monospace;
+      transition: opacity 0.25s;
+    }
+    #boot.done { opacity: 0; pointer-events: none; }
+    #boot-lines { width: min(70vw, 360px); white-space: pre; }
+    #boot-lines .ok { color: #ffb8ff; }
+    #boot-bar {
+      width: min(70vw, 360px);
+      height: 20px;
+      border: 3px solid #2121de;
+      padding: 3px;
+    }
+    #boot-fill {
+      height: 100%;
+      width: 0;
+      background: #ffff00;
+      transition: width 0.2s;
+    }
   </style>
 </head>
 <body>
   <div id="game"></div>
+  <div id="boot"><div id="boot-lines"></div><div id="boot-bar"><div id="boot-fill"></div></div></div>
   <button id="mute" aria-label="Sound on or off"></button>
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
+  <script>
+    // Boot screen: each check prints a line when it passes, the bar fills with the overall progress.
+    // Until Phaser has arrived (it can't report progress) the bar creeps towards the first step.
+    window.bootScreen = (() => {
+      const lines = document.getElementById('boot-lines'), fill = document.getElementById('boot-fill');
+      let shown = 0, creep = 0;
+      const set = (f) => { shown = Math.max(shown, Math.min(1, f)); fill.style.width = `${shown * 100}%`; };
+      const timer = setInterval(() => { creep += (0.35 - creep) * 0.08; set(creep); }, 100);
+      const line = (name) => {
+        const el = document.createElement('div');
+        el.innerHTML = `${name.padEnd(8)}<span class="ok">OK</span>`;
+        lines.appendChild(el);
+      };
+      line('RAM');
+      return {
+        step(name, f) { clearInterval(timer); line(name); set(f); },
+        progress(f) { clearInterval(timer); set(f); },
+        done() {
+          clearInterval(timer); set(1);
+          const boot = document.getElementById('boot');
+          boot.classList.add('done');
+          setTimeout(() => boot.remove(), 300);
+        },
+      };
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js" defer></script>
   <script>
     // iOS Safari ignores user-scalable=no for pinch and double-tap; block those gestures directly.
     ['gesturestart', 'gesturechange', 'dblclick'].forEach((t) =>
