@@ -58,13 +58,18 @@ portraits, one screen at 4x). Wire auto-joining and lookups in `src/systems/lobb
   machine's game continues). Deep layers: only LAYER UP, back to the lobby in front of their subsystem (no
   deep → deep). Winning a layer: the LAYER CLEAR callout (naming the subsystem that woke up), then back to the
   lobby after `LOBBY.clearDelay`, where the newly unlocked subsystem blinks lit (`-lit` art) and says it woke up.
-- **Reserved for the bonus layer:** the adder at (8, 16) and its switch at (9, 16) in `LOBBY.layout` (plain floor
-  for now, `LOBBY.reserved`). Once every subsystem is won (`allWon()`), a **bonus layer** appears: the physical
+- **The bonus layer (built, wired 2026-10-18):** the adder (`A`) and its 256 switch (`Z`) stand at
+  `LOBBY.reserved` (8, 16) and (9, 16), plain floor until every subsystem is won. Once every subsystem is won (`allWon()`), a **bonus layer** appears: the physical
   8-bit add of the round counter, played like Crossy Road. Winning it overflows the counter
   ([map 256 glitch](https://pacman.fandom.com/wiki/Map_256_Glitch)), flips the switch next to it in the lobby and
-  makes the switch usable; while it's on, the maze shows level 256. (Built separately.)
+  makes the switch usable; while it's on, the maze shows level 256. The adder glows while unplayed; talking to it
+  offers ENTER into the [Adder scene](layer-adder.md), which returns to the lobby. Winning flips the switch on
+  (`markAdderWon` in `src/progress.js`) and calls `setLevel256(true)` (`src/systems/arcade/world.js`): the machine's
+  round restarts on level 256 and the garbage is the program's own 8-bit overflow (see [arcade-maze](arcade-maze.md)).
+  Before that the switch is stuck; after, tapping it offers FLIP ON / FLIP OFF (level 256 / level 1). While it's
+  on, every fresh game also starts on level 256.
 - **Video RAM is replaced by work RAM** (see [layer-deep](layer-deep.md)): there were already many video layers.
-- Not in this slice: the bonus layer and the switch, saving progress, sounds of their own for the lobby (it uses
+- Not in this slice: saving progress, sounds of their own for the lobby (it uses
   the cabinet's bed), animated subsystems beyond the blink.
 
 ## Layer ideas · open (brainstorm, nothing decided)
@@ -131,3 +136,6 @@ minigame, a counter on the layer map, no unlock.*
   replaces video RAM; the logic is a brain with the ghosts on wires. (Quirin, defaults accepted)
 - 2026-10-18: Bonus layer built as its own scene: the round counter's +1 as a ripple-carry adder, Crossy Road style;
   it reports the win to whoever started it. See [layer-adder](layer-adder.md). (Quirin, defaults accepted)
+- 2026-10-18: The adder bonus layer is wired into the lobby: it appears with its 256 switch once every subsystem is won;
+  winning it flips the switch on and puts the machine on level 256 (the real overflow); after that the switch toggles
+  level 256 / level 1, and fresh games follow it. (Quirin, defaults accepted)

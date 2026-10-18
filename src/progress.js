@@ -30,3 +30,11 @@ export function setWonCount(n) {
   won.clear();
   ORDER.slice(0, n).forEach((id) => won.add(id));
 }
+
+// The bonus layer (the round counter's adder) shows once every subsystem is won. Winning it flips the 256 switch
+// next to it on, and from then on the switch can be flipped by hand: on, the maze plays level 256.
+let adderWon = false, switchOn = false;
+export const isAdderWon = () => adderWon;
+export const isSwitchOn = () => switchOn;
+export function markAdderWon() { adderWon = true; switchOn = true; }
+export function setSwitch(on) { if (adderWon) switchOn = !!on; }

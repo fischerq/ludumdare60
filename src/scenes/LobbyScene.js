@@ -4,7 +4,8 @@ import { wireMask, ghostWire, subsystemOf, subsystemTiles, standFor, ghostFacing
 import { tileKey } from '../systems/tiles.js';
 import { charFrame } from '../systems/anim.js';
 import { DEEP_LAYERS } from '../systems/layers/index.js';
-import { ORDER, isUnlocked, isWon, allWon } from '../progress.js';
+import { ORDER, isUnlocked, isWon, allWon, isAdderWon, isSwitchOn, markAdderWon, setSwitch } from '../progress.js';
+import { setLevel256 } from '../systems/arcade/world.js';
 import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
 
@@ -32,9 +33,20 @@ export default class LobbyScene extends Phaser.Scene {
     this.won = !!data?.won;
   }
 
+  // The map: once every subsystem is won, the adder (A) and its 256 switch (Z) stand on their reserved tiles.
+  layout() {
+    const rows = LOBBY.layout.map((r) => [...r]);
+    if (allWon()) {
+      const { adder, switch: sw } = LOBBY.reserved;
+      rows[adder.y][adder.x] = 'A';
+      rows[sw.y][sw.x] = 'Z';
+    }
+    return rows.map((r) => r.join(''));
+  }
+
   create() {
     setBed('cabinet');
-    this.h = createHall(LOBBY.layout, { solid: LOBBY.solid, speed: LOBBY.walkSpeed, ghosts: {} });
+    this.h = createHall(this.layout(), { solid: LOBBY.solid, speed: LOBBY.walkSpeed, ghosts: {} });
     this.viewW = GAME_WIDTH / LOBBY.zoom;
     this.viewH = GAME_HEIGHT / LOBBY.zoom;
     // The room sits at the bottom of the view: the LAYER UP button gets the strip above it.
@@ -50,11 +62,12 @@ export default class LobbyScene extends Phaser.Scene {
     this.drawMap();
     // Pac-Man starts on S, or in front of the subsystem he comes out of.
     const p = this.h.pac;
-    const deep = this.from && this.from !== 'maze' ? this.from : null;
+    const deep = this.from && this.from !== 'maze' && this.from !== 'adder' ? this.from : null;
     const stand = deep && standFor(this.h, deep);
     if (stand) Object.assign(p, stand);
+    if (this.from === 'adder') Object.assign(p, { x: LOBBY.reserved.adder.x, y: LOBBY.reserved.adder.y - 1, dir: 'down' });
     // The zoom out starts at the part we come out of: the monitor from the maze, else the subsystem.
-    this.focus = this.centerOf(deep ?? 'crt');
+    this.focus = this.from === 'adder' ? this.reservedCenter('adder') : this.centerOf(deep ?? 'crt');
     this.mode = this.from ? 'intro' : 'walk';
     this.introT = this.from ? 0 : 1;
 
@@ -88,6 +101,11 @@ export default class LobbyScene extends Phaser.Scene {
     return { x: this.sx(ts.reduce((a, t) => a + t.x, 0) / ts.length), y: this.sy(ts.reduce((a, t) => a + t.y, 0) / ts.length) };
   }
 
+  reservedCenter(name) {
+    const r = LOBBY.reserved[name];
+    return { x: this.sx(r.x), y: this.sy(r.y) };
+  }
+
   place(s, at) {
     const y = Math.round(this.sy(at.y));
     s.setDisplaySize(LOBBY.charSize, LOBBY.charSize).setPosition(Math.round(this.sx(at.x)), y).setDepth(y);
@@ -107,6 +125,8 @@ export default class LobbyScene extends Phaser.Scene {
       }
       at('floor');
       if (PARTS[c]) at(PARTS[c]);
+      if (c === 'A') this.adderImg = at('adder-on');
+      if (c === 'Z') this.switchImg = at('switch-stuck');
       const id = subsystemOf(c);
       if (id) (this.subImages[id] ??= []).push(at(`${id}-on`));
     }));
@@ -119,6 +139,10 @@ export default class LobbyScene extends Phaser.Scene {
       if (this.highlight?.id === id && Math.floor(this.highlight.t * LOBBY.highlightRate * 2) % 2 === 0) mood = 'lit';
       imgs.forEach((im) => im.setTexture(tileKey('board', `${id}-${mood}`)));
     }
+    // The adder glows while it's waiting to be played; the switch shows stuck, off or on.
+    const blink = Math.floor(this.t * LOBBY.highlightRate / 3) % 2 === 0;
+    this.adderImg?.setTexture(tileKey('board', !isAdderWon() && blink ? 'adder-lit' : 'adder-on'));
+    this.switchImg?.setTexture(tileKey('board', `switch-${!isAdderWon() ? 'stuck' : isSwitchOn() ? 'on' : 'off'}`));
   }
 
   makeUi() {
@@ -193,6 +217,8 @@ export default class LobbyScene extends Phaser.Scene {
     const f = facing(this.h), tx = LOBBY.text;
     const id = subsystemOf(f.cell);
     if (id) { this.talkTo(id); return; }
+    if (f.cell === 'A') { this.talkToAdder(); return; }
+    if (f.cell === 'Z') { this.useSwitch(); return; }
     const ghost = LOBBY.ghosts[f.cell];
     if (ghost) { this.say(tx[ghost], 'board/portrait-logic'); return; }
     const key = LOBBY.cellText[f.cell];
@@ -210,6 +236,35 @@ export default class LobbyScene extends Phaser.Scene {
     this.say(text, `board/portrait-${id}`, [
       { label: tx.enter, act: () => this.enter(id) },
       { label: tx.notNow },
+    ]);
+  }
+
+  // The bonus layer: the round counter's +1, played in the Adder scene. Winning it flips the 256 switch on.
+  talkToAdder() {
+    const tx = LOBBY.text;
+    this.say(isAdderWon() ? `${tx.adder} ${tx.adderWon}` : tx.adder, 'board/portrait-adder', [
+      { label: tx.enter, act: () => this.enterAdder() },
+      { label: tx.notNow },
+    ]);
+  }
+
+  enterAdder() {
+    const back = { from: 'adder' };
+    this.leave('Adder', {
+      returnTo: 'Lobby',
+      returnData: back,
+      onWin: () => { markAdderWon(); setLevel256(true); back.won = true; },
+    }, this.reservedCenter('adder'));
+  }
+
+  // The 256 switch: stuck until the adder is won, then it flips the maze between level 256 and level 1.
+  useSwitch() {
+    const tx = LOBBY.text;
+    if (!isAdderWon()) { this.say(tx.switchStuck, 'board/portrait-switch'); return; }
+    const on = isSwitchOn();
+    this.say(on ? tx.switchOn : tx.switchOff, 'board/portrait-switch', [
+      { label: on ? tx.flipOff : tx.flipOn, act: () => { sfx.click(); setSwitch(!on); setLevel256(!on); } },
+      { label: tx.leave },
     ]);
   }
 
@@ -324,7 +379,8 @@ export default class LobbyScene extends Phaser.Scene {
   arrived() {
     this.mode = 'walk';
     const tx = LOBBY.text;
+    if (this.from === 'adder' && this.won) { sfx.power(); this.say(tx.switchFlipped, 'board/portrait-switch'); return; }
     if (this.highlight) { sfx.power(); this.say(tx.woke.replace('{name}', LOBBY.names[this.highlight.id]), `board/portrait-${this.highlight.id}`); }
-    else if (this.won && allWon()) this.say(tx.allWon, 'board/portrait-logic');
+    else if (this.won && allWon()) this.say(`${tx.allWon} ${tx.adderAppears}`, 'board/portrait-adder');
   }
 }

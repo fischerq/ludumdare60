@@ -501,7 +501,7 @@ export const HALL = {
 // M/m the monitor (3x2, top front), K speaker, J joystick (control panel), D coin door, W power supply,
 // E edge connector (the harness plugs into the board), S start. On the board stack: V video board, R work RAM,
 // B bus, C CPU, L the logic brain with the four ghosts 1-4 (blinky, pinky, inky, clyde) on wires to it.
-// Reserved, still plain floor: the adder at (8, 16) and its switch at (9, 16) (LOBBY.reserved), for the bonus layer.
+// A the round counter's adder and Z its 256 switch: plain floor at LOBBY.reserved until every subsystem is won.
 export const LOBBY = {
   layout: [
     '###########',
@@ -523,7 +523,7 @@ export const LOBBY = {
     '#...B.....#',
     '###########',
   ],
-  solid: '#MmKJDWEVRBCL1234',
+  solid: '#MmKJDWEVRBCL1234AZ',
   reserved: { adder: { x: 8, y: 16 }, switch: { x: 9, y: 16 } },
   // Map character -> deep layer id (src/systems/layers/). The monitor is all six of its tiles.
   subsystems: { M: 'crt', m: 'crt', V: 'signals', R: 'ram', B: 'bus', C: 'cpu', L: 'logic', J: 'input' },
@@ -571,6 +571,7 @@ export const LOBBY = {
     won: 'ALL DONE IN THERE.',
     woke: '{name} WOKE UP!',
     allWon: 'EVERY PART OF THE MACHINE IS AWAKE.',
+    adderAppears: 'BY THE BUS, THE ADDER LIGHTS UP: THE ROUND COUNTER.',
     enter: 'ENTER',
     notNow: 'NOT NOW',
     speaker: 'THE SPEAKER. THE WAKKA-WAKKA COMES OUT HERE.',
@@ -582,6 +583,15 @@ export const LOBBY = {
     pinky: 'PINKY: THE BRAIN SAYS AIM FOUR TILES AHEAD OF HIM.',
     inky: 'INKY: MY TARGET DEPENDS ON WHERE BLINKY IS.',
     clyde: 'CLYDE: CLOSE TO PAC-MAN I RUN TO MY CORNER.',
+    adder: "THE ADDER. EVERY CLEARED MAZE I ADD 1 TO THE ROUND COUNTER. IT'S ONLY 8 BITS: 255 IS 11111111.",
+    adderWon: 'ADD 1 TO 255 AND THE CARRY FALLS OFF THE END. THE COUNTER WRAPS TO 0.',
+    switchStuck: "A SWITCH MARKED 256. IT WON'T BUDGE. THE ADDER NEXT TO IT HOLDS IT DOWN.",
+    switchFlipped: 'OVERFLOW! THE 256 SWITCH FLIPPED ON. THE MAZE IS ON LEVEL 256 NOW.',
+    switchOn: 'THE 256 SWITCH IS ON: THE MAZE PLAYS LEVEL 256.',
+    switchOff: 'THE 256 SWITCH IS OFF: THE MAZE PLAYS FROM LEVEL 1.',
+    flipOn: 'FLIP ON',
+    flipOff: 'FLIP OFF',
+    leave: 'LEAVE IT',
   },
   // Which text a tile shows when you face it and tap (keys into `text`); subsystems and ghosts are handled apart.
   cellText: { K: 'speaker', D: 'door', W: 'power', E: 'edge', '#': 'wall' },

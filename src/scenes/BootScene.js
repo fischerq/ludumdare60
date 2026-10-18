@@ -852,6 +852,39 @@ export default class BootScene extends Phaser.Scene {
       rect(set, 0, 0, P, P, K.portraitBg);
       monitor(set, 1, 0, 8);
     });
+    // The round counter's adder (the bonus layer): a chip with "+1" in the adder layer's yellow.
+    const A = ADDER.style;
+    const adder = (set, k, mood) => {
+      chipBody(set, k, 1, 2, 14, 12, mood, ['top', 'bottom']);
+      const r = (x, y, w, h, c) => rect(set, Math.round(x * k), Math.round(y * k), Math.max(1, Math.round(w * k)), Math.max(1, Math.round(h * k)), c);
+      r(3, 11, 3, 1, A.line); r(4, 10, 1, 3, A.line);  // +
+      r(9, 10, 1, 3, A.line); r(8, 10, 1, 1, A.line);  // 1
+      face(set, k, 8 * k, 6.5 * k, mood);
+    };
+    tile('adder-on', (set) => adder(set, 1, 'on'));
+    tile('adder-lit', (set) => withGlow(set, T, A.line, (s2) => adder(s2, 1, 'lit')));
+    this.pixels('board/portrait-adder', P, P, (set) => {
+      rect(set, 0, 0, P, P, K.portraitBg);
+      adder((x, y, c) => set(x + 4, y + 4, c), 2.5, 'on');
+    });
+    // The 256 switch: a toggle on a plate. Stuck (held down by the adder, grey), off (lever down), on (up, lit).
+    const toggle = (set, k, state) => {
+      const r = (x, y, w, h, c) => rect(set, Math.round(x * k), Math.round(y * k), Math.max(1, Math.round(w * k)), Math.max(1, Math.round(h * k)), c);
+      const stuck = state === 'stuck', on = state === 'on';
+      r(3, 3, 10, 11, stuck ? K.chipOff : K.chip);
+      r(3, 3, 10, 1, stuck ? K.chipOff : K.chipLight);
+      r(4, 4, 8, 3, stuck ? K.legOff : on ? A.line : A.wire); // the 256 label plate
+      r(5, 5, 1, 1, K.chip); r(7.5, 5, 1, 1, K.chip); r(10, 5, 1, 1, K.chip);
+      r(6, 9, 4, 3, K.legOff); // the toggle's collar
+      if (on) { r(7, 7, 2, 3, K.leg); r(6.5, 6.5, 3, 1, K.eye); }
+      else { r(7, 11, 2, 3, stuck ? K.legOff : K.leg); r(6.5, 13.5, 3, 1, stuck ? K.legOff : K.eye); }
+      if (on) { r(12, 12, 1, 1, A.line); } else if (!stuck) { r(12, 12, 1, 1, K.slot); }
+    };
+    for (const state of ['stuck', 'off', 'on']) tile(`switch-${state}`, (set) => toggle(set, 1, state));
+    this.pixels('board/portrait-switch', P, P, (set) => {
+      rect(set, 0, 0, P, P, K.portraitBg);
+      toggle((x, y, c) => set(x + 4, y + 4, c), 2.5, 'on');
+    });
   }
 
   // The cabinet in an oblique view: the front is drawn flat, depth goes up and right at 45°, so the right side
