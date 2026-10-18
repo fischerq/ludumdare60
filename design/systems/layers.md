@@ -99,6 +99,8 @@ minigame, a counter on the layer map, no unlock.*
   `DEEP.machineSlowdown` (4x) slower than the maze. (Quirin; slowdown factor and coin rules: Claude's defaults)
 - 2026-10-17: The cabinet no longer plays: nobody at the controls means the machine stands still there, and a coin zooms into the maze layer. (Quirin)
 - 2026-10-17: Cabinet follow-up: the bot plays on a running game there, and the coin door only takes a coin while the machine asks for one. (Quirin)
+- 2026-10-18: The maze game gets levels and Pac-Man's level 256 kill screen from a real 8-bit overflow on the machine,
+  so every deep layer shows the same garbage; see [arcade-maze](arcade-maze.md). (Quirin)
 - 2026-10-18: Outer loop idea: a board lobby inside the cabinet with locked subsystems that unlock one at a time, video
   RAM swapped for another memory, the logic as a brain with the ghosts, and a Crossy Road bonus layer for the round
   counter's 8-bit add that triggers the level 256 glitch. Questions open. (Quirin)

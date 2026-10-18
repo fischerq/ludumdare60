@@ -1,4 +1,4 @@
-import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP, ADDER } from '../config.js';
+import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP, LEVELS, ADDER } from '../config.js';
 import { tinyText } from '../systems/layers/font.js';
 import { mazeTiles, tileKey } from '../systems/tiles.js';
 import { world } from '../systems/arcade/world.js';
@@ -34,6 +34,7 @@ export default class BootScene extends Phaser.Scene {
 
   create() {
     this.makePellets();
+    this.makeFruit();
     this.makePac();
     this.makeGhosts();
     this.makeTileset();
@@ -289,14 +290,34 @@ export default class BootScene extends Phaser.Scene {
       rect(set, 6, 10, 5, 1, 0x5a3a20);
       rect(set, 6, 8, 4, 2, K.gurke); set(10, 9, K.gurke); set(7, 8, K.gurkeLight); set(9, 9, K.gurkeDark);
     });
-    tile('manual-table', (set) => {
-      rect(set, 1, 4, 14, 7, K.table); rect(set, 1, 4, 14, 1, 0xc89058);
-      rect(set, 2, 11, 2, 3, K.counter); rect(set, 12, 11, 2, 3, K.counter);
-      shadow(set);
-      // Four booklets: Space Invaders, Asteroids, Donkey Kong, and ours (yellowed).
-      [[2, 0xd03030], [5, 0x3060d0], [8, 0x30a050], [11, 0xe8d890]].forEach(([x, c], i) => {
-        rect(set, x, 5 + (i % 2), 3, 4, c); set(x, 5 + (i % 2), 0xffffff);
+    // The paper sign on the counter in front of the owner.
+    tile('counter-sign', (set) => {
+      counter(set);
+      rect(set, 3, 0, 10, 8, K.signPaper); rect(set, 3, 0, 10, 1, K.signEdge); rect(set, 3, 7, 10, 1, K.signEdge);
+      rect(set, 3, 0, 1, 8, K.signEdge); rect(set, 12, 0, 1, 8, K.signEdge);
+      rect(set, 5, 2, 6, 1, K.signInk); rect(set, 5, 4, 4, 1, K.signInk); rect(set, 10, 4, 1, 1, K.signInk);
+    });
+    // The manuals table, two tiles: the stack (Space Invaders, Asteroids, Donkey Kong, Galaxian's torn one) on the
+    // left, ours on its own on the right.
+    const table = (set, left) => {
+      rect(set, left ? 1 : 0, 4, 15, 7, K.table); rect(set, left ? 1 : 0, 4, 15, 1, 0xc89058);
+      rect(set, left ? 2 : 12, 11, 2, 3, K.counter);
+      rect(set, left ? 1 : 0, 14, 15, 2, 0x5a3a20);
+    };
+    tile('manual-stack', (set) => {
+      table(set, true);
+      [[0x8040c0, 9], [0x30a050, 7], [0x3060d0, 5], [0xd03030, 3]].forEach(([c, y], i) => {
+        rect(set, 4 + (i % 2), y - 2, 8, 4, c); rect(set, 4 + (i % 2), y + 2, 8, 1, 0xf0f0e0);
       });
+      set(11, 7, K.table); set(12, 8, K.table); // Galaxian's, torn at the corner
+    });
+    tile('manual-pac', (set) => {
+      table(set, false);
+      rect(set, 3, 1, 10, 10, K.signPaper); rect(set, 3, 10, 10, 1, K.signEdge); rect(set, 12, 1, 1, 10, K.signEdge);
+      this.disc((x, y, c) => set(x + 4, y + 2, c), 7, 2.8, COLORS.pac);
+      set(9, 5, K.signPaper); set(10, 5, K.signPaper); set(10, 4, K.signPaper); // mouth
+      rect(set, 4, 9, 7, 1, K.signInk);
+      set(5, 8, 0xa08050); set(11, 2, 0xa08050); // coffee stains
     });
     this.pixels('arcade/coin', 10, 10, (set) => {
       this.disc(set, 10, 4.6, 0xa07010);
@@ -309,6 +330,54 @@ export default class BootScene extends Phaser.Scene {
   makePellets() {
     this.pixels('maze/dot', 4, 4, (set) => this.disc(set, 4, 2.1, COLORS.dot));
     this.pixels('maze/power', 16, 16, (set) => this.disc(set, 16, 7.6, COLORS.dot));
+  }
+
+  // The level shelf's fruits (one 16x16 tile each, maze/fruit-<name>, cell codes in memmap.js), colors drawn in.
+  makeFruit() {
+    const C = LEVELS.colors;
+    const legend = {
+      r: C.red, d: C.darkRed, g: C.green, b: C.brown, w: C.white, o: C.orange, m: C.melon, n: C.melonDark,
+      y: C.yellow, u: C.blue, c: C.cyan, s: C.grey,
+    };
+    const art = {
+      cherry: [
+        '..........bb....', '.........b.b....', '........b...b...', '.......b....b...', '......b.....b...',
+        '.....b......b...', '..rrrb.....rrr..', '.rrrrr....rrrrr.', '.rwrrr....rwrrr.', '.rrrrr....rrrrr.',
+        '.rrrrd....rrrrd.', '..rdd......rdd..', '................', '................', '................', '................'],
+      strawberry: [
+        '................', '......gggg......', '.....gggggg.....', '...rrrrrrrrrr...', '..rrwrrrrrwrrr..',
+        '..rrrrrwrrrrrr..', '..rwrrrrrrrwrr..', '...rrrwrrrrrr...', '...rrrrrrwrr....', '....rwrrrrrr....',
+        '.....rrrrwr.....', '......rrrr......', '.......rr.......', '................', '................', '................'],
+      orange: [
+        '.......b........', '.......bgg......', '......gggg......', '....oooooooo....', '...oooooooooo...',
+        '..oowooooooooo..', '..owoooooooooo..', '..oooooooooooo..', '..oooooooooooo..', '..oooooooooooo..',
+        '...oooooooooo...', '....oooooooo....', '................', '................', '................', '................'],
+      apple: [
+        '.......b........', '.......b.gg.....', '...rrrrbrrrr....', '..rrrrrrrrrrr...', '.rrwwrrrrrrrrr..',
+        '.rrwrrrrrrrrrr..', '.rrrrrrrrrrrrr..', '.rrrrrrrrrrrrr..', '.rrrrrrrrrrrrr..', '..rrrrrrrrrrd...',
+        '..rrrrrrrrrdd...', '...rrdrrrddd....', '................', '................', '................', '................'],
+      melon: [
+        '.......bb.......', '......gg........', '....mmnmmnmm....', '...mnmmnmmnmm...', '..mnmmnmmnmmnm..',
+        '..mnmwnmmnmmnm..', '..mnmmnmmnmmnm..', '..mnmmnmmnmmnm..', '..mnmmnmmnmmnm..', '...mnmmnmmnmm...',
+        '....mmnmmnmm....', '......nnn.......', '................', '................', '................', '................'],
+      ship: [
+        '.......y........', '.......y........', '......yyy.......', '......uyu.......', '.r...uuyuu...r..',
+        '.r..uuuyuuu..r..', '.rr.uuyyyuu.rr..', '.rruuyyyyyuurr..', '.rruyyyyyyyurr..', '.r..yyy.yyy..r..',
+        '....rr...rr.....', '................', '................', '................', '................', '................'],
+      bell: [
+        '.......yy.......', '......yyyy......', '.....yyyyyy.....', '....yywyyyyy....', '....ywyyyyyy....',
+        '....ywyyyyyy....', '...yyyyyyyyyy...', '...yyyyyyyyyy...', '..yyyyyyyyyyyy..', '..yyyyyyyyyyyy..',
+        '...cccccccccc...', '.......ww.......', '................', '................', '................', '................'],
+      key: [
+        '.....cccccc.....', '....cc....cc....', '....c..uu..c....', '....cc....cc....', '.....cccccc.....',
+        '.......ss.......', '.......ss.......', '.......ssss.....', '.......ss.......', '.......sss......',
+        '.......ss.......', '.......ssss.....', '.......ss.......', '................', '................', '................'],
+    };
+    for (const [name, rows] of Object.entries(art)) {
+      this.pixels(`maze/fruit-${name}`, 16, 16, (set) => rows.forEach((row, y) => [...row].forEach((ch, x) => {
+        if (legend[ch] != null) set(x, y + 2, legend[ch]);
+      })));
+    }
   }
 
   // Lit where pixel (x, y) of an S x S sprite is inside a circle of radius r around (cx, cy), outside the mouth: a

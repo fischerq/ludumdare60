@@ -42,10 +42,36 @@ with rounded corners, pixel font (Press Start 2P, pinned on jsdelivr) at 16 px. 
 rendering could come later as a layer. WebAudio bleeps in
 `src/sound.js`: start jingle, waka on dots, power pellet, frightened siren, ghost eaten, death, clear.
 
+## Levels and the kill screen · decided (built 2026-10-18)
+Pac-Man's famous [Map 256 glitch](https://pacman.fandom.com/wiki/Map_256_Glitch), from a real 8-bit overflow in
+our own Z80 program (`game.asm`), not drawn by the host.
+- **Round counter:** one byte `LEVEL` in work RAM, 0 = level 1. Clearing the maze and tapping (START on the
+  cleared maze) runs `next_round`: counter + 1, maze refilled, everyone back to the start, score and lives kept.
+  A new game sets it to 0. After level 256 the byte wraps back to level 1 (never reached: 256 can't be cleared).
+- **Level shelf:** the tile row under the maze (VRAM row 25), right half (cols 10..18, `LEVELS.shelfCols`), shows a
+  fruit per level, right to left, at most the last 7, like the original's bottom row: cherry, strawberry, orange x2,
+  apple x2, melon x2, ship x2, bell x2, then keys (`FRUIT_TABLE` in ROM, art `assets/maze/fruit-*.png`). A full
+  shelf row would carry on in the row above (with 7 fruits it never does). No bonus fruit appears in the maze.
+- **The overflow:** `draw_fruit` takes the level number as counter + 1 in 8 bits. On level 256 (counter 255) that
+  wraps to 0, which passes the "fewer than 8" check, and DJNZ with 0 runs 256 times. The table pointer walks past
+  `FRUIT_TABLE` into the program code after it, and the screen pointer climbs the shelf rows up the right half of
+  the maze: about 220 cells get garbage codes and colors. The left half stays clean.
+- **Garbage:** codes the graphics ROM doesn't know show as a noise tile made from the byte, colored from the
+  palette byte. Like the original's tile check, every code from the wall code up blocks actors (the program's
+  `can_enter`, the bot and the deep layers use the same rule); garbage that happens to be 1 or 2 is a dot or pellet.
+- **Kill screen:** overwritten dots are gone but still counted in `PELLETS`, so it never reaches 0 (117 dots on
+  screen, 199 to go).
+- **Host API** (`src/systems/arcade/world.js`): `setRound(n)` puts the machine's game on level n (1..256) and
+  restarts the round there for free (pokes the counter to the level before, n - 2, and the phase to cleared, then presses START,
+  so the program's own `next_round` runs); `setLevel256(on)` is level 256 or level 1; `currentRound()` reads it.
+  `?level=256` starts every fresh maze game on that level, for testing. A lobby switch will use the API.
+- No level number on screen (the original has none either).
+
 ## Slice scope
 - Build (done): menu, one maze, chomper, 4 ghosts, pellets, lives, score + high score, ready/death/clear
-  sequences, swipe and keyboard, sound, game over / maze clear screen.
-- Not now: fruit, levels getting faster, intermissions, the first tech layer, mini-gurke egg, mute button,
+  sequences, swipe and keyboard, sound, game over / maze clear screen. Levels with the fruit shelf and the
+  level 256 kill screen (2026-10-18).
+- Not now: bonus fruit in the maze, levels getting faster, intermissions, the first tech layer, mini-gurke egg,
   sound settings.
 
 ## Open questions
@@ -67,3 +93,7 @@ rendering could come later as a layer. WebAudio bleeps in
 - 2026-10-17: Maze easier: ghosts 6 → 5.05 tiles/s (Pac-Man 6.5), turn window 0.4 → 0.7 tiles (late swipes still take
   the turn), 4 lives instead of 3. Playtest bots at light noise (0.25) went from 20% to about 88% cleared. (Quirin asked
   to make the maze easier; numbers Claude's from the [playtest](playtest.md) runs)
+- 2026-10-18: Add Pac-Man's level 256 glitch, from a real 8-bit overflow in the Z80 program: a round counter byte,
+  clears go to the next level with score and lives kept, a fruit shelf under the maze whose loop overruns on level
+  256 and garbles the right half (kill screen); `setRound`/`setLevel256` for a lobby switch, `?level=256`. (Quirin)
+  Shelf layout (right half, a full row carries on upward), garbage tiles and "codes from the wall up block" (Claude)

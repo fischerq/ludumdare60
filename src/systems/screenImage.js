@@ -4,7 +4,7 @@
 // read its pixels. `art(key)` returns the source canvas of a texture made in BootScene.
 
 import { CABINET, COLORS, MAZE, PIXEL } from '../config.js';
-import { drawPlayfield, W, H } from './arcade/video.js';
+import { drawPlayfield, W, H, SCREEN_H } from './arcade/video.js';
 import { readState } from './arcade/state.js';
 
 const T = CABINET.screenTile;
@@ -26,7 +26,7 @@ export function drawScreen(ctx, m, S, art, lines = [], best = 0) {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, w, h);
   const ox = MARGIN, oy = HUD;
-  drawPlayfield(ctx, m, art, { T, ox, oy });
+  drawPlayfield(ctx, m, art, { T, ox, oy, rows: SCREEN_H });   // with the level shelf, beside the lives
 
   ctx.font = '8px "Press Start 2P", monospace';
   ctx.textBaseline = 'top';

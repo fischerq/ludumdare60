@@ -77,7 +77,9 @@ const bus = {
   targets: (c) => Object.entries(BUS_CENTERS).filter(([room]) => !c.st.done.has(room)).map(([, p]) => p),
   blocked(c, x, y, eta) {
     const st = c.st, T = c.t + eta;
-    if ('RAVI'.includes(busAt(x, y)) && T + 0.3 > st.next) return true;
+    const door = { R: 'rom', A: 'ram', V: 'vram', I: 'io' }[busAt(x, y)];
+    if (door && T + 0.3 > (st.openUntil[door] ?? 0)) return true;
+    if ('ravi'.includes(busAt(x, y))) return false; // packets can't hit inside a room
     for (const p of st.packets) {
       for (const dT of [-0.1, 0, 0.1]) {
         const k = Math.floor((T + dT - p.t) * DEEP.bus.packetSpeed);
@@ -92,7 +94,7 @@ const bus = {
   waitAt(c) {
     const p = c.player, here = busAt(Math.round(p.x), Math.round(p.y));
     const room = { r: 'rom', a: 'ram', v: 'vram', i: 'io' }[here];
-    if (room && c.st.selected !== room) {
+    if (room && !(c.t < (c.st.openUntil[room] ?? 0))) {
       const out = [];
       for (let y = 0; y < BUS_MAP.length; y++) for (let x = 0; x < BUS_MAP[0].length; x++) {
         if (busAt(x, y) === here && !(x === 13 && 'RAVI'.includes(busAt(12, y)))) out.push({ x, y });
@@ -180,7 +182,7 @@ const input = {
 function mazeRace(m, g, isGoal, react, safety) {
   const wall = (x, y) => {
     if (y < 0 || y >= H) return true;
-    return m.vram[tileOffset(((x % W) + W) % W, y)] === CELL.wall;
+    return m.vram[tileOffset(((x % W) + W) % W, y)] >= CELL.wall;   // walls and anything above (game.asm can_enter)
   };
   const pacOpen = (x, y) => {
     if (wall(x, y)) return false;

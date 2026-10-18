@@ -89,7 +89,7 @@ export default {
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
         const i = tileOffset(x, y), c = m.vram[i];
-        if (c === CELL.wall) neonBox(ctx, x * S + 3, y * S + 3, S - 5, S - 5, P.glow, P.grid);
+        if (c >= CELL.wall) neonBox(ctx, x * S + 3, y * S + 3, S - 5, S - 5, P.glow, P.grid);
         else if ((c === CELL.dot || c === CELL.power) && !st.eaten.has(i)) dot(ctx, env, 'dot', x, y, S);
       }
     }

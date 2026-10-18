@@ -4,7 +4,7 @@
 
 export const MAP = {
   rom: [0x0000, 0x3fff],     // program ROM
-  vram: [0x4000, 0x43ff],    // one cell code per maze tile, 32 bytes per row (19 used), 25 rows
+  vram: [0x4000, 0x43ff],    // one cell code per maze tile, 32 bytes per row (19 used), 25 rows + the level shelf row
   cram: [0x4400, 0x47ff],    // one palette index per tile, same layout
   ram: [0x4c00, 0x4fef],     // work RAM (game state, stack at the top)
   spriteAttr: [0x4ff0, 0x4fff], // 8 sprites x (code, palette)
@@ -36,7 +36,19 @@ export const tileOffset = (x, y) => y * VRAM_STRIDE + x;
 export const tileAt = (offset) => ({ x: offset % VRAM_STRIDE, y: Math.floor(offset / VRAM_STRIDE) });
 
 // Cell codes in VRAM. The program reads them to know where actors may go, like the original reads tiles.
-export const CELL = { empty: 0x00, dot: 0x01, power: 0x02, door: 0x03, tunnel: 0x04, house: 0x05, wall: 0x10 };
+// Like the original, every code from the wall code up blocks actors: that covers the fruit tiles on the level shelf
+// below the maze, and any garbage byte that lands in the maze (the level 256 overflow, see game.asm draw_fruit).
+// Lower codes that aren't door or house are floor.
+export const CELL = {
+  empty: 0x00, dot: 0x01, power: 0x02, door: 0x03, tunnel: 0x04, house: 0x05, wall: 0x10,
+  // The level shelf's fruits, one tile each (art maze/fruit-<name>).
+  cherry: 0x20, strawberry: 0x21, orange: 0x22, apple: 0x23, melon: 0x24, ship: 0x25, bell: 0x26, key: 0x27,
+};
+export const FRUITS = ['cherry', 'strawberry', 'orange', 'apple', 'melon', 'ship', 'bell', 'key'];
+// What the program itself does with a cell code: true if no actor may enter it.
+export const blocksActors = (c) => c >= CELL.wall || c === CELL.door || c === CELL.house;
+// The codes the board's graphics ROM has a picture for; anything else is garbage (drawn as noise by video.js).
+export const knownCell = (c) => c <= CELL.house || c === CELL.wall || (c >= CELL.cherry && c <= CELL.key);
 
 export function region(addr) {
   for (const [name, r] of Object.entries(MAP)) if (Array.isArray(r) && addr >= r[0] && addr <= r[1]) return name;

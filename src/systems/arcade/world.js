@@ -1,10 +1,10 @@
 // The one emulated machine every layer looks at (no Phaser). It keeps running at the board's frame rate
 // whichever scene is showing; scenes only read it and press its inputs. main.js ticks it from the game loop.
 
-import { ARCADE } from '../../config.js';
+import { ARCADE, RULES } from '../../config.js';
 import { loadZ80 } from './z80.js';
 import { createMachine } from './machine.js';
-import { IN0, IN1, DSW } from './memmap.js';
+import { IN0, IN1, DSW, MAP } from './memmap.js';
 import { botDirection } from './bot.js';
 import { PHASES } from './state.js';
 
@@ -25,6 +25,8 @@ export const world = {
   input: { held: null, pulse: null, pulseFrames: 0, start: 0, coin: 0 },
   // Who steers Pac-Man: 'player' while the maze layer (or the cabinet) is showing, otherwise the 'bot'.
   driver: 'bot',
+  // setRound(): the level to put the machine's game on after the next frame (null: none asked for).
+  pendingRound: null,
 };
 
 // The bot plays with the demo dip switch on, so its deaths don't cost the player's lives.
@@ -42,6 +44,31 @@ export function newGame() {
   world.halted = false;
   world.paidGame = true;
   world.input.start = 12;
+}
+
+// Puts the machine's game on level n (1..256) and restarts the round there, for free (no coin). Like a rack
+// test: the host pokes the round counter (LEVEL in game.asm, one byte, 0 = level 1) to the level before and the
+// phase to "cleared", and presses START, so the program's own next-round code counts it up, refills the maze and
+// draws the level shelf. Score is kept; a game that has no lives left gets a full set. Applied after the next
+// frame, so it also works right after newGame() (whose reset clears RAM in that frame).
+export function setRound(n) {
+  world.pendingRound = Math.max(1, Math.min(256, Math.round(n)));
+  world.halted = false;
+  world.paidGame = true;
+}
+// The kill screen on or off: level 256 (counter 255), or back to level 1.
+export const setLevel256 = (on) => setRound(on ? 256 : 1);
+// The level the machine's game is on now (1..256), read from the round counter.
+export const currentRound = () => (world.machine && world.program ? world.machine.read(world.program.symbols.LEVEL) + 1 : 1);
+
+function applyRound(m, S) {
+  const n = world.pendingRound;
+  world.pendingRound = null;
+  const ram = (addr) => addr - MAP.ram[0];
+  m.ram[ram(S.LEVEL)] = (n - 2) & 0xff;
+  m.ram[ram(S.PHASE)] = PHASES.indexOf('cleared');
+  if (!m.ram[ram(S.LIVES_LEFT)]) m.ram[ram(S.LIVES_LEFT)] = RULES.lives;
+  world.input.start = Math.max(world.input.start, PULSE_FRAMES);
 }
 
 const PULSE_FRAMES = 2;
@@ -86,6 +113,7 @@ export function tickWorld(ms) {
     if (world.driver === 'bot') botStep(m);
     applyInput(m);
     m.runFrame(world.trace ? traceStep : undefined);
+    if (world.pendingRound != null && world.program) applyRound(m, world.program.symbols);
     if (world.trace?.steps.length) { world.trace.done(world.trace.steps); world.trace = null; }
     const sounds = m.takeSounds();
     for (const fn of world.listeners) fn(m, sounds);
