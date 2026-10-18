@@ -1,6 +1,7 @@
 import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP } from '../config.js';
 import { mazeTiles, tileKey } from '../systems/tiles.js';
 import { world } from '../systems/arcade/world.js';
+import { openManual } from '../manual/index.js';
 
 const hex = (c) => `#${c.toString(16).padStart(6, '0')}`;
 
@@ -51,7 +52,11 @@ export default class BootScene extends Phaser.Scene {
     const target = start && this.scene.get(start) ? start : 'Menu';
     // The emulated arcade machine has to be running too: the maze level is its picture.
     const machine = (world.ready ?? Promise.resolve()).catch((e) => console.error('arcade machine failed', e));
-    Promise.all([Promise.race([font, timeout]).catch(() => {}), machine]).finally(() => this.scene.start(target, data));
+    // ?manual opens the service manual over it (for debugging the emulator on the live page).
+    Promise.all([Promise.race([font, timeout]).catch(() => {}), machine]).finally(() => {
+      this.scene.start(target, data);
+      if (params.has('manual')) openManual();
+    });
   }
 
   // Draw a w x h texture; paint(set) calls set(x, y, color) for each lit pixel.
@@ -167,13 +172,6 @@ export default class BootScene extends Phaser.Scene {
       this.disc((x, y, c) => set(x + 1, y, c), 14, 4.5, 0xffffff);
       rect(set, 8, 3, 1, 4, 0x000000); rect(set, 8, 7, 3, 1, 0x000000);
     });
-    tile('counter', (set) => {
-      rect(set, 0, 1, T, 7, K.counterTop);
-      rect(set, 0, 2, T, 1, 0xe0b080);
-      rect(set, 0, 8, T, 6, K.counter);
-      for (let x = 3; x < T; x += 8) rect(set, x, 9, 1, 4, 0x5a3418);
-      shadow(set);
-    });
     tile('plant', (set) => {
       rect(set, 5, 10, 6, 4, K.plantPot); rect(set, 4, 9, 8, 2, 0xd07a4a);
       [[8, 2], [5, 4], [11, 4], [7, 6], [9, 6], [4, 7], [12, 7]].forEach(([x, y]) => {
@@ -213,6 +211,35 @@ export default class BootScene extends Phaser.Scene {
       rect(set, 4, 2, 8, 5, K.sky);
       set(11, 10, 0xffd23f);
     });
+    // What each cabinet's screen shows: ours the maze, the others famous games of the time.
+    const px = (set, pts, color) => pts.forEach(([x, y]) => set(x, y, color));
+    const screens = {
+      y: (set) => { px(set, [[6, 10], [7, 10]], 0xffff00); px(set, [[9, 9], [11, 9]], 0xffb897); },
+      r: (set) => { // Space Invaders: rows of invaders over a green base
+        px(set, [[5, 8], [7, 8], [9, 8], [11, 8]], 0xffffff);
+        px(set, [[4, 10], [6, 10], [8, 10], [10, 10]], 0xffffff);
+        px(set, [[7, 13], [8, 13], [9, 13], [8, 12]], 0x40ff40);
+      },
+      b: (set) => { // Asteroids: outlined rocks and the ship, drawn as lines
+        px(set, [[5, 7], [6, 7], [4, 8], [7, 8], [5, 9], [6, 9], [10, 8], [11, 9], [10, 10]], 0xd0d0d0);
+        px(set, [[8, 11], [7, 12], [9, 12], [8, 13]], 0xffffff);
+      },
+      g: (set) => { // Donkey Kong: red girders, a cyan ladder, the ape and a barrel
+        px(set, [[4, 9], [5, 9], [6, 9], [7, 9], [8, 10], [9, 10], [10, 10], [11, 10]], 0xff3060);
+        px(set, [[4, 13], [5, 13], [6, 13], [7, 12], [8, 12], [9, 12], [10, 12], [11, 12]], 0xff3060);
+        px(set, [[9, 11], [9, 13]], 0x40e0ff);
+        px(set, [[4, 7], [5, 7], [4, 8], [5, 8]], 0xa05020);
+        set(6, 11, 0xd08030);
+      },
+      v: (set) => { // Galaxian: a formation in color under stars
+        px(set, [[7, 7], [8, 7]], 0xffd000);
+        px(set, [[5, 8], [7, 8], [9, 8], [11, 8]], 0xff3030);
+        px(set, [[4, 9], [6, 9], [8, 9], [10, 9]], 0xc040ff);
+        px(set, [[5, 10], [7, 10], [9, 10]], 0x30a0ff);
+        px(set, [[8, 13], [7, 13], [9, 13], [8, 12]], 0xffffff);
+        px(set, [[11, 12], [4, 12]], 0x808080);
+      },
+    };
     for (const [c, col] of Object.entries(K.cabinets)) {
       // Top: side panels in the cabinet color, black marquee band and a lit screen.
       tile(`cab-top-${c}`, (set) => {
@@ -220,8 +247,8 @@ export default class BootScene extends Phaser.Scene {
         rect(set, 3, 2, 10, 3, 0x000000);
         rect(set, 4, 3, 8, 1, 0xffffff);
         rect(set, 3, 6, 10, 9, 0x101018);
-        rect(set, 4, 7, 8, 7, c === 'y' ? 0x2121de : 0x183048);
-        if (c === 'y') { set(6, 10, 0xffff00); set(7, 10, 0xffff00); set(9, 9, 0xffb897); set(11, 9, 0xffb897); }
+        rect(set, 4, 7, 8, 7, c === 'y' ? 0x2121de : 0x000000);
+        screens[c]?.(set);
       });
       // Bottom: control panel with a joystick, then the front with the coin door.
       tile(`cab-bottom-${c}`, (set) => {
@@ -233,6 +260,42 @@ export default class BootScene extends Phaser.Scene {
         shadow(set);
       });
     }
+    // Pickles: the owner's bitten Gurke and a jar of cornichons on the counter, a mini-Gurke on the floor.
+    const counter = (set) => {
+      rect(set, 0, 1, T, 7, K.counterTop);
+      rect(set, 0, 2, T, 1, 0xe0b080);
+      rect(set, 0, 8, T, 6, K.counter);
+      for (let x = 3; x < T; x += 8) rect(set, x, 9, 1, 4, 0x5a3418);
+      shadow(set);
+    };
+    tile('counter', counter);
+    tile('counter-gurke', (set) => {
+      counter(set);
+      rect(set, 2, 3, 11, 3, K.gurke); rect(set, 3, 2, 9, 1, K.gurke); rect(set, 3, 6, 9, 1, K.gurkeDark);
+      [[4, 3], [7, 3], [10, 4]].forEach(([x, y]) => set(x, y, K.gurkeLight));
+      [[5, 5], [8, 5]].forEach(([x, y]) => set(x, y, K.gurkeDark));
+      rect(set, 12, 3, 1, 3, K.gurkeInside); set(11, 2, K.counterTop); set(11, 6, K.counterTop); // the bite
+    });
+    tile('counter-jar', (set) => {
+      counter(set);
+      rect(set, 4, 1, 8, 9, K.jarGlass); rect(set, 5, 0, 6, 1, K.jarGlass);
+      rect(set, 5, 0, 6, 2, K.jarLid);
+      [[5, 4], [7, 3], [9, 5], [6, 7], [8, 6], [10, 8], [5, 8]].forEach(([x, y]) => { set(x, y, K.gurke); set(x, y + 1, K.gurkeDark); });
+      rect(set, 4, 3, 1, 5, 0xffffff);
+    });
+    tile('mini-gurke', (set) => {
+      rect(set, 6, 10, 5, 1, 0x5a3a20);
+      rect(set, 6, 8, 4, 2, K.gurke); set(10, 9, K.gurke); set(7, 8, K.gurkeLight); set(9, 9, K.gurkeDark);
+    });
+    tile('manual-table', (set) => {
+      rect(set, 1, 4, 14, 7, K.table); rect(set, 1, 4, 14, 1, 0xc89058);
+      rect(set, 2, 11, 2, 3, K.counter); rect(set, 12, 11, 2, 3, K.counter);
+      shadow(set);
+      // Four booklets: Space Invaders, Asteroids, Donkey Kong, and ours (yellowed).
+      [[2, 0xd03030], [5, 0x3060d0], [8, 0x30a050], [11, 0xe8d890]].forEach(([x, c], i) => {
+        rect(set, x, 5 + (i % 2), 3, 4, c); set(x, 5 + (i % 2), 0xffffff);
+      });
+    });
     this.pixels('arcade/coin', 10, 10, (set) => {
       this.disc(set, 10, 4.6, 0xa07010);
       this.disc(set, 10, 3.6, K.coin);
