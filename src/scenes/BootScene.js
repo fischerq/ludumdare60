@@ -381,6 +381,54 @@ export default class BootScene extends Phaser.Scene {
         }
       }
     });
+
+    // The shop owner, asleep behind the counter: the top of his head on his folded arms, a "z" rising.
+    [0, 1].forEach((f) => this.pixels(`arcade/owner-sleep-${f}`, S, S, (set) => {
+      rect(set, 8, 16, 16, 13, K.ownerShirt);
+      rect(set, 11, 20, 10, 9, K.ownerApron);
+      rect(set, 3, 18, 26, 6, K.ownerShirt);
+      rect(set, 3, 22, 5, 3, K.ownerSkin); rect(set, 24, 22, 5, 3, K.ownerSkin);
+      this.disc((x, y, c) => set(x + 8, y + 7, c), 16, 7.5, K.ownerHair);
+      this.disc((x, y, c) => set(x + 8, y + 6, c), 16, 5, K.ownerSkin);
+      const z = f ? [[25, 1], ['#####', '...#.', '..#..', '.#...', '#####']] : [[23, 6], ['####', '..#.', '.#..', '####']];
+      this.bitmap(set, z[1], K.snore, ...z[0]);
+    }));
+
+    // Text box portraits, 48x48 (HALL.portraitSize): each ghost from the front, all four together, the owner.
+    const P = HALL.portraitSize;
+    const shift = (set, ox, oy) => (x, y, c) => set(x + ox, y + oy, c);
+    const face = (set, name, ox, oy) => {
+      const s = shift(set, ox, oy);
+      this.ghostBody(s, COLORS.ghosts[name], 0);
+      this.ghostEyes(s, 'down');
+      cap(s, 'down');
+    };
+    for (const name of Object.keys(COLORS.ghosts)) {
+      this.pixels(`arcade/portrait-${name}`, P, P, (set) => { rect(set, 0, 0, P, P, K.portraitBg); face(set, name, 8, 12); });
+    }
+    this.pixels('arcade/portrait-ghosts', P, P, (set) => {
+      rect(set, 0, 0, P, P, K.portraitBg);
+      face(set, 'pinky', -4, 2); face(set, 'inky', 20, 2);
+      face(set, 'blinky', -8, 20); face(set, 'clyde', 24, 20);
+    });
+    this.pixels('arcade/portrait-owner', P, P, (set) => {
+      rect(set, 0, 0, P, P, K.portraitBg);
+      rect(set, 8, 38, 32, 10, K.ownerShirt); rect(set, 16, 40, 16, 8, K.ownerApron);
+      this.disc((x, y, c) => set(x + 8, y + 8, c), 32, 14, K.ownerSkin);
+      rect(set, 9, 14, 5, 12, K.ownerHair); rect(set, 34, 14, 5, 12, K.ownerHair);
+      rect(set, 15, 22, 6, 1, K.pacFace); rect(set, 27, 22, 6, 1, K.pacFace); // eyes shut
+      rect(set, 17, 29, 14, 3, K.ownerHair); // mustache
+      rect(set, 22, 34, 4, 3, K.pacFace); // mouth open, snoring
+      this.bitmap(set, ['#####', '...#.', '..#..', '.#...', '#####'], K.snore, 39, 3);
+      this.bitmap(set, ['####', '..#.', '.#..', '####'], K.snore, 34, 10);
+    });
+    // The "!" the ghosts show when they recognize Pac-Man, like a trainer spotting you.
+    this.pixels('arcade/exclaim', 16, 16, (set) => {
+      rect(set, 4, 0, 8, 14, 0x000000); rect(set, 3, 1, 10, 12, 0x000000);
+      rect(set, 5, 1, 6, 12, 0xffffff); rect(set, 4, 2, 8, 10, 0xffffff);
+      rect(set, 7, 2, 2, 6, K.exclaim); rect(set, 7, 9, 2, 2, K.exclaim);
+      set(7, 14, 0x000000); set(8, 14, 0x000000); set(7, 15, 0x000000);
+    });
   }
 
   // The cabinet in an oblique view: the front is drawn flat, depth goes up and right at 45°, so the right side

@@ -118,8 +118,8 @@ export function runDeep(s, index, { fresh = true } = {}) {
   return { win: result === 'win', result, time: s.t - t0, hits, goals: got, dots };
 }
 
-// The arcade hall. 'coins': pick up every coin left, then walk to our cabinet and tap it. 'chase': talk to the
-// angry visitor, then get out the door before the ghosts catch you (or outlast them). A text box stops Pac-Man
+// The arcade hall. 'coins': pick up every coin left, then walk to our cabinet and tap it. 'chase': read the
+// ghost poster (the ghosts show "!", then speak), then get out the door before the ghosts catch you (or outlast them). A text box stops Pac-Man
 // until it's tapped away. h: a hall to keep between visits (coins stay taken); default a fresh one.
 export function runHall(s, { scenario = 'coins', h = null } = {}) {
   h ??= createHall();
@@ -132,7 +132,7 @@ export function runHall(s, { scenario = 'coins', h = null } = {}) {
     s.t += DT;
     if (modal > 0) {
       modal -= DT;
-      if (modal <= 0 && stage === 'angry') { startChase(h); stage = 'escape'; }
+      if (modal <= 0 && stage === 'noticed') { startChase(h); stage = 'escape'; }
       continue;
     }
     const p = h.pac, from = { x: p.x, y: p.y };
@@ -144,13 +144,13 @@ export function runHall(s, { scenario = 'coins', h = null } = {}) {
       if (!coinsLeft.length && from.x === 5 && from.y === 4) faceTo = 'up';
       else want = plan({ from, cols: h.w, open, speed: HALL.walkSpeed, isGoal: (x, y) => goals.some((g) => g.x === x && g.y === y) })?.dir ?? 'stop';
     } else if (stage === 'talk') {
-      const angry = h.npcs.find((n) => n.name === HALL.angry);
-      const side = [['up', 0, 1], ['down', 0, -1], ['left', 1, 0], ['right', -1, 0]].find(([, dx, dy]) => from.x === angry.x + dx && from.y === angry.y + dy);
-      if (side) faceTo = side[0];
-      else want = plan({ from, cols: h.w, open, speed: HALL.walkSpeed, isGoal: (x, y) => manhattan({ x, y }, angry) === 1 })?.dir ?? 'stop';
+      // Stand under the ghost poster and face it.
+      const y = h.rows.findIndex((r) => r.includes(HALL.noticeCell)), poster = { x: h.rows[y].indexOf(HALL.noticeCell), y };
+      if (from.x === poster.x && from.y === poster.y + 1) faceTo = 'up';
+      else want = plan({ from, cols: h.w, open, speed: HALL.walkSpeed, isGoal: (x, yy) => x === poster.x && yy === poster.y + 1 })?.dir ?? 'stop';
     } else {
       const ghosts = h.npcs.map(actorPos);
-      const danger = (x, y, eta) => ghosts.some((g) => manhattan(g, { x, y }) < 1.4 + eta * HALL.chase.speed);
+      const danger = (x, y, eta) => ghosts.some((g) => manhattan(g, { x, y }) < 1.4 + Math.max(0, eta - h.chase.wait) * HALL.chase.speed); // they stand still during the head start
       const door = (x, y) => h.rows[y]?.[x] === 'D';
       want = plan({ from, cols: h.w, open, blocked: danger, speed: HALL.walkSpeed, isGoal: door })?.dir
         ?? evade({ from, cols: h.w, open, blocked: danger, speed: HALL.walkSpeed, canStay: true, score: (x, y) => Math.min(...ghosts.map((g) => manhattan(g, { x, y }))) }) ?? 'stop';
@@ -163,7 +163,8 @@ export function runHall(s, { scenario = 'coins', h = null } = {}) {
       held = null;
       say();
       if (stage === 'coins') { result = 'win'; break; }
-      if (stage === 'talk') stage = 'angry';
+      // Read the poster, wait out the "!", read the ghosts' line.
+      if (stage === 'talk') { stage = 'noticed'; modal += HALL.noticeTime + tap(s); }
       continue;
     }
     for (const e of stepHall(h, DT, held)) {

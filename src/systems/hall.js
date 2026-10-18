@@ -1,5 +1,5 @@
 // Arcade hall rules with no Phaser: grid walking one tile per step, coins, who or what Pac-Man is facing, and the
-// ghost visitors chasing Pac-Man with their maze rules once one of them gets angry.
+// ghost visitors chasing Pac-Man with their maze rules once they recognize him.
 // Positions are in tiles.
 
 import { HALL } from '../config.js';
@@ -7,7 +7,7 @@ import { HALL } from '../config.js';
 export const DIRS = {
   up: { x: 0, y: -1 }, left: { x: -1, y: 0 }, down: { x: 0, y: 1 }, right: { x: 1, y: 0 },
 };
-const SOLID = '#RBGVYrbgvy=MmD1234%!CcQq|^*+@';
+const SOLID = '#RBGVYrbgvy=MmD1234%!CcQq|^*+@O';
 
 export function createHall(layout = HALL.layout) {
   const h = { rows: layout, w: layout[0].length, h: layout.length, coins: new Set(), npcs: [], got: 0, pac: null, chase: null };
@@ -76,6 +76,15 @@ export function actorPos(a) {
   return { x: a.from.x + (a.x - a.from.x) * a.t, y: a.from.y + (a.y - a.from.y) * a.t };
 }
 export const pacPos = (h) => actorPos(h.pac);
+
+// The visitors recognize Pac-Man: each turns to look at him.
+export function noticePac(h) {
+  const p = h.pac;
+  for (const n of h.npcs) {
+    const dx = p.x - n.x, dy = p.y - n.y;
+    n.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+  }
+}
 
 export function startChase(h) {
   h.chase = { time: HALL.chase.time, wait: HALL.chase.headStart };

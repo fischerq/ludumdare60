@@ -6,7 +6,8 @@
     "blinky": 10,
     "pinky": 10,
     "inky": 10,
-    "clyde": 10
+    "clyde": 10,
+    "owner": 40
   },
   "effects": {
     "pacDeath": 8,

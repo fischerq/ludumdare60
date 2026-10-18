@@ -1,16 +1,32 @@
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, HALL, PIXEL, UI, COINS, ANIM } from '../config.js';
-import { createHall, stepHall, facing, pacPos, actorPos, startChase, endChase, stepGhosts } from '../systems/hall.js';
+import { createHall, stepHall, facing, pacPos, actorPos, noticePac, startChase, endChase, stepGhosts } from '../systems/hall.js';
 import { tileKey } from '../systems/tiles.js';
 import { PAC_CYCLE, charFrame, animFrame } from '../systems/anim.js';
 import { sfx, unlockAudio, setAudioPaused } from '../sound.js';
 import { addLayerButton } from '../layerButton.js';
-import { coins, addCoin, coinTaken } from '../wallet.js';
+import { coins, addCoin, coinTaken, loseCoins } from '../wallet.js';
 
 const T = PIXEL.tile;
 const KEYS = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
   KeyA: 'left', KeyD: 'right', KeyW: 'up', KeyS: 'down',
 };
+// Tiles of the hall's tileset (assets/arcade/) by map character: on the wall, and standing on the floor.
+const DECOR = { '|': 'wall-face', '^': 'window', '*': 'poster-pac', '+': 'poster-ghost', '@': 'clock' };
+const ON_FLOOR = {
+  '=': 'counter', M: 'change-top', m: 'change-bottom', C: 'claw-top', c: 'claw-bottom', Q: 'soda-top',
+  q: 'soda-bottom', '%': 'plant', '!': 'bin',
+};
+
+// The text box portrait for a map character: the owner's own, otherwise the thing's tile (a machine's top half).
+function portraitFor(c) {
+  if (c === 'O') return 'arcade/portrait-owner';
+  if (c === 'D') return tileKey('arcade', 'door');
+  if (DECOR[c]) return tileKey('arcade', DECOR[c]);
+  if ('RBGVYrbgvy'.includes(c)) return tileKey('arcade', `cab-top-${c.toLowerCase()}`);
+  const top = ON_FLOOR[c.toUpperCase()] ?? ON_FLOOR[c];
+  return top ? tileKey('arcade', top) : null;
+}
 
 // Layer 3, zoom out further: the arcade hall, top-down like a Pokémon game. Pac-Man walks the shop one tile per
 // step, picks up coins, talks to the ghost visitors, and plays our cabinet (back down to the cabinet layer).
@@ -21,6 +37,7 @@ export default class HallScene extends Phaser.Scene {
 
   init(data) {
     this.fromCabinet = data?.from === 'cabinet';
+    this.wasCaught = !!data?.caught; // the hall starts over after the ghosts caught Pac-Man
   }
 
   create() {
@@ -54,12 +71,19 @@ export default class HallScene extends Phaser.Scene {
     const actor = (key) => this.add.image(0, 0, key);
     this.npcSprites = this.h.npcs.map((n) => actor(`arcade/ghost-${n.name}-up-0`));
     this.pac = actor('arcade/pac-up-0');
+    // The shop owner, asleep behind the counter.
+    this.owners = [];
+    this.h.rows.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'O') this.owners.push({ x, y, s: actor('arcade/owner-sleep-0') }); }));
+    // The "!" over each visitor when they recognize Pac-Man.
+    this.exclaims = this.h.npcs.map(() => this.add.image(0, 0, 'arcade/exclaim').setVisible(false).setDepth(1e5));
+    this.notice = 0; // s left of the "!" before the ghosts speak
 
     this.makeUi();
     this.children.list.filter((o) => o.scrollFactorX === 0).forEach((o) => o.setDepth(1e6));
     this.setupInput();
     this.setupPauseOnHide();
     this.updateCamera();
+    if (this.wasCaught) this.say(HALL.text.caught);
   }
 
   sx(x) { return this.ox + x * T + T / 2; }
@@ -74,11 +98,6 @@ export default class HallScene extends Phaser.Scene {
   drawMap() {
     const { rows } = this.h;
     const rug = (x, y) => rows[y]?.[x] === '~';
-    const DECOR = { '|': 'wall-face', '^': 'window', '*': 'poster-pac', '+': 'poster-ghost', '@': 'clock' };
-    const ON_FLOOR = {
-      '=': 'counter', M: 'change-top', m: 'change-bottom', C: 'claw-top', c: 'claw-bottom', Q: 'soda-top',
-      q: 'soda-bottom', '%': 'plant', '!': 'bin',
-    };
     rows.forEach((row, y) => [...row].forEach((c, x) => {
       const at = (key) => this.add.image(this.ox + x * T, this.oy + y * T, tileKey('arcade', key)).setOrigin(0);
       if (c === '#') { at('wall-top'); return; }
@@ -107,10 +126,14 @@ export default class HallScene extends Phaser.Scene {
     this.boxText = fixed(this.add.text(11, 0, '', {
       fontFamily: UI.arcadeFont, fontSize: 8, color: COLORS.text, resolution: 1, wordWrap: { width: this.viewW - 22 }, lineSpacing: 4,
     }));
+    // Who's talking: a large portrait in a frame sitting on the box's top left edge.
+    this.portraitFrame = fixed(this.add.graphics());
+    this.portrait = fixed(this.add.image(0, 0, 'arcade/portrait-owner').setOrigin(0));
     this.closeText(true);
   }
 
-  say(text) {
+  // Show `text` in the box; `portrait` is a texture key (a 48x48 portrait or a 16x16 tile, shown 3x) or none.
+  say(text, portrait = null) {
     sfx.click();
     this.boxText.setText(text);
     const bh = this.boxText.height + 14, by = this.viewH - bh - 4, bw = this.viewW - 8;
@@ -118,15 +141,30 @@ export default class HallScene extends Phaser.Scene {
     this.box.clear().fillStyle(0x000000, 0.92).fillRect(4, by, bw, bh).lineStyle(1, 0xffffff, 1).strokeRect(4.5, by + 0.5, bw - 1, bh - 1);
     this.box.setVisible(true);
     this.boxText.setVisible(true);
+    const P = HALL.portraitSize, px = 4, py = by - P - 3;
+    this.portraitFrame.clear().fillStyle(0x000000, 1).fillRect(px, py - 1, P + 4, P + 4)
+      .lineStyle(1, 0xffffff, 1).strokeRect(px + 0.5, py - 0.5, P + 3, P + 3);
+    if (portrait) this.portrait.setTexture(portrait).setDisplaySize(P, P).setPosition(px + 2, py + 1);
+    this.portraitFrame.setVisible(!!portrait);
+    this.portrait.setVisible(!!portrait);
     this.talking = true;
   }
 
   closeText(silent) {
     this.box.setVisible(false);
     this.boxText.setVisible(false);
+    this.portraitFrame.setVisible(false);
+    this.portrait.setVisible(false);
     this.talking = false;
     if (!silent) sfx.click();
-    // The angry visitor's line is over: now they all come for Pac-Man.
+    // Pac-Man read the ghost poster: the visitors look up and recognize him.
+    if (this.pendingNotice) {
+      this.pendingNotice = false;
+      noticePac(this.h);
+      this.notice = HALL.noticeTime;
+      sfx.alert();
+    }
+    // The ghosts' line is over: now they all come for Pac-Man.
     if (this.pendingChase) {
       this.pendingChase = false;
       startChase(this.h);
@@ -144,18 +182,20 @@ export default class HallScene extends Phaser.Scene {
 
   // Tap: close the text box, or use whatever Pac-Man faces.
   interact() {
-    if (this.mode !== 'walk') return;
+    if (this.mode !== 'walk' || this.notice > 0) return;
     if (this.talking) { this.closeText(); return; }
     const f = facing(this.h);
     const tx = HALL.text;
-    if (f.npc && !this.h.chase) {
-      if (f.npc.name === HALL.angry) { this.say(tx.angry); this.pendingChase = true; } else this.say(tx[f.npc.name]);
-      return;
-    }
+    if (f.npc && !this.h.chase) { this.say(tx[f.npc.name], `arcade/portrait-${f.npc.name}`); return; }
+    const portrait = portraitFor(f.cell);
     if (f.cell.toLowerCase() === 'y') {
       if (coins() >= COINS.perGame) this.goDown();
-      else this.say(tx.yNeedCoins.replace('{n}', coins()).replace('{need}', COINS.perGame));
-    } else if (HALL.cellText[f.cell]) this.say(tx[HALL.cellText[f.cell]]);
+      else this.say(tx.yNeedCoins.replace('{n}', coins()).replace('{need}', COINS.perGame), portrait);
+    } else if (HALL.cellText[f.cell]) {
+      this.say(tx[HALL.cellText[f.cell]], portrait);
+      // The ghost poster: the visitors look at it, then at Pac-Man...
+      if (f.cell === HALL.noticeCell && !this.h.chase) this.pendingNotice = true;
+    }
   }
 
   goDown() {
@@ -231,7 +271,8 @@ export default class HallScene extends Phaser.Scene {
     // Screen-fixed UI would scale with the zoom; show it only at the normal zoom.
     const showUi = this.mode === 'walk';
     this.coinText.setVisible(showUi);
-    this.children.list.filter((o) => o.scrollFactorX === 0 && o !== this.box && o !== this.boxText && o !== this.coinText)
+    const textBox = [this.box, this.boxText, this.coinText, this.portraitFrame, this.portrait];
+    this.children.list.filter((o) => o.scrollFactorX === 0 && !textBox.includes(o))
       .forEach((o) => o.setVisible(showUi));
   }
 
@@ -245,6 +286,10 @@ export default class HallScene extends Phaser.Scene {
     } else if (this.mode === 'outro') {
       this.introT -= dt / HALL.outroTime;
       if (this.introT <= 0) { this.mode = 'gone'; this.scene.start('Cabinet', { from: 'above' }); return; }
+    } else if (this.mode === 'walk' && this.notice > 0) {
+      // The "!" is up: everyone freezes, then the ghosts say it together.
+      this.notice -= dt;
+      if (this.notice <= 0) { this.say(HALL.text.weKnowYou, 'arcade/portrait-ghosts'); this.pendingChase = true; }
     } else if (this.mode === 'walk' && !this.talking) {
       for (const e of stepHall(this.h, dt, this.held ?? this.keyDir)) {
         if (e.type === 'door') { this.stopChase(HALL.text.escaped, { x: this.h.pac.x, y: this.h.pac.y }); break; }
@@ -255,7 +300,8 @@ export default class HallScene extends Phaser.Scene {
       }
       if (!this.talking) {
         for (const e of stepGhosts(this.h, dt)) {
-          if (e.type === 'caught') { sfx.frightOff(); sfx.death(); this.stopChase(HALL.text.caught, this.start); }
+          // Caught: they take every coin and the hall starts over (floor coins back, everyone in place).
+          if (e.type === 'caught') { sfx.frightOff(); sfx.death(); loseCoins(); this.mode = 'gone'; this.scene.restart({ caught: true }); return; }
           if (e.type === 'calm') { sfx.frightOff(); this.say(HALL.text.calm); }
         }
       }
@@ -266,6 +312,11 @@ export default class HallScene extends Phaser.Scene {
     const frame = p.moving ? charFrame('pac', (p.steps + p.t) / HALL.walkSpeed, 2) : 0;
     this.place(this.pac.setTexture(`arcade/pac-${p.dir === 'left' ? 'right' : p.dir}-${frame}`).setFlipX(p.dir === 'left'), pp);
     this.h.npcs.forEach((n, i) => this.place(this.npcSprites[i].setTexture(`arcade/ghost-${n.name}-${n.dir}-${charFrame(n.name, this.t, 2)}`), actorPos(n)));
+    this.h.npcs.forEach((n, i) => {
+      const at = actorPos(n);
+      this.exclaims[i].setVisible(this.notice > 0).setPosition(Math.round(this.sx(at.x)), Math.round(this.sy(at.y - 1)));
+    });
+    for (const o of this.owners) this.place(o.s.setTexture(`arcade/owner-sleep-${charFrame('owner', this.t, 2)}`), o);
     for (const [k, s] of this.coinSprites) {
       const y = Number(k.split(',')[1]);
       if (s.active) s.y = this.sy(y) + animFrame(this.t + y * ANIM.effects.coinBob / ANIM.fps, ANIM.effects.coinBob, 2);
