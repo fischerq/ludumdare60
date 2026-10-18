@@ -1,4 +1,5 @@
-import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP } from '../config.js';
+import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP, ADDER } from '../config.js';
+import { tinyText } from '../systems/layers/font.js';
 import { mazeTiles, tileKey } from '../systems/tiles.js';
 import { world } from '../systems/arcade/world.js';
 import { openManual } from '../manual/index.js';
@@ -42,6 +43,7 @@ export default class BootScene extends Phaser.Scene {
     this.makeHall();
     this.makeHallCharacters();
     this.makeDeep();
+    this.makeAdder();
     // Wait for the arcade font so text doesn't render in the fallback first (give up after 2 s).
     const font = document.fonts?.load(`8px ${UI.arcadeFont}`) ?? Promise.resolve();
     const timeout = new Promise((r) => setTimeout(r, 2000));
@@ -349,6 +351,69 @@ export default class BootScene extends Phaser.Scene {
         this.disc(set, 12, 2.6, P.special);
       });
     }
+  }
+
+  // The adder layer (assets/deep/adder/, 32x32 each): the carry bit (carry-0, carry-1 idle glow, carry-hop, carry-hit),
+  // a signal pulse in tiles (pulse-single, pulse-body, pulse-head-<dir> at its front, pulse-tail-<dir> at its back,
+  // for pulses moving left and right), the gates with their output drawn in (gate-<xor|and|or>-<0|1>: 1 lets the
+  // carry through, 0 blocks) and the chip between them (chip).
+  makeAdder() {
+    const A = ADDER.style, red = DEEP.hazard, redGlow = DEEP.hazardGlow;
+    const text = (set, str, x, y, k, color) => tinyText({ fillRect: (fx, fy, w, h) => {
+      for (let yy = fy; yy < fy + h; yy++) for (let xx = fx; xx < fx + w; xx++) set(xx, yy, color);
+    } }, str, x, y, k);
+    // The carry: a round chip with a big 1 on it.
+    const carry = (key, { line = A.line, glow = A.glow, core = A.carry, ring = 0, sx = 1, sy = 1 } = {}) => this.pixels(`deep/adder/${key}`, S, S, (set) => {
+      for (let y = 0; y < S; y++) {
+        for (let x = 0; x < S; x++) {
+          const dx = (x + 0.5 - 16) / sx, dy = (y + 0.5 - 16) / sy, d = Math.sqrt(dx * dx + dy * dy);
+          if (d <= 11) set(x, y, glow);
+          else if (d <= 12.5) set(x, y, line);
+          else if (d <= 13.6) set(x, y, 0xffffff);
+          else if (ring && d <= 15.5 && d > 14.4) set(x, y, line);
+        }
+      }
+      text(set, '1', 12, 9, 3, core);
+    });
+    carry('carry-0');
+    carry('carry-1', { ring: 1 });
+    carry('carry-hop', { sx: 0.88, sy: 1.12 });
+    carry('carry-hit', { line: red, glow: redGlow, core: 0xffffff, ring: 1 });
+    // Pulses: a band across the tile's middle, white core, rounded ends.
+    const pulse = (key, round) => this.pixels(`deep/adder/${key}`, S, S, (set) => {
+      for (let y = 9; y < 23; y++) {
+        for (let x = 0; x < S; x++) {
+          const dy = Math.abs(y + 0.5 - 16);
+          const cut = (end) => { const dx = end === 'left' ? 7 - x - 0.5 : x + 0.5 - 25; return dx > 0 && dx * dx + dy * dy > 49; };
+          if (round.some(cut)) continue;
+          set(x, y, dy < 2.5 ? 0xffffff : dy < 5 ? red : redGlow);
+        }
+      }
+    });
+    pulse('pulse-single', ['left', 'right']);
+    pulse('pulse-body', []);
+    pulse('pulse-head-right', ['right']);
+    pulse('pulse-tail-right', ['left']);
+    pulse('pulse-head-left', ['left']);
+    pulse('pulse-tail-left', ['right']);
+    // Gates: a chip box with its pins, the gate's name and its output.
+    for (const g of ['xor', 'and', 'or']) {
+      for (const out of [0, 1]) {
+        const line = out ? A.line : 0x6a6a6a, fill = out ? A.glow : A.wall, ink = out ? 0xffffff : 0x8a8a8a;
+        this.pixels(`deep/adder/gate-${g}-${out}`, S, S, (set) => {
+          for (let y = 3; y < 29; y++) for (let x = 3; x < 29; x++) set(x, y, x === 3 || x === 28 || y === 3 || y === 28 ? line : fill);
+          for (const px of [10, 21]) for (let y = 29; y < 32; y++) set(px, y, line); // two inputs below
+          for (let y = 0; y < 3; y++) set(16, y, line); // the output on top
+          const name = g.toUpperCase(), w = name.length * 8 - 2;
+          text(set, name, Math.floor((S - w) / 2), 7, 2, ink);
+          text(set, String(out), 13, 18, 2, out ? A.line : red);
+        });
+      }
+    }
+    this.pixels('deep/adder/chip', S, S, (set) => {
+      for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) set(x, y, (x + y) % 8 === 0 ? A.grid : A.wall);
+      for (let x = 0; x < S; x++) { set(x, 0, A.glow); set(x, S - 1, A.glow); }
+    });
   }
 
   // The maze level's Pac-Man: maze/pac-0 .. pac-6, the chomp's 7 frames facing right (the game flips it for left
