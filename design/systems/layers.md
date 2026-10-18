@@ -33,6 +33,18 @@ LAYER UP and LAYER DOWN buttons (no unlocking, no cheat buttons). Layer buttons:
 - **Deep layers run the machine slower** than the maze, by `DEEP.machineSlowdown` (4x): down there we play with
   the signals that make each frame. Cabinet and hall run at normal speed.
 
+## Inside the cabinet: board lobby and subsystems · open (questions asked 2026-10-18)
+Requested by Quirin, details waiting on answers:
+- LAYER DOWN from the maze goes to a **lobby inside the arcade machine**, built like the [hall](layer-arcade.md):
+  the floor shows the PCB and how the parts are wired (the monitor far from the board, joined by the harness).
+- Every subsystem is something to talk to that enters its deep layer. All are locked except the first; winning one
+  unlocks the next.
+- Video RAM gets replaced by a different memory component (there are already many video layers).
+- The game logic is shown as a small brain with the four ghosts wired to it.
+- Once every subsystem is won, a **bonus layer** appears: the physical 8-bit add of the round counter, played like
+  Crossy Road. Winning it overflows the counter ([map 256 glitch](https://pacman.fandom.com/wiki/Map_256_Glitch)),
+  flips a switch next to it in the lobby and makes the switch usable; while it's on, the maze shows level 256.
+
 ## Layer ideas · open (brainstorm, nothing decided)
 Rough order from outside to inside; we pick a few, not all.
 - **Cabinet:** coins, the CRT, joystick wiring.
@@ -86,3 +98,6 @@ minigame, a counter on the layer map, no unlock.*
   `DEEP.machineSlowdown` (4x) slower than the maze. (Quirin; slowdown factor and coin rules: Claude's defaults)
 - 2026-10-17: The cabinet no longer plays: nobody at the controls means the machine stands still there, and a coin zooms into the maze layer. (Quirin)
 - 2026-10-17: Cabinet follow-up: the bot plays on a running game there, and the coin door only takes a coin while the machine asks for one. (Quirin)
+- 2026-10-18: Outer loop idea: a board lobby inside the cabinet with locked subsystems that unlock one at a time, video
+  RAM swapped for another memory, the logic as a brain with the ghosts, and a Crossy Road bonus layer for the round
+  counter's 8-bit add that triggers the level 256 glitch. Questions open. (Quirin)
