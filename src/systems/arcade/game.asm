@@ -64,6 +64,7 @@ MOVE_TY         equ RAM+0x2d        ; word
 NO_REVERSE      equ RAM+0x2f        ; 1 while choosing without the reverse direction
 WALL_PAL        equ RAM+0x30        ; palette the walls have now
 COIN_LAST       equ RAM+0x31        ; the coin switch last frame
+LEVEL           equ RAM+0x32        ; round counter, one byte: 0 = level 1, 255 = level 256
 
 ; Actors: Pac-Man, then the four ghosts (blinky, pinky, inky, clyde), 32 bytes each.
 ACTORS          equ RAM+0x40
@@ -94,6 +95,17 @@ A_ANIM_RATE     equ 17              ; ghosts: frames per skirt frame
         org 0x0010
 VECTORS:
         dw vblank
+
+; The level shelf's fruits, one entry per level: cell code, palette. From level FRUIT_LEVELS on it's keys.
+; draw_fruit walks this table with a pointer; whatever follows it in ROM (the code below) is what it reads
+; if it ever runs past the end.
+FRUIT_TABLE:
+        db CELL_CHERRY, 1,  CELL_STRAWBERRY, 1,  CELL_ORANGE, 1,  CELL_ORANGE, 1
+        db CELL_APPLE, 1,   CELL_APPLE, 1,       CELL_MELON, 1,   CELL_MELON, 1
+        db CELL_SHIP, 1,    CELL_SHIP, 1,        CELL_BELL, 1,    CELL_BELL, 1
+        db CELL_KEY, 1,     CELL_KEY, 1,         CELL_KEY, 1,     CELL_KEY, 1
+        db CELL_KEY, 1,     CELL_KEY, 1,         CELL_KEY, 1
+FRUIT_LEVELS    equ ($-FRUIT_TABLE)/2
 
 reset:  di
         ld sp, STACK_TOP
@@ -142,10 +154,16 @@ frame:  ld hl, (FRAME)
         jp z, ph_dying
         cp PH_CLEARING
         jp z, ph_clearing
-        ; attract, cleared, over: wait for START
+        ; attract, cleared, over: wait for START (after a clear it starts the next round)
         ld a, (IN1_PORT)
         and IN_START
-        call z, new_game
+        jp nz, sprites
+        ld a, (PHASE)
+        cp PH_CLEARED
+        jr nz, .new
+        call next_round
+        jp sprites
+.new:   call new_game
         jp sprites
 
 ph_ready:
@@ -272,6 +290,24 @@ new_game:
         ld (SCORE), hl
         ld a, LIVES
         ld (LIVES_LEFT), a
+        xor a                       ; level 1
+        ld (LEVEL), a
+        call start_round
+        ld a, SND_START
+        ld (SOUND_CMD), a
+        ret
+
+; The maze was cleared: the next level, same score and lives.
+next_round:
+        ld hl, LEVEL
+        inc (hl)                    ; one byte: after level 256 (255) comes level 1 (0) again
+        call start_round
+        ld a, SND_READY
+        ld (SOUND_CMD), a
+        ret
+
+; A fresh maze full of dots, the level shelf, everyone at the start, READY.
+start_round:
         ld hl, PELLET_COUNT
         ld (PELLETS), hl
         xor a
@@ -279,10 +315,62 @@ new_game:
         ld hl, (MODE_TIMES)
         ld (MODE_T), hl
         call draw_maze
+        call draw_fruit
         call reset_actors
-        call to_ready
-        ld a, SND_START
-        ld (SOUND_CMD), a
+        jp to_ready
+
+; The level shelf under the right half of the maze: one fruit per level so far, right to left, at most the
+; last 7. A full shelf row would carry on in the row above (with 7 fruits it never fills up).
+; The count is the 8-bit level number, counter + 1, like the original's: on level 256 it wraps to 0, which
+; is less than 8 and goes to DJNZ as 0, so the loop runs 256 times, reading on past the end of FRUIT_TABLE
+; and writing row after row up the right half of the maze.
+SHELF_END       equ VRAM + MAZE_H*VRAM_STRIDE + MAZE_W - 1   ; rightmost shelf cell, the row under the maze
+draw_fruit:
+        ld hl, SHELF_END-SHELF_COLS+1   ; clear the shelf
+        ld b, SHELF_COLS
+.clear: ld (hl), CELL_EMPTY
+        inc hl
+        djnz .clear
+        ld a, (LEVEL)
+        inc a                       ; the level number, in 8 bits
+        cp 8
+        jr c, .few                  ; levels 1..7: a fruit for every level so far
+        cp FRUIT_LEVELS+1
+        jr c, .last7
+        ld a, FRUIT_LEVELS          ; past the table: its last 7 entries
+.last7: sub 7                       ; the 7 levels ending at this one
+        add a, a
+        ld e, a
+        ld d, 0
+        ld hl, FRUIT_TABLE
+        add hl, de
+        ex de, hl
+        ld b, 7
+        jr .draw
+.few:   ld b, a
+        ld de, FRUIT_TABLE
+.draw:  ld hl, SHELF_END
+        ld c, SHELF_COLS
+.fruit: ld a, (de)                  ; cell code into video RAM
+        ld (hl), a
+        inc de
+        push hl
+        ld a, h                     ; palette into color RAM, same place 0x400 higher
+        add a, high(CRAM-VRAM)
+        ld h, a
+        ld a, (de)
+        ld (hl), a
+        pop hl
+        inc de
+        dec hl                      ; next fruit to the left
+        dec c
+        jr nz, .next
+        push de                     ; shelf row full: carry on at the right end of the row above
+        ld de, SHELF_COLS-VRAM_STRIDE
+        add hl, de
+        pop de
+        ld c, SHELF_COLS
+.next:  djnz .fruit
         ret
 
 ; Pac-Man and the ghosts back to their starts (after a death the modes keep running).
@@ -558,8 +646,8 @@ can_enter:
         jr z, .no
         cp CELL_HOUSE
         jr z, .no
-        cp CELL_WALL
-        jr z, .no
+        cp CELL_WALL                ; walls, and every code above them (fruit, garbage)
+        jr nc, .no
         or a
         ret
 .no:    scf

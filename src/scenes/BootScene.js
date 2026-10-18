@@ -1,4 +1,4 @@
-import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP } from '../config.js';
+import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP, LEVELS } from '../config.js';
 import { mazeTiles, tileKey } from '../systems/tiles.js';
 import { world } from '../systems/arcade/world.js';
 import { openManual } from '../manual/index.js';
@@ -33,6 +33,7 @@ export default class BootScene extends Phaser.Scene {
 
   create() {
     this.makePellets();
+    this.makeFruit();
     this.makePac();
     this.makeGhosts();
     this.makeTileset();
@@ -327,6 +328,54 @@ export default class BootScene extends Phaser.Scene {
   makePellets() {
     this.pixels('maze/dot', 4, 4, (set) => this.disc(set, 4, 2.1, COLORS.dot));
     this.pixels('maze/power', 16, 16, (set) => this.disc(set, 16, 7.6, COLORS.dot));
+  }
+
+  // The level shelf's fruits (one 16x16 tile each, maze/fruit-<name>, cell codes in memmap.js), colors drawn in.
+  makeFruit() {
+    const C = LEVELS.colors;
+    const legend = {
+      r: C.red, d: C.darkRed, g: C.green, b: C.brown, w: C.white, o: C.orange, m: C.melon, n: C.melonDark,
+      y: C.yellow, u: C.blue, c: C.cyan, s: C.grey,
+    };
+    const art = {
+      cherry: [
+        '..........bb....', '.........b.b....', '........b...b...', '.......b....b...', '......b.....b...',
+        '.....b......b...', '..rrrb.....rrr..', '.rrrrr....rrrrr.', '.rwrrr....rwrrr.', '.rrrrr....rrrrr.',
+        '.rrrrd....rrrrd.', '..rdd......rdd..', '................', '................', '................', '................'],
+      strawberry: [
+        '................', '......gggg......', '.....gggggg.....', '...rrrrrrrrrr...', '..rrwrrrrrwrrr..',
+        '..rrrrrwrrrrrr..', '..rwrrrrrrrwrr..', '...rrrwrrrrrr...', '...rrrrrrwrr....', '....rwrrrrrr....',
+        '.....rrrrwr.....', '......rrrr......', '.......rr.......', '................', '................', '................'],
+      orange: [
+        '.......b........', '.......bgg......', '......gggg......', '....oooooooo....', '...oooooooooo...',
+        '..oowooooooooo..', '..owoooooooooo..', '..oooooooooooo..', '..oooooooooooo..', '..oooooooooooo..',
+        '...oooooooooo...', '....oooooooo....', '................', '................', '................', '................'],
+      apple: [
+        '.......b........', '.......b.gg.....', '...rrrrbrrrr....', '..rrrrrrrrrrr...', '.rrwwrrrrrrrrr..',
+        '.rrwrrrrrrrrrr..', '.rrrrrrrrrrrrr..', '.rrrrrrrrrrrrr..', '.rrrrrrrrrrrrr..', '..rrrrrrrrrrd...',
+        '..rrrrrrrrrdd...', '...rrdrrrddd....', '................', '................', '................', '................'],
+      melon: [
+        '.......bb.......', '......gg........', '....mmnmmnmm....', '...mnmmnmmnmm...', '..mnmmnmmnmmnm..',
+        '..mnmwnmmnmmnm..', '..mnmmnmmnmmnm..', '..mnmmnmmnmmnm..', '..mnmmnmmnmmnm..', '...mnmmnmmnmm...',
+        '....mmnmmnmm....', '......nnn.......', '................', '................', '................', '................'],
+      ship: [
+        '.......y........', '.......y........', '......yyy.......', '......uyu.......', '.r...uuyuu...r..',
+        '.r..uuuyuuu..r..', '.rr.uuyyyuu.rr..', '.rruuyyyyyuurr..', '.rruyyyyyyyurr..', '.r..yyy.yyy..r..',
+        '....rr...rr.....', '................', '................', '................', '................', '................'],
+      bell: [
+        '.......yy.......', '......yyyy......', '.....yyyyyy.....', '....yywyyyyy....', '....ywyyyyyy....',
+        '....ywyyyyyy....', '...yyyyyyyyyy...', '...yyyyyyyyyy...', '..yyyyyyyyyyyy..', '..yyyyyyyyyyyy..',
+        '...cccccccccc...', '.......ww.......', '................', '................', '................', '................'],
+      key: [
+        '.....cccccc.....', '....cc....cc....', '....c..uu..c....', '....cc....cc....', '.....cccccc.....',
+        '.......ss.......', '.......ss.......', '.......ssss.....', '.......ss.......', '.......sss......',
+        '.......ss.......', '.......ssss.....', '.......ss.......', '................', '................', '................'],
+    };
+    for (const [name, rows] of Object.entries(art)) {
+      this.pixels(`maze/fruit-${name}`, 16, 16, (set) => rows.forEach((row, y) => [...row].forEach((ch, x) => {
+        if (legend[ch] != null) set(x, y + 2, legend[ch]);
+      })));
+    }
   }
 
   // Lit where pixel (x, y) of an S x S sprite is inside a circle of radius r around (cx, cy), outside the mouth: a

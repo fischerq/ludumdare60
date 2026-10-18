@@ -629,6 +629,18 @@ export const ARCADE = {
   maxFramesPerTick: 4,  // after a hitch, catch up at most this many frames at once
 };
 
+// Levels and the level 256 glitch (design/systems/arcade-maze.md, "Levels and the kill screen"). The round counter is a
+// byte in the machine's work RAM; the fruit shelf under the maze shows one fruit per level, drawn by game.asm.
+export const LEVELS = {
+  shelfCols: 9,          // shelf width in tiles, right-aligned under the maze (cols 10..18, the right half)
+  param: 'level',        // ?level=256 starts the maze on that level (1..256), for testing
+  // Fruit tile colors (art maze/fruit-<name>, drawn in BootScene).
+  colors: {
+    red: 0xff2020, darkRed: 0xa00010, green: 0x30c030, brown: 0xa06030, white: 0xffffff, orange: 0xffa020,
+    melon: 0x40d060, melonDark: 0x107020, yellow: 0xffe040, blue: 0x3060ff, cyan: 0x40e0ff, grey: 0xc0c0c0,
+  },
+};
+
 // Animation speeds (characters and effects), in game frames per animation frame. Lives in a JSON file so the lab can
 // export it: tune at /lab/bench.html?b=animation, download, save over src/settings/animation.json.
 // These defaults are only used if the file can't be loaded.

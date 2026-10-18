@@ -1,7 +1,7 @@
 // Builds the board's program: assembles game.asm with constants taken from src/config.js (speeds, timers,
 // the maze), so tuning the game stays a one-line edit in config. No Phaser.
 
-import { ARCADE, MAZE, SPEED, GHOSTS, RULES, CONTROL, ANIM } from '../../config.js';
+import { ARCADE, MAZE, SPEED, GHOSTS, RULES, CONTROL, ANIM, LEVELS } from '../../config.js';
 import { assemble } from './asm.js';
 import { CELL, SOUND, MAP, IN0, IN1, DSW, VRAM_STRIDE } from './memmap.js';
 import { SPRITE } from './video.js';
@@ -32,7 +32,7 @@ export function configSymbols() {
     HIT_PX: Math.floor(RULES.hitDistance * T), TURN_WINDOW_PX: Math.round(CONTROL.turnWindow * T),
     BUFFER_FRAMES: frames(CONTROL.bufferTime),
     IN_UP: IN0.up, IN_LEFT: IN0.left, IN_DOWN: IN0.down, IN_RIGHT: IN0.right, IN_COIN: IN0.coin,
-    IN_START: IN1.start, DSW_DEMO: DSW.demo,
+    IN_START: IN1.start, DSW_DEMO: DSW.demo, SHELF_COLS: LEVELS.shelfCols,
     PELLET_COUNT: MAZE.layout.join('').replace(/[^.o]/g, '').length,
     // Animation speeds from src/settings/animation.json, in frames per animation frame (read at assembly).
     ANIM_PAC: ANIM.characters.pac ?? 2, ANIM_DEATH: ANIM.effects.pacDeath ?? 8,
