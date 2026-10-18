@@ -1,0 +1,64 @@
+{
+ "session_id": "4824fb8b-507d-5b74-a8ef-683d8d4eebe9",
+ "title": null,
+ "session_url": "https://claude.ai/code/session_01JwGxsAgzdeQEDT46UcjSue",
+ "claude_code_version": "2.1.302",
+ "first_date": "2026-10-18",
+ "last_date": "2026-10-18",
+ "turns": [
+  {
+   "index": 1,
+   "seq": 71,
+   "date": "2026-10-18",
+   "time": "10:41",
+   "duration_s": 48,
+   "prompt": "we need background sound for all the layers. should each be distinct, fitting the theme of the layer/its inspirations.",
+   "followups": [],
+   "images": [],
+   "claude_images": [],
+   "reply": "Asking the design questions first, as the project rules require. First I'll commit the log and open the PR.",
+   "progress_notes": [],
+   "tools": {
+    "Bash": 6,
+    "mcp__claude-code-remote__list_events": 2,
+    "ToolSearch": 1,
+    "mcp__github__list_pull_requests": 1
+   },
+   "api_requests": 8,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 16,
+     "cache_write_5m": 0,
+     "cache_write_1h": 36452,
+     "cache_read": 598263,
+     "output": 2748,
+     "thinking": 1123,
+     "cost_usd": 0.466293
+    }
+   },
+   "cost_usd": 0.466293,
+   "commits": [],
+   "entrypoint": "remote",
+   "branch": "claude/sweet-curie-ywyyi1",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0,
+     "end": 0,
+     "delta": 0
+    },
+    "seven_day": {
+     "start": 0.23,
+     "end": 0.23,
+     "delta": 0.0
+    }
+   }
+  }
+ ],
+ "totals": {
+  "prompts": 1,
+  "cost_usd": 0.466293,
+  "output_tokens": 2748,
+  "input_tokens": 634731
+ },
+ "reported_by_claude_code": null
+}
