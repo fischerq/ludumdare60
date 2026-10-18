@@ -280,6 +280,8 @@ export const DEEP = {
     cycleTime: 1.1,      // s between bus cycles shown
     packetSpeed: 7,      // tiles per second along the lanes
     readDelay: 1.3,      // s a read's packet waits in the chip before it heads out through the door
+    doorHold: 1.6,       // s a door stays open after its chip's cycle ends (so other doors can be open at once)
+    doorWarn: 0.6,       // s a door blinks before it closes
     // # wall, . floor, = bus lane (packets run here), C the CPU; chip rooms: interior r a v i, door R A V I
     // (open while the decoder selects that chip): ROM, RAM, VRAM, I/O.
     layout: [
