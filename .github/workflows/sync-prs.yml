@@ -1,6 +1,7 @@
 # Keeps every open PR merged with main, so none sits in conflict between Claude sessions.
-# For each open PR from this repo: merge origin/main into its branch with tools/sync_main.py --ci (generated
-# making-of files are regenerated, never conflict) and push. A real conflict is left alone and gets one comment
+# For each open PR from this repo: merge origin/main into its branch with tools/sync_main.py --ci, run from main's
+# copy so older branches get the current handling (generated making-of files never conflict), and push. A real
+# conflict is left alone and gets one comment
 # on the PR; the next Claude session on that branch resolves it (UserPromptSubmit / pre-push hooks).
 name: Sync open PRs with main
 
@@ -31,13 +32,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           MARKER='<!-- sync-prs-conflict -->'
+          TOOLS="$RUNNER_TEMP/sync-tools"
+          cp -r tools "$TOOLS"
           gh pr list --state open --base main --json number,headRefName,isCrossRepository \
             --jq '.[] | select(.isCrossRepository | not) | "\(.number) \(.headRefName)"' |
           while read -r num branch; do
             echo "::group::#$num $branch"
             git fetch -q origin "$branch"
             git checkout -q -B "$branch" "origin/$branch"
-            if python3 tools/sync_main.py --ci; then
+            if REPO_ROOT="$PWD" python3 "$TOOLS/sync_main.py" --ci; then
               if [ "$(git rev-list --count "origin/$branch..HEAD")" != "0" ]; then
                 git push -q origin "$branch" && echo "merged main into $branch"
               else

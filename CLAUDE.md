@@ -75,12 +75,15 @@ on the same scripted input (pause, speed, scrub, live touch mode). Use one when 
   - Put the PR link in your reply.
 - **Never leave a PR in conflict with `main`; fix it without being asked.** `tools/sync_main.py` merges
   `origin/main` into the branch automatically at the start of every turn (`UserPromptSubmit` hook) and before every
-  `git push` (`PreToolUse` hook), regenerating `repo-stats.json` and the sessions index instead of resolving them.
+  `git push` (`PreToolUse` hook). Generated making-of files never need hand resolution: `repo-stats.json`, the
+  sessions index and `commits.json` are regenerated (commits.json keeps both sides' entries), and a conflicted
+  session log takes the side that is further along.
   If a real conflict remains, the push is blocked with the merge left in the tree: resolve it (keep both sides of
   decision logs and config blocks), commit, push again. Merge, never rebase or force-push a branch with an open PR.
   A clean merge at turn start is pushed right away when the branch has an upstream. Between sessions, the
   `sync-prs` GitHub Action (`.github/workflows/sync-prs.yml`) merges `main` into every open PR whenever `main`
-  changes; on a real conflict it comments on the PR instead, and the next session resolves it.
+  changes, running main's copy of `tools/sync_main.py` so older branches get the current handling; on a real
+  conflict it comments on the PR instead, and the next session resolves it.
 
 ## AI-use log (making-of)
 Every human prompt and its token usage/cost is published in `making-of/` as a scrollable "making of" page.
