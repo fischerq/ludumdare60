@@ -12,18 +12,25 @@ After a clean merge, --hook also pushes it when the branch has an upstream, so t
 GitHub right away instead of only after the next push of the turn. Between sessions, the sync-prs workflow does
 the same for every open PR whenever main changes.
 
-Generated files (repo-stats.json, the sessions index) are never resolved by hand: they are regenerated with
-tools/ai_log.py after the merge. Any other conflict is reported; with --push it stays in the tree so Claude
-resolves it (keep both sides of decision logs) and pushes again.
+Generated making-of files are never resolved by hand: repo-stats.json and the sessions index are regenerated,
+commits.json keeps the entries of both sides and is regenerated, and a session log (sessions/<id>.json, rewritten
+whole from its transcript every turn) takes the side that is further along. Any other conflict is reported; with
+--push it stays in the tree so Claude resolves it (keep both sides of decision logs) and pushes again.
+
+REPO_ROOT=<checkout> runs this copy against another checkout: the workflow uses main's tools on every PR branch,
+so a branch with an older copy of this script still gets the current conflict handling.
 """
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(os.environ.get("REPO_ROOT") or Path(__file__).resolve().parent.parent).resolve()
 BASE = "main"
 GENERATED = ["making-of/repo-stats.json", "making-of/sessions/index.json"]
+COMMITS_LOG = "making-of/commits.json"
+SESSIONS = "making-of/sessions/"
 
 
 def git(*args, check=False):
@@ -37,13 +44,62 @@ def merging():
     return git("rev-parse", "-q", "--verify", "MERGE_HEAD").returncode == 0
 
 
-def regenerate():
+def ai_log():
     sys.dont_write_bytecode = True
-    sys.path.insert(0, str(ROOT / "tools"))
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    os.environ["REPO_ROOT"] = str(ROOT)
     import ai_log
-    ai_log.write_manifest()
-    ai_log.write_repo_stats()
-    git("add", *GENERATED)
+    return ai_log
+
+
+def is_session_log(path):
+    return path.startswith(SESSIONS) and path.endswith(".json") and path not in GENERATED
+
+
+def stage(path, n):
+    """Side n of a conflicted file (2 = this branch, 3 = main) as JSON, or None."""
+    r = git("show", f":{n}:{path}")
+    try:
+        return json.loads(r.stdout) if r.returncode == 0 else None
+    except ValueError:
+        return None
+
+
+def resolve_commits_log():
+    """Both sides' entries, so every commit keeps its seq; regenerate() then rebuilds the file from git."""
+    ours, theirs = stage(COMMITS_LOG, 2) or {}, stage(COMMITS_LOG, 3) or {}
+    entries = {e["sha"]: e for e in theirs.get("entries", []) + ours.get("entries", [])}
+    merged = {**theirs, **ours, "entries": sorted(entries.values(), key=lambda e: e.get("seq") or 0)}
+    (ROOT / COMMITS_LOG).write_text(json.dumps(merged, indent=1, ensure_ascii=False) + "\n")
+    git("add", COMMITS_LOG)
+
+
+def resolve_session_log(path):
+    """A session log is rewritten whole from its transcript, so the side with more of it is the newer one."""
+    def progress(d):
+        return (len(d.get("turns", [])), (d.get("totals") or {}).get("output_tokens") or 0) if d else (-1, 0)
+    side = "--theirs" if progress(stage(path, 3)) > progress(stage(path, 2)) else "--ours"
+    if git("checkout", side, "--", path).returncode:  # deleted on that side: keep the one that exists
+        git("checkout", "--theirs" if side == "--ours" else "--ours", "--", path)
+    git("add", path)
+
+
+def discard_regenerable():
+    """Local edits to generated files would make git refuse the merge; they are rebuilt after it anyway.
+    A dirty session log is dropped only when its transcript is here to rebuild it from."""
+    git("checkout", "--", *GENERATED, COMMITS_LOG)
+    transcripts = ai_log().transcripts_dir()
+    for path in git("diff", "--name-only", "--", SESSIONS).stdout.split():
+        if is_session_log(path) and (transcripts / Path(path).with_suffix(".jsonl").name).exists():
+            git("checkout", "--", path)
+
+
+def regenerate():
+    log = ai_log()
+    log.write_commits_log(log.jam_window())
+    log.write_manifest()
+    log.write_repo_stats()
+    git("add", *GENERATED, COMMITS_LOG, "making-of/media/art")
 
 
 def sync(keep_conflicts):
@@ -56,7 +112,7 @@ def sync(keep_conflicts):
     if git("merge-base", "--is-ancestor", f"origin/{BASE}", "HEAD").returncode == 0:
         return None
     # Generated files are rewritten by every hook run; drop local copies so they can't block the merge.
-    git("checkout", "--", *GENERATED)
+    discard_regenerable()
     r = git("merge", "--no-ff", "--no-commit", f"origin/{BASE}")
     if not merging():
         if r.returncode:
@@ -66,8 +122,12 @@ def sync(keep_conflicts):
     for path in conflicted:
         if path in GENERATED:
             git("checkout", "--ours", "--", path)
+        elif path == COMMITS_LOG:
+            resolve_commits_log()
+        elif is_session_log(path):
+            resolve_session_log(path)
     regenerate()
-    others = [p for p in conflicted if p not in GENERATED]
+    others = [p for p in conflicted if p not in GENERATED and p != COMMITS_LOG and not is_session_log(p)]
     if others:
         if not keep_conflicts:
             git("merge", "--abort")
