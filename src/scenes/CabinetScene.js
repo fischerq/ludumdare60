@@ -7,11 +7,13 @@ import { addLayerButtonAt } from '../layerButton.js';
 import { coins, spendCoin } from '../wallet.js';
 import { showCallout } from '../callout.js';
 import { fxOn } from '../systems/anim.js';
+import { createMech, stepMech, tapMech, armState, magnetState, coinPos } from '../systems/coinmech.js';
 
 // Layer 2, zoom out: the arcade cabinet the maze game runs in. Pixel art with faked depth (see CABINET in
 // config). Starts zoomed in so the screen looks exactly like the maze level, then pulls back to show the whole
 // machine. Nobody plays here: the bot plays on a running game, and when the machine asks for a coin, a coin in
-// the door zooms back into a fresh game.
+// the door opens the coin minigame (the coin mechanism behind the door); a coin it takes zooms back into a fresh
+// game.
 export default class CabinetScene extends Phaser.Scene {
   constructor() {
     super('Cabinet');
@@ -63,13 +65,14 @@ export default class CabinetScene extends Phaser.Scene {
 
     this.makePrompt();
     this.makeCounter();
+    this.makeMech();
     // Down one layer: zoom back into the screen and go on with the machine's game on the maze level.
     this.layerBtn = addLayerButtonAt(this, 'down', () => {
-      if (this.mode !== 'outro' && this.mode !== 'coin') { sfx.frightOff(); this.layerDown({ continue: true }); }
+      if (this.mode === 'insert' || this.mode === 'intro') { sfx.frightOff(); this.layerDown({ continue: true }); }
     }, { zoom: CABINET.zoom });
     // Up one layer: the arcade hall this cabinet stands in, where the coins are.
     this.layerUpBtn = addLayerButtonAt(this, 'up', () => {
-      if (this.mode !== 'outro' && this.mode !== 'gone' && this.mode !== 'coin') { sfx.frightOff(); this.mode = 'gone'; this.scene.start('Hall', { from: 'cabinet' }); }
+      if (this.mode === 'insert' || this.mode === 'intro') { sfx.frightOff(); this.mode = 'gone'; this.scene.start('Hall', { from: 'cabinet' }); }
     }, { zoom: CABINET.zoom });
 
     this.cam = this.cameras.main.setOrigin(0, 0).setRoundPixels(true);
@@ -135,15 +138,26 @@ export default class CabinetScene extends Phaser.Scene {
   setupInput() {
     this.input.on('pointerdown', (p, over) => {
       unlockAudio();
+      if (this.mode === 'mech') { this.mechDown(p, over); return; }
       if (this.mode === 'intro') { this.introT = 1; return; } // tap to skip the zoom-out
       if (!this.waiting() || over.length) return; // a layer button, or the machine isn't asking for a coin
       const wp = this.cam.getWorldPoint(p.x, p.y);
       const cd = CABINET.coinDoor, pad = 24;
       if (wp.x > cd.x - pad && wp.x < cd.x + cd.w + pad && wp.y > cd.y - pad && wp.y < cd.y + cd.h + pad) this.insertCoin();
     });
+    // Flicking the coin into the slot: a swipe (or a tap, let go) while it's in hand.
+    this.input.on('pointermove', (p) => {
+      if (this.mode !== 'mech' || !this.flickFrom || !p.isDown) return;
+      if (Math.hypot(p.x - this.flickFrom.x, p.y - this.flickFrom.y) >= CABINET.coinMech.flickMin) this.mechTap();
+    });
+    this.input.on('pointerup', () => {
+      if (this.mode === 'mech' && this.flickFrom) this.mechTap();
+    });
     this.input.keyboard?.on('keydown', (e) => {
       unlockAudio();
-      if ((e.code === 'Space' || e.code === 'Enter') && this.waiting()) this.insertCoin();
+      if (e.code !== 'Space' && e.code !== 'Enter') return;
+      if (this.mode === 'mech') this.mechTap();
+      else if (this.waiting()) this.insertCoin();
     });
   }
 
@@ -158,9 +172,10 @@ export default class CabinetScene extends Phaser.Scene {
     this.downData = data;
   }
 
-  // One coin flies from the counter into the left coin slot, then we zoom into the screen for a fresh game.
+  // Tapping the coin door with a coin in hand opens the coin minigame. The coin is spent only when the coin
+  // switch takes it (see mechSwitch); a rejected coin comes back.
   insertCoin() {
-    if (!spendCoin()) {
+    if (coins() < COINS.perGame) {
       sfx.click();
       this.noCoinT = this.t;
       this.needCoins();
@@ -168,25 +183,121 @@ export default class CabinetScene extends Phaser.Scene {
     }
     this.callout?.destroy();
     this.callout = null;
-    this.mode = 'coin';
-    this.showCoins();
-    this.tweens.add({ targets: this.counter, scale: 1.4, duration: 90, yoyo: true });
-    const cd = CABINET.coinDoor, from = this.counterCoin;
-    const coin = this.add.image(from.x, from.y, 'arcade/coin');
-    const to = { x: cd.x + 15, y: cd.y + 18 }, ms = COINS.flyTime * 1000;
-    this.tweens.add({ targets: coin, x: to.x, duration: ms, ease: 'Sine.easeInOut' });
-    // Up a little first, then down into the slot.
-    this.tweens.add({ targets: coin, y: to.y, duration: ms, ease: 'Back.easeIn' });
-    this.tweens.add({
-      targets: coin, scaleX: 0, scaleY: 0.8, duration: 120, delay: ms - 60,
-      onComplete: () => {
-        coin.destroy();
-        sfx.coin();
-        this.credit = 1;
-        // The coin is paid here, so the maze level starts its game without taking another.
-        this.time.delayedCall(COINS.startDelay * 1000, () => this.layerDown({ free: true }));
-      },
+    sfx.click();
+    this.zoomDoor(true, () => {
+      const P = CABINET.coinMech;
+      this.mech = createMech(P, Math.random() * 10);
+      this.mechEnd = null;
+      this.flickFrom = null;
+      this.mechSwitch.setTexture('cabinet/coinmech-switch-up');
+      this.mechPulse.setVisible(false);
+      this.mode = 'mech';
+      this.cam.setZoom(P.zoom).setScroll(P.originX, 0);
+      this.cam.fadeIn(150);
     });
+  }
+
+  // The camera between the whole cabinet (k 0) and the coin door filling the view (k 1), over zoomInTime; done
+  // runs at the end. Coming back out it starts at the door.
+  zoomDoor(inward, done) {
+    const C = CABINET, cd = C.coinDoor, viewW = cd.w * 1.6, viewH = viewW * GAME_HEIGHT / GAME_WIDTH;
+    const door = { x: cd.x + cd.w / 2 - viewW / 2, y: cd.y + cd.h / 2 - viewH / 2 };
+    const set = (k) => {
+      const e = k * k * (3 - 2 * k), w = GAME_WIDTH / C.zoom + (viewW - GAME_WIDTH / C.zoom) * e;
+      this.cam.setZoom(GAME_WIDTH / w).setScroll(door.x * e, door.y * e);
+    };
+    this.mode = 'zoom';
+    set(inward ? 0 : 1);
+    if (!inward) this.cam.fadeIn(150);
+    this.tweens.addCounter({
+      from: inward ? 0 : 1, to: inward ? 1 : 0, duration: C.coinMech.zoomInTime * 1000,
+      onUpdate: (tw) => set(tw.getValue()), onComplete: done,
+    });
+  }
+
+  // The coin mechanism, built once far right in the world; the camera moves there for the minigame.
+  makeMech() {
+    const P = CABINET.coinMech, ox = P.originX, at = (x, y) => [ox + x, y];
+    this.add.image(ox, 0, 'cabinet/coinmech-bg').setOrigin(0);
+    this.mechSwitch = this.add.image(...at(P.switchAt.x, P.switchAt.y), 'cabinet/coinmech-switch-up');
+    this.mechCoin = this.add.image(...at(P.hand.x, P.hand.y), 'cabinet/coinmech-coin-0');
+    this.mechArm = this.add.image(...at(P.arm.x, P.arm.y), 'cabinet/coinmech-arm-in');
+    this.mechMagnet = this.add.image(...at(P.magnet.x, P.magnet.y - 26), 'cabinet/coinmech-magnet-off');
+    this.mechPulse = this.add.image(...at(...P.wire[0]), 'cabinet/coinmech-pulse').setVisible(false);
+    this.mechText = this.add.text(...at(P.w / 2, P.textY), '', {
+      fontFamily: UI.arcadeFont, fontSize: 8, color: P.textColor, align: 'center', resolution: 1,
+    }).setOrigin(0.5).setLineSpacing(6);
+    // Back out without a coin going in (the coin stays in hand): a big box top right.
+    const bx = ox + P.w - 86, by = 6, bw = 40, bh = 20; // left of the page's sound button
+    this.add.graphics().fillStyle(0x000000, 1).fillRect(bx, by, bw, bh).lineStyle(1, 0xffffff, 1).strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
+    this.add.text(bx + bw / 2, by + bh / 2 + 1, 'BACK', { fontFamily: UI.arcadeFont, fontSize: 8, color: '#ffffff', resolution: 1 }).setOrigin(0.5);
+    this.add.zone(bx - 4, by - 4, bw + 8, bh + 8).setOrigin(0).setInteractive().on('pointerdown', () => {
+      if (this.mode === 'mech' && ['hand', 'hold', 'returned'].includes(this.mech.phase)) this.closeMech(false);
+    });
+  }
+
+  mechDown(p, over) {
+    if (over.length) return; // the back button
+    if (this.mech.phase === 'hand') this.flickFrom = { x: p.x, y: p.y };
+    else this.mechTap();
+  }
+
+  mechTap() {
+    this.flickFrom = null;
+    const ev = tapMech(this.mech, CABINET.coinMech);
+    if (ev) sfx.click();
+  }
+
+  // Back out to the whole cabinet: with the coin taken (CREDIT 1, then the zoom into a fresh game) or not.
+  closeMech(paid) {
+    this.cam.setScroll(0, 0);
+    this.zoomDoor(false, () => {
+      this.setIntro(1);
+      if (!paid) { this.mode = 'insert'; return; }
+      this.mode = 'coin';
+      this.credit = 1;
+      this.showCoins();
+      this.tweens.add({ targets: this.counter, scale: 1.4, duration: 90, yoyo: true });
+      // The coin is paid here, so the maze level starts its game without taking another.
+      this.time.delayedCall(COINS.startDelay * 1000, () => this.layerDown({ free: true }));
+    });
+  }
+
+  // The coin pressed the coin switch: it's spent, and a pulse runs down the wire to the board (IN0's COIN bit).
+  mechSwitched() {
+    const P = CABINET.coinMech;
+    if (!spendCoin()) { this.closeMech(false); return; }
+    sfx.coin();
+    this.mechSwitch.setTexture('cabinet/coinmech-switch-down');
+    const pts = P.wire.map(([x, y]) => ({ x: P.originX + x, y }));
+    const lens = pts.slice(1).map((q, i) => Math.hypot(q.x - pts[i].x, q.y - pts[i].y)), total = lens.reduce((a, b) => a + b, 0);
+    this.mechPulse.setPosition(pts[0].x, pts[0].y).setVisible(true);
+    this.tweens.addCounter({
+      from: 0, to: total, duration: P.pulseTime * 1000,
+      onUpdate: (tw) => {
+        let d = tw.getValue(), i = 0;
+        while (i < lens.length - 1 && d > lens[i]) d -= lens[i++];
+        const k = Math.min(1, d / lens[i]);
+        this.mechPulse.setPosition(Math.round(pts[i].x + (pts[i + 1].x - pts[i].x) * k), Math.round(pts[i].y + (pts[i + 1].y - pts[i].y) * k));
+      },
+      onComplete: () => { this.mechPulse.setVisible(false); this.time.delayedCall(P.doneDelay * 1000, () => this.closeMech(true)); },
+    });
+  }
+
+  updateMech(dt) {
+    const P = CABINET.coinMech, m = this.mech;
+    for (const ev of stepMech(m, dt, P)) {
+      if (ev === 'switch') this.mechSwitched();
+      else if (ev.startsWith('reject')) { sfx.alert(); this.cam.shake(120, 0.004); }
+    }
+    const c = coinPos(m, P);
+    this.mechCoin.setPosition(P.originX + Math.round(c.x), Math.round(c.y))
+      .setTexture(`cabinet/coinmech-coin-${Math.floor(m.s / 6) % 2}`);
+    this.mechArm.setTexture(`cabinet/coinmech-arm-${armState(m, P)}`);
+    this.mechMagnet.setTexture(`cabinet/coinmech-magnet-${magnetState(m, P)}`);
+    const T = P.text, failed = m.phase === 'reject' || m.phase === 'returned';
+    const text = failed ? T[m.fail] : m.phase === 'switch' ? T.ok : m.phase === 'hand' ? T.hand : m.phase === 'hold' ? T.hold : T.roll;
+    this.mechText.setText(text).setColor(failed ? P.failColor : m.phase === 'switch' ? P.okColor : P.textColor);
   }
 
   // Out of coins: point the player up to the arcade hall, where the coins are.
@@ -215,6 +326,7 @@ export default class CabinetScene extends Phaser.Scene {
       this.setIntro(Math.min(1, this.introT));
       if (this.introT >= 1) this.mode = 'insert';
     }
+    if (this.mode === 'mech') this.updateMech(dt);
     if (this.mode === 'outro') {
       this.introT -= dt / LAYERS.outroTime;
       this.setIntro(Math.max(0, this.introT));

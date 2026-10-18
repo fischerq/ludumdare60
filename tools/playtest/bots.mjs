@@ -53,15 +53,18 @@ const signals = {
   score: (c, x, y) => Math.min(9, ...c.ghosts.map((g) => manhattan(g, { x, y }))),
 };
 
-// -3 work RAM: the game state bytes; keep out of the row the write head is about to dash along.
+// -3 work RAM: walk onto the blinking bit lamps (they move an objective on), keep off the other lamps (stepping on
+// one flips it) and off the bits the write head is about to dash along.
 const ram = {
-  targets: (c) => c.st.goals.filter((g) => !c.st.got.has(g.a)).map((g) => ({ x: g.a % 32, y: Math.floor(g.a / 32) })),
+  frame(c) { c.want = c.L.wanted(c.st, c.env); },
+  targets: (c) => c.want,
   blocked(c, x, y, eta) {
+    const l = c.L.lampAt(c.st, x, y);
+    if (l && !c.want.some((p) => p.x === x && p.y === y)) return true;
     const h = c.st.head;
-    if (!h) return false;
-    const row = Math.floor(h.a / 32), to = h.a % 32, C = DEEP.ram;
-    const end = h.t + C.waitTime + to / C.dashSpeed + 0.15;
-    return y === row && x <= to + 1 && c.t + eta < end;
+    if (!h || !l || l.v.i !== h.i) return false;
+    const C = DEEP.ram, end = h.t + C.waitTime + 8 / C.dashSpeed + 0.15;
+    return c.t + eta < end;
   },
 };
 
@@ -105,36 +108,21 @@ const bus = {
   },
 };
 
-// -5 the CPU: CALL warps into routines not yet visited, page by page; off the PC's next line, the flag blocks
-// and the other warps.
-const CPU = DEEP.cpu, CPU_TEXT_ROWS = 27;
+// -5 the CPU: pick up the patch card, carry it onto the marked line; keep off the line the PC lands on next
+// around the time it lands (the warning outline shows it).
+const CPU_TOP = 5;
 const cpu = {
-  frame(c) {
-    const st = c.st;
-    c.mem.dir ??= 'down';
-    if (st.page + CPU_TEXT_ROWS >= st.lines.length) c.mem.dir = 'up';
-    if (st.page === 0) c.mem.dir = 'down';
-  },
-  calls(c) {
-    const st = c.st, out = [];
-    for (let i = st.page; i < Math.min(st.lines.length, st.page + CPU_TEXT_ROWS); i++) {
-      const l = st.lines[i];
-      if (l.op === 'call' && l.to !== undefined && !st.visited.has(l.target)) out.push({ x: 0, y: i - st.page });
-    }
-    return out;
-  },
   targets(c) {
-    const calls = cpu.calls(c);
-    if (calls.length) return calls;
-    const y = c.mem.dir === 'down' ? CPU_TEXT_ROWS : -1;
-    return Array.from({ length: c.L.cols }, (_, x) => ({ x, y }));
+    const st = c.st, r = st.routines[st.k];
+    if (!r || st.nextT !== null) return [];
+    if (!st.carry) return Array.from({ length: st.token.w }, (_, i) => ({ x: st.token.x0 + i, y: CPU_TOP + st.token.row }));
+    return Array.from({ length: c.L.cols }, (_, x) => ({ x, y: CPU_TOP + r.row }));
   },
   blocked(c, x, y, eta) {
-    const st = c.st, line = st.page + y, l = st.lines[line];
-    if (x === 0 && l?.op && !(l.op === 'call' && l.to !== undefined && !st.visited.has(l.target))) return true;
-    if ((x === CPU.zColumn && line % 3 === 1) || (x === CPU.cColumn && line % 3 === 2)) return true;
-    if (st.line !== undefined && ((line === st.line + 1 && eta < 0.45) || (line === st.line && eta < 0.12))) return true;
-    return false;
+    const st = c.st, next = c.L.nextRow(st);
+    if (next === null || y - CPU_TOP !== next) return false;
+    const left = st.endT - c.t;
+    return eta > left - 0.3 && eta < left + 0.3;
   },
 };
 
@@ -149,27 +137,29 @@ const logic = {
   score: (c, x, y) => Math.min(9, ...c.st.seekers.map((s) => manhattan(s, { x, y }))),
 };
 
-// -7 input wires: stand on the switch that steers the machine's Pac-Man toward a corner it hasn't reached;
-// keep away from the spark.
-const PADS = { up: { x: 5, y: 10 }, left: { x: 2, y: 12 }, right: { x: 8, y: 12 }, down: { x: 5, y: 14 } };
-const MAZE_CORNERS = [{ name: 'TL', x: 0, y: 0 }, { name: 'TR', x: W - 1, y: 0 }, { name: 'BL', x: 0, y: H - 1 }, { name: 'BR', x: W - 1, y: H - 1 }];
+// -7 input wires: carry each cut wire's loose end to its pin, keeping off the wires where a spark is (or is about
+// to be) when it gets there; then walk onto the stick and play the real game by swipes (eat the dots).
+const IW = DEEP.input;
 const input = {
-  frame(c) {
-    const g = readState(c.m, c.S);
-    if (g.phase !== 'play') return;
-    const left = MAZE_CORNERS.filter((k) => !c.st.corners.has(k.name));
-    // The player stands on a switch, so a change of direction takes a walk to another one: about a second.
-    const d = mazeRace(c.m, g, (x, y) => left.some((k) => Math.max(Math.abs(x - k.x), Math.abs(y - k.y)) <= DEEP.input.corner - 1), 1 / DEEP.machineSlowdown, 0.3);
-    if (d) c.mem.pad = d;
-  },
-  dwell: true,
+  // While playing, the bot's swipes are the stick's direction: the maze bot, with a reaction at the machine's speed.
+  direct: (c) => (c.st.phase === 'play' ? mazeBot(c.m, c.S, 0.4 * IW.playSpeed, 0.25) : undefined),
   targets(c) {
-    const p = PADS[c.mem.pad ?? 'left'];
-    return [[0, 0], [1, 0], [0, 1], [1, 1]].map(([dx, dy]) => ({ x: p.x + dx, y: p.y + dy }));
+    const st = c.st;
+    if (st.phase === 'play') return [];
+    if (st.phase === 'grab') return [c.L.STICK];
+    if (st.carry) { const [x, y] = IW.wires[st.carry].pin; return [{ x, y }]; }
+    return c.L.DIRS.filter((d) => !st.wires[d].fixed).map((d) => { const p = st.wires[d].path; const [x, y] = p[p.length - 1]; return { x, y }; });
   },
   blocked(c, x, y, eta) {
-    if (c.t < c.st.sparkFrom - 1) return false;
-    return Math.abs(c.st.spark.x - x) + Math.abs(c.st.spark.y - y) < 1.5 + eta * DEEP.input.sparkSpeed;
+    const st = c.st;
+    if (st.phase !== 'repair') return false;
+    const near = (path, s) => path.some(([px, py], k) => px === x && py === y && Math.abs(k - s) < 1.6);
+    if (st.sparks.some((sp) => near(sp.path, sp.s + IW.sparkSpeed * eta))) return true;
+    // Sparks about to leave a switch (it blinks before).
+    return c.L.DIRS.some((d) => {
+      const w = st.wires[d], dt = w.next - c.t;
+      return st.carry !== d && dt < eta + 0.3 && dt > -0.1 && near(w.path, IW.sparkSpeed * Math.max(0, eta - dt));
+    });
   },
 };
 
@@ -262,6 +252,8 @@ function distanceField(goals, open) {
 // The direction the bot wants this frame. c: { L, st, env, m, S, t, player, mem }.
 export function decideDeep(bot, c) {
   bot.frame?.(c);
+  const direct = bot.direct?.(c); // a layer phase where the bot's swipes aren't walking (the input layer's stick)
+  if (direct !== undefined) return direct;
   const from = decisionTile(c.player);
   const goals = bot.targets(c);
   c.goals = goals;

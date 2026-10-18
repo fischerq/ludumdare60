@@ -45,6 +45,7 @@ export default class BootScene extends Phaser.Scene {
     this.buildMaze();
     this.makeCabinet();
     this.makeSticks();
+    this.makeCoinMech();
     this.makeHall();
     this.makeHallCharacters();
     this.makeDeep();
@@ -933,6 +934,98 @@ export default class BootScene extends Phaser.Scene {
       }
       this.poly(set, [[cd.x + 18, cd.y + 50], [cd.x + cd.w - 18, cd.y + 50], [cd.x + cd.w - 18, cd.y + 62], [cd.x + 18, cd.y + 62]], 0x000000);
     });
+  }
+
+  // The coin mechanism behind the coin door, for the coin minigame (CABINET.coinMech, shown at 4x): the backdrop
+  // with slot, track, coin return, cash box and wire (180x320), and one file per state of the moving parts:
+  // reject arm (in / warn / out), slug magnet (off / warn / on), coin switch (up / down), the coin (two roll
+  // frames) and the pulse on the wire. Each part is drawn centered on its point in the config.
+  makeCoinMech() {
+    const P = CABINET.coinMech, K = P.colors;
+    const line = (set, x0, y0, x1, y1, color, th = 1) => {
+      const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
+      for (let i = 0; i <= n; i++) {
+        const x = Math.round(x0 + (x1 - x0) * i / n), y = Math.round(y0 + (y1 - y0) * i / n);
+        for (let a = 0; a < th; a++) for (let b = 0; b < th; b++) set(x + a, y + b, color);
+      }
+    };
+    const rect = (set, x0, y0, x1, y1, color) => { for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) set(x, y, color); };
+    this.pixels('cabinet/coinmech-bg', P.w, P.h, (set) => {
+      rect(set, 0, 0, P.w, P.h, K.back);
+      // The mechanism's steel plate, riveted to the inside of the door.
+      rect(set, 16, 40, 170, 230, K.plate);
+      rect(set, 16, 228, 170, 230, K.plateDark);
+      rect(set, 168, 40, 170, 230, K.plateDark);
+      for (const [x, y] of [[20, 44], [164, 44], [20, 224], [164, 224]]) rect(set, x, y, x + 2, y + 2, K.rivet);
+      // The slot the coin goes in, edge on, with a funnel.
+      const [sx, sy] = P.track[0];
+      rect(set, sx - 12, 36, sx + 12, 40, K.plateDark);
+      rect(set, sx - 10, 38, sx + 10, sy - P.coinR, K.slot);
+      // The rails under the coin, light on top, dark below.
+      for (let i = 1; i < P.track.length; i++) {
+        const [ax, ay] = P.track[i - 1], [bx, by] = P.track[i], o = P.coinR;
+        line(set, ax - 2, ay + o, bx + 2, by + o, K.rail, 2);
+        line(set, ax - 2, ay + o + 2, bx + 2, by + o + 2, K.railDark, 1);
+      }
+      // The end stops on the two ledges.
+      for (const i of P.stops) { const [x, y] = P.track[i]; rect(set, x + P.coinR, y - 3, x + P.coinR + 3, y + P.coinR + 2, K.railDark); }
+      // The coin return: a dark chute and a cup at the bottom right.
+      const c = P.cup;
+      rect(set, c.x - 16, c.y - 10, c.x + 16, c.y + 12, K.cup);
+      rect(set, c.x - 18, c.y - 12, c.x + 18, c.y - 10, K.cupRim);
+      rect(set, c.x - 18, c.y - 10, c.x - 16, c.y + 12, K.cupRim);
+      rect(set, c.x + 16, c.y - 10, c.x + 18, c.y + 12, K.cupRim);
+      rect(set, c.x - 18, c.y + 12, c.x + 18, c.y + 14, K.cupRim);
+      // The cash box under the coin switch.
+      const s = P.switchAt;
+      rect(set, s.x - 16, s.y + 12, s.x + 22, s.y + 40, K.box);
+      rect(set, s.x - 8, s.y + 12, s.x + 14, s.y + 15, K.slot);
+      // The wire from the coin switch down to the board.
+      for (let i = 1; i < P.wire.length; i++) line(set, ...P.wire[i - 1], ...P.wire[i], K.wire, 2);
+    });
+    // The reject arm swings on a pivot top right, across the coin's path when out.
+    const arm = { in: [6, 4], warn: [11, 11], out: [10, 27] };
+    for (const [k, [ex, ey]] of Object.entries(arm)) {
+      this.pixels(`cabinet/coinmech-arm-${k}`, 32, 32, (set) => {
+        line(set, 26, 3, ex, ey, K.armDark, 3);
+        line(set, 26, 3, ex, ey, K.arm, 2);
+        if (k !== 'in') line(set, ex, ey, ex + 1, ey + 1, K.armWarn, 3);
+        rect(set, 24, 1, 30, 7, K.armDark);
+        rect(set, 26, 3, 28, 5, K.rivet);
+      });
+    }
+    // The slug magnet: a horseshoe over the track, poles down; sparks when it's on.
+    for (const k of ['off', 'warn', 'on']) {
+      this.pixels(`cabinet/coinmech-magnet-${k}`, 32, 32, (set) => {
+        const red = k === 'on' ? K.magnetOn : K.magnet;
+        for (let y = 2; y < 22; y++) for (let x = 4; x < 28; x++) {
+          const dx = x + 0.5 - 16, dy = y + 0.5 - 14, r = Math.hypot(dx, dy);
+          if ((y >= 14 && (Math.abs(dx) >= 5 && Math.abs(dx) <= 11)) || (y < 14 && r >= 5 && r <= 11)) set(x, y, red);
+        }
+        rect(set, 5, 20, 11, 24, k === 'warn' ? K.armWarn : K.magnetPole);
+        rect(set, 21, 20, 27, 24, k === 'warn' ? K.armWarn : K.magnetPole);
+        if (k === 'on') for (const [x0, x1] of [[8, 6], [8, 11], [24, 21], [24, 27]]) line(set, x0, 25, x1, 30, K.spark, 1);
+      });
+    }
+    // The coin switch: a microswitch with a lever; down (and lit) while the coin presses it.
+    for (const k of ['up', 'down']) {
+      this.pixels(`cabinet/coinmech-switch-${k}`, 24, 24, (set) => {
+        rect(set, 2, 12, 22, 22, K.switchBody);
+        rect(set, 4, 14, 8, 17, k === 'down' ? K.switchLit : K.railDark);
+        line(set, 4, 11, 20, k === 'up' ? 4 : 10, K.switchLever, 2);
+      });
+    }
+    // The coin, close up: two frames of its shine as it rolls.
+    for (const f of [0, 1]) {
+      this.pixels(`cabinet/coinmech-coin-${f}`, 16, 16, (set) => {
+        this.disc(set, 16, 8, K.coinDark);
+        this.disc((x, y, c) => set(x, y, c), 16, 6.5, K.coin);
+        if (f === 0) { set(5, 4, K.coinLight); set(4, 5, K.coinLight); set(6, 4, K.coinLight); }
+        else { set(10, 11, K.coinLight); set(11, 10, K.coinLight); set(11, 11, K.coinLight); }
+        rect(set, 7, 5, 9, 11, K.coinDark);
+      });
+    }
+    this.pixels('cabinet/coinmech-pulse', 8, 8, (set) => this.disc(set, 8, 4, K.wireLit));
   }
 
   // The joystick as seen on the control panel: neutral and pushed four ways. 24x32, base at the bottom.

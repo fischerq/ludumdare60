@@ -15,6 +15,7 @@ import { DEEP_BOTS, decideDeep, mazeBot } from './bots.mjs';
 import { plan, evade, manhattan } from './plan.mjs';
 import { rng, createHand } from './noise.mjs';
 import { runAdder } from './adder.mjs';
+import { revertPatches } from '../../src/systems/layers/cpu.js';
 
 const DT = 1 / 60;
 
@@ -33,6 +34,7 @@ function freshMachine() {
   Object.assign(world.input, { held: null, pulse: null, pulseFrames: 0, start: 0, coin: 0 });
   Object.assign(world, { halted: false, paused: false, acc: 0, trace: null });
   setSpeed(1);
+  revertPatches(); // the CPU layer's ROM patches, so every run starts from the original program
   newGame();
 }
 
