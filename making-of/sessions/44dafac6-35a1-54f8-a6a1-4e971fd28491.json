@@ -1,0 +1,64 @@
+{
+ "session_id": "44dafac6-35a1-54f8-a6a1-4e971fd28491",
+ "title": null,
+ "session_url": "https://claude.ai/code/session_01LfdVAPNEhdMWj6ahcS45Nm",
+ "claude_code_version": "2.1.302",
+ "first_date": "2026-10-18",
+ "last_date": "2026-10-18",
+ "turns": [
+  {
+   "index": 1,
+   "seq": 68,
+   "date": "2026-10-18",
+   "time": "10:27",
+   "duration_s": 41,
+   "prompt": "lets polish the arcade layer a bit. add the shop owner, when talking to him he should just snore.\nadd a larger portrait to the text box when talking to  things.\nlets tweak the ghost-chase. it should activate when talking to the poster about the ghosts (talk to the poster, then the ghosts show a exclamation mark like pokemon trainers, as a grou they should say something like \"wait a minute. we know you!\" then they chase one. should lose coins and reset the layer).",
+   "followups": [],
+   "images": [],
+   "claude_images": [],
+   "reply": "Read the arcade code and docs; preparing a few design questions before building, per the project's questions-first rule.",
+   "progress_notes": [],
+   "tools": {
+    "Bash": 5,
+    "ToolSearch": 2,
+    "mcp__claude-code-remote__list_events": 2,
+    "mcp__github__list_pull_requests": 1
+   },
+   "api_requests": 7,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 14,
+     "cache_write_5m": 0,
+     "cache_write_1h": 48041,
+     "cache_read": 555444,
+     "output": 2914,
+     "thinking": 1487,
+     "cost_usd": 0.553753
+    }
+   },
+   "cost_usd": 0.553753,
+   "commits": [],
+   "entrypoint": "remote",
+   "branch": "claude/relaxed-ritchie-ggyl6t",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0,
+     "end": 0,
+     "delta": 0
+    },
+    "seven_day": {
+     "start": 0.23,
+     "end": 0.23,
+     "delta": 0.0
+    }
+   }
+  }
+ ],
+ "totals": {
+  "prompts": 1,
+  "cost_usd": 0.553753,
+  "output_tokens": 2914,
+  "input_tokens": 603499
+ },
+ "reported_by_claude_code": null
+}
