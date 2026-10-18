@@ -4,7 +4,7 @@
   {
    "sha": "6145ac49c0c245939a8df305ee4dcd2c3831088c",
    "date": "2026-10-08",
-   "seq": 24.75,
+   "seq": 24.875,
    "kind": "commit",
    "author": "Quirin",
    "title": "Merge pull request #3 from fischerq/ccr-f83e2812-i8p69i",
@@ -123,6 +123,140 @@
     {
      "label": "Commit 81e2771",
      "url": "https://github.com/fischerq/ludumdare60/commit/81e2771e1e12af7ce0649f85490d52f85b8eb7b0"
+    }
+   ]
+  },
+  {
+   "sha": "00061f7fe9dc90b6d67e4d122aeee34839680e40",
+   "date": "2026-10-18",
+   "time": "12:17",
+   "seq": 75.5,
+   "kind": "commit",
+   "author": "Max",
+   "title": "update sprites",
+   "body": "Changed 23 art files.",
+   "art": [
+    {
+     "name": "arcade/pac-down-0.png",
+     "before": "media/art/00061f7f/arcade__pac-down-0.before.png",
+     "after": "media/art/00061f7f/arcade__pac-down-0.after.png"
+    },
+    {
+     "name": "arcade/pac-down-1.png",
+     "before": "media/art/00061f7f/arcade__pac-down-1.before.png",
+     "after": "media/art/00061f7f/arcade__pac-down-1.after.png"
+    },
+    {
+     "name": "arcade/pac-right-0.png",
+     "before": "media/art/00061f7f/arcade__pac-right-0.before.png",
+     "after": "media/art/00061f7f/arcade__pac-right-0.after.png"
+    },
+    {
+     "name": "arcade/pac-right-1.png",
+     "before": "media/art/00061f7f/arcade__pac-right-1.before.png",
+     "after": "media/art/00061f7f/arcade__pac-right-1.after.png"
+    },
+    {
+     "name": "arcade/pac-up-0.png",
+     "before": "media/art/00061f7f/arcade__pac-up-0.before.png",
+     "after": "media/art/00061f7f/arcade__pac-up-0.after.png"
+    },
+    {
+     "name": "arcade/pac-up-1.png",
+     "before": "media/art/00061f7f/arcade__pac-up-1.before.png",
+     "after": "media/art/00061f7f/arcade__pac-up-1.after.png"
+    },
+    {
+     "name": "maze/ghost-blinky-down-0.png",
+     "before": "media/art/00061f7f/maze__ghost-blinky-down-0.before.png",
+     "after": "media/art/00061f7f/maze__ghost-blinky-down-0.after.png"
+    },
+    {
+     "name": "maze/ghost-blinky-down-1.png",
+     "before": "media/art/00061f7f/maze__ghost-blinky-down-1.before.png",
+     "after": "media/art/00061f7f/maze__ghost-blinky-down-1.after.png"
+    },
+    {
+     "name": "maze/ghost-blinky-left-0.png",
+     "before": "media/art/00061f7f/maze__ghost-blinky-left-0.before.png",
+     "after": "media/art/00061f7f/maze__ghost-blinky-left-0.after.png"
+    },
+    {
+     "name": "maze/ghost-blinky-left-1.png",
+     "before": "media/art/00061f7f/maze__ghost-blinky-left-1.before.png",
+     "after": "media/art/00061f7f/maze__ghost-blinky-left-1.after.png"
+    },
+    {
+     "name": "maze/ghost-blinky-right-0.png",
+     "before": "media/art/00061f7f/maze__ghost-blinky-right-0.before.png",
+     "after": "media/art/00061f7f/maze__ghost-blinky-right-0.after.png"
+    },
+    {
+     "name": "maze/ghost-blinky-right-1.png",
+     "before": "media/art/00061f7f/maze__ghost-blinky-right-1.before.png",
+     "after": "media/art/00061f7f/maze__ghost-blinky-right-1.after.png"
+    },
+    {
+     "name": "maze/ghost-blinky-up-0.png",
+     "before": "media/art/00061f7f/maze__ghost-blinky-up-0.before.png",
+     "after": "media/art/00061f7f/maze__ghost-blinky-up-0.after.png"
+    },
+    {
+     "name": "maze/ghost-blinky-up-1.png",
+     "before": "media/art/00061f7f/maze__ghost-blinky-up-1.before.png",
+     "after": "media/art/00061f7f/maze__ghost-blinky-up-1.after.png"
+    },
+    {
+     "name": "maze/ghost-clyde-down-0.png",
+     "before": "media/art/00061f7f/maze__ghost-clyde-down-0.before.png",
+     "after": "media/art/00061f7f/maze__ghost-clyde-down-0.after.png"
+    },
+    {
+     "name": "maze/ghost-clyde-down-1.png",
+     "before": "media/art/00061f7f/maze__ghost-clyde-down-1.before.png",
+     "after": "media/art/00061f7f/maze__ghost-clyde-down-1.after.png"
+    },
+    {
+     "name": "maze/ghost-clyde-left-0.png",
+     "before": "media/art/00061f7f/maze__ghost-clyde-left-0.before.png",
+     "after": "media/art/00061f7f/maze__ghost-clyde-left-0.after.png"
+    },
+    {
+     "name": "maze/ghost-clyde-left-1.png",
+     "before": "media/art/00061f7f/maze__ghost-clyde-left-1.before.png",
+     "after": "media/art/00061f7f/maze__ghost-clyde-left-1.after.png"
+    },
+    {
+     "name": "maze/ghost-clyde-right-0.png",
+     "before": "media/art/00061f7f/maze__ghost-clyde-right-0.before.png",
+     "after": "media/art/00061f7f/maze__ghost-clyde-right-0.after.png"
+    },
+    {
+     "name": "maze/ghost-clyde-right-1.png",
+     "before": "media/art/00061f7f/maze__ghost-clyde-right-1.before.png",
+     "after": "media/art/00061f7f/maze__ghost-clyde-right-1.after.png"
+    },
+    {
+     "name": "maze/ghost-clyde-up-0.png",
+     "before": "media/art/00061f7f/maze__ghost-clyde-up-0.before.png",
+     "after": "media/art/00061f7f/maze__ghost-clyde-up-0.after.png"
+    },
+    {
+     "name": "maze/ghost-clyde-up-1.png",
+     "before": "media/art/00061f7f/maze__ghost-clyde-up-1.before.png",
+     "after": "media/art/00061f7f/maze__ghost-clyde-up-1.after.png"
+    },
+    {
+     "name": "maze/life.png",
+     "before": "media/art/00061f7f/maze__life.before.png",
+     "after": "media/art/00061f7f/maze__life.after.png"
+    }
+   ],
+   "shots": [],
+   "links": [
+    {
+     "label": "Commit 00061f7",
+     "url": "https://github.com/fischerq/ludumdare60/commit/00061f7fe9dc90b6d67e4d122aeee34839680e40"
     }
    ]
   }
