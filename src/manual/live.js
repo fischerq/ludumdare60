@@ -1,57 +1,66 @@
-// The live page: the machine as it is right now, drawn in ink like a magic map. Everything is read from the
+// The live page: the machine as it is right now, drawn like a magic map. Everything is read from the
 // running machine (registers, memory, the bus log, inputs, the program's RAM), MANUAL.liveHz times a second,
 // detailed enough to debug the emulator: ?manual opens it straight away.
-import { MANUAL, RULES } from '../config.js';
+import { MANUAL } from '../config.js';
 import { world, onFrame, requestTrace } from '../systems/arcade/world.js';
 import { MAP, IN0, IN1, DSW, CELL, tileOffset, region } from '../systems/arcade/memmap.js';
 import { BUS } from '../systems/arcade/machine.js';
-import { readState } from '../systems/arcade/state.js';
+import { readState, PHASES } from '../systems/arcade/state.js';
 import { W, H, spriteArt } from '../systems/arcade/video.js';
 
 const C = MANUAL.colors;
 const hex = (n, d = 4) => n.toString(16).toUpperCase().padStart(d, '0');
 const DX = { up: 0, left: -1, down: 0, right: 1 }, DY = { up: -1, left: 0, down: 1, right: 0 };
 const GHOST_INK = { blinky: '#b02020', pinky: '#c0508a', inky: '#11807a', clyde: '#c06a10' };
-const TRAIL = 40;      // footprints kept per actor
+const TRAIL = 8;       // footprints kept per actor
 const TRACE_EVERY = 1; // s between profiles of a frame's instructions
 const TRACE_MAX = 6000;
+const GHOST_NAMES = ['blinky', 'pinky', 'inky', 'clyde'];
 
 export const livePage = {
   title: '10. The live page',
-  html: `<p><i>Hold the page still and watch: the ink moves with the machine. Everything below is read from the
-    running board, ${MANUAL.liveHz} times a second.</i></p>
-    <p><button class="manual-btn live-hold" style="width:100%;font-size:16px">HOLD THE INK</button></p>
-    <div class="live-status mono"></div>
+  html: `<p><i>Everything below is read from the running board, ${MANUAL.liveHz} times a second.</i></p>
+    <p><button class="manual-btn live-hold" style="width:100%;font-size:16px">FREEZE VIEW</button></p>
+    <div class="live-status"></div>
     <h2>The map</h2>
     <canvas class="live-map" style="width:100%;image-rendering:auto"></canvas>
-    <p class="fig">Walls and dots from video RAM, everyone at their position in work RAM with their last footsteps.
-      ✕ marks where each ghost is heading (its target tile).</p>
+    <p class="fig">Walls and dots from video RAM, everyone at their position in work RAM. ✕ is the tile each ghost
+      last aimed for, as the program wrote it (TGT_X, TGT_Y in ghost_target).</p>
     <h2>The game state</h2><div class="live-game"></div>
-    <h2>The Z80</h2><div class="live-cpu mono"></div>
+    <h2>The actors</h2><div class="live-actors"></div>
+    <h2>The Z80</h2><div class="live-cpu"></div>
     <h2>Where the time goes</h2><div class="live-prof"></div>
     <h2>Memory, last frame</h2><canvas class="live-heat" style="width:100%"></canvas>
     <p class="fig">The 64 KB address space in 256-byte pages, row by row from 0x0000: blue = read, red = written.</p>
     <div class="live-regions"></div>
-    <h2>The bus, latest cycles</h2><div class="live-bus mono"></div>
+    <h2>The bus, latest cycles</h2><div class="live-bus"></div>
     <h2>Sprites</h2><div class="live-sprites"></div>
     <h2>The input wires</h2><div class="live-input"></div>
-    <h2>Sound commands</h2><div class="live-sound mono"></div>`,
+    <h2>Sound commands</h2><div class="live-sound"></div>`,
   mount(body) {
     const q = (s) => body.querySelector(s);
     const map = q('.live-map'), heat = q('.live-heat');
-    const st = { hold: false, trails: new Map(), sounds: [], prof: null, lastTrace: 0, routines: null };
+    const st = { hold: false, trails: new Map(), sounds: [], prof: null, lastTrace: 0, routines: null, targets: [], hooked: null };
     q('.live-hold').onclick = (e) => {
       st.hold = !st.hold;
-      e.target.textContent = st.hold ? 'LET THE INK FLOW' : 'HOLD THE INK';
+      e.target.textContent = st.hold ? 'RESUME VIEW' : 'FREEZE VIEW';
     };
     const offFrame = onFrame((m, sounds) => {
-      for (const s of sounds) st.sounds.push(`frame ${s.frame}: ${s.name}`);
-      st.sounds.splice(0, Math.max(0, st.sounds.length - 6));
+      for (const s of sounds) st.sounds.push(s);
+      st.sounds.splice(0, Math.max(0, st.sounds.length - 8));
     });
+    // The ghosts' targets as the program computes them: ghost_target writes TGT_X then TGT_Y with IX on the ghost.
+    const hook = (addr, value, kind) => {
+      const m = world.machine, S = world.program.symbols;
+      if (addr !== S.TGT_Y || !(kind & BUS.write) || kind & BUS.io) return;
+      const id = m.read(m.cpu.getState().ix + S.A_ID);
+      st.targets[id] = { x: (m.read(S.TGT_X) << 24) >> 24, y: (value << 24) >> 24, frame: m.frame };
+    };
     const tick = () => {
       if (st.hold) return;
       const m = world.machine, S = world.program?.symbols;
       if (!m || !S) { q('.live-status').textContent = 'The machine is still warming up…'; return; }
+      if (st.hooked !== m) { m.hooks.push(hook); st.hooked = m; }
       st.routines ??= routineMap(world.program.listing);
       const now = performance.now() / 1000;
       if (now - st.lastTrace > TRACE_EVERY && !world.trace && !world.halted && !world.paused) {
@@ -59,28 +68,44 @@ export const livePage = {
         requestTrace(TRACE_MAX, (steps) => { st.prof = profile(steps, st.routines); });
       }
       const g = readState(m, S);
-      drawStatus(q('.live-status'), m, g);
+      drawStatus(q('.live-status'), m);
       drawMap(map, m, S, g, st);
-      drawGame(q('.live-game'), g, m, S);
-      drawCpu(q('.live-cpu'), m, world.program.listing);
+      drawGame(q('.live-game'), m, S);
+      drawActors(q('.live-actors'), g, st.targets);
+      drawCpu(q('.live-cpu'), m, world.program.listing, st.routines);
       drawProfile(q('.live-prof'), st.prof);
       drawHeat(heat, q('.live-regions'), m);
       drawBus(q('.live-bus'), m);
       drawSprites(q('.live-sprites'), m);
       drawInput(q('.live-input'), m);
-      q('.live-sound').innerHTML = st.sounds.length ? st.sounds.slice().reverse().join('<br>') : '(none yet)';
+      q('.live-sound').innerHTML = st.sounds.length
+        ? table(['frame', 'command'], st.sounds.slice().reverse().map((s) => [s.frame, s.name])) : '<p>(none yet)</p>';
+      // The next look at the CPU: somewhere in the part of the frame where it works.
+      m.sampleAt = Math.floor(Math.random() * Math.max(1, m.busy));
     };
     tick();
     const timer = setInterval(tick, 1000 / MANUAL.liveHz);
-    return { stop: () => { clearInterval(timer); offFrame(); } };
+    return {
+      stop: () => {
+        clearInterval(timer); offFrame();
+        if (st.hooked) { st.hooked.hooks.splice(st.hooked.hooks.indexOf(hook) >>> 0, 1); st.hooked.sampleAt = null; }
+      },
+    };
   },
 };
 
-function drawStatus(el, m, g) {
-  const load = Math.round((m.busy / m.frameCycles) * 100);
-  const state = world.halted ? 'STANDING STILL (waiting for a coin)' : world.paused ? 'PAUSED' : 'RUNNING';
-  el.innerHTML = `<b>${state}</b> · frame ${m.frame} · ${g.phase.toUpperCase()}<br>
-    at the joystick: <b>${world.driver === 'bot' ? 'the autopilot' : 'the player'}</b> · speed ${world.speed}× · CPU busy ${load}% of the last frame`;
+// ---- the panels ---------------------------------------------------------------------------------------------------
+// One cell per value: numbers right-aligned in the mono face, so columns line up from one update to the next.
+const table = (head, rows) => `<div class="live-t"><table class="live">${head ? `<tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr>` : ''}${rows
+  .map((r) => `<tr>${r.map((c) => `<td${typeof c === 'number' ? ' class="n"' : ''}>${c}</td>`).join('')}</tr>`).join('')}</table></div>`;
+const mono = (s) => `<span class="mono">${s}</span>`;
+
+function drawStatus(el, m) {
+  const state = world.halted ? 'STOPPED (waiting for a coin)' : world.paused ? 'PAUSED' : 'RUNNING';
+  el.innerHTML = table(['board', 'frame', 'joystick', 'speed', 'CPU busy'], [[
+    `<b>${state}</b>`, m.frame, world.driver === 'bot' ? 'autopilot' : 'player', `${world.speed}×`,
+    `${m.busy} / ${m.frameCycles} cyc (${Math.round((m.busy / m.frameCycles) * 100)}%)`,
+  ]]);
 }
 
 // ---- the map ------------------------------------------------------------------------------------------------------
@@ -110,23 +135,23 @@ function drawMap(cv, m, S, g, st) {
   }
   const actors = [{ name: 'pac-man', ink: C.ink, ...g.pac }, ...g.ghosts.map((gh) => ({ ...gh, ink: GHOST_INK[gh.name] }))];
   for (const a of actors) {
-    // Footsteps: where it was on earlier updates, fading.
+    // A few footsteps: where it was on earlier updates, fading.
     const tr = st.trails.get(a.name) ?? [];
     const last = tr[tr.length - 1];
     if (!last || Math.hypot(last.x - a.x, last.y - a.y) > 0.4) tr.push({ x: a.x, y: a.y, dir: a.dir });
     if (tr.length > TRAIL) tr.shift();
     st.trails.set(a.name, tr);
     tr.forEach((p, i) => {
-      ctx.globalAlpha = (i / tr.length) * 0.6;
+      ctx.globalAlpha = (i / tr.length) * 0.3;
       ctx.fillStyle = a.ink;
       const side = i % 2 ? 2.5 : -2.5, ox = (DY[p.dir] ?? 0) * side, oy = (DX[p.dir] ?? 0) * side;
       ctx.beginPath();
-      ctx.ellipse(p.x * T + T / 2 + ox, p.y * T + T / 2 + oy, 1.6, 2.4, Math.atan2(DY[p.dir] ?? 1, DX[p.dir] ?? 0) + Math.PI / 2, 0, Math.PI * 2);
+      ctx.ellipse(p.x * T + T / 2 + ox, p.y * T + T / 2 + oy, 1, 1.6, Math.atan2(DY[p.dir] ?? 1, DX[p.dir] ?? 0) + Math.PI / 2, 0, Math.PI * 2);
       ctx.fill();
     });
     ctx.globalAlpha = 1;
     // Targets: where the rules send each ghost.
-    const tg = a.name !== 'pac-man' ? target(a, g, S) : null;
+    const tg = a.name !== 'pac-man' ? target(a, st.targets[GHOST_NAMES.indexOf(a.name)]) : null;
     if (tg) {
       ctx.strokeStyle = a.ink;
       ctx.setLineDash([3, 3]);
@@ -157,55 +182,59 @@ function drawMap(cv, m, S, g, st) {
   }
 }
 
-// The tile a ghost is heading for, with the program's rules (game.asm, ghost_target).
-function target(gh, g, S) {
-  if (gh.state === 'eyes') return { x: S.HOUSE_EXIT_X, y: S.HOUSE_EXIT_Y };
-  if (gh.state !== 'active' || gh.frightened) return null;
-  if (!g.chase) return gh.corner;
-  const p = { x: Math.floor(g.pac.x), y: Math.floor(g.pac.y) }, d = g.pac.dir ?? 'up';
-  const ahead = (n) => ({ x: p.x + DX[d] * n, y: p.y + DY[d] * n });
-  if (gh.name === 'blinky') return p;
-  if (gh.name === 'pinky') return ahead(RULES.pinkyAhead);
-  if (gh.name === 'inky') {
-    const a = ahead(RULES.inkyAhead), b = g.ghosts[0];
-    return { x: 2 * a.x - Math.floor(b.x), y: 2 * a.y - Math.floor(b.y) };
-  }
-  const dx = Math.floor(gh.x) - p.x, dy = Math.floor(gh.y) - p.y;
-  return dx * dx + dy * dy > RULES.clydeShyDistance ** 2 ? p : gh.corner;
+// The target the program last wrote for a ghost, while it's one the ghost is following (active and not
+// frightened, or eyes going home).
+function target(gh, tg) {
+  if (!tg || gh.frightened || (gh.state !== 'active' && gh.state !== 'eyes')) return null;
+  return tg;
 }
 
-// ---- the panels ---------------------------------------------------------------------------------------------------
-const table = (head, rows) => `<table><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr>${rows
-  .map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</table>`;
+// Work RAM by the program's own symbols: [name, bytes, how to show the value].
+const GAME_VARS = [
+  ['FRAME', 2], ['PHASE', 1, (v) => PHASES[v] ?? '?'], ['PHASE_T', 2, (v) => (v ? `${secs(v)} s` : '—')],
+  ['SCORE', 2], ['LIVES_LEFT', 1], ['PELLETS', 2], ['LEVEL', 1, (v) => `level ${v + 1}`],
+  ['MODE_I', 1, (v) => (v & 1 ? 'chase' : 'scatter')], ['MODE_T', 2, (v) => (v ? `${secs(v)} s` : 'forever')],
+  ['FRIGHT', 2, (v) => (v ? `${secs(v)} s` : '—')], ['FREEZE', 1], ['COMBO', 1], ['EATEN', 1, (v) => (v === 0xff ? 'none' : GHOST_NAMES[v - 1] ?? v)],
+  ['RNG', 1], ['TGT_X', 1, (v) => (v << 24) >> 24], ['TGT_Y', 1, (v) => (v << 24) >> 24],
+];
+const secs = (frames) => (frames / 60.6).toFixed(1);
 
-function drawGame(el, g, m, S) {
-  const secs = (frames) => (frames / 60.6).toFixed(1);
-  const modeT = m.read(S.MODE_T) | (m.read(S.MODE_T + 1) << 8);
-  const phaseT = m.read(S.PHASE_T) | (m.read(S.PHASE_T + 1) << 8);
-  el.innerHTML = table(['', ''], [
-    ['phase', `${g.phase} (${phaseT ? `${secs(phaseT)} s left` : 'until something happens'})`],
-    ['score · lives · dots left', `${g.score} · ${g.lives} · ${g.pellets}`],
-    ['mode', `${g.chase ? 'CHASE' : 'SCATTER'} (step ${g.modeIndex}${modeT ? `, ${secs(modeT)} s left` : ', forever'})`],
-    ['fright', g.fright ? `${secs(g.fright)} s left` : '—'],
-  ]) + table(['who', 'tile', 'dir', 'state'], [
-    ['Pac-Man', `${g.pac.x.toFixed(2)}, ${g.pac.y.toFixed(2)}`, `${g.pac.dir ?? '—'}${g.pac.next ? ` → ${g.pac.next}` : ''}`, '—'],
-    ...g.ghosts.map((gh) => [gh.name, `${gh.x.toFixed(2)}, ${gh.y.toFixed(2)}`, gh.dir ?? '—', `${gh.state}${gh.frightened ? ', afraid' : ''}`]),
+function drawGame(el, m, S) {
+  el.innerHTML = table(['variable', 'addr', 'hex', 'value'], GAME_VARS.map(([name, n, show]) => {
+    const v = n === 2 ? m.read(S[name]) | (m.read(S[name] + 1) << 8) : m.read(S[name]);
+    return [name, mono(hex(S[name])), mono(hex(v, n * 2)), show ? show(v) : v];
+  }));
+}
+
+function drawActors(el, g, targets) {
+  const row = (name, a, tg) => [name, a.x.toFixed(2), a.y.toFixed(2), a.dir ?? '—', a.next ?? '—', a.state ?? '—',
+    a.frightened ? 'yes' : '—', a.corner ? `${a.corner.x}, ${a.corner.y}` : '—', tg ? `${tg.x}, ${tg.y}` : '—'];
+  el.innerHTML = table(['who', 'x', 'y', 'dir', 'next', 'state', 'afraid', 'corner', 'target'], [
+    row('Pac-Man', { ...g.pac, state: null, corner: null }),
+    ...g.ghosts.map((gh, i) => row(gh.name, { ...gh, next: null }, targets[i])),
   ]);
 }
 
-function drawCpu(el, m, listing) {
-  const c = m.cpu.getState();
-  const r16 = (a, b) => hex((a << 8) | b);
-  const f = c.flags;
-  const flag = (k, n = k) => `<span style="${f[k] ? `color:${C.accent};font-weight:700` : 'opacity:0.35'}">${n}</span>`;
+function drawCpu(el, m, listing, routines) {
+  const smp = m.sample;
+  if (!smp) { el.innerHTML = '<p>(waiting for a frame to run…)</p>'; return; }
+  const c = smp.cpu, f = c.flags, f2 = c.flags_prime ?? {};
+  const h2 = (v) => mono(hex(v ?? 0, 2)), h4 = (v) => mono(hex(v ?? 0));
+  const bit = (v) => `<span style="${v ? `color:${C.accent};font-weight:700` : 'opacity:0.4'}">${v ? 1 : 0}</span>`;
   // The source lines around PC (the program's own listing, as the board assembled it).
   const at = listing.findIndex((l) => l.addr === c.pc && l.bytes.length);
   const around = at < 0 ? [] : listing.slice(Math.max(0, at - 3), at + 4);
-  el.innerHTML = table(['AF', 'BC', 'DE', 'HL'], [[r16(c.a, flagsByte(f)), r16(c.b, c.c), r16(c.d, c.e), r16(c.h, c.l)]])
-    + table(['IX', 'IY', 'SP', 'PC'], [[hex(c.ix), hex(c.iy), hex(c.sp), `<b>${hex(c.pc)}</b>`]])
-    + `<p>flags ${flag('S')} ${flag('Z')} ${flag('H')} ${flag('P', 'P/V')} ${flag('N')} ${flag('C')} ·
-      I ${hex(c.i, 2)} · IM ${c.imode} · interrupts ${c.iff1 ? 'on' : 'off'} · ${c.halted ? 'HALTED (asleep until vblank)' : 'running'}</p>`
-    + `<div style="font-size:12px;white-space:pre;overflow-x:auto;background:rgba(43,33,23,0.06);padding:4px">${around.map((l) =>
+  el.innerHTML = `<p style="font-size:13px">The CPU caught in the middle of frame ${smp.frame}, at cycle ${smp.cycle}
+      of ${m.frameCycles}, in <b>${routineAt(routines, c.pc)}</b>. A new moment every update; after its work each
+      frame it sleeps on HALT until the next vblank.</p>`
+    + table(['', 'A', 'F', 'B', 'C', 'D', 'E', 'H', 'L'], [
+      ['main', h2(c.a), h2(flagsByte(f)), h2(c.b), h2(c.c), h2(c.d), h2(c.e), h2(c.h), h2(c.l)],
+      ["shadow", h2(c.a_prime), h2(flagsByte(f2)), h2(c.b_prime), h2(c.c_prime), h2(c.d_prime), h2(c.e_prime), h2(c.h_prime), h2(c.l_prime)],
+    ])
+    + table(['PC', 'SP', 'IX', 'IY', 'I', 'R'], [[`<b>${h4(c.pc)}</b>`, h4(c.sp), h4(c.ix), h4(c.iy), h2(c.i), h2(c.r)]])
+    + table(['S', 'Z', 'Y', 'H', 'X', 'P/V', 'N', 'C'], [['S', 'Z', 'Y', 'H', 'X', 'P', 'N', 'C'].map((k) => bit(f[k]))])
+    + table(['IM', 'IFF1', 'IFF2', 'halted'], [[c.imode, bit(c.iff1), bit(c.iff2), c.halted ? 'yes' : 'no']])
+    + `<div class="mono" style="font-size:12px;white-space:pre;overflow-x:auto;background:rgba(43,33,23,0.06);padding:4px">${around.map((l) =>
       `<span style="${l === listing[at] ? `background:rgba(154,42,26,0.2);font-weight:700` : ''}">${hex(l.addr)}  ${escapeHtml(l.source)}</span>`).join('\n') || '(PC outside the listing)'}</div>`;
 }
 
@@ -241,9 +270,8 @@ function drawProfile(el, prof) {
   if (!prof) { el.innerHTML = '<p>(measuring one frame…)</p>'; return; }
   const max = prof.top[0]?.[1] ?? 1;
   el.innerHTML = `<p style="font-size:13px">Instructions in one recent frame, by routine (${prof.total} in all${prof.total >= TRACE_MAX ? '+' : ''}):</p>`
-    + prof.top.map(([n, k]) => `<div class="mono" style="font-size:13px;display:flex;gap:6px;align-items:center">
-      <span style="width:110px;overflow:hidden">${n}</span><span style="flex:1"><span style="display:inline-block;height:9px;background:${C.ink};width:${(k / max) * 100}%"></span></span>
-      <span style="width:44px;text-align:right">${k}</span></div>`).join('');
+    + table(['routine', 'instr', '%', ''], prof.top.map(([n, k]) => [n, k, Math.round((k / prof.total) * 100),
+      `<span style="display:inline-block;height:9px;background:${C.ink};width:${(k / max) * 100}%"></span>`]));
 }
 
 function drawHeat(cv, el, m) {
@@ -277,14 +305,14 @@ function drawHeat(cv, el, m) {
 
 function drawBus(el, m) {
   const last = m.recentBus(12).reverse();
-  el.innerHTML = `<div style="font-size:12px;white-space:pre">${last.map((b) =>
-    `${b.write ? '<b>W</b>' : 'R'} ${hex(b.addr)} ${b.write ? '←' : '→'} ${hex(b.value, 2)}  ${b.region.padEnd(10)} cycle ${b.cycle}`).join('\n')}</div>`;
+  el.innerHTML = table(['', 'addr', 'value', 'region', 'cycle'], last.map((b) => [
+    b.write ? '<b>W</b>' : 'R', mono(hex(b.addr, b.io ? 2 : 4)), mono(hex(b.value, 2)), b.region, b.cycle]));
 }
 
 function drawSprites(el, m) {
-  el.innerHTML = table(['slot', 'code', 'pal', 'x, y', 'art'], m.sprites().map((s, i) => {
+  el.innerHTML = table(['slot', 'code', 'pal', 'x', 'y', 'art'], m.sprites().map((s, i) => {
     const a = s.code ? spriteArt(s.code) : null;
-    return [i, s.code, s.palette, s.code ? `${s.x}, ${s.y}` : '—', a ? (a.text ?? a.key?.split('/')[1] ?? '') : 'empty'];
+    return [i, s.code, s.palette, s.code ? s.x : '—', s.code ? s.y : '—', a ? (a.text ?? a.key?.split('/')[1] ?? '') : 'empty'];
   }));
 }
 
