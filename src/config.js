@@ -189,7 +189,7 @@ export const DEEP = {
   style: {
     crt:     { bg: 0x12040e, grid: 0x2a0c22, line: 0xff3cc8, glow: 0x4a0e3a, dot: 0xff8ae0, dot2: 0xffd0f4, special: 0xffffff },
     signals: { bg: 0x02100f, grid: 0x07302c, line: 0x2af0e0, glow: 0x0a3a36, dot: 0x8afff4, dot2: 0xffe08a, special: 0xffffff },
-    vram:    { bg: 0x050620, grid: 0x10144a, line: 0x4a6aff, glow: 0x141c5a, dot: 0x9ab0ff, dot2: 0xffffff, special: 0xffffff },
+    ram:     { bg: 0x02101a, grid: 0x0a2c40, line: 0x5ac8ff, glow: 0x0c3048, dot: 0xb0e4ff, dot2: 0xffffff, special: 0xffffff },
     bus:     { bg: 0x140c02, grid: 0x34220a, line: 0xffa82a, glow: 0x4a2e08, dot: 0xffd88a, dot2: 0xffffff, special: 0xffffff },
     cpu:     { bg: 0x02120a, grid: 0x08321a, line: 0x2aff7a, glow: 0x0a3a1c, dot: 0x9affc0, dot2: 0x8ad8ff, special: 0xffffff },
     logic:   { bg: 0x0c0418, grid: 0x220e40, line: 0xa45aff, glow: 0x2a1250, dot: 0xd0b0ff, dot2: 0xffffff, special: 0xffffff },
@@ -250,11 +250,18 @@ export const DEEP = {
     ],
     goal: 4,             // colors delivered
   },
-  vram: {                // -3 blade trap: the write head dashes along a row to the address it writes
+  ram: {                 // -3 work RAM, blade trap: the write head dashes along a row to the address it writes
     waitTime: 0.7,       // s it waits at the row's start (telegraph)
     dashSpeed: 24,       // bytes per second along the row
     queue: 3,            // writes waiting at most; older ones are skipped
-    goal: 4,             // the power pellet bytes
+    nameReach: 31,       // bytes past a symbol the status line still names it by (GHOST0+4)
+    // The objectives: game state bytes, by the program's symbol (+ add bytes), with the name shown over them.
+    goals: [
+      { sym: 'SCORE', name: 'SCORE' },
+      { sym: 'LIVES_LEFT', name: 'LIVES' },
+      { sym: 'PAC', name: 'PAC X' },
+      { sym: 'GHOST0', name: 'BLINKY X' },
+    ],
   },
   bus: {                 // -4 the spatial bus: chip rooms behind decoder doors, packets on the lanes
     cycleTime: 1.1,      // s between bus cycles shown
@@ -532,7 +539,7 @@ export const MUSIC = {
       ],
       textures: [{ type: 'ticks', every: 1, freq: 9000, vol: 0.05 }],
     },
-    vram: {
+    ram: {
       bpm: 100, root: 45, // A: slow organ steps over the memory's refresh pulse
       tracks: [
         { wave: 'square', vol: 0.22, oct: -12, notes: '0 . . 0 . . 0 . -4 . . -4 . . -4 .' },

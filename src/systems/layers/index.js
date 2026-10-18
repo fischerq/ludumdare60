@@ -6,10 +6,10 @@
 // input layer steers the machine).
 import crt from './crt.js';
 import signals from './signals.js';
-import vram from './vram.js';
+import ram from './ram.js';
 import bus from './bus.js';
 import cpu from './cpu.js';
 import logic from './logic.js';
 import input from './input.js';
 
-export const DEEP_LAYERS = [crt, signals, vram, bus, cpu, logic, input];
+export const DEEP_LAYERS = [crt, signals, ram, bus, cpu, logic, input];
