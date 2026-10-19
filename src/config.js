@@ -922,6 +922,46 @@ export const UI = {
   menuGhostAnim: 15,
 };
 
+// The start screen (src/scenes/MenuScene.js): the cabinet's machine (Max's assets/cabinet/machine.png) standing on
+// a big layer cake (assets/menu/cake.png), both shown 1:1, with the attract show on the machine's screen.
+// Same oblique view as the cabinet: depth goes up and to the right at 45°.
+export const MENU = {
+  titleY: 150,            // below the sound button
+  machineX: 192,          // screen px of the machine texture's top-left corner
+  machineY: 196,
+  // The machine's picture, inside the bezel (texture px, see CABINET: screen at panelDepth plus the bezel).
+  screen: { x: 98, y: 67, w: 168, h: 264 },
+  castY: 120,             // texture px inside the screen: the row Pac-Man and the ghosts run along
+  castSpeed: 40,          // screen px per s
+  castGap: 34,            // screen px between the runners
+  dotGap: 16,             // screen px; the screen shows the maze at half its size, so this is one tile
+  promptY: 210,           // texture px inside the screen: TAP TO START
+  promptSize: 24,
+  cakeX: 50,              // screen px of the cake texture's top-left corner
+  cakeY: 778,
+  cake: {
+    w: 560,               // front face, art px
+    depth: 80,            // drawn as (+depth/2, -depth/2)
+    rim: 24,              // plate rim beyond the cake on each side
+    // Top to bottom, outside in like the game's layers: the hall's frosting, the cabinet, the maze, the board,
+    // the deep layers. Fillings between them.
+    layers: [
+      { name: 'frosting', h: 26, front: 0xfff4e0, side: 0xe0cfb4 },
+      { name: 'cabinet', h: 64, front: 0xf2c200, side: 0xa88600 },
+      { name: 'filling', h: 10, front: 0xffb8de, side: 0xd88fb8 },
+      { name: 'maze', h: 64, front: 0x05051a, side: 0x020210, line: 0x2121de, dot: 0xffb897 },
+      { name: 'filling', h: 10, front: 0xffb8de, side: 0xd88fb8 },
+      { name: 'board', h: 64, front: 0x24382c, side: 0x17241c, line: 0xd8a83a },
+      { name: 'filling', h: 10, front: 0xffb8de, side: 0xd88fb8 },
+      { name: 'deep', h: 56, front: 0x3a3448, side: 0x25212e, line: 0x6a6280 },
+    ],
+    top: 0xfffaf0,        // the frosting's top surface
+    drip: 0xfff4e0,       // frosting running down over the cabinet layer
+    sprinkles: [0xd32734, 0x00ffde, 0xffb847, 0x2121de, 0xffde00],
+    plate: 0xd8dce6, plateSide: 0x9aa0b0,
+  },
+};
+
 // Emulated arcade machine (Pac-Man-style hardware) that the lower layers read from. See design/systems/emulator.md.
 export const ARCADE = {
   // MIT Z80 core by Molly Howell, pinned to a commit. A classic script (global Z80), loaded by src/systems/arcade/z80.js.
