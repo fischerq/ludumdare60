@@ -68,8 +68,8 @@ Sizes are in image pixels at native resolution. Transparent background.
 | Texture key | Size | Frames | Notes |
 |---|---|---|---|
 | **Maze level** (`assets/maze/`, also the cabinet's screen picture and the menu) | | | |
-| `maze/pac-0` .. `maze/pac-6` | 32x32 | 7 | Pac-Man facing right, the chomp played 0..6 and back. The odd frames (1, 3, 5) are in-betweens, placeholders drawn as halfway shapes between the even neighbours: redraw them freely. The game mirrors it for left and turns it for up and down. |
-| `maze/pac-die-0` .. `maze/pac-die-9` | 32x32 | 10 | Death animation, drawn facing up (shown as is). |
+| `maze/pac-0` .. `maze/pac-6` | 32x32 | 7 | Pac-Man facing right, the chomp played 0..6 and back: body 24 px across (a bit bigger than the 20x22 ghosts), Max's outline and blue-white mouth rim, the mouth never fully shut (frame 0 a slit, 6 widest) so his heading always shows. The game mirrors it for left and turns it for up and down. |
+| `maze/pac-die-0` .. `maze/pac-die-9` | 32x32 | 10 | Death animation, drawn facing up (shown as is). Frames 0..4 at the chomp's 24 px, 5..9 Max's shrinking shapes. |
 | `maze/life` | 32x32 | 1 | Spare-life icon under the maze (facing left). |
 | `maze/ghost-<name>-<dir>-<f>` | 32x32 | 32 files | One per ghost (blinky, pinky, inky, clyde), direction (left, right, up, down) and skirt frame (0, 1): body and eyes in one picture, colors drawn in. |
 | `maze/ghost-fright-0/1`, `maze/ghost-flash-0/1` | 32x32 | 4 | Frightened ghost (blue with face) and its white flash near the end, the same for all four. |
@@ -165,3 +165,4 @@ Characters are 32x32; tiles and pellets stay at tile resolution. Text uses the P
 - 2026-10-19: Max's Blinky and Clyde (three eyes, 20 px body, his red, white and blue) are the template for every ghost: the code draws Pinky, Inky, frightened, flash, eaten eyes, the hall visitors (his ghosts with a cap, standing at Pac-Man's feet), the portraits and the ghost poster from it; Pac-Man's yellow is his `#ffde00`. (Quirin)
 - 2026-10-19: `board/mecha-0/1` and `board/portrait-mecha`: Mecha-Pac, the bot, in the board lobby. (Quirin)
 - 2026-10-19: Board lobby art: four status lamps (off/on each, own colors), cheat levers, a sign, a film reel and mini-gurke as 16x16 tiles in `assets/board/`. (Quirin)
+- 2026-10-19: Maze Pac-Man was too small next to the ghosts and a closed circle hid his heading: chomp frames and the first five death frames redrawn at 24 px in Max's style, mouth always a little open. (Quirin)
