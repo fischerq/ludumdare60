@@ -42,6 +42,7 @@ export function openManual(onClose) {
   const shut = () => {
     live?.stop?.();
     window.removeEventListener('keydown', onKey, true);
+    window.removeEventListener('popstate', shut);
     root.remove();
     root = null;
     // Mobile browsers can leave the page scrolled or resized under a tall overlay: put it back and let Phaser
@@ -62,6 +63,8 @@ export function openManual(onClose) {
   next.onclick = () => show(at + 1);
   close.onclick = shut;
   window.addEventListener('keydown', onKey, true);
+  // The phone's back gesture (caught in main.js, so it doesn't leave the game) closes the manual.
+  window.addEventListener('popstate', shut);
   // Swipe sideways to turn pages; vertical moves scroll the page.
   let sx = null, sy = null;
   sheet.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
@@ -133,7 +136,7 @@ function injectStyle() {
   style.textContent = `
   .manual { position: fixed; inset: 0; z-index: 100; background: ${C.desk}; display: flex; flex-direction: column;
     align-items: center; touch-action: pan-y; font-family: ${MANUAL.font}; color: ${C.ink}; }
-  .manual-page { flex: 1; width: min(100%, 720px); box-sizing: border-box; overflow-y: auto; padding: 22px 20px 30px;
+  .manual-page { flex: 1; width: min(100%, 720px); box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; padding: 22px 20px 30px;
     background: ${C.paper}; background-attachment: local;
     box-shadow: inset 0 0 40px ${C.paperEdge}; font-size: 17px; line-height: 1.45; -webkit-user-select: none; user-select: none; }
   .manual-page h1, .manual-page h2 { font-family: ${MANUAL.heading}; }

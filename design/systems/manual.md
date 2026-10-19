@@ -54,3 +54,5 @@ Marauder's-Map-style live view of the machine's state, detailed enough to debug 
   last frame's program reads by routine). Figures print through an ink filter (grain, slight warp, multiply onto
   the paper); the map is a hatched plan with dropout specks, the memory grid a two-color halftone. ?manual opens
   over the hall, and closing re-measures the screen so the game isn't left shrunk. (Quirin)
+- 2026-10-19: The phone's back gesture no longer leaves the game: an extra history entry (re-added on the next
+  tap) catches it, and it closes the manual if open. The hall's stack of manuals gets a CLOSE choice. (Quirin)

@@ -231,7 +231,10 @@ export default class HallScene extends Phaser.Scene {
       if (coins() >= COINS.perGame) this.goDown();
       else this.say(tx.yNeedCoins.replace('{n}', coins()).replace('{need}', COINS.perGame), portrait);
     } else if (HALL.cellText[f.cell] === 'manuals') {
-      this.say(tx.manuals, portrait, HALL.manuals.map((m) => ({ label: m.title, act: () => this.say(m.ripped ? tx.rippedOut : m.text, portrait) })));
+      this.say(tx.manuals, portrait, [
+        ...HALL.manuals.map((m) => ({ label: m.title, act: () => this.say(m.ripped ? tx.rippedOut : m.text, portrait) })),
+        { label: HALL.menu.close },
+      ]);
     } else if (HALL.cellText[f.cell] === 'globe') {
       this.say(tx.globe, portrait, [{ label: tx.globeLook, act: () => this.openGlobe() }, { label: tx.globeClose }]);
     } else if (HALL.cellText[f.cell] === 'pacManual') {
