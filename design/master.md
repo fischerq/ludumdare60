@@ -126,3 +126,5 @@ survives only as the movement lab bench.
 - 2026-10-18: Every layer gets its own synthesized background sound in the style of its tech; see [audio](systems/audio.md).
 - 2026-10-18: LAYER DOWN from the maze goes to a board lobby inside the cabinet; the deep layers are its subsystems,
   unlocked one at a time; work RAM replaces video RAM. See [layers](systems/layers.md). (Quirin, defaults accepted)
+- 2026-10-19: Start screen: the cabinet's machine standing on a big layer cake (one band per layer), the attract show
+  and TAP TO START on the machine's screen. The how-to-play lines moved under the maze. (Quirin)
