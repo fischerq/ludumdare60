@@ -205,21 +205,27 @@ export default class GameScene extends Phaser.Scene {
       return;
     }
     const broke = !cleared && coins() < COINS.perGame;
-    const text = cleared ? 'MAZE CLEAR!\n\nWANT TO GO\nDEEPER?\n\nTAP TO PLAY AGAIN'
-      : broke ? 'GAME OVER\n\nOUT OF COINS\nGO LAYER UP'
-        : `GAME OVER\n\nCOINS ${coins()}\nTAP TO INSERT COIN`;
-    showCallout(this, this.viewW / 2, this.oy + 12 * T, text);
-    if (broke) return;
     // Short delay so the swipe that ended the round doesn't restart it at once.
+    let ready = false;
+    // After a clear the machine's own next round starts (START on the cleared maze): same score and lives,
+    // the level counter one up. After a game over a new game costs a coin.
+    // A new coin goes in through the cabinet's coin mechanism (the coin minigame).
+    const again = () => {
+      if (this.leaving || !ready) return;
+      if (cleared) this.scene.restart({ continue: true });
+      else this.leave('Cabinet', { coin: true });
+    };
+    // Each callout carries a button that does what it asks; tapping anywhere else still plays on.
+    const text = cleared ? 'MAZE CLEAR!\n\nWANT TO GO\nDEEPER?'
+      : broke ? 'GAME OVER\n\nOUT OF COINS'
+        : `GAME OVER\n\nCOINS ${coins()}`;
+    const button = cleared ? { label: 'PLAY AGAIN', onTap: again }
+      : broke ? { label: 'LAYER UP', onTap: () => this.leave('Cabinet') }
+        : { label: 'INSERT COIN', onTap: again };
+    showCallout(this, this.viewW / 2, this.oy + 12 * T, text, 2, button);
+    if (broke) return;
     this.time.delayedCall(600, () => {
-      // After a clear the machine's own next round starts (START on the cleared maze): same score and lives,
-      // the level counter one up. After a game over a new game costs a coin.
-      // A new coin goes in through the cabinet's coin mechanism (the coin minigame).
-      const again = () => {
-        if (this.leaving) return;
-        if (cleared) this.scene.restart({ continue: true });
-        else this.leave('Cabinet', { coin: true });
-      };
+      ready = true;
       this.input.on('pointerdown', (p, over) => { if (!over.length) again(); });
       this.input.keyboard?.once('keydown-SPACE', again);
       this.input.keyboard?.once('keydown-ENTER', again);
