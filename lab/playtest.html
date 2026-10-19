@@ -112,6 +112,22 @@
       // Hard mode (the 256 switch on): node tools/playtest.mjs --hard.
       const hr = await fetch('./playtest/results-hard.json', { cache: 'no-store' }).catch(() => null);
       if (hr?.ok) { const hd = await hr.json(); text += ` Hard mode: ${meta(hd)}.`; html += cards(hd, true); }
+      // Game levels (NEXT LEVEL after a clear): node tools/playtest.mjs --levels. One table per layer, a row per level.
+      const lr = await fetch('./playtest/levels.json', { cache: 'no-store' }).catch(() => null);
+      if (lr?.ok) {
+        const ld = await lr.json();
+        text += ` Levels: ${ld.runs} runs per level and noise, run on ${ld.generated}.`;
+        html += Object.entries(ld.layers).map(([id, L]) => {
+          const head = ['level', ...L.noise.flatMap((n) => [`won @${n.noise}`, `median s @${n.noise}`, `hits @${n.noise}`])];
+          const rows = L.noise[0].levels.map((r, i) => `<tr><td>${r.level}${r.level === L.capLevel ? ' (cap)' : ''}</td>${L.noise.map((n) => {
+            const x = n.levels[i];
+            return `<td>${Math.round(x.winRate * 100)}%</td><td>${x.time ?? '–'}</td><td>${x.hits}</td>`;
+          }).join('')}</tr>`).join('');
+          const reach = L.noise.map((n) => `noise ${n.noise}: median ${n.reached.median}`).join(', ');
+          return `<section class="pt-card"><h2>${esc((NAMES[id] ?? [id])[0])} (levels)</h2><p>Levels won in a row from level 1: ${esc(reach)}. Cap at level ${L.capLevel}.</p>
+            <table><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr>${rows}</table></section>`;
+        }).join('');
+      }
       document.getElementById('meta').textContent = text;
       document.getElementById('grid').innerHTML = html;
     } catch (e) {

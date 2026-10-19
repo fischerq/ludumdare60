@@ -212,7 +212,52 @@ is a hit (the dots eaten so far stay). Removed: the pads that steered Pac-Man, t
 corner objectives and the crawling spark. Playtest bot (quick runs): 100% up to noise 0.75 (23 s with no noise, about
 100 s at 0.75), 20% at full noise.
 
-## Hard mode · decided (Quirin, 2026-10-19; numbers Claude's)
+## Levels · decided, built (Quirin, 2026-10-19: all defaults accepted, "the ceiling should be harder")
+Every deep layer (and the [adder](layer-adder.md#levels--decided-built-2026-10-19)) is endless in levels, like the
+maze's "tap plays on".
+- **Level 1 is the layer as before.** Clearing it is the LAYER CLEAR (wakes the next part, counts the win). Then the
+  callout gets two big buttons: **NEXT LEVEL** (the layer again, fresh, one level up) and **BACK TO THE BOARD** (the
+  lobby, as before; LAYER UP also still goes back). Later clears say `LEVEL n CLEAR!`. `LEVEL n` sits in the top-left
+  corner. Nothing changes inside a level; nothing is saved; each entry starts at level 1 (hard mode: level 4); no
+  rewards beyond the number.
+- **Ramp:** data-driven in `src/config.js`: each layer's `levels.cap` names the numbers that ramp and their value at
+  the cap; level 1 plays the layer's own numbers, in between a straight line, reached at `DEEP.capLevel` (8; a layer
+  can override it with `levels.capLevel`), and past it they stay at the cap, so it never becomes unwinnable. One
+  pure helper, `src/systems/layers/levels.js` (`setLevel`, `levelNumbers`, `adderConfig`), used by DeepScene,
+  AdderScene and the playtest bots; it replaces `hard.js` (same swap-in-on-start, restore-after).
+- **Ceiling:** the cap is calibrated with the bots (`node tools/playtest.mjs --levels`,
+  [playtest.md](playtest.md)): the hardest numbers the bot at noise 0.25 still clears at least half the time within
+  the 180 s cap. Since hits only cost time, the bot clears some layers even at absurd numbers with 30+ hits; there the
+  cap was set where a cleared level at noise 0.25 still takes about a minute or less (CPU, logic, input, RAM).
+- **Hard mode = start at a higher level:** with the 256 switch on, a deep layer starts at `DEEP.hardLevel` (4);
+  clearing it is the hard win (`markHardWon`, `LEVEL 256 REPAIRED n/7`) and NEXT LEVEL goes on from 5. The red HARD
+  label stays. The old per-layer `hard` blocks are gone; their intent (faster hazards, shorter windows) is the ramp.
+  Not kept from them: the extra color on the video board and the longer input test game (goals don't ramp).
+
+| Layer | What ramps: level 1 → cap (level 8) | Level 4 (hard start) |
+|---|---|---|
+| -1 screen | beam 13 → 5.5 s per picture, bonus scans 15 → 6 s | 9.6 s, 11.1 s |
+| -2 video board | frame timer 16 → 10 s (level 1 loosened from 12 s, which the bot at noise 0.5 cleared 35%; 9 s is about one perfect delivery) | 13.4 s |
+| -3 work RAM | write head waits 0.8 → 0.1 s, dashes 9 → 12 bits/s, rests 0.25 → 0 s | 0.5 s, 10.3, 0.14 s |
+| -4 bus | cycle 1.1 → 0.55 s, packets 7 → 13 tiles/s, reads wait 1.3 → 0.75 s, doors hold 1.6 → 0.9 s | 0.86 s, 9.6, 1.06 s, 1.3 s |
+| -5 CPU | PC 4.5 → 6 lines/s, grace 0.6 → 0.45 s | 5.1, 0.54 s |
+| -6 logic | vectors 0.45 → 2 tiles wide, seekers 3.6 → 6 tiles/s (you walk 5), hunt 6 → 20 s | 1.1, 4.6, 12 s |
+| -7 input | sparks 3 → 12 tiles/s, every 3.5-6 → 0.45-0.9 s, warn 0.8 → 0.15 s, quiet 3 → 0.4 s; test game at machine speed 0.5 → 1 | 6.9, 2.2-3.0 s, 0.53 s, 1.9 s, 0.71 |
+
+Bot results at the cap (`--levels`, 10 runs per level, 2026-10-19), win rate at noise 0.25 / 0.5 and median time at
+0.25: screen 80% / 10% (129 s), video board 100% / 10% (92 s), work RAM 100% / 100% (11 s), bus 80% / 30% (99 s),
+CPU 100% / 90% (22 s, 5 hits; 25 hits at 0.5), logic 100% / 100% (35 s), input 100% / 100% (27 s). Levels won in a
+row from level 1 at noise 0.5 (median): screen 6, video board 3, bus 7, CPU 4.5, the rest 8. **Not tight:** RAM,
+CPU, logic and input stay at 100% at 0.25 even with far harsher numbers (hits only cost time; at CPU 7+ lines/s
+the bot still wins with 30+ hits in 100 s), so their caps are set by time and hits, not by the 50% line; the RAM
+layer barely gets harder (the head only runs when the CPU writes, the bot just waits). Full table on
+[/lab/playtest.html](../../lab/playtest.html).
+
+## Hard mode · replaced by levels (2026-10-19)
+*Replaced: hard mode now starts a layer at level 4 (see Levels above); the `hard` blocks and `hard.js` are gone.
+Kept for the record:*
+
+### Hard mode (as built 2026-10-19; numbers Claude's)
 While the lobby's 256 switch is on, every deep layer plays a hard variant; winning one in hard mode repairs its strip
 of level 256 (see [arcade-maze.md](arcade-maze.md#levels-and-the-kill-screen--decided-built-2026-10-18)), all seven
 make it winnable (the fourth lobby lamp).
@@ -300,3 +345,5 @@ picture). How the other layers do on that, to decide later:
 - 2026-10-19: Hard mode: with the 256 switch on every deep layer plays a `hard` block of tighter numbers (faster
   hazards, shorter windows, one more color on the video board, a longer test game on the input layer); its win
   repairs a strip of level 256. (Quirin; numbers Claude's)
+- 2026-10-19: levels in every layer, endless with a capped ramp; hard mode starts at level 4 (Quirin). Caps calibrated
+  with the bots (Claude); video board level 1 timer 12 → 16 s so level 1 stays winnable at noise 0.5.

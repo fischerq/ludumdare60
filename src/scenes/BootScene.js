@@ -68,9 +68,12 @@ export default class BootScene extends Phaser.Scene {
     const font = document.fonts?.load(`8px ${UI.arcadeFont}`) ?? Promise.resolve();
     const timeout = new Promise((r) => setTimeout(r, 2000));
     // ?scene=Cabinet (or any scene key) jumps straight to that layer, for playtesting.
-    // ?scene=Deep&layer=2 picks a deep layer.
+    // ?scene=Deep&layer=2 picks a deep layer; &level=n starts it (or ?scene=Adder) at level n.
     const params = new URLSearchParams(window.location.search), start = params.get('scene');
-    const data = params.has('layer') ? { layer: Number(params.get('layer')) } : undefined;
+    const data = params.has('layer') || params.has('level') ? {
+      ...(params.has('layer') ? { layer: Number(params.get('layer')) } : {}),
+      ...(params.has('level') ? { level: Number(params.get('level')) } : {}),
+    } : undefined;
     // ?won=n: the first n subsystems inside the cabinet count as won (for testing the unlocks).
     if (params.has('won')) setWonCount(Number(params.get('won')));
     // ?hard=n: everything up to the 256 switch won and the switch on (the deep layers play hard), and the first n
