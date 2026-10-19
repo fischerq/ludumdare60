@@ -549,33 +549,19 @@ export const HALL = {
   noticeTime: 0.9,       // s the "!" shows before the ghosts speak
   choiceLine: 14,        // art px per choice line in the text box (a 56 px tall tap target at 4x)
   portraitSize: 48,      // art px of a text box portrait (arcade/portrait-*.png); tiles are shown 3x to fill it
-  // The snow globe (w, bottom left), looked at up close (arcade/globe-big, 96x112, shown at the hall's zoom):
-  // drag sideways to turn it, the glitter swirls and slowly settles. Glitter rules in src/systems/globe.js.
+  // The snow globe (w, bottom left): the hall tile's colors (arcade/snow-globe). The close-up is HALL.globe3d.
   globe: {
-    size: { w: 96, h: 112 },
-    center: { x: 48, y: 46 }, // the glass sphere's center in the art, px
-    radius: 34,          // px the glitter stays inside (the glass is 10 px wider; below that the base starts)
-    count: 160,          // glitter specks
-    gravity: 14,         // px/s² down (the water slows it a lot)
-    drag: 2.2,           // 1/s: how fast the water takes the glitter's speed
-    swirl: 30,           // rad/s of water spin per rad the globe is turned
-    stir: 20,            // stirred-up water per rad the globe is turned (either way)
-    jitter: 400,         // px/s² of random kick per unit of spin and stir
-    maxTilt: 0.5,        // rad the globe turns at most either way
-    dragTurn: 0.006,     // rad per screen px dragged
-    springBack: 3,       // 1/s: let go and it rights itself
-    tapShake: 8,         // rad/s of swirl a tap on the globe gives
     colors: [0xff9ad8, 0xffd23f, 0xffffff, 0x9ad8ff, 0xd0a0ff],
-    glass: 0xd6eef8, glassLight: 0xffffff, glassEdge: 0x8ab8d0, snow: 0xf4f8ff, snowShade: 0xc8d8e8,
-    base: 0xff7ac0, baseDark: 0xd04a98, baseLight: 0xffb8e0, rim: 0xffd23f,
-    unicorn: 0xffffff, unicornShade: 0xd8d8e8, horn: 0xffd23f, hoof: 0xc8a0c0, eye: 0x202030,
+    glass: 0xd6eef8, glassLight: 0xffffff, glassEdge: 0x8ab8d0, snow: 0xf4f8ff,
+    base: 0xff7ac0, baseDark: 0xd04a98, rim: 0xffd23f, unicorn: 0xffffff, horn: 0xffd23f,
     rainbow: [0xff4040, 0xff9a30, 0xffe040, 0x50d050, 0x40a0ff, 0xa060e0],
   },
-  // The 3D close-up (the default; FLAT shows the picture above, design/systems/layer-arcade.md). The model is
+  // The close-up (LOOK CLOSER), in 3D over the dimmed hall (design/systems/layer-arcade.md). The model is
   // src/settings/globe-model.json, the physics src/systems/globe3d.js, the pixel renderer src/systems/globeRender.js.
   // Drag anywhere on it to grab that spot and turn it any way, tap to shake; the heavy base swings it back upright.
   globe3d: {
-    view: 136,           // art px square it's drawn into, the glass center in the middle
+    view: 152,           // art px square it's drawn into, the glass center in the middle (room for the base turned any way)
+    pitch: 0.35,         // rad the camera looks down from above: settled, you see a bit of the top
     light: [-0.5, 0.65, 0.6], // toward the light (world: x right, y up, z toward you)
     bands: [-0.05, 0.55], // brightness where dark turns mid, and mid turns light
     dither: 0.2,         // how far the bands mix at their edges (a 2x2 checker)
@@ -593,7 +579,7 @@ export const HALL = {
     stirRate: 1.5,       // stir per rad/s of lag per s
     stirDecay: 0.7,      // 1/s: how fast the stirred-up water calms down
     jitter: 160,         // px/s² of random kick per unit of stir
-    flakes: 240,         // glitter flakes
+    flakes: 340,         // glitter flakes
     glitterColors: 5,    // glitter0..4 rows of the palette
     sink: 6,             // px/s a flake sinks at in still water
     flakeDrag: 3,        // 1/s: how fast a flake takes the water's speed
@@ -682,8 +668,6 @@ export const HALL = {
     globeLook: 'LOOK CLOSER',
     globeClose: 'CLOSE',
     globeHint: 'DRAG TO TURN IT, TAP IT TO SHAKE. TAP OUTSIDE TO PUT IT DOWN.',
-    globeFlat: 'FLAT',
-    globe3d: '3D',
     rabbit: 'A STUFFED RABBIT WITH VERY LONG, FLOPPY ARMS AND LEGS. IT MUST HAVE ESCAPED THE CLAW MACHINE.',
     sweater: 'AN OLD SWEATER WITH ANNA AND ELSA ON IT. WASHED A HUNDRED TIMES, STILL LOVED.',
     paper: 'A BLUE PIECE OF PAPER. IT JUST SAYS: BLAU!',
