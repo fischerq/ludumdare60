@@ -507,7 +507,7 @@ export const HALL = {
     '#o.....l.o#',
     '#.O.....!.#',
     '#ksj...oM.#',
-    '#..o....m.#',
+    '#..o..x.m.#',
     '#w....np.e#',
     '#####D#####',
   ],
@@ -539,6 +539,7 @@ export const HALL = {
     paper: 0x4a7ae0, paperEdge: 0x3058b0, paperInk: 0xffffff,
     sweater: 0x7a6aa8, sweaterDark: 0x5a4a88, sweaterFuzz: 0x9a8ac0,
     elsaHair: 0xf4f0d0, elsaDress: 0x8ad0f0, annaHair: 0xb04a20, annaDress: 0x3a7a5a, skin: 0xf0c8a8,
+    gbc: 0x2aa8a8, gbcDark: 0x1a7070, gbcLight: 0x6ad8d0, gbcBezel: 0x404050, gbcScreen: 0x2a3428, gbcButton: 0xc03050, cartRed: 0xd03030, // the Game Boy Color (x)
     cabinets: { r: 0xd03030, b: 0x3060d0, g: 0x30a050, v: 0x8040c0, y: 0xf2c200 },
   },
   ghosts: { 1: 'blinky', 2: 'pinky', 3: 'inky', 4: 'clyde' },
@@ -631,7 +632,7 @@ export const HALL = {
     R: 'r', r: 'r', B: 'b', b: 'b', G: 'g', g: 'g', V: 'v', v: 'v', '=': 'counter', M: 'change', m: 'change',
     D: 'door', '%': 'plant', '!': 'bin', C: 'claw', c: 'claw', Q: 'soda', q: 'soda', '^': 'door', '*': 'posterPac',
     '+': 'posterGhost', '@': 'clock', O: 'owner', k: 'gurke', j: 'jar', u: 'miniGurke', s: 'sign', n: 'manuals', p: 'pacManual', w: 'globe',
-    h: 'rabbit', e: 'urmel', l: 'paper', a: 'sweater',
+    h: 'rabbit', e: 'urmel', l: 'paper', a: 'sweater', x: 'gameboy',
   },
   text: {
     blinky: "I'M NOT A GHOST. I'M JUST... VERY PALE.",
@@ -648,6 +649,17 @@ export const HALL = {
     b: 'ASTEROIDS, 1979. NO PIXELS AT ALL: THE BEAM DRAWS EVERY ROCK AS LINES. HIGH SCORE: AAA 99990.',
     g: 'DONKEY KONG, 1981. A CARPENTER CALLED JUMPMAN CLIMBS GIRDERS. THE BARRELS NEVER STOP.',
     v: 'GALAXIAN, 1979. OUT OF ORDER: THE COIN SLOT IS JAMMED. THE FIRST GAME WITH EVERY SPRITE IN COLOR.',
+    vBroken: 'THE MACHINE SWALLOWS YOUR COIN. THE SCREEN FLICKERS... NOTHING. OUT OF ORDER MEANS OUT OF ORDER.',
+    // Our cabinet: walking into it goes straight down a layer; talking to it asks first.
+    pac: 'LAYERS OF PAC. THE SCREEN GLOWS, THE MACHINE HUMS. IT FEELS LIKE THERE IS MORE IN THERE THAN JUST A GAME.',
+    play: 'PLAY ({need} COIN)',
+    notNow: 'NOT NOW',
+    needCoin: ' YOU NEED A COIN TO PLAY.',
+    // Back from one of the other machines ({score} its points).
+    gameWin: 'YOU WIN! {score} POINTS.',
+    gameLose: 'GAME OVER. {score} POINTS.',
+    gameGurke: ' AND YOU FOUND A MINI-GURKE IN THERE!',
+    gameboy: 'A GAME BOY COLOR, LYING ON THE FLOOR. POKEMON RED IS STILL IN IT. YOU FLIP THE SWITCH... NOTHING. THE BATTERIES ARE DEAD.',
     yNeedCoins: 'LAYERS OF PAC. INSERT COIN. YOU HAVE {n} OF {need} COINS.',
     counter: 'THE COUNTER. SCRATCHED, STICKY, LOVED.',
     sign: 'A PAPER SIGN: BACK IN 5 MIN.',
@@ -696,6 +708,69 @@ export const HALL = {
   menu: {
     readMore: 'READ MORE',
     close: 'CLOSE',
+  },
+};
+
+// The other cabinets in the hall (src/scenes/MiniGameScene.js, rules in src/systems/minigames/): one level each of
+// Space Invaders (r), Asteroids (b) and Donkey Kong (g), a coin a game; Galaxian (v) is broken and eats the coin.
+// Each hides a mini-Gurke (the hall's arcade/mini-gurke tile). Shown at 4x like the hall: a 180x320 art px view,
+// the play field above the layer button. Art in assets/games/. design/systems/layer-arcade.md
+export const MINI = {
+  zoom: 4,
+  w: 180, h: 320,        // art px of the view
+  top: 18,               // art px under the score line
+  bottom: 276,           // art px: the play field ends here (the layer button is below)
+  machines: { r: 'invaders', b: 'asteroids', g: 'kong' }, // hall cabinet (bottom map character) to game
+  broken: 'v',           // Galaxian: takes the coin, does nothing
+  endTime: 2.2,          // s the YOU WIN / GAME OVER banner shows before the hall comes back
+  dragDeadzone: 24,      // screen px a finger moves before it counts as a drag, not a tap
+  tapTime: 250,          // ms; a touch shorter than this that didn't move is a tap
+  colors: { text: '#ffffff', score: '#f2c94c', win: '#50e060', lose: '#ff4040', gurke: '#6ab850' },
+  // Colors of the code-drawn art (assets/games/): every sprite with its colors drawn in, no tinting.
+  art: {
+    alien: 0xffffff, cannon: 0x50e060, shot: 0xffffff, bomb: 0xffffff, boom: 0xff8040,
+    vector: 0xffffff, flame: 0xffa040,
+    girder: 0xe04060, girderDark: 0x902040, ladder: 0x40c0e0,
+    cap: 0xe03030, skin: 0xf0b888, hair: 0x6a3a18, overalls: 0x3050e0, button: 0xf2c94c, shoe: 0x6a3a18, eye: 0x101010,
+    ape: 0x8a4a1a, apeDark: 0x5a2a0a, apeFace: 0xe0a870, barrel: 0xb06a2a, barrelBand: 0x6a3a10,
+    dress: 0xf060a0, ladyHair: 0xf2c94c,
+  },
+  // Space Invaders: drag anywhere to move the cannon under your finger, it fires by itself (one shot at a time,
+  // like the original). The fewer invaders are left, the faster they march.
+  invaders: {
+    cols: 6, rows: 3, kinds: ['squid', 'crab', 'octopus'], points: { squid: 30, crab: 20, octopus: 10 },
+    left: 20, top: 40, dx: 20, dy: 16, alienW: 12, alienH: 8,
+    stepX: 2, drop: 8, margin: 4,
+    stepSlow: 0.5,       // s between march steps with every invader alive
+    stepFast: 0.04,      // s with one left
+    cannonY: 262, cannonSpeed: 110, shotSpeed: 240,
+    bombEvery: 1.1, bombSpeed: 70,
+    lives: 3, respawn: 1.2,
+    gurkeAt: 6,          // the mini-Gurke flies across the top (like the mystery ship) once this few invaders are left
+    gurkeY: 26, gurkeSpeed: 40, gurkePoints: 300,
+  },
+  // Asteroids: hold a finger down and the ship turns toward it, thrusts and fires; tap to fire once. Clear the rocks.
+  // One big rock has the mini-Gurke inside: shoot it open and fly into the Gurke.
+  asteroids: {
+    rocks: 4, radius: [12, 7, 4], speed: [16, 28, 40], points: [20, 50, 100],
+    turnSpeed: 6,        // rad/s
+    accel: 90, drag: 0.6, maxSpeed: 90,
+    fireEvery: 0.3, shotSpeed: 160, shotLife: 0.9, maxShots: 4,
+    shipRadius: 4, lives: 3, invulnerable: 2,
+    dirs: 16,            // ship sprites games/ast-ship-0..15, clockwise from up
+    gurkeSpeed: 10, gurkePoints: 300,
+  },
+  // Donkey Kong: drag left/right to walk, up/down on a ladder to climb, tap to jump. Reach the top girder.
+  // The mini-Gurke lies at the right end of the second girder from the top, where the barrels drop down.
+  kong: {
+    floors: [270, 216, 162, 108, 54], // art px of each girder's top, bottom to top; the last is Kong's
+    left: 8, right: 172,
+    ladders: [{ x: 140, from: 0 }, { x: 40, from: 1 }, { x: 140, from: 2 }, { x: 96, from: 3 }],
+    walkSpeed: 40, climbSpeed: 30, jumpSpeed: 110, gravity: 380, ladderGrab: 6,
+    throwEvery: 2.6, firstThrow: 1, barrelSpeed: 46, barrelFall: 300,
+    kongX: 24, ladyX: 152,
+    jumpPoints: 100, lives: 3, respawn: 1,
+    gurkeX: 166, gurkeFloor: 3, gurkePoints: 300,
   },
 };
 
@@ -949,6 +1024,29 @@ export const MUSIC = {
         { type: 'noise', filter: 'bandpass', freq: 180, vol: 0.03 },
         { type: 'ticks', every: 4, freq: 2500, vol: 0.025 },
         { type: 'blips', chance: 0.03, lo: 64, hi: 88, len: 1, wave: 'square', vol: 0.04, lp: 700 },
+      ],
+    },
+    // The other machines in the hall (src/scenes/MiniGameScene.js), each its own bed on its own chip voice.
+    // Space Invaders: a four-note bass march, down and down again, like the original's heartbeat.
+    invaders: {
+      bpm: 110, root: 40, vol: 0.8,
+      tracks: [{ wave: 'square', len: 1.5, vol: 0.35, notes: '0 . . . -2 . . . -4 . . . -5 . . . ' }],
+      textures: [{ type: 'noise', filter: 'lowpass', freq: 300, vol: 0.02 }],
+    },
+    // Asteroids: two low thumps taking turns, the vector monitor's hum under them.
+    asteroids: {
+      bpm: 96, root: 31, vol: 0.8,
+      tracks: [{ wave: 'pulse', len: 1.2, vol: 0.45, notes: '0 . . . . . . . 1 . . . . . . . ' }],
+      textures: [{ type: 'tone', wave: 'sine', freq: 60, vol: 0.02 }, { type: 'noise', filter: 'highpass', freq: 6000, vol: 0.006 }],
+    },
+    // Donkey Kong: a bouncy tune over a walking bass (our own melody), G major.
+    kong: {
+      bpm: 140, root: 55, vol: 0.7,
+      tracks: [
+        { wave: 'pulse', len: 1.4, vol: 0.18, notes:
+          '0 . 4 . 7 . 4 . 9 . 7 . 4 . 2 . 0 . 4 . 7 . 12 . 11 . 7 . 9 . 7 . . . ' +
+          '5 . 9 . 12 . 9 . 11 . 9 . 7 . 4 . 2 . 4 . 5 . 7 . 4 . 2 . 0 . . . . . ' },
+        { wave: 'tri', vol: 0.4, oct: -12, notes: '0 . 7 . 0 . 7 . 0 . 7 . 5 . 7 . 5 . 0 . 5 . 0 . 7 . 2 . 7 . 0 . ' },
       ],
     },
     // The original has no music: just the siren, a little higher and faster every stage of dots eaten.

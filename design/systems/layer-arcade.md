@@ -24,6 +24,9 @@ the arcade as a place.
 - **Only bonus coins to collect** (like the fruit in the maze): 5 on the floor. Coins go into the global wallet
   (`src/wallet.js`, shown as COINS n) and stay picked up for the session. With at least one coin (`COINS.perGame`)
   you can play our cabinet, which zooms down into the cabinet layer. *(proposed)*
+- **Our cabinet** *(decided, Quirin, 2026-10-19)*: walking into it zooms straight down into the cabinet layer (no
+  coin: the INSERT COIN line instead, once per push). Talking to it shows a dialog (`HALL.text.pac`) with
+  PLAY (1 COIN) / NOT NOW; PLAY does the same zoom.
 - **Talking:** the four ghosts in caps stand at the machines, one line each, hinting at how they hunt in the maze.
   Every machine and decoration has a line (`HALL.text`, `HALL.cellText`). The **shop owner** sleeps on the tile
   above the counter's left end (`O` in the map, `arcade/owner-sleep-0/1`, a "z" rising); talking to him only gets
@@ -31,6 +34,28 @@ the arcade as a place.
 - **The other cabinets** play famous games of the time (named only in the text, a tiny picture on each screen, no
   logos): red Space Invaders (1978), blue Asteroids (1979), green Donkey Kong (1981), violet Galaxian (1979, out of
   order). Each has one line with a fact about how it worked.
+- **Playing the other cabinets** *(decided, Quirin, defaults accepted 2026-10-19)*: talking to one shows its line,
+  then PLAY (1 COIN) / NOT NOW (no coin: the line plus "YOU NEED A COIN TO PLAY"). Walking into them does nothing.
+  PLAY spends the coin and zooms into that machine; one level of its game runs full screen
+  (`src/scenes/MiniGameScene.js`, `?scene=Mini&game=invaders|asteroids|kong`), rules in pure modules under
+  `src/systems/minigames/`, numbers in `MINI` in `src/config.js`, art in `assets/games/` (characters 16x16 or
+  smaller, like the originals). 3 lives each. Win or lose (or LAYER UP to quit), the hall zooms back out of the
+  machine with Pac-Man in front of it and a line with the score. No reward beyond that, so they're no coin farm.
+  - **Space Invaders:** 6x3 invaders march and speed up as they die; drag anywhere to move the cannon, it fires by
+    itself (one shot at a time).
+  - **Asteroids:** 4 big rocks split into medium and small; hold a finger down and the ship turns toward it,
+    thrusts and fires; tap (or a second finger) fires once. The field wraps.
+  - **Donkey Kong:** five flat girders with ladders, Kong rolls barrels that drop down girder by girder; drag
+    left/right to walk, up/down to climb, tap (or a second finger) to jump; reach the top.
+  - **Galaxian is broken:** PLAY takes the coin, the screen flashes, "THE MACHINE SWALLOWS YOUR COIN... NOTHING."
+  - **A mini-Gurke hides in each** (the hall's `arcade/mini-gurke` tile): it flies across the top like the mystery
+    ship once 6 invaders are left (shoot it); it's inside one of the big asteroids (shoot that rock open, then fly
+    into it); it lies at the right end of the second girder from the top, where the barrels fall (walk to it).
+    300 points and "MINI-GURKE!"; the hall's result line mentions it.
+  - Each machine has its own background bed (`MUSIC.beds.invaders`, `asteroids`, `kong`, see [audio](audio.md)).
+- **The Game Boy Color** *(decided, Quirin, defaults accepted 2026-10-19)*: a teal GBC lying on the floor (`x`, left
+  of the change machine, `arcade/gameboy`) with Pokemon Red's red cartridge in it. Talking to it: Pokemon Red is
+  still in it, you flip the switch, nothing: the batteries are dead. Nothing to pick up.
 - **Pickles:** the owner's bitten Gurke and a jar of cornichons on the counter next to him (`k`, `j`), a mini-Gurke
   in the top right corner where a plant stood (`u`). Details to talk to, nothing to collect.
 - **The counter** is three tiles wide (Gurke, paper sign, jar) with the owner centered behind it. Only the paper sign
@@ -89,7 +114,11 @@ the arcade as a place.
 - Build (done, polish): the sleeping shop owner, text box portraits, the poster-triggered chase with the "!"
   moment, losing all coins and resetting the hall when caught.
 - Build (done, details): the other cabinets as other games, the pickles, the manuals table with choices.
-- Not now: more dialogue, collecting the mini-gurke, footstep sounds, a street outside.
+- Build (done, other machines): one level each of Space Invaders, Asteroids and Donkey Kong for a coin, a broken
+  Galaxian, a mini-Gurke hidden in each game, a background bed per machine, the Game Boy Color, walking into our
+  cabinet plays it, a dialog when talking to it.
+- Not now: more dialogue, collecting the mini-gurke, footstep sounds, a street outside; high scores, more levels,
+  shields or sloped girders in the mini-games, a playtest bot or lab bench for them, batteries for the Game Boy.
 
 ## Open questions
 - Should entering the machine work as an escape even without a coin? *Default now: no, a coin is needed.*
@@ -123,3 +152,4 @@ the arcade as a place.
 - 2026-10-19: More decoration: a long-limbed red/pink plush rabbit, an Urmel figurine on a stand that cycles iceberg with egg, egg under a blanket, small Urmel with a milk bottle, Urmel saying OKOPUSPAPAT, a blue paper on the floor saying BLAU! (10% GRÜN!), an old Anna and Elsa sweater on the side. (Quirin) Claude picked the spots (rabbit under the claw machine, Urmel in the bottom right corner, paper below the rug, sweater on the back wall's right side).
 - 2026-10-19: Snow globe close-up: glass and unicorn bigger (glass radius 36 to 44, unicorn scaled with it), base unchanged; the camera looks down from a little above (0.35 rad) so the settled globe is seen diagonally from above; the FLAT mode and its switch dropped. (Quirin)
 - 2026-10-19: The sweater moves from the back wall (unreachable there) to the floor, lying in the middle of the rug. (Quirin)
+- 2026-10-19: The other cabinets become playable, one level each for a coin (Space Invaders, Asteroids, Donkey Kong); Galaxian is broken and eats the coin; a Game Boy Color with Pokemon Red lies on the floor, batteries dead; walking into our cabinet zooms straight down, talking to it asks PLAY / NOT NOW; a mini-Gurke hidden in each game; each machine gets its own background track. Defaults accepted (full-screen scene per game, touch controls, no reward, no bot). (Quirin) Claude picked where the mini-Gurke hides in each game and wrote the dialog lines.

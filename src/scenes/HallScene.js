@@ -1,10 +1,10 @@
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, HALL, PIXEL, UI, COINS, ANIM } from '../config.js';
-import { createHall, stepHall, facing, pacPos, actorPos, noticePac, startChase, endChase, stepGhosts } from '../systems/hall.js';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, HALL, PIXEL, UI, COINS, ANIM, MINI } from '../config.js';
+import { createHall, stepHall, facing, pacPos, actorPos, noticePac, startChase, endChase, stepGhosts, blocked } from '../systems/hall.js';
 import { tileKey } from '../systems/tiles.js';
 import { PAC_CYCLE, charFrame, animFrame } from '../systems/anim.js';
 import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
 import { addLayerButtonAt } from '../layerButton.js';
-import { coins, addCoin, coinTaken, loseCoins } from '../wallet.js';
+import { coins, addCoin, coinTaken, loseCoins, spendCoin } from '../wallet.js';
 import { openManual } from '../manual/index.js';
 import { buildModel, createGlobe3d, grabGlobe3d, dragGlobe3d, releaseGlobe3d, shakeGlobe3d, stepGlobe3d } from '../systems/globe3d.js';
 import { createView, renderGlobe, pickGlobe } from '../systems/globeRender.js';
@@ -21,7 +21,7 @@ const DECOR = { '|': 'wall-face', '^': 'window', '*': 'poster-pac', '+': 'poster
 const ON_FLOOR = {
   '=': 'counter', M: 'change-top', m: 'change-bottom', C: 'claw-top', c: 'claw-bottom', Q: 'soda-top',
   q: 'soda-bottom', w: 'snow-globe', '%': 'plant', '!': 'bin', k: 'counter-gurke', j: 'counter-jar', u: 'mini-gurke', s: 'counter-sign', n: 'manual-stack', p: 'manual-pac',
-  h: 'rabbit', e: 'urmel-0', l: 'paper', a: 'sweater',
+  h: 'rabbit', e: 'urmel-0', l: 'paper', a: 'sweater', x: 'gameboy',
 };
 
 // The Urmel figurine's stage (HALL.urmel, arcade/urmel-<n>): kept for the session, like the coins. The first talk
@@ -48,6 +48,7 @@ export default class HallScene extends Phaser.Scene {
   init(data) {
     this.fromCabinet = data?.from === 'cabinet';
     this.wasCaught = !!data?.caught; // the hall starts over after the ghosts caught Pac-Man
+    this.fromGame = data?.from === 'game' ? data : null; // back from one of the other machines (MiniGameScene)
   }
 
   preload() {
@@ -67,7 +68,7 @@ export default class HallScene extends Phaser.Scene {
     this.oy = Math.floor((this.viewH - this.h.h * T) / 2);
     this.held = null;
     this.keyDir = null;
-    this.mode = this.fromCabinet ? 'intro' : 'walk';
+    this.mode = this.fromCabinet || this.fromGame ? 'intro' : 'walk';
     this.introT = 0;
     this.t = 0;
     this.cam = this.cameras.main.setOrigin(0, 0).setRoundPixels(true).setBackgroundColor(0x000000);
@@ -77,6 +78,9 @@ export default class HallScene extends Phaser.Scene {
     const s = this.h.pac;
     this.start = { x: s.x, y: s.y };
     this.ourCab = { x: this.sx(s.x), y: this.sy(s.y - 1.5) };
+    this.zoomAt = this.ourCab; // what the intro zooms out of and the outro into
+    this.bumped = false;
+    if (this.fromGame) this.backFromGame(this.fromGame);
 
     this.coinSprites = new Map();
     for (const k of this.h.coins) {
@@ -103,6 +107,24 @@ export default class HallScene extends Phaser.Scene {
   }
 
   sx(x) { return this.ox + x * T + T / 2; }
+
+  // A machine's bottom tile (its lowercase map character) and the middle of the machine, to zoom into.
+  machine(c) {
+    const y = this.h.rows.findIndex((r) => r.includes(c)), x = this.h.rows[y].indexOf(c);
+    return { x, y, at: { x: this.sx(x), y: this.sy(y - 0.5) } };
+  }
+
+  // Back from another machine: zoom out of it, Pac-Man standing in front of it, then the result.
+  backFromGame(d) {
+    const c = Object.keys(MINI.machines).find((k) => MINI.machines[k] === d.game), m = this.machine(c);
+    this.zoomAt = m.at;
+    const spot = [[0, 1, 'up'], [-1, 0, 'right'], [1, 0, 'left']].map(([dx, dy, dir]) => ({ x: m.x + dx, y: m.y + dy, dir }))
+      .find((p) => !blocked(this.h, p.x, p.y));
+    if (spot) Object.assign(this.h.pac, spot);
+    const tx = HALL.text, line = d.result === 'win' ? tx.gameWin : d.result === 'lose' ? tx.gameLose : '';
+    const text = (line + (d.gurke ? tx.gameGurke : '')).replace('{score}', d.score).trim();
+    this.afterIntro = text || null;
+  }
 
   // A character at tile position `at`: fills exactly that one tile (HALL.charSize), like a Pokémon game, whatever the art's size.
   place(s, at) {
@@ -234,9 +256,12 @@ export default class HallScene extends Phaser.Scene {
     const tx = HALL.text;
     if (f.npc && !this.h.chase) { this.say(tx[f.npc.name], `arcade/portrait-${f.npc.name}`); return; }
     const portrait = portraitFor(f.cell);
-    if (f.cell.toLowerCase() === 'y') {
-      if (coins() >= COINS.perGame) this.goDown();
+    const lc = f.cell.toLowerCase();
+    if (lc === 'y') {
+      if (coins() >= COINS.perGame) this.say(tx.pac, portrait, [{ label: tx.play.replace('{need}', COINS.perGame), act: () => this.goDown() }, { label: tx.notNow }]);
       else this.say(tx.yNeedCoins.replace('{n}', coins()).replace('{need}', COINS.perGame), portrait);
+    } else if (MINI.machines[lc] || lc === MINI.broken) {
+      this.useMachine(lc, portrait);
     } else if (HALL.cellText[f.cell] === 'manuals') {
       this.say(tx.manuals, portrait, [
         ...HALL.manuals.map((m) => ({ label: m.title, act: () => this.say(m.ripped ? tx.rippedOut : m.text, portrait) })),
@@ -259,6 +284,19 @@ export default class HallScene extends Phaser.Scene {
       // The ghost poster: the visitors look at it, then at Pac-Man...
       if (f.cell === HALL.noticeCell && !this.h.chase) this.pendingNotice = true;
     }
+  }
+
+  // One of the other machines: its line, then PLAY for a coin (Galaxian just eats it).
+  useMachine(c, portrait) {
+    const tx = HALL.text;
+    if (coins() < COINS.perGame) { this.say(tx[c] + tx.needCoin, portrait); return; }
+    const play = () => {
+      if (!spendCoin()) return;
+      sfx.coin();
+      if (c === MINI.broken) { this.cam.flash(120, 255, 255, 255); this.say(tx.vBroken, portrait); return; }
+      this.goDown({ scene: 'Mini', data: { game: MINI.machines[c] }, at: this.machine(c).at });
+    };
+    this.say(tx[c], portrait, [{ label: tx.play.replace('{need}', COINS.perGame), act: play }, { label: tx.notNow }]);
   }
 
   // Our manual offers READ MORE: the full service manual over the game, the hall paused under it.
@@ -366,9 +404,12 @@ export default class HallScene extends Phaser.Scene {
     } else this.closeGlobe();
   }
 
-  goDown() {
+  // Zoom into a machine and play it: ours by default (the cabinet layer), or one of the others.
+  goDown(to = { scene: 'Cabinet', data: { from: 'above' }, at: this.ourCab }) {
     if (this.mode === 'outro') return;
     this.closeText(true);
+    this.outro = to;
+    this.zoomAt = to.at;
     this.mode = 'outro';
     this.introT = 1;
   }
@@ -452,7 +493,7 @@ export default class HallScene extends Phaser.Scene {
     if (this.mode === 'intro' || this.mode === 'outro') {
       const e = 1 - (1 - Math.min(1, this.introT)) ** 3;
       zoom = HALL.introZoom * (HALL.zoom / HALL.introZoom) ** e; // even zoom speed on a log scale
-      center = { x: this.ourCab.x + (follow.x - this.ourCab.x) * e, y: this.ourCab.y + (follow.y - this.ourCab.y) * e };
+      center = { x: this.zoomAt.x + (follow.x - this.zoomAt.x) * e, y: this.zoomAt.y + (follow.y - this.zoomAt.y) * e };
     }
     this.cam.setZoom(zoom);
     this.cam.setScroll(center.x - GAME_WIDTH / zoom / 2, center.y - GAME_HEIGHT / zoom / 2);
@@ -470,10 +511,10 @@ export default class HallScene extends Phaser.Scene {
 
     if (this.mode === 'intro') {
       this.introT += dt / HALL.introTime;
-      if (this.introT >= 1) this.mode = 'walk';
+      if (this.introT >= 1) { this.mode = 'walk'; if (this.afterIntro) { this.say(this.afterIntro); this.afterIntro = null; } }
     } else if (this.mode === 'outro') {
       this.introT -= dt / HALL.outroTime;
-      if (this.introT <= 0) { this.mode = 'gone'; this.scene.start('Cabinet', { from: 'above' }); return; }
+      if (this.introT <= 0) { this.mode = 'gone'; this.scene.start(this.outro.scene, this.outro.data); return; }
     } else if (this.mode === 'globe') {
       this.stepGlobeView(dt);
     } else if (this.mode === 'walk' && this.notice > 0) {
@@ -481,7 +522,16 @@ export default class HallScene extends Phaser.Scene {
       this.notice -= dt;
       if (this.notice <= 0) { this.say(HALL.text.weKnowYou, 'arcade/portrait-ghosts'); this.pendingChase = true; }
     } else if (this.mode === 'walk' && !this.talking) {
+      if (!(this.held ?? this.keyDir) || this.h.pac.moving) this.bumped = false;
       for (const e of stepHall(this.h, dt, this.held ?? this.keyDir)) {
+        // Walking into our cabinet: straight down a layer with a coin, otherwise say so (once per push).
+        if (e.type === 'bump') {
+          if (this.bumped) continue;
+          this.bumped = true;
+          if (coins() >= COINS.perGame) this.goDown();
+          else this.say(HALL.text.yNeedCoins.replace('{n}', coins()).replace('{need}', COINS.perGame), portraitFor('y'));
+          break;
+        }
         if (e.type === 'door') { this.stopChase(HALL.text.escaped, { x: this.h.pac.x, y: this.h.pac.y }); break; }
         sfx.coin();
         addCoin(`${e.x},${e.y}`);

@@ -7,7 +7,7 @@ import { HALL } from '../config.js';
 export const DIRS = {
   up: { x: 0, y: -1 }, left: { x: -1, y: 0 }, down: { x: 0, y: 1 }, right: { x: 1, y: 0 },
 };
-const SOLID = '#RBGVYrbgvy=MmD1234%!CcQq|^*+@Okjsunpwhea';
+const SOLID = '#RBGVYrbgvy=MmD1234%!CcQq|^*+@Okjsunpwheax';
 
 // The same rules walk other rooms too (the board lobby): opts.solid are its blocking map characters, opts.speed
 // its walk speed in tiles per second, opts.ghosts its visitor characters.
@@ -41,8 +41,9 @@ export function facing(h) {
   return { x, y, cell: cellAt(h, x, y), npc: npcAt(h, x, y) };
 }
 
-// Advance by dt seconds while `held` (a direction or null) is pushed. Returns events: { type: 'coin' }, and
-// { type: 'door' } when Pac-Man walks into the door during a chase (his way out).
+// Advance by dt seconds while `held` (a direction or null) is pushed. Returns events: { type: 'coin' },
+// { type: 'door' } when Pac-Man walks into the door during a chase (his way out), and { type: 'bump' } when he
+// walks into our cabinet.
 export function stepHall(h, dt, held) {
   const p = h.pac;
   const events = [];
@@ -53,7 +54,11 @@ export function stepHall(h, dt, held) {
       p.dir = held;
       const d = DIRS[held];
       if (h.chase && cellAt(h, p.x + d.x, p.y + d.y) === 'D') { events.push({ type: 'door' }); break; }
-      if (blocked(h, p.x + d.x, p.y + d.y)) break;
+      if (blocked(h, p.x + d.x, p.y + d.y)) {
+        // Walking into our cabinet plays it.
+        if (cellAt(h, p.x + d.x, p.y + d.y).toLowerCase() === 'y') events.push({ type: 'bump', cell: 'y' });
+        break;
+      }
       p.from = { x: p.x, y: p.y };
       p.x += d.x; p.y += d.y;
       p.moving = true;

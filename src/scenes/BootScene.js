@@ -1,4 +1,4 @@
-import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP, LOBBY, LEVELS, ADDER, MENU } from '../config.js';
+import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP, LOBBY, LEVELS, ADDER, MENU, MINI } from '../config.js';
 import { tinyText } from '../systems/layers/font.js';
 import { mazeTiles, tileKey } from '../systems/tiles.js';
 import { world } from '../systems/arcade/world.js';
@@ -60,6 +60,7 @@ export default class BootScene extends Phaser.Scene {
     this.makeCoinMech();
     this.makeHall();
     this.makeHallCharacters();
+    this.makeMiniGames();
     this.makeDeep();
     this.makeBoard();
     this.makeAdder();
@@ -70,9 +71,11 @@ export default class BootScene extends Phaser.Scene {
     // ?scene=Cabinet (or any scene key) jumps straight to that layer, for playtesting.
     // ?scene=Deep&layer=2 picks a deep layer; &level=n starts it (or ?scene=Adder) at level n.
     const params = new URLSearchParams(window.location.search), start = params.get('scene');
-    const data = params.has('layer') || params.has('level') ? {
+    // ?scene=Mini&game=kong (or invaders, asteroids) plays one of the hall's other machines.
+    const data = params.has('layer') || params.has('level') || params.has('game') ? {
       ...(params.has('layer') ? { layer: Number(params.get('layer')) } : {}),
       ...(params.has('level') ? { level: Number(params.get('level')) } : {}),
+      ...(params.has('game') ? { game: params.get('game') } : {}),
     } : undefined;
     // ?won=n: the first n subsystems inside the cabinet count as won (for testing the unlocks).
     if (params.has('won')) setWonCount(Number(params.get('won')));
@@ -291,6 +294,7 @@ export default class BootScene extends Phaser.Scene {
     });
     this.makeSnowGlobe(rect, tile, shadow);
     this.makeHallToys(rect, tile, shadow, wallpaper);
+    this.makeGameBoy(rect, tile, shadow);
     tile('change-top', (set) => { rect(set, 2, 2, 12, 14, K.change); rect(set, 4, 4, 8, 3, 0x30ff60); });
     tile('change-bottom', (set) => { rect(set, 2, 0, 12, 13, K.change); rect(set, 6, 4, 4, 4, 0x202020); shadow(set); });
     tile('claw-top', (set) => {
@@ -653,6 +657,132 @@ export default class BootScene extends Phaser.Scene {
   }
 
   // The arcade hall's characters, top-down, feet at the bottom of the 32x32 sprite, two walk frames each:
+  // The Game Boy Color on the floor (x), seen from above: teal, its screen dark (dead batteries), Pokémon Red's
+  // red cartridge sticking out at the top.
+  makeGameBoy(rect, tile, shadow) {
+    const K = HALL.colors;
+    tile('gameboy', (set) => {
+      rect(set, 4, 15, 9, 1, 0x5a3a20);
+      rect(set, 5, 1, 6, 2, K.cartRed); rect(set, 5, 1, 6, 1, 0xff7070);
+      rect(set, 4, 3, 8, 12, K.gbc); rect(set, 4, 3, 8, 1, K.gbcLight); rect(set, 4, 14, 8, 1, K.gbcDark); rect(set, 11, 3, 1, 12, K.gbcDark);
+      rect(set, 5, 4, 6, 5, K.gbcBezel); rect(set, 6, 5, 4, 3, K.gbcScreen);
+      rect(set, 5, 11, 3, 1, 0x202020); rect(set, 6, 10, 1, 3, 0x202020);
+      set(10, 10, K.gbcButton); set(9, 11, K.gbcButton);
+      set(7, 13, K.gbcDark); set(8, 13, K.gbcDark);
+    });
+  }
+
+  // The hall's other machines (src/scenes/MiniGameScene.js), assets/games/: Space Invaders (inv-*), Asteroids
+  // (ast-*, vector lines), Donkey Kong (kong-*). Colors in MINI.art. The mini-Gurke reuses arcade/mini-gurke.
+  makeMiniGames() {
+    const C = MINI.art;
+    const rect = (set, x, y, w, h, c) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) set(i, j, c); };
+    const art = (name, w, h, paint) => this.pixels(`games/${name}`, w, h, paint);
+    const line = (set, x0, y0, x1, y1, c) => {
+      const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
+      for (let i = 0; i <= n; i++) set(Math.round(x0 + (x1 - x0) * i / n), Math.round(y0 + (y1 - y0) * i / n), c);
+    };
+    const outline = (set, pts, c) => pts.forEach((p, i) => { const q = pts[(i + 1) % pts.length]; line(set, p[0], p[1], q[0], q[1], c); });
+
+    // Space Invaders: the three invaders (two frames each), the cannon, shots, bombs and the explosion.
+    const ALIENS = {
+      squid: [['...##...', '..####..', '.######.', '##.##.##', '########', '..#..#..', '.#.##.#.', '#.#..#.#'],
+        ['...##...', '..####..', '.######.', '##.##.##', '########', '.#.##.#.', '#......#', '.#....#.']],
+      crab: [['..#.....#..', '...#...#...', '..#######..', '.##.###.##.', '###########', '#.#######.#', '#.#.....#.#', '...##.##...'],
+        ['..#.....#..', '#..#...#..#', '#.#######.#', '###.###.###', '###########', '.#########.', '..#.....#..', '.#.......#.']],
+      octopus: [['....####....', '.##########.', '############', '###..##..###', '############', '...##..##...', '..##.##.##..', '##........##'],
+        ['....####....', '.##########.', '############', '###..##..###', '############', '..###..###..', '.##..##..##.', '..##....##..']],
+    };
+    for (const [kind, frames] of Object.entries(ALIENS)) {
+      frames.forEach((rows, f) => art(`inv-${kind}-${f}`, 12, 8, (set) => this.bitmap(set, rows, C.alien, Math.floor((12 - rows[0].length) / 2))));
+    }
+    art('inv-cannon', 13, 8, (set) => this.bitmap(set, ['......#......', '.....###.....', '.....###.....', '.###########.',
+      '#############', '#############', '#############', '#############'], C.cannon));
+    art('inv-shot', 1, 4, (set) => rect(set, 0, 0, 1, 4, C.shot));
+    art('inv-bomb', 3, 6, (set) => this.bitmap(set, ['#..', '.#.', '..#', '.#.', '#..', '.#.'], C.bomb));
+    art('inv-boom', 12, 8, (set) => this.bitmap(set, ['.#...#..#...', '..#..#.#..#.', '...#....#...', '##........##',
+      '...#....#...', '..#.#..#.#..', '.#...#...#..', '............'], C.boom));
+
+    // Asteroids: the ship in 16 directions (with and without the flame), three rock sizes, the shot.
+    const A = MINI.asteroids;
+    for (let i = 0; i < A.dirs; i++) {
+      const a = (i / A.dirs) * Math.PI * 2, rot = ([x, y]) => [7 + x * Math.cos(a) - y * Math.sin(a), 7 + x * Math.sin(a) + y * Math.cos(a)];
+      const ship = (set) => {
+        const [n, l, r, b] = [[0, -6], [-4, 5], [4, 5], [0, 3]].map(rot);
+        outline(set, [n, l, b, r], C.vector);
+      };
+      art(`ast-ship-${i}`, 15, 15, ship);
+      art(`ast-ship-thrust-${i}`, 15, 15, (set) => {
+        ship(set);
+        const [p, q, t] = [[-2, 5], [2, 5], [0, 8]].map(rot);
+        line(set, Math.round(p[0]), Math.round(p[1]), Math.round(t[0]), Math.round(t[1]), C.flame);
+        line(set, Math.round(q[0]), Math.round(q[1]), Math.round(t[0]), Math.round(t[1]), C.flame);
+      });
+    }
+    ['big', 'mid', 'small'].forEach((name, s) => {
+      const r = A.radius[s], size = r * 2 + 3, c = size / 2 - 0.5, n = 9 + (2 - s);
+      const lumps = [1, 0.8, 0.95, 0.75, 1, 0.85, 0.7, 0.95, 0.85, 1, 0.8];
+      const pts = [...Array(n)].map((_, k) => {
+        const a = (k / n) * Math.PI * 2, d = r * lumps[k % lumps.length];
+        return [Math.round(c + Math.cos(a) * d), Math.round(c + Math.sin(a) * d)];
+      });
+      art(`ast-rock-${name}`, size, size, (set) => outline(set, pts, C.vector));
+    });
+    art('ast-shot', 2, 2, (set) => rect(set, 0, 0, 2, 2, C.vector));
+
+    // Donkey Kong: a girder and a ladder piece (8x8, repeated), Jumpman, Kong, a barrel and the lady.
+    art('kong-girder', 8, 8, (set) => {
+      rect(set, 0, 0, 8, 1, C.girder); rect(set, 0, 7, 8, 1, C.girder);
+      line(set, 0, 1, 3, 6, C.girderDark); line(set, 4, 6, 7, 1, C.girderDark);
+      set(0, 3, C.girder); set(7, 3, C.girder);
+    });
+    art('kong-ladder', 8, 8, (set) => { rect(set, 1, 0, 1, 8, C.ladder); rect(set, 6, 0, 1, 8, C.ladder); rect(set, 1, 2, 6, 1, C.ladder); rect(set, 1, 6, 6, 1, C.ladder); });
+    const man = (set, legs, arms) => {
+      rect(set, 5, 1, 5, 2, C.cap); rect(set, 9, 2, 3, 1, C.cap);
+      rect(set, 5, 3, 6, 3, C.skin); rect(set, 5, 3, 2, 2, C.hair); set(9, 3, C.eye); rect(set, 9, 5, 3, 1, C.hair);
+      rect(set, 4, 6, 8, 2, C.cap);
+      rect(set, 5, 8, 6, 5, C.overalls); set(6, 8, C.button); set(9, 8, C.button);
+      if (arms === 'up') { rect(set, 3, 3, 2, 4, C.cap); rect(set, 11, 3, 2, 4, C.cap); set(3, 2, C.skin); set(12, 2, C.skin); }
+      else { rect(set, 3, 7, 2, 3, C.cap); rect(set, 11, 7, 2, 3, C.cap); set(3, 10, C.skin); set(12, 10, C.skin); }
+      for (const [x, w] of legs) { rect(set, x, 13, w, 2, C.overalls); rect(set, x - 1, 15, w + 1, 1, C.shoe); }
+    };
+    art('kong-man-walk-0', 16, 16, (set) => man(set, [[5, 2], [9, 2]]));
+    art('kong-man-walk-1', 16, 16, (set) => man(set, [[6, 4]]));
+    art('kong-man-jump', 16, 16, (set) => man(set, [[4, 2], [10, 2]], 'up'));
+    // Climbing: seen from behind, arms reaching up in turn.
+    const climb = (set, f) => {
+      rect(set, 5, 1, 6, 2, C.cap); rect(set, 5, 3, 6, 3, C.hair);
+      rect(set, 4, 6, 8, 2, C.cap); rect(set, 5, 8, 6, 5, C.overalls);
+      rect(set, f ? 3 : 11, 2, 2, 5, C.cap); rect(set, f ? 11 : 3, 6, 2, 4, C.cap);
+      rect(set, f ? 5 : 9, 13, 2, 2, C.overalls); rect(set, f ? 9 : 5, 13, 2, 3, C.overalls);
+    };
+    art('kong-man-climb-0', 16, 16, (set) => climb(set, 0));
+    art('kong-man-climb-1', 16, 16, (set) => climb(set, 1));
+    art('kong-man-dead', 16, 16, (set) => {
+      rect(set, 1, 10, 3, 4, C.cap); rect(set, 4, 9, 3, 6, C.skin); set(5, 11, C.eye);
+      rect(set, 7, 10, 2, 4, C.cap); rect(set, 9, 10, 5, 4, C.overalls); rect(set, 14, 10, 1, 4, C.shoe);
+    });
+    const ape = (set, up) => {
+      const ell = (cx, cy, rx, ry, c) => { for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) if (((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 <= 1) set(x, y, c); };
+      ell(16, 20, 11, 10, C.ape); ell(16, 22, 6, 6, C.apeFace);
+      if (up) { ell(5, 8, 3, 7, C.ape); ell(27, 8, 3, 7, C.ape); } else { ell(4, 22, 3, 7, C.ape); ell(28, 22, 3, 7, C.ape); }
+      ell(16, 8, 7, 6, C.ape); ell(16, 10, 5, 3, C.apeFace);
+      set(13, 7, C.eye); set(19, 7, C.eye); rect(set, 14, 11, 5, 1, C.apeDark);
+      rect(set, 8, 29, 6, 3, C.apeDark); rect(set, 18, 29, 6, 3, C.apeDark);
+    };
+    art('kong-ape-0', 32, 32, (set) => ape(set, false));
+    art('kong-ape-1', 32, 32, (set) => ape(set, true));
+    [0, 1].forEach((f) => art(`kong-barrel-${f}`, 10, 10, (set) => {
+      this.disc(set, 10, 5, C.barrel);
+      if (f) { rect(set, 3, 1, 1, 8, C.barrelBand); rect(set, 6, 1, 1, 8, C.barrelBand); }
+      else { rect(set, 1, 3, 8, 1, C.barrelBand); rect(set, 1, 6, 8, 1, C.barrelBand); }
+    }));
+    art('kong-lady', 16, 16, (set) => {
+      rect(set, 5, 0, 6, 6, C.ladyHair); rect(set, 6, 2, 4, 4, C.skin); set(7, 3, C.eye); set(9, 3, C.eye);
+      rect(set, 4, 6, 8, 3, C.dress); rect(set, 3, 9, 10, 6, C.dress); rect(set, 5, 15, 2, 1, C.shoe); rect(set, 9, 15, 2, 1, C.shoe);
+    });
+  }
+
   // More things in the hall: the long-limbed plush rabbit (arcade/rabbit), the Urmel figurine on its stand in four
   // stages (arcade/urmel-0 iceberg with the egg, 1 egg under a blanket, 2 small Urmel with a milk bottle, 3 Urmel
   // talking), the blue paper on the floor (arcade/paper, drawn over the floor tile) and the old Anna and Elsa
