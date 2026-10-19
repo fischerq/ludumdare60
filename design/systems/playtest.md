@@ -17,10 +17,16 @@ curve, and a rerun after a balance change shows what the change did.
   objectives, as in `DeepScene.update`).
 - **What's tested** (`--layers`): `maze` (swipes), `cabinet` (held stick), `hall` (collect every coin, tap our
   cabinet), `hall-chase` (read the ghost poster, get out the door), the seven deep layers, the bonus `adder` layer (bot in `tools/playtest/adder.mjs`), and `playthrough`.
-- **Hard mode** (`--hard`, decided 2026-10-19): the seven deep layers with their `hard` blocks switched in the way
-  DeepScene does (`src/systems/layers/hard.js`), results in `lab/playtest/results-hard.json` (the lab page shows
-  both files). Tune with `--set DEEP.<id>.hard.<key>=v`. `runDeep(s, i, { hard, over })` also takes an override
+- **Hard mode** (`--hard`, decided 2026-10-19): the seven deep layers at `DEEP.hardLevel` (levels, below), as
+  DeepScene starts them with the 256 switch on, results in `lab/playtest/results-hard.json` (the lab page shows
+  both files). Tune with `--set DEEP.<id>.levels.cap.<key>=v`. `runDeep(s, i, { hard, over })` also takes an override
   object merged over `DEEP.<id>` for one run, so per-layer difficulty levels can be swept the same way later.
+- **Levels** (`--levels [n]`, decided 2026-10-19): the deep layers and the adder at every game level 1..n (default
+  `DEEP.capLevel`), each level a fresh run with that level's numbers (`src/systems/layers/levels.js`, run i uses
+  seed + i at every level), at the noise levels `PLAYTEST.levelNoise` (0.25, 0.5; `--noise` overrides). Reports win
+  rate, median time and hits per level, and per run the levels won in a row from level 1 (`reached`). Results in
+  `lab/playtest/levels.json`, shown on the lab page. `--from k` starts at level k (`--levels 8 --from 8` tunes the
+  cap). The noise list moved from `--levels` to `--noise`. `--set` takes JSON arrays (`...sparkEvery=[1,2]`).
 - **Win / loss:** maze and cabinet: clear the maze before game over. Deep layers: all objectives within
   `PLAYTEST.timeCap.deep` (180 s; hits only cost time, as in the game).
   Hall: coins and tap within 90 s; chase: out the door or outlasted, caught loses.
@@ -81,6 +87,12 @@ player who knows the game".*
   board (signals) bot is out of date since that layer's rework (it calls `inPulse`, and the layer needs a DOM canvas
   for its tile snapshot), and the full playthrough crashes on it, so there is no end-to-end number this round.
 
+- 2026-10-19 (levels, `--levels`, 10 runs per level at noise 0.25 / 0.5): win rate at the cap (level 8): screen
+  80/10, video board 100/10, RAM 100/100, bus 80/30, CPU 100/90, logic 100/100, input 100/100, adder 90/0. Level 1
+  as before (video board's timer loosened 12 → 16 s: 80% at 0.5, was 35%). RAM, CPU, logic and input can't be pushed
+  under 50% at 0.25 with their numbers alone (hits only cost time), so their caps follow time and hits. Details in
+  [layer-deep.md](layer-deep.md#levels--decided-built-quirin-2026-10-19-all-defaults-accepted-the-ceiling-should-be-harder).
+
 ## Slice scope
 - Build: the CLI, the bots, the noise model, the playthrough, the results page.
 - Not now: bots in the browser (watching a bot play a layer), CI runs, automatic tuning.
@@ -94,3 +106,5 @@ player who knows the game".*
   layer code. The playthrough runs the whole game to the credits; `--hard` sweeps the hard blocks (measured, not
   retuned: hard mode is being replaced by per-layer levels). The sim takes a per-run override object
   (`runDeep`/`runLayer`/`runPlaythrough` `over`) for those levels to plug into. (Quirin)
+- 2026-10-19: `--levels` sweeps the game levels per layer and noise; `--noise` for the noise list. Levels in every layer,
+  endless with a capped ramp; hard mode starts at level 4 (Quirin).

@@ -70,6 +70,14 @@ lanes (`speed` 1.4 to 3.0, `gap` at bit 7 from 2.2): noise 0 wins 100% in 19 s; 
 0.5 wins 80% in 100 s (23 hits); 0.75 never within the 180 s cap. Read 0.25 to 0.5 as a player who knows the game:
 1 to 2 minutes, as asked. Most hits come from late or sideways swipes in a lane.
 
+## Levels · decided, built (2026-10-19)
+Same pattern as the [deep layers](layer-deep.md#levels--decided-built-quirin-2026-10-19-all-defaults-accepted-the-ceiling-should-be-harder):
+the overflow at level 1 is the win as before (the callback flips the 256 switch); then NEXT LEVEL (a new board, one
+level up, endless) or BACK TO THE BOARD. `LEVEL n` in the bottom bar's right corner. The lanes get faster and denser up
+to the cap at level 8 (`ADDER.levels.cap`): pulse speed at bit 0 / bit 7 1.4 / 3.0 → 2.1 / 4.2 tiles/s, free wire
+between pulses 3-6 / 2.2-4.5 → 2.4-4.8 / 1.8-3.6 tiles. Each entry starts at level 1 (hard mode doesn't change the
+adder). Bot at the cap (10 runs): 90% at noise 0.25 (120 s, 27 hits), 0% at 0.5 (0.5 reaches level 2 in a row, median).
+
 ## Open questions
 - Should the board show the gates' wiring (P into the XOR and the AND, the AND into the OR)? *Default: no, the
   labels and outputs carry it.*
@@ -81,3 +89,5 @@ lanes (`speed` 1.4 to 3.0, `gap` at bit 7 from 2.2): noise 0 wins 100% in 19 s; 
 - 2026-10-18: Tuned with the bot: top lanes a bit slower and wider (speed 1.4 to 3.0 tiles/s, gap at bit 7 2.2 to 4.5). (Claude)
 - 2026-10-18: Wired into the board lobby: entered from the adder chip there, returns to the lobby, the win flips the
   256 switch and puts the machine on level 256. See [layers](layers.md). (Quirin, defaults accepted)
+- 2026-10-19: levels in every layer, endless with a capped ramp; hard mode starts at level 4 (Quirin). The adder's
+  cap: faster, denser lanes, calibrated with the bot (Claude).
