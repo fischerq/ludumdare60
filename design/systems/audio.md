@@ -45,3 +45,4 @@ Every layer sounds different and fits its tech, so the player hears where they a
   original's siren only. Other defaults (crossfade, mute button) accepted.
 - 2026-10-19: The start screen gets background music, an original wavetable tune (replaces "the menu is silent"). Defaults accepted; Claude made the first tap start the music where phones block sound, since the menu's first tap otherwise starts the game at once. (Quirin)
 - 2026-10-19: lobby gets its own bed (Quirin)
+- 2026-10-19: Each of the hall's other machines gets its own bed: a four-note bass march (Space Invaders), two alternating thumps over a vector hum (Asteroids), a bouncy original tune over a walking bass (Donkey Kong). (Quirin)

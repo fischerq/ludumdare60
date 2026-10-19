@@ -92,6 +92,16 @@ export const sfx = {
   glitter() {
     [2093, 2637, 3136, 2349, 3520].forEach((f, i) => tone(f, 0.35, { type: 'sine', vol: 0.08, at: i * 0.06 + Math.random() * 0.03 }));
   },
+  // The hall's other machines: a laser shot, a rock or invader blowing up, Jumpman's jump.
+  shoot() {
+    tone(1800, 0.09, { type: 'square', slideTo: 500, vol: 0.18 });
+  },
+  boom() {
+    tone(220, 0.3, { type: 'sawtooth', slideTo: 40, vol: 0.35 });
+  },
+  jump() {
+    tone(400, 0.14, { type: 'square', slideTo: 900, vol: 0.2 });
+  },
   // The joystick's microswitch clicking over.
   click() {
     tone(2400, 0.015, { type: 'square', vol: 0.25 });

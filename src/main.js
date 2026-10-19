@@ -8,6 +8,7 @@ import DeepScene from './scenes/DeepScene.js';
 import LobbyScene from './scenes/LobbyScene.js';
 import AdderScene from './scenes/AdderScene.js';
 import CreditsScene from './scenes/CreditsScene.js';
+import MiniGameScene from './scenes/MiniGameScene.js';
 import { world, startWorld, tickWorld, pauseWorld, setRepairs } from './systems/arcade/world.js';
 import { ORDER, isHardWon, onChange } from './progress.js';
 import { loadProgram } from './systems/arcade/program.js';
@@ -27,7 +28,7 @@ const config = {
   input: {
     activePointers: 2,
   },
-  scene: [BootScene, MenuScene, GameScene, CabinetScene, HallScene, LobbyScene, DeepScene, AdderScene, CreditsScene],
+  scene: [BootScene, MenuScene, GameScene, CabinetScene, HallScene, LobbyScene, DeepScene, AdderScene, CreditsScene, MiniGameScene],
 };
 
 window.game = new Phaser.Game(config);
