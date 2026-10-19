@@ -29,7 +29,7 @@ export default {
   subtitle: 'STAND ON EACH GHOST\'S TARGET TILE\nCROSS A TARGET LINE AND IT SEES YOU',
   cols: W, rows: H,
   start: { x: 9, y: 17 },
-  get goal() { return C.goal; }, // read live: hard mode can change it (hard.js)
+  get goal() { return C.goal; }, // read live: levels can change it (levels.js)
 
   init() {
     return { eaten: new Set(), vectors: [], seekers: [], done: new Set() };

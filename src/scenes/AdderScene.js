@@ -5,6 +5,8 @@ import { setDriver, setSpeed } from '../systems/arcade/world.js';
 import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
 import { addLayerButtonAt } from '../layerButton.js';
 import { showCallout } from '../callout.js';
+import { addTextButton } from '../textButton.js';
+import { adderConfig } from '../systems/layers/levels.js';
 
 const KEYS = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', Space: 'up',
@@ -18,8 +20,9 @@ const ABOVE = 3, BELOW = 4;   // rows of board drawn above the OVERFLOW row and 
 // src/systems/layers/adder.js, numbers in ADDER, design/systems/layer-adder.md). Tap hops up, a swipe hops that way.
 //
 // data: returnTo (scene key to go back to, default 'Game'), returnData (its data, default { continue: true } for
-// 'Game'), onWin(result) called on the win, seed (the board). On the win the scene also emits 'adder-win' with
-// result = { hits, time } on this.game.events (and 'win' on its own events), then goes back to returnTo.
+// 'Game'), onWin(result) called on the win, seed (the board), level (default 1; src/systems/layers/levels.js).
+// On the entry's first win the scene also emits 'adder-win' with result = { hits, time } on this.game.events (and
+// 'win' on its own events), then offers NEXT LEVEL (the scene again, one level up, endless) or BACK (returnTo).
 export default class AdderScene extends Phaser.Scene {
   constructor() {
     super('Adder');
@@ -29,7 +32,8 @@ export default class AdderScene extends Phaser.Scene {
     this.data0 = data;
     this.returnTo = data.returnTo ?? 'Game';
     this.returnData = data.returnData ?? (this.returnTo === 'Game' ? { continue: true } : {});
-    this.st = createAdder(data.seed ?? Math.floor(Math.random() * 1e9));
+    this.level = data.level ?? 1;
+    this.st = createAdder(data.seed ?? Math.floor(Math.random() * 1e9), adderConfig(this.level));
     this.P = ADDER.style;
     this.leaving = false;
     this.overT = 0;
@@ -77,6 +81,7 @@ export default class AdderScene extends Phaser.Scene {
       text(x, 38, String(7 - i), COLORS.textDim);
     }
     this.valueText = text(vw / 2, 50, '', COLORS.textDim);
+    text(vw - 8, vh - BAR + 10, `${DEEP.levelLabel} ${this.level}`, COLORS.textDim, 8, 1);
     this.info = text(vw / 2 - 34, vh - BAR + 10, 'TAP: HOP UP\nSWIPE: HOP THAT WAY', COLORS.textDim);
     this.hitText = text(vw / 2 - 34, vh - BAR + 34, '', COLORS.textDim);
     this.upZone = addLayerButtonAt(this, 'up', () => this.leave(), { zoom: ZOOM, fixed: true });
@@ -267,14 +272,24 @@ export default class AdderScene extends Phaser.Scene {
     sfx.clear();
     this.refreshHud();
     this.cameras.main.shake(400, 0.006);
-    const c = showCallout(this, GAME_WIDTH / ZOOM / 2, this.vh / 2, 'OVERFLOW!\n11111111 + 1\n= 00000000\nLEVEL 256', 1);
+    const first = !this.data0.cleared, cx = GAME_WIDTH / ZOOM / 2;
+    const msg = first ? 'OVERFLOW!\n11111111 + 1\n= 00000000\nLEVEL 256' : `OVERFLOW!\n${DEEP.levelLabel} ${this.level} CLEAR`;
+    const c = showCallout(this, cx, this.vh / 2, msg, 1);
     c.objects.forEach((o, i) => o.setScrollFactor(0).setDepth(30 + i));
     const result = { hits: this.st.hits, time: +this.st.t.toFixed(1) };
     this.time.delayedCall(ADDER.overflowTime * 1000, () => {
-      this.data0.onWin?.(result);
-      this.events.emit('win', result);
-      this.game.events.emit('adder-win', result);
-      this.leave();
+      if (first) {
+        this.data0.onWin?.(result);
+        this.events.emit('win', result);
+        this.game.events.emit('adder-win', result);
+      }
+      // Play on (a new board one level up; the win above is not repeated) or go back as before.
+      addTextButton(this, cx, this.vh / 2 + 70, DEEP.nextLabel, () => {
+        if (this.leaving) return;
+        this.leaving = true;
+        this.scene.restart({ ...this.data0, seed: undefined, level: this.level + 1, cleared: true });
+      }, { fixed: true, depth: 40 });
+      addTextButton(this, cx, this.vh / 2 + 110, this.returnTo === 'Lobby' ? DEEP.backLabel : DEEP.backShort, () => this.leave(), { fixed: true, depth: 40 });
     });
   }
 
