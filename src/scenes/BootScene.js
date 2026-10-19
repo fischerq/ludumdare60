@@ -1,4 +1,4 @@
-import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP, LOBBY, LEVELS, ADDER, MENU, MINI } from '../config.js';
+import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP, LOBBY, LEVELS, ADDER, MENU, MINI, GB } from '../config.js';
 import { tinyText } from '../systems/layers/font.js';
 import { mazeTiles, tileKey } from '../systems/tiles.js';
 import { world } from '../systems/arcade/world.js';
@@ -61,6 +61,7 @@ export default class BootScene extends Phaser.Scene {
     this.makeHall();
     this.makeHallCharacters();
     this.makeMiniGames();
+    this.makeGameBoyGame();
     this.makeDeep();
     this.makeBoard();
     this.makeAdder();
@@ -657,10 +658,18 @@ export default class BootScene extends Phaser.Scene {
   }
 
   // The arcade hall's characters, top-down, feet at the bottom of the 32x32 sprite, two walk frames each:
-  // The Game Boy Color on the floor (x), seen from above: teal, its screen dark (dead batteries), Pokémon Red's
+  // The Game Boy Color on the floor (x), seen from above: yellow, its screen dark (dead batteries), Pokémon Red's
   // red cartridge sticking out at the top.
   makeGameBoy(rect, tile, shadow) {
     const K = HALL.colors;
+    // Two AA batteries on the floor under the plant (z), picked up like a coin.
+    tile('batteries', (set) => {
+      rect(set, 3, 12, 11, 1, 0x5a3a20);
+      for (const x of [4, 9]) {
+        rect(set, x, 5, 4, 7, K.battery); rect(set, x + 1, 4, 2, 1, K.batteryTop); rect(set, x, 7, 4, 2, K.batteryLabel);
+        set(x, 5, 0x606060);
+      }
+    });
     tile('gameboy', (set) => {
       rect(set, 4, 15, 9, 1, 0x5a3a20);
       rect(set, 5, 1, 6, 2, K.cartRed); rect(set, 5, 1, 6, 1, 0xff7070);
@@ -670,6 +679,129 @@ export default class BootScene extends Phaser.Scene {
       set(10, 10, K.gbcButton); set(9, 11, K.gbcButton);
       set(7, 13, K.gbcDark); set(8, 13, K.gbcDark);
     });
+  }
+
+  // The Gurk Boy Color's game (src/scenes/GameBoyScene.js), assets/gameboy/: the Game Boy itself (body, 180x320 with
+  // the screen hole at GB.screen, yellow), the lab's tiles, RED, BLUE and PROF. DILL (16x16), the three mini-Gurken front and
+  // back (32x32). Colors in GB.colors.
+  makeGameBoyGame() {
+    const C = GB.colors, T = 16;
+    const rect = (set, x, y, w, h, c) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) set(i, j, c); };
+    const ell = (set, cx, cy, rx, ry, c) => {
+      for (let y = Math.floor(cy - ry); y < Math.ceil(cy + ry); y++) {
+        for (let x = Math.floor(cx - rx); x < Math.ceil(cx + rx); x++) if (((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 <= 1) set(x, y, c);
+      }
+    };
+    const art = (name, w, h, paint) => this.pixels(`gameboy/${name}`, w, h, paint);
+    const roundRect = (set, x, y, w, h, r, c) => {
+      for (let j = 0; j < h; j++) {
+        for (let i = 0; i < w; i++) {
+          const dx = Math.max(r - i - 0.5, i + 0.5 - (w - r), 0), dy = Math.max(r - j - 0.5, j + 0.5 - (h - r), 0);
+          if (dx * dx + dy * dy <= r * r) set(x + i, y + j, c);
+        }
+      }
+    };
+
+    // The Game Boy: yellow body, dark bezel, the D-pad, A and B, start/select and the speaker.
+    const S = GB.screen;
+    art('body', 180, 320, (set) => {
+      roundRect(set, 0, 0, 180, 320, 14, C.bodyDark);
+      roundRect(set, 0, 0, 178, 317, 14, C.bodyLight);
+      roundRect(set, 2, 2, 175, 314, 12, C.body);
+      roundRect(set, S.x - 8, S.y - 14, S.w + 16, S.h + 30, 8, C.bezelDark);
+      roundRect(set, S.x - 7, S.y - 13, S.w + 14, S.h + 27, 7, C.bezel);
+      rect(set, S.x - 1, S.y - 1, S.w + 2, S.h + 2, C.bezelDark);
+      ell(set, S.x - 3, S.y + 40, 1.5, 1.5, C.led);
+      const d = GB.dpad;
+      rect(set, d.x - 21, d.y - 7, 42, 14, C.bezelDark); rect(set, d.x - 7, d.y - 21, 14, 42, C.bezelDark);
+      rect(set, d.x - 20, d.y - 6, 40, 12, C.button); rect(set, d.x - 6, d.y - 20, 12, 40, C.button);
+      rect(set, d.x - 20, d.y - 6, 40, 1, C.buttonLight); rect(set, d.x - 6, d.y - 20, 12, 1, C.buttonLight);
+      ell(set, d.x, d.y, 3, 3, C.bezelDark);
+      for (const btn of [GB.a, GB.b]) { ell(set, btn.x, btn.y + 1, 11, 11, C.bezelDark); ell(set, btn.x, btn.y, 10.5, 10.5, C.button); ell(set, btn.x - 3, btn.y - 4, 3, 2, C.buttonLight); }
+      for (const x of [70, 98]) { roundRect(set, x, 282, 16, 6, 3, C.bezelDark); roundRect(set, x + 1, 282, 14, 5, 2.5, C.button); }
+      for (let i = 0; i < 5; i++) for (let j = 0; j < 14; j++) set(136 + i * 6 + Math.floor(j / 2), 284 + j, C.bodyDark);
+    });
+
+    // The lab's tiles.
+    art('floor', T, T, (set) => { rect(set, 0, 0, T, T, C.floor); rect(set, 0, 15, T, 1, C.floorLine); rect(set, 15, 0, 1, T, C.floorLine); });
+    art('wall', T, T, (set) => { rect(set, 0, 0, T, T, C.wall); rect(set, 0, 12, T, 4, C.wallDark); rect(set, 0, 0, T, 1, C.wallDark); });
+    art('shelf', T, T, (set) => {
+      rect(set, 0, 0, T, T, C.shelf); rect(set, 0, 7, T, 1, C.shelfDark); rect(set, 0, 15, T, 1, C.shelfDark);
+      for (let i = 0; i < 6; i++) { rect(set, 1 + i * 2 + (i > 2 ? 1 : 0), 1, 2, 6, C.book[i % 4]); rect(set, 2 + i * 2, 9, 2, 6, C.book[(i + 2) % 4]); }
+    });
+    const table = (set) => { rect(set, 0, 3, T, 9, C.table); rect(set, 0, 3, T, 1, 0xd8a870); rect(set, 0, 11, T, 1, C.tableDark); rect(set, 1, 12, 2, 4, C.tableDark); rect(set, 13, 12, 2, 4, C.tableDark); };
+    art('table', T, T, table);
+    // The Gurken wait in pickle jars on the table, a lid colored by kind; an empty jar once taken.
+    const jar = (set, kind) => {
+      rect(set, 4, 2, 8, 7, C.jarEdge); rect(set, 5, 2, 6, 6, C.jar);
+      if (kind) { rect(set, 5, 4, 6, 4, C.brine); rect(set, 7, 3, 2, 5, kind === 'fire' ? C.fire : C.gurke); set(7, 3, kind === 'fire' ? C.fireLight : C.gurkeLight); }
+      rect(set, 5, 3, 1, 3, C.jarLight);
+      rect(set, 5, 0, 6, 2, kind ? C.lids[kind] : C.jarEdge); set(6, 0, C.lidLight);
+    };
+    for (const kind of ['grass', 'fire', 'water', null]) art(`table-jar-${kind ?? 'empty'}`, T, T, (set) => { table(set); jar(set, kind); });
+    art('mat', T, T, (set) => { rect(set, 0, 0, T, T, C.floor); rect(set, 1, 2, 14, 12, C.mat); rect(set, 2, 3, 12, 1, C.matLight); });
+
+    // People, 16x16: RED (four directions, two frames; left is right mirrored), BLUE and the professor standing.
+    const person = (set, dir, f, look) => {
+      const { hat, hatDark, hair, top, topDark } = look;
+      const back = dir === 'up', side = dir === 'right';
+      rect(set, 4, 1, 8, 4, hair); if (hat) { rect(set, 4, 0, 8, 3, hat); rect(set, side ? 10 : 4, 3, side ? 3 : 8, 1, hatDark); }
+      if (!back) { rect(set, side ? 6 : 5, 4, side ? 6 : 6, 4, C.skin); set(side ? 10 : 6, 5, C.eye); if (!side) set(9, 5, C.eye); }
+      else rect(set, 5, 4, 6, 4, hair);
+      rect(set, 4, 8, 8, 5, top); rect(set, 4, 12, 8, 1, topDark);
+      if (side) rect(set, 7 + (f ? 1 : -1), 9, 2, 3, topDark); else { rect(set, 3, 9, 1, 3, top); rect(set, 12, 9, 1, 3, top); }
+      const legs = f ? (side ? [[5, 3], [9, 2]] : [[5, 2], [10, 2]]) : (side ? [[6, 4]] : [[5, 2], [9, 2]]);
+      for (const [x, w] of legs) rect(set, x, 13, w, 2, C.pants);
+      for (const [x, w] of legs) rect(set, x, 15, w, 1, C.eye);
+    };
+    const RED = { hat: C.red, hatDark: C.redDark, hair: C.hair, top: C.red, topDark: C.redDark };
+    for (const dir of ['down', 'up', 'right']) for (const f of [0, 1]) art(`red-${dir}-${f}`, T, T, (set) => person(set, dir, f, RED));
+    // RED carrying his Gurke after picking it (one file per direction, frame and kind): in his arms facing down or
+    // right, over his shoulder from behind.
+    const held = (set, dir, kind) => {
+      const body = kind === 'fire' ? C.fireLight : C.gurke, light = kind === 'fire' ? C.fireTip : C.gurkeLight; // orange: red would vanish on his shirt
+      const [x, y] = dir === 'down' ? [6, 8] : dir === 'right' ? [11, 8] : [12, 6];
+      rect(set, x, y, 3, 5, body); set(x, y + 1, light); set(x, y + 2, light);
+      if (kind === 'grass') { set(x, y - 1, C.leaf); set(x + 2, y - 1, C.leaf); set(x + 1, y - 1, C.leafDark); }
+      if (kind === 'fire') { set(x + 1, y - 1, C.fireTip); }
+      if (kind === 'water') { set(x + 2, y - 1, C.water); set(x + 2, y - 2, C.waterLight); }
+      if (dir === 'down') { set(5, 10, C.skin); set(9, 10, C.skin); } else if (dir === 'right') set(10, 10, C.skin);
+    };
+    for (const kind of ['grass', 'fire', 'water']) {
+      for (const dir of ['down', 'up', 'right']) {
+        for (const f of [0, 1]) art(`red-carry-${dir}-${f}-${kind}`, T, T, (set) => { person(set, dir, f, RED); held(set, dir, kind); });
+      }
+    }
+    art('rival-down', T, T, (set) => person(set, 'down', 0, { hair: C.rivalHair, top: C.blue, topDark: C.blueDark }));
+    art('prof-down', T, T, (set) => person(set, 'down', 0, { hair: C.profHair, top: C.coat, topDark: C.coatShade }));
+
+    // The mini-Gurken, 32x32: a pickle with a face, front (facing you) and back (yours, seen from behind).
+    const gurke = (set, front) => {
+      ell(set, 16, 19, 8, 11, C.gurkeDark); ell(set, 16, 19, 7, 10, C.gurke); ell(set, 13, 15, 2, 5, C.gurkeLight);
+      for (const [x, y] of [[19, 12], [21, 18], [18, 24], [12, 22], [14, 27]]) set(x, y, C.gurkeDark);
+      if (front) { rect(set, 12, 16, 2, 3, C.eye); rect(set, 18, 16, 2, 3, C.eye); set(12, 16, 0xffffff); set(18, 16, 0xffffff); rect(set, 14, 21, 4, 1, C.gurkeDark); }
+      rect(set, 11, 29, 3, 2, C.gurkeDark); rect(set, 18, 29, 3, 2, C.gurkeDark);
+    };
+    const extra = {
+      // Leaves sprouting from the top.
+      grass: (set) => { ell(set, 11, 6, 5, 3, C.leafDark); ell(set, 11, 6, 4, 2, C.leaf); ell(set, 21, 5, 5, 3, C.leafDark); ell(set, 21, 5, 4, 2, C.leaf); rect(set, 15, 5, 2, 4, C.leafDark); },
+      // A red-hot chili pickle with a flame on top.
+      fire: (set) => { ell(set, 16, 6, 4, 5, C.fire); ell(set, 16, 6, 2, 3, C.fireLight); set(16, 2, C.fireTip); set(16, 3, C.fireTip); },
+      // Floating in a bubble of brine.
+      water: (set) => { for (let a = 0; a < 64; a++) { const t = a / 64 * Math.PI * 2; set(Math.round(16 + Math.cos(t) * 14.5), Math.round(17 + Math.sin(t) * 14.5), C.waterDark); } rect(set, 6, 8, 2, 2, C.waterLight); set(9, 6, C.waterLight); },
+    };
+    const tint = { grass: null, fire: [C.fire, C.fireLight], water: null };
+    for (const kind of ['grass', 'fire', 'water']) {
+      for (const front of [true, false]) {
+        art(`mon-${kind}-${front ? 'front' : 'back'}`, 32, 32, (set) => {
+          if (kind === 'water') ell(set, 16, 17, 14, 14, C.waterLight);
+          // Fire and water mini-Gurken have their own body colors drawn in (no tinting).
+          const paint = tint[kind] ? (x, y, c) => set(x, y, c === C.gurke ? tint[kind][1] : c === C.gurkeDark ? tint[kind][0] : c) : set;
+          gurke(paint, front);
+          extra[kind](set);
+        });
+      }
+    }
   }
 
   // The hall's other machines (src/scenes/MiniGameScene.js), assets/games/: Space Invaders (inv-*), Asteroids

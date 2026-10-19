@@ -85,7 +85,14 @@ Sizes are in image pixels at native resolution. Transparent background.
 | `games/inv-<squid/crab/octopus>-<f>`, `inv-cannon`, `inv-shot`, `inv-bomb`, `inv-boom` | 12x8 etc. | 11 | Space Invaders, white invaders and a green cannon, two march frames each. |
 | `games/ast-ship-<0..15>`, `ast-ship-thrust-<0..15>`, `ast-rock-<big/mid/small>`, `ast-shot` | 15x15, 27/17/11 | 36 | Asteroids as white vector lines, the ship in 16 directions clockwise from up, with and without the flame. |
 | `games/kong-girder`, `kong-ladder`, `kong-man-<walk-0/1, jump, climb-0/1, dead>`, `kong-ape-<0/1>`, `kong-barrel-<0/1>`, `kong-lady` | 8x8, 16x16, 32x32, 10x10 | 12 | Donkey Kong: girder and ladder pieces (repeated), Jumpman (left is mirrored), Kong (arms down / throwing), the rolling barrel. |
-| `arcade/gameboy` | 16x16 | 1 | The Game Boy Color on the hall floor with Pokemon Red's cartridge, screen dark. |
+| `arcade/gameboy` | 16x16 | 1 | The Game Boy Color on the hall's rug with Pokemon Red's cartridge, screen dark. |
+| `arcade/batteries` | 16x16 | 1 | Two AA batteries on the floor under the plant. |
+| **The Game Boy's game** (`assets/gameboy/`, `GameBoyScene`) | | | |
+| `gameboy/body` | 180x320 | 1 | The whole Game Boy Color filling the screen; the game draws its screen into the hole at `GB.screen` (10, 22, 160x144). |
+| `gameboy/floor`, `wall`, `shelf`, `table`, `table-jar-<grass/fire/water/empty>`, `mat` | 16x16 | 9 | PROF. DILL's lab; the Gurken wait in pickle jars on the table. |
+| `gameboy/red-carry-<down/up/right>-<f>-<grass/fire/water>` | 16x16 | 18 | RED carrying his Gurke after choosing it. |
+| `gameboy/red-<down/up/right>-<f>`, `rival-down`, `prof-down` | 16x16 | 8 | RED walking (left is right mirrored), BLUE and the professor standing. |
+| `gameboy/mon-<grass/fire/water>-<front/back>` | 32x32 | 6 | The three Gurken: BLATTGURK, FEUERGURK, SALZGURK; front for the enemy, back for yours. |
 | **Arcade hall** (`assets/arcade/`) | | | |
 | `arcade/pac-<right/up/down>-<f>` | 32x32 | 6 | Pac-Man walking, top-down, two frames each (frame 1 a step up, the mouth wider); left is `right` mirrored. Max's ball head on a body, ghost-sized (head 18 px, 27 px tall) with a face so his heading shows: `right` an eye and mouth on the side he faces, `down` eyes and mouth, `up` the back of his head. The game shows him one tile big (16x16, half size), centered on his tile. |
 | `arcade/ghost-<name>-<dir>-<f>` | 32x32 | 32 files | The ghost visitors with their cap on, per ghost, direction and frame; `up` is seen from behind. |
