@@ -23,7 +23,7 @@ const scene = opt('--scene'), data = JSON.parse(opt('--data', '{}')), wait = Num
 let root = path.resolve(opt('--root', repo));
 const full = flag('--full');
 const [name, page = ''] = args;
-if (!name || !/^([0-9A-Za-z]{8}-\d+-c\d+|commit-[0-9a-f]{8}-(before|after)-\d+)$/.test(name)) {
+if (!name || !/^([0-9a-f]{8}-\d+-c\d+|commit-[0-9a-f]{8}-(before|after)-\d+)$/.test(name)) {
   console.error('usage: node tools/shot.js <session8>-<turn>-c<n> | commit-<sha8>-<before|after>-<n> [page] [--scene Key [--data json]] [--wait ms] [--at rev | --root dir] [--full]');
   process.exit(1);
 }
