@@ -922,6 +922,10 @@ export const ARCADE = {
 export const LEVELS = {
   shelfCols: 9,          // shelf width in tiles, right-aligned under the maze (cols 10..18, the right half)
   param: 'level',        // ?level=256 starts the maze on that level (1..256), for testing
+  // Level 256's garbage half (the shelf's columns, every maze row) splits into this many strips, top to bottom, one
+  // per deep layer in DEEP_LAYERS order (crt at the top). A layer won in hard mode repairs its strip; with all of
+  // them the level is clean and can be cleared (the program's `repair`, game.asm).
+  repairs: 7,
   // Fruit tile colors (art maze/fruit-<name>, drawn in BootScene).
   colors: {
     red: 0xff2020, darkRed: 0xa00010, green: 0x30c030, brown: 0xa06030, white: 0xffffff, orange: 0xffa020,

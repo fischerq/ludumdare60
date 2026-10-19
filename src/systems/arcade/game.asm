@@ -65,6 +65,8 @@ NO_REVERSE      equ RAM+0x2f        ; 1 while choosing without the reverse direc
 WALL_PAL        equ RAM+0x30        ; palette the walls have now
 COIN_LAST       equ RAM+0x31        ; the coin switch last frame
 LEVEL           equ RAM+0x32        ; round counter, one byte: 0 = level 1, 255 = level 256
+REPAIRS         equ RAM+0x33        ; level 256 strips to repair, a bit each (set by the host: the hard-mode wins)
+REPAIRED        equ RAM+0x34        ; strips repaired this round
 
 ; Actors: Pac-Man, then the four ghosts (blinky, pinky, inky, clyde), 32 bytes each.
 ACTORS          equ RAM+0x40
@@ -135,6 +137,7 @@ frame:  ld hl, (FRAME)
         call blink
         call tick_flash
         call read_input
+        call repair
         ld a, (IN0_PORT)            ; a coin dropping in starts a fresh game, whatever is going on
         cpl
         and IN_COIN
@@ -316,8 +319,81 @@ start_round:
         ld (MODE_T), hl
         call draw_maze
         call draw_fruit
+        xor a                       ; a fresh round: the overflow just drew the garbage again
+        ld (REPAIRED), a
+        call repair
         call reset_actors
         jp to_ready
+
+; Level 256 only: puts back the clean maze (cells from MAZE_ROM, palette 1) on every strip of the garbage half
+; whose bit is set in REPAIRS and not yet in REPAIRED (REPAIR_TABLE, top to bottom). Runs at the start of a
+; round and every frame, so a repair shows at once. A dot under the garbage was never eaten (garbage blocks
+; Pac-Man) and is still counted in PELLETS, so with every strip back the maze can be cleared.
+repair:
+        ld a, (LEVEL)
+        inc a
+        ret nz                      ; not level 256 (counter 255)
+        ld a, (REPAIRED)
+        cpl
+        ld hl, REPAIRS
+        and (hl)
+        ret z                       ; nothing new
+        ld c, a
+        ld hl, REPAIRED
+        or (hl)
+        ld (hl), a
+        ld hl, REPAIR_TABLE
+        ld b, REPAIR_COUNT
+.strip: srl c
+        jr nc, .skip
+        push bc
+        push hl
+        call repair_strip
+        pop hl
+        pop bc
+.skip:  ld de, 5
+        add hl, de
+        djnz .strip
+        ret
+
+; One strip, HL at its REPAIR_TABLE entry.
+repair_strip:
+        ld e, (hl)                  ; DE: source in MAZE_ROM
+        inc hl
+        ld d, (hl)
+        inc hl
+        ld c, (hl)                  ; BC: video RAM
+        inc hl
+        ld b, (hl)
+        inc hl
+        ld a, (hl)                  ; rows
+        ex de, hl                   ; HL: source
+        ld d, b
+        ld e, c                     ; DE: video RAM
+.row:   push af
+        push de
+        ld bc, SHELF_COLS
+        ldir                        ; the row's cells
+        ex (sp), hl                 ; HL: the row in video RAM, source on the stack
+        push hl
+        ld a, h                     ; palette 1 in color RAM, same place 0x400 higher
+        add a, high(CRAM-VRAM)
+        ld h, a
+        ld b, SHELF_COLS
+.pal:   ld (hl), 1
+        inc hl
+        djnz .pal
+        pop hl
+        ld de, VRAM_STRIDE          ; next row in video RAM
+        add hl, de
+        ex de, hl
+        pop hl                      ; next row in MAZE_ROM
+        ld bc, MAZE_W-SHELF_COLS
+        add hl, bc
+        pop af
+        dec a
+        jr nz, .row
+        ret
 
 ; The level shelf under the right half of the maze: one fruit per level so far, right to left, at most the
 ; last 7. A full shelf row would carry on in the row above (with 7 fruits it never fills up).
