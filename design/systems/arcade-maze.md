@@ -72,10 +72,15 @@ our own Z80 program (`game.asm`), not drawn by the host.
   top, input at the bottom; 3-4 rows each). In the machine's real data: the host latches the hard wins as a bit mask
   into the program's `REPAIRS` byte in work RAM before every frame (`setRepairs`, wired in main.js through
   `progress.onChange`, so a lobby lever and a real win act the same). On level 256 only, the program's `repair`
-  (game.asm, called at round start after `draw_fruit` and every frame) copies `MAZE_ROM` back over each newly set
-  strip (`REPAIR_TABLE`, generated from config) with palette 1, and notes it in `REPAIRED`. Dots under garbage were
-  never eaten and are still counted in `PELLETS`, so with all seven strips back the level can be cleared, also
-  mid-round. The level shelf row keeps its garbage.
+  (game.asm, called at round start after `draw_fruit` and every frame) makes each newly set strip
+  (`REPAIR_TABLE`, generated from config) playable, not clean, and notes it in `REPAIRED`. A repair tweaks the
+  corruption instead of reverting it (Quirin, 2026-10-19): cells that are walls in `MAZE_ROM` keep their garbage
+  when it blocks (the maze keeps its shape, drawn in noise and fruit junk), and only become a clean wall where the
+  garbage byte would let actors through; every other cell gets `MAZE_ROM`'s code with palette 1 (paths, dots,
+  door, house). Mid-round an empty cell stays empty (its dot may have been eaten). Dots under garbage were never
+  eaten and are still counted in `PELLETS`; once all seven strips are repaired the program recounts `PELLETS`
+  from the dots on screen (a dot hidden under a zero byte can't be told from an eaten one mid-round), so the
+  level can always be cleared, also mid-round. The level shelf row keeps its garbage.
 - **Beating it:** clearing level 256 on the maze shows LEVEL 256 CLEAR! and rolls the credits
   (`Credits` scene, back to the menu) when that scene exists, else the normal maze clear. The counter then wraps to
   level 1 on the next START, the program's own byte; a fresh game with the switch on starts on 256 again.
@@ -113,3 +118,6 @@ our own Z80 program (`game.asm`), not drawn by the host.
 - 2026-10-19: Level 256 repairs: each hard-mode deep layer win restores one of 7 row strips of the garbage half,
   in the program (REPAIRS byte latched by the host, `repair` copies MAZE_ROM back); clearing the repaired 256 rolls
   the credits, then the counter wraps to level 1. (Quirin; strips and mechanism Claude's)
+- 2026-10-19: Repairs no longer revert a strip to the clean maze (after all switches it looked normal again):
+  walls keep their garbage, only the paths come back, and the dot count is recounted once all strips are
+  repaired so it stays winnable. (Quirin; which cells keep garbage and the recount Claude's)
