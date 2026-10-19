@@ -667,13 +667,13 @@ export const HALL = {
     gameWin: 'YOU WIN! {score} POINTS.',
     gameLose: 'GAME OVER. {score} POINTS.',
     gameGurke: ' AND YOU FOUND A MINI-GURKE IN THERE!',
-    gameboy: 'A GAME BOY COLOR, LYING ON THE FLOOR. POKEMON RED IS STILL IN IT. YOU FLIP THE SWITCH... NOTHING. THE BATTERIES ARE DEAD.',
+    gameboy: 'A GURK BOY COLOR, LYING ON THE RUG. GURKEMON RED IS STILL IN IT. YOU FLIP THE SWITCH... NOTHING. THE BATTERIES ARE DEAD.',
     // With the batteries from under the plant: it plays the start of Pokemon Red (src/scenes/GameBoyScene.js), once.
-    gameboyPower: 'THE GAME BOY COLOR. POKEMON RED IS STILL IN IT, THE BATTERIES ARE DEAD... BUT YOU HAVE TWO NEW ONES.',
+    gameboyPower: 'THE GURK BOY COLOR. GURKEMON RED IS STILL IN IT, THE BATTERIES ARE DEAD... BUT YOU HAVE TWO NEW ONES.',
     gameboyOn: 'PUT THEM IN',
     gameboyLeave: 'LEAVE IT',
     gameboyOff: 'THE SCREEN FADES TO BLACK. THE BATTERIES ARE DEAD AGAIN.',
-    gameboyDead: 'THE GAME BOY COLOR. THE BATTERIES ARE DEAD AGAIN.',
+    gameboyDead: 'THE GURK BOY COLOR. THE BATTERIES ARE DEAD AGAIN.',
     batteries: 'FOUND 2 AA BATTERIES!',
     yNeedCoins: 'LAYERS OF PAC. INSERT COIN. YOU HAVE {n} OF {need} COINS.',
     counter: 'THE COUNTER. SCRATCHED, STICKY, LOVED.',
@@ -815,7 +815,8 @@ export const GB = {
   solid: '#wbD123',
   npcs: { P: 'prof', R: 'rival' },
   walkSpeed: 4,          // tiles per second
-  balls: { 1: 'fire', 2: 'water', 3: 'grass' },
+  balls: { 1: 'fire', 2: 'water', 3: 'grass' }, // the jars on the table
+  nickname: 'MINI-GURKE', // what yours is called once you pick it
   counter: { grass: 'fire', fire: 'water', water: 'grass' }, // the rival takes the one that beats yours
   mons: {
     grass: { name: 'BLATTGURK', kind: 'GRASS', move: 'BLATTHIEB' },
@@ -831,11 +832,12 @@ export const GB = {
   fade: 0.8,             // s the screen takes to go dark at the end
   colors: {
     text: '#202020', box: 0xf8f8f8, boxEdge: 0x202020, hp: 0x38b838, hpLow: 0xe0a020, hpCrit: 0xe03030, hpBack: 0x484848,
-    screenOff: 0x2a3428, label: '#3a3a48',
+    screenOff: 0x2a3428, label: '#3a3a48', brand: '#b8b8c8',
     // art (assets/gameboy/)
     floor: 0xe8e0c8, floorLine: 0xc8c0a8, wall: 0x7890a8, wallDark: 0x506880, shelf: 0x8a5a30, shelfDark: 0x5a3a18,
-    book: [0xd04040, 0x4070d0, 0x40a050, 0xe0c040], table: 0xb08050, tableDark: 0x806040, ball: 0xe03030,
-    ballLight: 0xf8f8f8, ballLine: 0x202020, mat: 0xc05050, matLight: 0xe08080,
+    book: [0xd04040, 0x4070d0, 0x40a050, 0xe0c040], table: 0xb08050, tableDark: 0x806040,
+    jar: 0xc8e8e0, jarLight: 0xffffff, jarEdge: 0x6a9a98, brine: 0xa8d8a0, // the pickle jars, lids in `lids`
+    lids: { grass: 0x40a050, fire: 0xe03030, water: 0x3070d0 }, lidLight: 0xf8f8f8, mat: 0xc05050, matLight: 0xe08080,
     red: 0xe03030, redDark: 0x901818, blue: 0x3060c0, blueDark: 0x183870, hair: 0x5a3a18, rivalHair: 0xa86830,
     skin: 0xf0c8a0, pants: 0x3a3a60, coat: 0xf0f0f0, coatShade: 0xb8b8c8, profHair: 0xa8a8a8, eye: 0x202020,
     gurke: 0x3a8a30, gurkeLight: 0x6ab850, gurkeDark: 0x1e5018, leaf: 0x50c050, leafDark: 0x2a7a2a,
@@ -843,20 +845,22 @@ export const GB = {
     body: 0xf0c820, bodyLight: 0xffe870, bodyDark: 0xb08a10, bezel: 0x404050, bezelDark: 0x2a2a38, button: 0x3a3a48,
     buttonLight: 0x6a6a7a, led: 0xff3030,
   },
+  brand: 'GURK BOY COLOR', // printed under the screen
   text: {
-    intro: ['PROF. DILL: AH, RED! THERE ARE THREE MINI-GURKEN ON THE TABLE.', 'PROF. DILL: GO ON, CHOOSE ONE!'],
-    prof: 'PROF. DILL: PICK A MINI-GURKE FROM THE TABLE, RED!',
-    profAfter: 'PROF. DILL: NOW GO, RED! THE WORLD OF MINI-GURKEN AWAITS!',
-    rival: 'BLUE: HURRY UP, RED! I WANT MY MINI-GURKE!',
+    intro: ['PROF. DILL: AH, RED! THERE ARE THREE GURKEN ON THE TABLE.', 'PROF. DILL: GO ON, CHOOSE ONE!'],
+    prof: 'PROF. DILL: PICK A GURKE FROM THE TABLE, RED!',
+    profAfter: 'PROF. DILL: NOW GO, RED! THE WORLD OF GURKEN AWAITS!',
+    rival: 'BLUE: HURRY UP, RED! I WANT MY GURKE!',
     rivalAfter: 'BLUE: SEE YOU AROUND, RED!',
     wait: "PROF. DILL: WAIT, RED! DON'T GO AWAY YET!",
-    ask: 'SO! YOU WANT {name}, THE {kind} MINI-GURKE?',
+    ask: 'SO! YOU WANT {name}, THE {kind} GURKE?',
     yes: 'YES', no: 'NO',
     got: 'RED RECEIVED {name}!',
-    empty: 'AN EMPTY BALL. BLUE TOOK THIS ONE.',
-    taken: 'AN EMPTY SPOT ON THE TABLE.',
-    last: 'THE LAST MINI-GURKE. PROF. DILL IS KEEPING THIS ONE.',
-    rivalTakes: ["BLUE: THEN I'LL TAKE THIS ONE!", 'BLUE RECEIVED {name}!', "BLUE: WAIT, RED! LET'S CHECK OUT OUR MINI-GURKEN. COME ON, I'LL TAKE YOU ON!"],
+    named: 'RED NAMES IT MINI-GURKE!',
+    empty: 'AN EMPTY JAR. BLUE TOOK HIS GURKE FROM THIS ONE.',
+    taken: 'AN EMPTY JAR. MINI-GURKE CAME FROM THIS ONE.',
+    last: 'THE LAST GURKE. PROF. DILL IS KEEPING THIS ONE.',
+    rivalTakes: ["BLUE: THEN I'LL TAKE THIS ONE!", 'BLUE RECEIVED {name}!', "BLUE: WAIT, RED! LET'S CHECK OUT OUR GURKEN. COME ON, I'LL TAKE YOU ON!"],
     battleStart: ['BLUE WANTS TO FIGHT!', 'BLUE SENT OUT {enemy}!', 'GO! {mine}!'],
     what: 'WHAT WILL {mine} DO?',
     fight: 'FIGHT', run: 'RUN', back: 'BACK', tackle: 'TACKLE',
@@ -868,8 +872,8 @@ export const GB = {
     weak: "IT'S NOT VERY EFFECTIVE...",
     fainted: '{who} FAINTED!',
     win: ['RED DEFEATED BLUE!', 'BLUE: WHAT?! NO WAY! I SHOULD HAVE PICKED THE OTHER ONE!'],
-    lose: ['RED IS OUT OF USABLE MINI-GURKEN!', "BLUE: HA! I'M THE BEST!"],
-    healed: 'PROF. DILL: THERE, YOUR MINI-GURKE IS ALL HEALED. TAKE GOOD CARE OF IT!',
+    lose: ['RED IS OUT OF USABLE GURKEN!', "BLUE: HA! I'M THE BEST!"],
+    healed: 'PROF. DILL: THERE, MINI-GURKE IS ALL HEALED. TAKE GOOD CARE OF IT!',
   },
 };
 

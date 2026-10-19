@@ -1,4 +1,4 @@
-// The Game Boy's rival fight, no Phaser: your mini-Gurke against BLUE's, one move each per turn, you first.
+// The Game Boy's rival fight, no Phaser: your Gurke (named MINI-GURKE) against BLUE's, one move each per turn, you first.
 // A turn returns its steps: { text, hp: { mine, enemy } } so the scene shows each line with the HP bars as they
 // were at that moment.
 
@@ -15,7 +15,7 @@ const effect = (from, to) => (GB.strong[from] === to ? 2 : GB.strong[to] === fro
 // One attack: { move: 'tackle' | 'type' | 'sour' }. Pushes its lines onto `steps`.
 function attack(b, who, move, steps) {
   const T = GB.text, B = GB.battle, me = b[who], foe = b[who === 'mine' ? 'enemy' : 'mine'];
-  const name = GB.mons[me.kind].name, whoText = who === 'mine' ? name : fill(T.enemyWho, { name });
+  const name = who === 'mine' ? GB.nickname : GB.mons[me.kind].name, whoText = who === 'mine' ? name : fill(T.enemyWho, { name });
   const snap = (text) => steps.push({ text, hp: { mine: b.mine.hp, enemy: b.enemy.hp } });
   if (move === 'sour') { snap(fill(T.sour, { name })); return; }
   const typed = move === 'type';
@@ -27,7 +27,7 @@ function attack(b, who, move, steps) {
   if (eff > 1) snap(T.super);
   if (eff < 1) snap(T.weak);
   if (foe.hp <= 0) {
-    const foeName = GB.mons[foe.kind].name;
+    const foeName = who === 'mine' ? GB.mons[foe.kind].name : GB.nickname;
     snap(fill(T.fainted, { who: who === 'mine' ? fill(T.enemyWho, { name: foeName }) : foeName }));
     b.over = who === 'mine' ? 'win' : 'lose';
   }

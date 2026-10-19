@@ -681,7 +681,7 @@ export default class BootScene extends Phaser.Scene {
     });
   }
 
-  // The Game Boy Color's game (src/scenes/GameBoyScene.js), assets/gameboy/: the Game Boy itself (body, 180x320 with
+  // The Gurk Boy Color's game (src/scenes/GameBoyScene.js), assets/gameboy/: the Game Boy itself (body, 180x320 with
   // the screen hole at GB.screen, yellow), the lab's tiles, RED, BLUE and PROF. DILL (16x16), the three mini-Gurken front and
   // back (32x32). Colors in GB.colors.
   makeGameBoyGame() {
@@ -731,11 +731,14 @@ export default class BootScene extends Phaser.Scene {
     });
     const table = (set) => { rect(set, 0, 3, T, 9, C.table); rect(set, 0, 3, T, 1, 0xd8a870); rect(set, 0, 11, T, 1, C.tableDark); rect(set, 1, 12, 2, 4, C.tableDark); rect(set, 13, 12, 2, 4, C.tableDark); };
     art('table', T, T, table);
-    art('table-ball', T, T, (set) => {
-      table(set);
-      ell(set, 8, 6, 4, 4, C.ballLight); for (let y = 2; y < 6; y++) for (let x = 4; x < 12; x++) if ((x + 0.5 - 8) ** 2 + (y + 0.5 - 6) ** 2 <= 16) set(x, y, C.ball);
-      rect(set, 4, 6, 8, 1, C.ballLine); set(8, 6, C.ballLight);
-    });
+    // The Gurken wait in pickle jars on the table, a lid colored by kind; an empty jar once taken.
+    const jar = (set, kind) => {
+      rect(set, 4, 2, 8, 7, C.jarEdge); rect(set, 5, 2, 6, 6, C.jar);
+      if (kind) { rect(set, 5, 4, 6, 4, C.brine); rect(set, 7, 3, 2, 5, kind === 'fire' ? C.fire : C.gurke); set(7, 3, kind === 'fire' ? C.fireLight : C.gurkeLight); }
+      rect(set, 5, 3, 1, 3, C.jarLight);
+      rect(set, 5, 0, 6, 2, kind ? C.lids[kind] : C.jarEdge); set(6, 0, C.lidLight);
+    };
+    for (const kind of ['grass', 'fire', 'water', null]) art(`table-jar-${kind ?? 'empty'}`, T, T, (set) => { table(set); jar(set, kind); });
     art('mat', T, T, (set) => { rect(set, 0, 0, T, T, C.floor); rect(set, 1, 2, 14, 12, C.mat); rect(set, 2, 3, 12, 1, C.matLight); });
 
     // People, 16x16: RED (four directions, two frames; left is right mirrored), BLUE and the professor standing.
@@ -753,6 +756,22 @@ export default class BootScene extends Phaser.Scene {
     };
     const RED = { hat: C.red, hatDark: C.redDark, hair: C.hair, top: C.red, topDark: C.redDark };
     for (const dir of ['down', 'up', 'right']) for (const f of [0, 1]) art(`red-${dir}-${f}`, T, T, (set) => person(set, dir, f, RED));
+    // RED carrying his Gurke after picking it (one file per direction, frame and kind): in his arms facing down or
+    // right, over his shoulder from behind.
+    const held = (set, dir, kind) => {
+      const body = kind === 'fire' ? C.fireLight : C.gurke, light = kind === 'fire' ? C.fireTip : C.gurkeLight; // orange: red would vanish on his shirt
+      const [x, y] = dir === 'down' ? [6, 8] : dir === 'right' ? [11, 8] : [12, 6];
+      rect(set, x, y, 3, 5, body); set(x, y + 1, light); set(x, y + 2, light);
+      if (kind === 'grass') { set(x, y - 1, C.leaf); set(x + 2, y - 1, C.leaf); set(x + 1, y - 1, C.leafDark); }
+      if (kind === 'fire') { set(x + 1, y - 1, C.fireTip); }
+      if (kind === 'water') { set(x + 2, y - 1, C.water); set(x + 2, y - 2, C.waterLight); }
+      if (dir === 'down') { set(5, 10, C.skin); set(9, 10, C.skin); } else if (dir === 'right') set(10, 10, C.skin);
+    };
+    for (const kind of ['grass', 'fire', 'water']) {
+      for (const dir of ['down', 'up', 'right']) {
+        for (const f of [0, 1]) art(`red-carry-${dir}-${f}-${kind}`, T, T, (set) => { person(set, dir, f, RED); held(set, dir, kind); });
+      }
+    }
     art('rival-down', T, T, (set) => person(set, 'down', 0, { hair: C.rivalHair, top: C.blue, topDark: C.blueDark }));
     art('prof-down', T, T, (set) => person(set, 'down', 0, { hair: C.profHair, top: C.coat, topDark: C.coatShade }));
 

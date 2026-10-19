@@ -9,11 +9,11 @@ const KEYS = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
   KeyA: 'left', KeyD: 'right', KeyW: 'up', KeyS: 'down',
 };
-const TILES = { w: 'wall', b: 'shelf', D: 'mat', 1: 'table-ball', 2: 'table-ball', 3: 'table-ball' };
+const TILES = { w: 'wall', b: 'shelf', D: 'mat', ...Object.fromEntries(Object.entries(GB.balls).map(([c, k]) => [c, `table-jar-${k}`])) };
 const fill = (t, o) => t.replace(/\{(\w+)\}/g, (m, k) => o[k] ?? m);
 
-// The Game Boy Color from the hall's rug, playing the start of Pokemon Red our way: in PROF. DILL's lab, pick one
-// of three mini-Gurken from the table, BLUE takes the one that beats it and fights you; then walk out the door and
+// The Gurk Boy Color from the hall's rug, playing the start of Pokemon Red our way: in PROF. DILL's lab, pick one
+// of three Gurken from the jars on the table (yours is named MINI-GURKE and RED carries it), BLUE takes the one that beats it and fights you; then walk out the door and
 // the batteries die. The Game Boy fills the screen; its D-pad and A/B are the controls (design/systems/layer-arcade.md).
 export default class GameBoyScene extends Phaser.Scene {
   constructor() {
@@ -28,12 +28,17 @@ export default class GameBoyScene extends Phaser.Scene {
     const label = (x, y, t) => this.add.text(x, y, t, { fontFamily: UI.arcadeFont, fontSize: 8, color: GB.colors.label, resolution: 1 }).setOrigin(0.5);
     label(GB.a.x, GB.a.y + 17, 'A');
     label(GB.b.x, GB.b.y + 17, 'B');
+    // The brand under the screen.
+    this.add.text(GB.screen.x + GB.screen.w / 2, GB.screen.y + GB.screen.h + 8, GB.brand, {
+      fontFamily: UI.arcadeFont, fontSize: 8, color: GB.colors.brand, resolution: 1,
+    }).setOrigin(0.5);
 
     this.h = createHall(GB.layout, { solid: GB.solid, speed: GB.walkSpeed, ghosts: GB.npcs });
     this.h.pac.dir = 'up';
     this.mode = 'lab';
     this.chosen = null;   // your mini-Gurke's kind
     this.rivalKind = null;
+    this.taken = {};      // jar cell -> 'mine' | 'rival'
     this.done = false;    // the fight is over: the door lets you out
     this.held = null;
     this.keyDir = null;
@@ -171,7 +176,7 @@ export default class GameBoyScene extends Phaser.Scene {
 
   ball(cell) {
     const kind = GB.balls[cell], T2 = GB.text, mon = GB.mons[kind];
-    if (this.chosen) { this.talk([this.tiles[cell].visible ? T2.last : T2.taken]); return; }
+    if (this.chosen) { this.talk([{ mine: T2.taken, rival: T2.empty }[this.taken[cell]] ?? T2.last]); return; }
     this.popup.setTexture(`gameboy/mon-${kind}-front`).setVisible(true);
     const no = () => this.popup.setVisible(false);
     this.ask(fill(T2.ask, mon), [{ label: T2.yes, act: () => { no(); this.choose(cell, kind); } }, { label: T2.no, act: no }], 1);
@@ -182,11 +187,13 @@ export default class GameBoyScene extends Phaser.Scene {
     const T2 = GB.text;
     this.chosen = kind;
     this.rivalKind = GB.counter[kind];
-    this.tiles[cell].setVisible(false);
+    this.taken[cell] = 'mine';
+    this.tiles[cell].setTexture('gameboy/table-jar-empty');
     sfx.coin();
     const rivalCell = Object.keys(GB.balls).find((k) => GB.balls[k] === this.rivalKind);
-    this.talk([fill(T2.got, GB.mons[kind])], () => {
-      this.tiles[rivalCell].setVisible(false);
+    this.talk([fill(T2.got, GB.mons[kind]), T2.named], () => {
+      this.taken[rivalCell] = 'rival';
+      this.tiles[rivalCell].setTexture('gameboy/table-jar-empty');
       this.talk(T2.rivalTakes.map((t) => fill(t, GB.mons[this.rivalKind])), () => this.startBattle());
     });
   }
@@ -199,15 +206,15 @@ export default class GameBoyScene extends Phaser.Scene {
     this.enemyImg.setTexture(`gameboy/mon-${this.rivalKind}-front`);
     this.mineImg.setTexture(`gameboy/mon-${this.chosen}-back`);
     this.enemyName.setText(GB.mons[this.rivalKind].name);
-    this.mineName.setText(GB.mons[this.chosen].name);
+    this.mineName.setText(GB.nickname);
     this.battleUi.forEach((o) => o.setVisible(true));
-    const names = { enemy: GB.mons[this.rivalKind].name, mine: GB.mons[this.chosen].name };
+    const names = { enemy: GB.mons[this.rivalKind].name, mine: GB.nickname };
     this.talk(GB.text.battleStart.map((t) => fill(t, names)), () => this.menu());
   }
 
   menu() {
     const T2 = GB.text;
-    this.ask(fill(T2.what, { mine: GB.mons[this.chosen].name }), [
+    this.ask(fill(T2.what, { mine: GB.nickname }), [
       { label: T2.fight, act: () => this.moves() },
       { label: T2.run, act: () => this.talk([T2.noRun], () => this.menu()) },
     ]);
@@ -316,7 +323,9 @@ export default class GameBoyScene extends Phaser.Scene {
     }
     const p = this.h.pac, pp = pacPos(this.h);
     const f = p.moving ? charFrame('pac', (p.steps + p.t) / GB.walkSpeed, 2) : 0;
-    this.red.setTexture(`gameboy/red-${p.dir === 'left' ? 'right' : p.dir}-${f}`).setFlipX(p.dir === 'left')
+    // Once chosen, RED carries his Gurke (its own frames, gameboy/red-carry-<dir>-<f>-<kind>).
+    const carry = this.chosen ? `carry-` : '', kind = this.chosen ? `-${this.chosen}` : '';
+    this.red.setTexture(`gameboy/red-${carry}${p.dir === 'left' ? 'right' : p.dir}-${f}${kind}`).setFlipX(p.dir === 'left')
       .setPosition(Math.round(S.x + pp.x * T), Math.round(S.y + pp.y * T));
     this.h.npcs.forEach((n, i) => { const a = actorPos(n); this.npcSprites[i].setPosition(S.x + a.x * T, S.y + a.y * T); });
     if (this.mode === 'battle' && this.shown) this.drawBars();
