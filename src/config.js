@@ -498,16 +498,16 @@ export const HALL = {
     '###########',
     '#^|^*@+^|^#',
     '#%RB.Y.VGu#',
-    '#.rb.y.vg.#',
+    '#zrb.y.vg.#',
     '#.1.oS..2.#',
     '#.........#',
     '#C.~~~~~.Q#',
-    '#c3~~a~~4q#',
+    '#c3~xa~~4q#',
     '#h.~~~~~..#',
     '#o.....l.o#',
     '#.O.....!.#',
     '#ksj...oM.#',
-    '#..o..x.m.#',
+    '#..o....m.#',
     '#w....np.e#',
     '#####D#####',
   ],
@@ -539,6 +539,7 @@ export const HALL = {
     paper: 0x4a7ae0, paperEdge: 0x3058b0, paperInk: 0xffffff,
     sweater: 0x7a6aa8, sweaterDark: 0x5a4a88, sweaterFuzz: 0x9a8ac0,
     elsaHair: 0xf4f0d0, elsaDress: 0x8ad0f0, annaHair: 0xb04a20, annaDress: 0x3a7a5a, skin: 0xf0c8a8,
+    battery: 0x303030, batteryTop: 0xc0a040, batteryLabel: 0xe04020, // the two AA batteries (z)
     gbc: 0x2aa8a8, gbcDark: 0x1a7070, gbcLight: 0x6ad8d0, gbcBezel: 0x404050, gbcScreen: 0x2a3428, gbcButton: 0xc03050, cartRed: 0xd03030, // the Game Boy Color (x)
     cabinets: { r: 0xd03030, b: 0x3060d0, g: 0x30a050, v: 0x8040c0, y: 0xf2c200 },
   },
@@ -660,6 +661,13 @@ export const HALL = {
     gameLose: 'GAME OVER. {score} POINTS.',
     gameGurke: ' AND YOU FOUND A MINI-GURKE IN THERE!',
     gameboy: 'A GAME BOY COLOR, LYING ON THE FLOOR. POKEMON RED IS STILL IN IT. YOU FLIP THE SWITCH... NOTHING. THE BATTERIES ARE DEAD.',
+    // With the batteries from under the plant: it plays the start of Pokemon Red (src/scenes/GameBoyScene.js), once.
+    gameboyPower: 'THE GAME BOY COLOR. POKEMON RED IS STILL IN IT, THE BATTERIES ARE DEAD... BUT YOU HAVE TWO NEW ONES.',
+    gameboyOn: 'PUT THEM IN',
+    gameboyLeave: 'LEAVE IT',
+    gameboyOff: 'THE SCREEN FADES TO BLACK. THE BATTERIES ARE DEAD AGAIN.',
+    gameboyDead: 'THE GAME BOY COLOR. THE BATTERIES ARE DEAD AGAIN.',
+    batteries: 'FOUND 2 AA BATTERIES!',
     yNeedCoins: 'LAYERS OF PAC. INSERT COIN. YOU HAVE {n} OF {need} COINS.',
     counter: 'THE COUNTER. SCRATCHED, STICKY, LOVED.',
     sign: 'A PAPER SIGN: BACK IN 5 MIN.',
@@ -771,6 +779,90 @@ export const MINI = {
     kongX: 24, ladyX: 152,
     jumpPoints: 100, lives: 3, respawn: 1,
     gurkeX: 166, gurkeFloor: 3, gurkePoints: 300,
+  },
+};
+
+// The Game Boy Color on the hall's rug (src/scenes/GameBoyScene.js): the start of Pokemon Red, our way. A big Game
+// Boy fills the screen (gameboy/body, 180x320 art px at 4x), its 160x144 screen shows the professor's lab, played
+// with the on-screen D-pad and A/B (arrows and Space/Enter/X on a keyboard). Pick a mini-Gurke from the table, the
+// rival takes the one that beats it and fights you; walk out the door and the Game Boy turns off.
+// Tiles and characters 16x16, the mini-Gurken 32x32 (front and back), all in assets/gameboy/.
+// design/systems/layer-arcade.md
+export const GB = {
+  zoom: 4,
+  screen: { x: 10, y: 22, w: 160, h: 144 }, // art px of the screen inside gameboy/body
+  dpad: { x: 44, y: 236, r: 30, dead: 4 },  // center and hit radius of the D-pad
+  a: { x: 146, y: 226, r: 18 }, b: { x: 120, y: 244, r: 18 },
+  // w wall, b bookshelf, 1-3 the balls on the table, P the professor, R the rival, S where you start, D the door mat.
+  layout: [
+    'wwwwwwwwww',
+    'bbbb..bbbb',
+    '....P.....',
+    '...123....',
+    '..........',
+    '..R.......',
+    '..........',
+    '....S.....',
+    'wwwwDDwwww',
+  ],
+  solid: '#wbD123',
+  npcs: { P: 'prof', R: 'rival' },
+  walkSpeed: 4,          // tiles per second
+  balls: { 1: 'fire', 2: 'water', 3: 'grass' },
+  counter: { grass: 'fire', fire: 'water', water: 'grass' }, // the rival takes the one that beats yours
+  mons: {
+    grass: { name: 'BLATTGURK', kind: 'GRASS', move: 'BLATTHIEB' },
+    fire: { name: 'FEUERGURK', kind: 'FIRE', move: 'GLUT' },
+    water: { name: 'SALZGURK', kind: 'WATER', move: 'SPRITZER' },
+  },
+  // Who beats whom: x2 damage one way, x0.5 the other.
+  strong: { grass: 'water', water: 'fire', fire: 'grass' },
+  battle: {
+    hp: 20, tackle: 4, typeMove: 4, spread: 0.3, // damage = power x effect x (1 - spread/2 .. 1 + spread/2)
+    rival: { tackle: 0.5, typeMove: 0.25 },      // chances of the rival's moves; the rest is a sour face (nothing)
+  },
+  fade: 0.8,             // s the screen takes to go dark at the end
+  colors: {
+    text: '#202020', box: 0xf8f8f8, boxEdge: 0x202020, hp: 0x38b838, hpLow: 0xe0a020, hpCrit: 0xe03030, hpBack: 0x484848,
+    screenOff: 0x2a3428, label: '#e8e8f0',
+    // art (assets/gameboy/)
+    floor: 0xe8e0c8, floorLine: 0xc8c0a8, wall: 0x7890a8, wallDark: 0x506880, shelf: 0x8a5a30, shelfDark: 0x5a3a18,
+    book: [0xd04040, 0x4070d0, 0x40a050, 0xe0c040], table: 0xb08050, tableDark: 0x806040, ball: 0xe03030,
+    ballLight: 0xf8f8f8, ballLine: 0x202020, mat: 0xc05050, matLight: 0xe08080,
+    red: 0xe03030, redDark: 0x901818, blue: 0x3060c0, blueDark: 0x183870, hair: 0x5a3a18, rivalHair: 0xa86830,
+    skin: 0xf0c8a0, pants: 0x3a3a60, coat: 0xf0f0f0, coatShade: 0xb8b8c8, profHair: 0xa8a8a8, eye: 0x202020,
+    gurke: 0x3a8a30, gurkeLight: 0x6ab850, gurkeDark: 0x1e5018, leaf: 0x50c050, leafDark: 0x2a7a2a,
+    fire: 0xe04020, fireLight: 0xffa030, fireTip: 0xffe060, water: 0x60b0f0, waterLight: 0xc0e8ff, waterDark: 0x3070b0,
+    body: 0x2aa8a8, bodyLight: 0x6ad8d0, bodyDark: 0x1a7070, bezel: 0x404050, bezelDark: 0x2a2a38, button: 0x3a3a48,
+    buttonLight: 0x6a6a7a, led: 0xff3030,
+  },
+  text: {
+    intro: ['PROF. DILL: AH, RED! THERE ARE THREE MINI-GURKEN ON THE TABLE.', 'PROF. DILL: GO ON, CHOOSE ONE!'],
+    prof: 'PROF. DILL: PICK A MINI-GURKE FROM THE TABLE, RED!',
+    profAfter: 'PROF. DILL: NOW GO, RED! THE WORLD OF MINI-GURKEN AWAITS!',
+    rival: 'BLUE: HURRY UP, RED! I WANT MY MINI-GURKE!',
+    rivalAfter: 'BLUE: SEE YOU AROUND, RED!',
+    wait: "PROF. DILL: WAIT, RED! DON'T GO AWAY YET!",
+    ask: 'SO! YOU WANT {name}, THE {kind} MINI-GURKE?',
+    yes: 'YES', no: 'NO',
+    got: 'RED RECEIVED {name}!',
+    empty: 'AN EMPTY BALL. BLUE TOOK THIS ONE.',
+    taken: 'AN EMPTY SPOT ON THE TABLE.',
+    last: 'THE LAST MINI-GURKE. PROF. DILL IS KEEPING THIS ONE.',
+    rivalTakes: ["BLUE: THEN I'LL TAKE THIS ONE!", 'BLUE RECEIVED {name}!', "BLUE: WAIT, RED! LET'S CHECK OUT OUR MINI-GURKEN. COME ON, I'LL TAKE YOU ON!"],
+    battleStart: ['BLUE WANTS TO FIGHT!', 'BLUE SENT OUT {enemy}!', 'GO! {mine}!'],
+    what: 'WHAT WILL {mine} DO?',
+    fight: 'FIGHT', run: 'RUN', back: 'BACK', tackle: 'TACKLE',
+    noRun: "NO! THERE'S NO RUNNING FROM A TRAINER BATTLE!",
+    used: '{who} USED {move}!',
+    enemyWho: 'ENEMY {name}',
+    sour: 'ENEMY {name} MAKES A SOUR FACE. NOTHING HAPPENS.',
+    super: "IT'S SUPER EFFECTIVE!",
+    weak: "IT'S NOT VERY EFFECTIVE...",
+    fainted: '{who} FAINTED!',
+    win: ['RED DEFEATED BLUE!', 'BLUE: WHAT?! NO WAY! I SHOULD HAVE PICKED THE OTHER ONE!'],
+    lose: ['RED IS OUT OF USABLE MINI-GURKEN!', "BLUE: HA! I'M THE BEST!"],
+    healed: 'PROF. DILL: THERE, YOUR MINI-GURKE IS ALL HEALED. TAKE GOOD CARE OF IT!',
   },
 };
 
@@ -1048,6 +1140,25 @@ export const MUSIC = {
           '5 . 9 . 12 . 9 . 11 . 9 . 7 . 4 . 2 . 4 . 5 . 7 . 4 . 2 . 0 . . . . . ' },
         { wave: 'tri', vol: 0.4, oct: -12, notes: '0 . 7 . 0 . 7 . 0 . 7 . 5 . 7 . 5 . 0 . 5 . 0 . 7 . 2 . 7 . 0 . ' },
       ],
+    },
+    // The Game Boy: an original bouncy tune in the professor's lab, a faster one for the rival fight (pulse + wave).
+    gbLab: {
+      bpm: 120, root: 60, vol: 0.7,
+      tracks: [
+        { wave: 'pulse', len: 1.5, vol: 0.18, notes:
+          '7 . 9 . 11 . 12 . 14 . 12 . 11 . 9 . 7 . . . 4 . 7 . 9 . . . 7 . . . . . ' +
+          '5 . 7 . 9 . 11 . 12 . 11 . 9 . 7 . 9 . . . 11 . 12 . 14 . . . . . . . . . ' },
+        { wave: 'tri', vol: 0.35, oct: -12, notes: '0 . 7 . 0 . 7 . 5 . 0 . 5 . 0 . 2 . 7 . 2 . 7 . 0 . 7 . 0 . 7 . ' },
+      ],
+    },
+    gbBattle: {
+      bpm: 168, root: 57, vol: 0.7,
+      tracks: [
+        { wave: 'square', len: 1, vol: 0.16, notes:
+          '12 . 12 11 12 . 15 . 14 . 12 . 10 . 12 . 7 . 7 8 7 . 10 . 12 . 10 . 8 . 7 . ' },
+        { wave: 'tri', vol: 0.4, oct: -12, notes: '0 0 12 0 0 12 0 12 -2 -2 10 -2 -2 10 -2 10 ' },
+      ],
+      textures: [{ type: 'ticks', every: 2, freq: 6000, vol: 0.03 }],
     },
     // The original has no music: just the siren, a little higher and faster every stage of dots eaten.
     maze: {

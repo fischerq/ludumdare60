@@ -53,9 +53,22 @@ the arcade as a place.
     into it); it lies at the right end of the second girder from the top, where the barrels fall (walk to it).
     300 points and "MINI-GURKE!"; the hall's result line mentions it.
   - Each machine has its own background bed (`MUSIC.beds.invaders`, `asteroids`, `kong`, see [audio](audio.md)).
-- **The Game Boy Color** *(decided, Quirin, defaults accepted 2026-10-19)*: a teal GBC lying on the floor (`x`, left
-  of the change machine, `arcade/gameboy`) with Pokemon Red's red cartridge in it. Talking to it: Pokemon Red is
-  still in it, you flip the switch, nothing: the batteries are dead. Nothing to pick up.
+- **The Game Boy Color** *(decided, Quirin, defaults accepted 2026-10-19)*: a teal GBC lying on the rug, left of the
+  sweater (`x`, `arcade/gameboy`) with Pokemon Red's red cartridge in it. Without batteries: you flip the switch,
+  nothing, the batteries are dead. **Two AA batteries** lie below the potted plant (`z`, `arcade/batteries`): walk
+  over them to pick them up (kept for the session). Then the Game Boy offers PUT THEM IN, and it plays **the start
+  of Pokemon Red, our way** (`src/scenes/GameBoyScene.js`, `GB` in `src/config.js`, art in `assets/gameboy/`):
+  - A big Game Boy fills the screen; its 160x144 screen at 4x shows PROF. DILL's lab. Play with the on-screen D-pad
+    and A/B (tap the screen to go on or pick a choice; arrows, Space/Enter and X on a keyboard). Walking reuses the
+    hall's grid rules (`src/systems/hall.js`).
+  - Three balls on the table hold three **mini-Gurken**: FEUERGURK (fire, a red-hot chili pickle), SALZGURK (water,
+    a pickle in a brine bubble), BLATTGURK (grass, leaves sprouting). A on a ball shows it and asks YES/NO.
+  - BLUE (the rival) then takes the one that beats yours and fights you right away: FIGHT (TACKLE or the type move)
+    or RUN (not from a trainer battle), HP bars, super/not very effective, BLUE sometimes makes a sour face
+    (rules in `src/systems/gameboy/battle.js`). Win or lose, PROF. DILL heals your mini-Gurke.
+  - The door won't let you out before the fight; after it, walking out fades the screen to black and you're back in
+    the hall: "THE BATTERIES ARE DEAD AGAIN." Once per session.
+  - Own names, no Pokemon branding in the game itself (RED, BLUE, PROF. DILL); its own beds `gbLab` and `gbBattle`.
 - **Pickles:** the owner's bitten Gurke and a jar of cornichons on the counter next to him (`k`, `j`), a mini-Gurke
   in the top right corner where a plant stood (`u`). Details to talk to, nothing to collect.
 - **The counter** is three tiles wide (Gurke, paper sign, jar) with the owner centered behind it. Only the paper sign
@@ -118,7 +131,10 @@ the arcade as a place.
   Galaxian, a mini-Gurke hidden in each game, a background bed per machine, the Game Boy Color, walking into our
   cabinet plays it, a dialog when talking to it.
 - Not now: more dialogue, collecting the mini-gurke, footstep sounds, a street outside; high scores, more levels,
-  shields or sloped girders in the mini-games, a playtest bot or lab bench for them, batteries for the Game Boy.
+  shields or sloped girders in the mini-games, a playtest bot or lab bench for them.
+- Build (done, Game Boy): batteries under the plant, the Game Boy on the rug playing the lab scene (pick a mini-Gurke,
+  the rival fight, out the door and off).
+- Not now (Game Boy): leaving the lab (Pallet Town and beyond), levels and experience, naming, saving, replaying.
 
 ## Open questions
 - Should entering the machine work as an escape even without a coin? *Default now: no, a coin is needed.*
@@ -153,3 +169,4 @@ the arcade as a place.
 - 2026-10-19: Snow globe close-up: glass and unicorn bigger (glass radius 36 to 44, unicorn scaled with it), base unchanged; the camera looks down from a little above (0.35 rad) so the settled globe is seen diagonally from above; the FLAT mode and its switch dropped. (Quirin)
 - 2026-10-19: The sweater moves from the back wall (unreachable there) to the floor, lying in the middle of the rug. (Quirin)
 - 2026-10-19: The other cabinets become playable, one level each for a coin (Space Invaders, Asteroids, Donkey Kong); Galaxian is broken and eats the coin; a Game Boy Color with Pokemon Red lies on the floor, batteries dead; walking into our cabinet zooms straight down, talking to it asks PLAY / NOT NOW; a mini-Gurke hidden in each game; each machine gets its own background track. Defaults accepted (full-screen scene per game, touch controls, no reward, no bot). (Quirin) Claude picked where the mini-Gurke hides in each game and wrote the dialog lines.
+- 2026-10-19: The Game Boy moves onto the rug (left of the sweater); batteries to pick up under the potted plant; with them it plays the start of Pokemon Red with mini-Gurken: choose a starter in the professor's lab, the rival takes the counter and fights you, leaving the lab turns the Game Boy off. Defaults accepted (on-screen D-pad, grass/fire/water mini-Gurken BLATTGURK, FEUERGURK, SALZGURK, a short fight, once per session, own names RED/BLUE/PROF. DILL, own tunes). (Quirin)

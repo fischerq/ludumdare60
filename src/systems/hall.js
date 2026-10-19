@@ -12,9 +12,10 @@ const SOLID = '#RBGVYrbgvy=MmD1234%!CcQq|^*+@Okjsunpwheax';
 // The same rules walk other rooms too (the board lobby): opts.solid are its blocking map characters, opts.speed
 // its walk speed in tiles per second, opts.ghosts its visitor characters.
 export function createHall(layout = HALL.layout, { solid = SOLID, speed = HALL.walkSpeed, ghosts = HALL.ghosts } = {}) {
-  const h = { rows: layout, w: layout[0].length, h: layout.length, coins: new Set(), npcs: [], got: 0, pac: null, chase: null, solid, speed };
+  const h = { rows: layout, w: layout[0].length, h: layout.length, coins: new Set(), batteries: new Set(), npcs: [], got: 0, pac: null, chase: null, solid, speed };
   layout.forEach((row, y) => [...row].forEach((c, x) => {
     if (c === 'o') h.coins.add(`${x},${y}`);
+    if (c === 'z') h.batteries.add(`${x},${y}`);
     if (ghosts[c]) h.npcs.push({ name: ghosts[c], x, y, home: { x, y }, dir: 'down', moving: false, from: null, t: 0 });
     if (c === 'S') h.pac = { x, y, dir: 'up', moving: false, from: null, t: 0, steps: 0 };
   }));
@@ -42,8 +43,8 @@ export function facing(h) {
 }
 
 // Advance by dt seconds while `held` (a direction or null) is pushed. Returns events: { type: 'coin' },
-// { type: 'door' } when Pac-Man walks into the door during a chase (his way out), and { type: 'bump' } when he
-// walks into our cabinet.
+// { type: 'batteries' }, { type: 'door' } when Pac-Man walks into the door during a chase (his way out), and
+// { type: 'bump', cell } when he walks into something.
 export function stepHall(h, dt, held) {
   const p = h.pac;
   const events = [];
@@ -55,8 +56,8 @@ export function stepHall(h, dt, held) {
       const d = DIRS[held];
       if (h.chase && cellAt(h, p.x + d.x, p.y + d.y) === 'D') { events.push({ type: 'door' }); break; }
       if (blocked(h, p.x + d.x, p.y + d.y)) {
-        // Walking into our cabinet plays it.
-        if (cellAt(h, p.x + d.x, p.y + d.y).toLowerCase() === 'y') events.push({ type: 'bump', cell: 'y' });
+        // Walking into something (the hall plays our cabinet when it's that one).
+        events.push({ type: 'bump', cell: cellAt(h, p.x + d.x, p.y + d.y) });
         break;
       }
       p.from = { x: p.x, y: p.y };
@@ -72,6 +73,7 @@ export function stepHall(h, dt, held) {
       p.steps += 1;
       const k = `${p.x},${p.y}`;
       if (h.coins.delete(k)) { h.got += 1; events.push({ type: 'coin', x: p.x, y: p.y }); }
+      if (h.batteries.delete(k)) events.push({ type: 'batteries', x: p.x, y: p.y });
     }
   }
   return events;

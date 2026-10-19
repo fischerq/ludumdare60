@@ -27,6 +27,8 @@ const ON_FLOOR = {
 // The Urmel figurine's stage (HALL.urmel, arcade/urmel-<n>): kept for the session, like the coins. The first talk
 // shows the iceberg it starts as, every later one the next stage.
 const urmel = { stage: 0, talked: false };
+// The Game Boy Color: the batteries under the plant (picked up once per session) power it for one go.
+const gameboy = { batteries: false, used: false };
 
 // The text box portrait for a map character: the owner's own, otherwise the thing's tile (a machine's top half).
 function portraitFor(c) {
@@ -49,6 +51,7 @@ export default class HallScene extends Phaser.Scene {
     this.fromCabinet = data?.from === 'cabinet';
     this.wasCaught = !!data?.caught; // the hall starts over after the ghosts caught Pac-Man
     this.fromGame = data?.from === 'game' ? data : null; // back from one of the other machines (MiniGameScene)
+    this.fromGameboy = data?.from === 'gameboy'; // the Game Boy just turned off (GameBoyScene)
   }
 
   preload() {
@@ -81,12 +84,18 @@ export default class HallScene extends Phaser.Scene {
     this.zoomAt = this.ourCab; // what the intro zooms out of and the outro into
     this.bumped = false;
     if (this.fromGame) this.backFromGame(this.fromGame);
+    if (this.fromGameboy) this.backFromGameboy();
 
     this.coinSprites = new Map();
     for (const k of this.h.coins) {
       const [x, y] = k.split(',').map(Number);
       this.coinSprites.set(k, this.add.image(this.sx(x), this.sy(y), 'arcade/coin'));
     }
+    if (gameboy.batteries) this.h.batteries.clear();
+    this.batterySprites = [...this.h.batteries].map((k) => {
+      const [x, y] = k.split(',').map(Number);
+      return this.add.image(this.sx(x), this.sy(y), 'arcade/batteries');
+    });
     // Characters fill one tile, centered on it, like a Pokémon game; lower ones are drawn in front.
     const actor = (key) => this.add.image(0, 0, key);
     this.npcSprites = this.h.npcs.map((n) => actor(`arcade/ghost-${n.name}-down-0`));
@@ -104,6 +113,7 @@ export default class HallScene extends Phaser.Scene {
     this.setupPauseOnHide();
     this.updateCamera();
     if (this.wasCaught) this.say(HALL.text.caught);
+    if (this.afterStart) this.say(this.afterStart);
   }
 
   sx(x) { return this.ox + x * T + T / 2; }
@@ -112,6 +122,15 @@ export default class HallScene extends Phaser.Scene {
   machine(c) {
     const y = this.h.rows.findIndex((r) => r.includes(c)), x = this.h.rows[y].indexOf(c);
     return { x, y, at: { x: this.sx(x), y: this.sy(y - 0.5) } };
+  }
+
+  // The Game Boy turned off: Pac-Man next to it on the rug.
+  backFromGameboy() {
+    const y = this.h.rows.findIndex((r) => r.includes('x')), x = this.h.rows[y].indexOf('x');
+    const spot = [[0, 1, 'up'], [0, -1, 'down'], [-1, 0, 'right']].map(([dx, dy, dir]) => ({ x: x + dx, y: y + dy, dir }))
+      .find((p) => !blocked(this.h, p.x, p.y));
+    if (spot) Object.assign(this.h.pac, spot);
+    this.afterStart = HALL.text.gameboyOff;
   }
 
   // Back from another machine: zoom out of it, Pac-Man standing in front of it, then the result.
@@ -135,7 +154,7 @@ export default class HallScene extends Phaser.Scene {
 
   drawMap() {
     const { rows } = this.h;
-    const rug = (x, y) => '~a'.includes(rows[y]?.[x] ?? '.'); // the sweater lies on the rug
+    const rug = (x, y) => '~ax'.includes(rows[y]?.[x] ?? '.'); // the sweater and the Game Boy lie on the rug
     rows.forEach((row, y) => [...row].forEach((c, x) => {
       const at = (key) => this.add.image(this.ox + x * T, this.oy + y * T, tileKey('arcade', key)).setOrigin(0);
       if (c === '#') { at('wall-top'); return; }
@@ -275,6 +294,13 @@ export default class HallScene extends Phaser.Scene {
       const key = tileKey('arcade', `urmel-${urmel.stage}`);
       this.urmelImg.setTexture(key);
       this.say(HALL.urmel[urmel.stage], key);
+    } else if (HALL.cellText[f.cell] === 'gameboy') {
+      if (gameboy.used) this.say(tx.gameboyDead, portrait);
+      else if (!gameboy.batteries) this.say(tx.gameboy, portrait);
+      else {
+        const on = () => { gameboy.used = true; sfx.click(); this.mode = 'gone'; this.scene.start('GameBoy'); };
+        this.say(tx.gameboyPower, portrait, [{ label: tx.gameboyOn, act: on }, { label: tx.gameboyLeave }]);
+      }
     } else if (HALL.cellText[f.cell] === 'paper') {
       this.say(Math.random() < HALL.paperRareChance ? tx.paperRare : tx.paper, portrait);
     } else if (HALL.cellText[f.cell] === 'pacManual') {
@@ -526,10 +552,17 @@ export default class HallScene extends Phaser.Scene {
       for (const e of stepHall(this.h, dt, this.held ?? this.keyDir)) {
         // Walking into our cabinet: straight down a layer with a coin, otherwise say so (once per push).
         if (e.type === 'bump') {
-          if (this.bumped) continue;
+          if (e.cell.toLowerCase() !== 'y' || this.bumped) continue;
           this.bumped = true;
           if (coins() >= COINS.perGame) this.goDown();
           else this.say(HALL.text.yNeedCoins.replace('{n}', coins()).replace('{need}', COINS.perGame), portraitFor('y'));
+          break;
+        }
+        if (e.type === 'batteries') {
+          sfx.coin();
+          gameboy.batteries = true;
+          this.batterySprites.forEach((b) => b.destroy());
+          this.say(HALL.text.batteries);
           break;
         }
         if (e.type === 'door') { this.stopChase(HALL.text.escaped, { x: this.h.pac.x, y: this.h.pac.y }); break; }
