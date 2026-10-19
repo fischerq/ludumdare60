@@ -26,6 +26,7 @@
     .pt-charts .band { stroke: var(--accent); stroke-width: 2; stroke-linecap: round; opacity: .45; }
     .pt-charts .hit { fill: transparent; }
     details { margin-top: 8px; font-size: 13px; }
+    .pt-scroll { overflow-x: auto; }
     details table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; margin-top: 6px; }
     details th, details td { text-align: right; padding: 3px 4px; border-bottom: 1px solid var(--line); }
     details th:first-child, details td:first-child { text-align: left; }
@@ -125,7 +126,7 @@
           }).join('')}</tr>`).join('');
           const reach = L.noise.map((n) => `noise ${n.noise}: median ${n.reached.median}`).join(', ');
           return `<section class="pt-card"><h2>${esc((NAMES[id] ?? [id])[0])} (levels)</h2><p>Levels won in a row from level 1: ${esc(reach)}. Cap at level ${L.capLevel}.</p>
-            <table><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr>${rows}</table></section>`;
+            <div class="pt-scroll"><table><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr>${rows}</table></div></section>`;
         }).join('');
       }
       document.getElementById('meta').textContent = text;
