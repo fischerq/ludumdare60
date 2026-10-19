@@ -1,6 +1,8 @@
 // The 3D snow globe with no Phaser: a rigid globe turning about its glass center, pulled upright by its heavy base,
 // with water inside that lags behind the glass, glitter flakes that ride the water and sink, and a mane and tail of
-// bead chains floating in it. Units are art px; world x right, y up, z toward you. The model is
+// bead chains floating in it. Units are art px; world x right, y up, z toward you (the screen). The camera looks
+// down on it from a little above (cfg.pitch), so world gravity tips away from you and the settled globe shows its
+// top. The model is
 // src/settings/globe-model.json; src/systems/globeRender.js draws it.
 
 import { HALL } from '../config.js';
@@ -54,9 +56,12 @@ const randUnit = (rand) => {
   return [Math.cos(a) * s, Math.sin(a) * s, z];
 };
 
+// Which way is down on screen: straight down, tipped away from you by the camera's pitch.
+const gravityDir = (cfg) => [0, -Math.cos(cfg.pitch), -Math.sin(cfg.pitch)];
+
 export function createGlobe3d(model, cfg = HALL.globe3d, rand = Math.random) {
   const g = {
-    model, cfg, rand, q: [1, 0, 0, 0], w: [0, 0, 0], water: [0, 0, 0], stir: 0,
+    model, cfg, rand, q: [Math.cos(cfg.pitch / 2), Math.sin(cfg.pitch / 2), 0, 0], down: gravityDir(cfg), w: [0, 0, 0], water: [0, 0, 0], stir: 0,
     jolt: { x: 0, y: 0, vx: 0, vy: 0 }, grab: null, torque: [0, 0, 0], flakes: [],
   };
   // Glitter starts settled on the snow.
@@ -109,7 +114,7 @@ export function stepGlobe3d(g, dt) {
 function substep(g, h) {
   const c = g.cfg, R = g.model.glassR, m = quatMatrix(g.q), w = g.w;
   // The heavy base: the center of mass sits below the glass center, so gravity turns it upright.
-  const down = toWorld(m, [0, -1, 0]), tau = cross(down, [0, -c.weight, 0]);
+  const down = toWorld(m, [0, -1, 0]), tau = cross(down, g.down.map((x) => x * c.weight));
   if (g.grab) {
     const pw = toWorld(m, g.grab.local), v = cross(w, pw);
     const f = [0, 1, 2].map((i) => c.grabSpring * (g.grab.target[i] - pw[i]) - c.grabDamp * v[i]);
@@ -137,7 +142,7 @@ function substep(g, h) {
 
   // Everything inside moves in the globe's own frame: there, gravity turns with the globe and the water flows
   // around the center at the speed it lags behind the glass.
-  const m2 = quatMatrix(g.q), gl = toLocal(m2, [0, -1, 0]), rel = toLocal(m2, [-lag[0], -lag[1], -lag[2]]);
+  const m2 = quatMatrix(g.q), gl = toLocal(m2, g.down), rel = toLocal(m2, [-lag[0], -lag[1], -lag[2]]);
   const { center: mc, r: mr } = g.model.mound, rin = R - 1.5, kick = c.jitter * g.stir * h, rand = g.rand;
   for (const f of g.flakes) {
     const p = f.p, v = f.v, vw = cross(rel, p), follow = Math.min(1, c.flakeDrag * h);
