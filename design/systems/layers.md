@@ -76,8 +76,7 @@ portraits, one screen at 4x). Wire auto-joining and lookups in `src/systems/lobb
   NOT NOW) wakes every subsystem at once, as if each was won, so the adder and the 256 switch appear: the final level
   without the wins. One-way for the session (a reload resets it). *(Quirin, defaults accepted 2026-10-19)*
 - **Video RAM is replaced by work RAM** (see [layer-deep](layer-deep.md)): there were already many video layers.
-- Not in this slice: saving progress, sounds of their own for the lobby (it uses
-  the cabinet's bed), animated subsystems beyond the blink.
+- Not in this slice: saving progress, lobby sound effects beyond its own bed, animated subsystems beyond the blink.
 
 ## Layer ideas · open (brainstorm, nothing decided)
 Rough order from outside to inside; we pick a few, not all.

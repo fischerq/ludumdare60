@@ -46,7 +46,7 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   create() {
-    setBed('cabinet');
+    setBed('lobby');
     this.h = createHall(this.layout(), { solid: LOBBY.solid, speed: LOBBY.walkSpeed, ghosts: {} });
     this.viewW = GAME_WIDTH / LOBBY.zoom;
     this.viewH = GAME_HEIGHT / LOBBY.zoom;
