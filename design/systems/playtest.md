@@ -17,13 +17,22 @@ curve, and a rerun after a balance change shows what the change did.
   objectives, as in `DeepScene.update`).
 - **What's tested** (`--layers`): `maze` (swipes), `cabinet` (held stick), `hall` (collect every coin, tap our
   cabinet), `hall-chase` (read the ghost poster, get out the door), the seven deep layers, the bonus `adder` layer (bot in `tools/playtest/adder.mjs`), and `playthrough`.
+- **Hard mode** (`--hard`, decided 2026-10-19): the seven deep layers with their `hard` blocks switched in the way
+  DeepScene does (`src/systems/layers/hard.js`), results in `lab/playtest/results-hard.json` (the lab page shows
+  both files). Tune with `--set DEEP.<id>.hard.<key>=v`. `runDeep(s, i, { hard, over })` also takes an override
+  object merged over `DEEP.<id>` for one run, so per-layer difficulty levels can be swept the same way later.
 - **Win / loss:** maze and cabinet: clear the maze before game over. Deep layers: all objectives within
   `PLAYTEST.timeCap.deep` (180 s; hits only cost time, as in the game).
   Hall: coins and tap within 90 s; chase: out the door or outlasted, caught loses.
-- **Full playthrough** (`playthrough`): the outer loop from the menu's first coin. Play the maze until cleared; game
-  over costs a coin; out of coins, go up through the cabinet to the hall, collect what's left, play on in the
-  cabinet. Then go down and clear all seven deep layers in order. Transitions, text boxes, coin drops and tap reading time all count. Loses on running out of coins, a
-  stuck layer or 40 minutes.
+- **Full playthrough** (`playthrough`, extended 2026-10-19 to the whole game): the outer loop from the menu's first
+  coin to the credits. Play the maze until cleared (game over costs a coin; out of coins, go up through the cabinet
+  to the hall, collect what's left, play on in the cabinet); lamp 1. The seven deep layers in lobby order; the adder
+  (its win turns the 256 switch on); the seven deep layers again in hard mode, each win repairing its strip of
+  level 256 (`progress.js` and the repair mask wired as in `main.js`); up to the maze, now on level 256, played
+  with the same coin and hall loop until it's cleared: the end (credits). Transitions, text boxes, coin drops and
+  tap reading time all count. Loses on running out of coins, a stuck layer or 60 minutes. Segments are named after
+  what's played (`maze`, `cabinet`, `hall`, layer ids, `adder`, `<id>-hard`, `maze-256`, `cabinet-256`); the
+  results also say where each run ended (`reached`).
 - **Bots** see what the player sees (positions, the beam, packets, lit cells, door states), never the machine's
   future. Each deep bot is a target list plus a "blocked at time eta" test; a breadth-first search finds the
   nearest safe target, else the plain path while its next tile is safe, else the safest neighbor. The maze bot
@@ -37,7 +46,7 @@ curve, and a rerun after a balance change shows what the change did.
   like for like. Deep runs start after a seeded 0 to 20 s of the machine playing itself.
 - **Output:** a table on the console and `lab/playtest/results.json` (per layer and level: win rate, time to
   solve p25/median/p75 over wins, hits or deaths, swipes per second, outcome counts; playthrough also coins
-  found, games played, hall visits and median time per segment).
+  found, games played, hall visits, median time per segment and where runs ended).
 
 ## How to use it
 `node tools/playtest.mjs --quick` for a look (5 runs), `node tools/playtest.mjs` for the full sweep (20 runs,
@@ -80,3 +89,8 @@ player who knows the game".*
 - 2026-10-17: Bots play every layer and the whole game with structured noise; win rate and time to solve per noise
   level; a rerunnable framework checked in. Machine (cabinet) and arcade hall included, and a full playthrough
   with the outer loop. (Quirin; details Claude's defaults)
+- 2026-10-19: The video board bot follows the reworked layer (marks, palette, DAC); its tile snapshot renders into a
+  small software canvas in `tools/playtest/canvas.mjs` (with the real art from `assets/`), so game and bot share the
+  layer code. The playthrough runs the whole game to the credits; `--hard` sweeps the hard blocks (measured, not
+  retuned: hard mode is being replaced by per-layer levels). The sim takes a per-run override object
+  (`runDeep`/`runLayer`/`runPlaythrough` `over`) for those levels to plug into. (Quirin)

@@ -3,8 +3,10 @@
 // Each runner takes a session { t, hand, random } and plays until it wins, loses or hits its time cap;
 // the full playthrough strings them together with the outer loop (coins, game over, the hall, going deeper).
 
-import { DEEP, HALL, COINS, PLAYTEST } from '../../src/config.js';
-import { world, startWorld, tickWorld, newGame, setDriver, setSpeed, pressDir, holdDir, onFrame } from '../../src/systems/arcade/world.js';
+import { DEEP, HALL, COINS, PLAYTEST, LEVELS } from '../../src/config.js';
+import { world, startWorld, tickWorld, newGame, setDriver, setSpeed, pressDir, holdDir, onFrame, setRound, setRepairs, currentRound } from '../../src/systems/arcade/world.js';
+import { setHard } from '../../src/systems/layers/hard.js';
+import { ORDER, onChange, isHardWon, setLamp, markMazeWon, markWon, markAdderWon, markHardWon } from '../../src/progress.js';
 import { loadProgram } from '../../src/systems/arcade/program.js';
 import { readState } from '../../src/systems/arcade/state.js';
 import { DEEP_LAYERS } from '../../src/systems/layers/index.js';
@@ -15,6 +17,7 @@ import { DEEP_BOTS, decideDeep, mazeBot } from './bots.mjs';
 import { plan, evade, manhattan } from './plan.mjs';
 import { rng, createHand } from './noise.mjs';
 import { runAdder } from './adder.mjs';
+import { art } from './canvas.mjs';
 import { revertPatches } from '../../src/systems/layers/cpu.js';
 
 const DT = 1 / 60;
@@ -74,9 +77,18 @@ export function runMaze(s, { mode = 'swipe', fresh = true } = {}) {
 
 // One deep layer (index into DEEP_LAYERS), as DeepScene runs it: the machine runs DEEP.machineSlowdown times slower
 // and the in-game bot plays the maze unless the layer steers it. fresh: start a new game and let it run a seeded
-// while first, so runs see different machine states.
-export function runDeep(s, index, { fresh = true } = {}) {
+// while first, so runs see different machine states. hard: play with the layer's hard numbers, switched in the way
+// DeepScene does (src/systems/layers/hard.js). over: other numbers to try, merged over DEEP.<id> for this run only
+// (for difficulty levels later).
+export function runDeep(s, index, { fresh = true, hard = false, over = null } = {}) {
   const L = DEEP_LAYERS[index], bot = DEEP_BOTS[L.id];
+  setHard(L.id, hard);
+  const C = DEEP[L.id], saved = over ? Object.fromEntries(Object.keys(over).map((k) => [k, C[k]])) : null;
+  if (over) Object.assign(C, over);
+  try { return deepRun(s, L, bot, fresh); } finally { if (saved) Object.assign(C, saved); setHard(L.id, false); }
+}
+
+function deepRun(s, L, bot, fresh) {
   if (fresh) {
     freshMachine();
     setDriver('bot');
@@ -97,7 +109,7 @@ export function runDeep(s, index, { fresh = true } = {}) {
     tickWorld(DT * 1000);
     t += DT;
     s.t += DT;
-    const env = { id: L.id, P: DEEP.style[L.id], m, S, t, dt: DT, player, sounds: sounds.splice(0), art: null };
+    const env = { id: L.id, P: DEEP.style[L.id], m, S, t, dt: DT, player, sounds: sounds.splice(0), art };
     const open = (x, y) => L.open(st, env, x, y);
     if (hitT > 0) {
       hitT -= DT;
@@ -105,7 +117,7 @@ export function runDeep(s, index, { fresh = true } = {}) {
     } else {
       Object.assign(c, { env, t });
       const want = decideDeep(bot, c);
-      for (const d of s.hand.update(t, DT, want, (dd) => player.next === dd || player.dir === dd)) steerWalker(player, d);
+      for (const d of s.hand.update(s.t, DT, want, (dd) => player.next === dd || player.dir === dd)) steerWalker(player, d); // session time: the hand's clock runs on across layers
       stepWalker(player, (L.walkSpeed ?? DEEP.walkSpeed) * DT, open);
       const r = L.update(st, env);
       if (r === 'dot') dots++;
@@ -184,20 +196,40 @@ export function runHall(s, { scenario = 'coins', h = null } = {}) {
   return { win: result === 'win', result, time: s.t - t0, coins: got, h };
 }
 
-// The whole game with its outer loop, from the menu's first coin to the bottom layer: play the maze until it's
-// cleared (a game over costs a coin; out of coins, go up through the cabinet to the hall, collect coins, play on
-// in the cabinet), then go down and clear every deep layer. A game over in the input layer halts the machine:
-// go back up to the maze for a coin. Every move between layers costs its transition time.
-export function runPlaythrough(s) {
+// The level 256 repairs follow the hard-mode wins, wired as in src/main.js.
+let wired = false;
+function wireRepairs() {
+  if (wired) return;
+  wired = true;
+  onChange(() => setRepairs(ORDER.reduce((mask, id, k) => (isHardWon(id) ? mask | (1 << k) : mask), 0)));
+}
+
+// The whole game with its outer loop, from the menu's first coin to the credits:
+//   maze      play the maze until it's cleared (a game over costs a coin; out of coins, go up through the cabinet
+//             to the hall, collect coins, play on in the cabinet). Lamp 1 wakes the monitor.
+//   deep      the seven deep layers in lobby order. A game over in the input layer halts the machine: go back up
+//             to the maze for a coin, then all the way back down.
+//   adder     the bonus layer; winning it turns the 256 switch on.
+//   hard      the seven deep layers again with their hard numbers; each win repairs its strip of level 256.
+//   256       up to the maze, now on level 256 (a coin per game, the hall when out), until it's cleared: the end.
+// Every move between layers costs its transition time, every text box its reading time. Segments are named after
+// what's played (maze, cabinet, hall, the layer ids, adder, <id>-hard, maze-256, cabinet-256).
+// o.over: { <id>: numbers, '<id>-hard': numbers } merged over DEEP.<id> for that layer's runs (difficulty levels).
+export function runPlaythrough(s, o = {}) {
+  wireRepairs();
+  setLamp(0, false); // a new session: nothing won, level 256 unrepaired
   resetWallet();
   const cap = PLAYTEST.timeCap.playthrough;
-  const log = { mazeGames: 0, cabinetGames: 0, hallVisits: 0, coinsFound: 0, deaths: 0, deep: [], segments: [] };
+  const log = { mazeGames: 0, cabinetGames: 0, hallVisits: 0, coinsFound: 0, deaths: 0, deep: [], segments: [], reached: 'maze' };
   const seg = (name, r) => { log.segments.push({ name, time: +r.time.toFixed(1), result: r.result }); return r; };
-  let where = 'maze', hall = null;
+  const fail = (result) => ({ win: false, result, time: s.t, ...log });
+  let where = 'maze', hall = null, round = 1;
 
-  // Start a fresh game wherever we are; false when there are no coins left anywhere.
+  // Start a fresh game wherever we are (on the current round); false when there are no coins left anywhere.
+  // On level 256 the round is set after the reset frame: run a few frames so the last game's RAM is gone.
+  const fresh = () => { freshMachine(); if (round > 1) { setRound(round); idle(s, 0.1); } };
   const newGameSomewhere = () => {
-    if (spendCoin()) { idle(s, where === 'cabinet' ? COINS.flyTime + COINS.startDelay : tap(s)); freshMachine(); return true; }
+    if (spendCoin()) { idle(s, where === 'cabinet' ? COINS.flyTime + COINS.startDelay : tap(s)); fresh(); return true; }
     // Out of coins: up to the cabinet and the hall, collect what's left, back into our cabinet.
     idle(s, (where === 'maze' ? DEEP.transition : 0) + HALL.introTime);
     log.hallVisits++;
@@ -208,51 +240,87 @@ export function runPlaythrough(s) {
     where = 'cabinet';
     if (!spendCoin()) return false;
     idle(s, COINS.flyTime + COINS.startDelay);
-    freshMachine();
+    fresh();
     return true;
   };
 
-  let first = true, cleared = false;
-  while (!cleared && s.t < cap) {
-    if (first) { spendCoin(); freshMachine(); first = false; }
-    else if (!newGameSomewhere()) return { win: false, result: 'out of coins', time: s.t, ...log };
-    if (where === 'maze') log.mazeGames++; else log.cabinetGames++;
-    const r = seg(where, runMaze(s, { mode: where === 'cabinet' ? 'stick' : 'swipe', fresh: false }));
-    log.deaths += r.deaths;
-    cleared = r.win;
-    if (!cleared) idle(s, tap(s));
-  }
-  if (!cleared) return { win: false, result: 'timeout', time: s.t, ...log };
+  // The maze (or the cabinet) until a clear; null when cleared, else the failure.
+  const clearMaze = (first) => {
+    const tag = round > 1 ? `-${round}` : '';
+    for (;;) {
+      if (s.t > cap) return 'timeout';
+      if (first) { first = false; if (!spendCoin()) return 'out of coins'; fresh(); }
+      else if (!newGameSomewhere()) return 'out of coins';
+      if (where === 'maze') log.mazeGames++; else log.cabinetGames++;
+      const r = seg(where + tag, runMaze(s, { mode: where === 'cabinet' ? 'stick' : 'swipe', fresh: false }));
+      log.deaths += r.deaths;
+      if (r.win && currentRound() === round) return null;
+      idle(s, tap(s));
+    }
+  };
+
+  // The seven deep layers, normal or hard; null when all are won, else the failure.
+  const deepRound = (hard) => {
+    for (let i = 0; i < DEEP_LAYERS.length; i++) {
+      const id = DEEP_LAYERS[i].id, name = hard ? `${id}-hard` : id;
+      log.reached = name;
+      const r = seg(name, runDeep(s, i, { fresh: false, hard, over: o.over?.[name] ?? null }));
+      log.deep.push({ id: name, time: +r.time.toFixed(1), hits: r.hits, result: r.result });
+      if (r.result === 'over') {
+        // The machine stopped: up to the maze (or the hall) for a new game, then all the way back down.
+        idle(s, DEEP.transition * (i + 1));
+        where = 'maze';
+        if (!newGameSomewhere()) return 'out of coins';
+        setDriver('bot');
+        idle(s, DEEP.transition * (i + 1) + (where === 'cabinet' ? DEEP.transition : 0));
+        i--;
+        continue;
+      }
+      if (!r.win) return `stuck in ${name}`;
+      if (s.t > cap) return 'timeout';
+      if (hard) markHardWon(id); else markWon(id);
+      idle(s, tap(s) + DEEP.transition);
+    }
+    return null;
+  };
+
+  let f = clearMaze(true);
+  if (f) return fail(f);
+  markMazeWon();
   idle(s, tap(s) + DEEP.transition * (where === 'cabinet' ? 2 : 1));
 
-  for (let i = 0; i < DEEP_LAYERS.length; i++) {
-    const r = seg(DEEP_LAYERS[i].id, runDeep(s, i, { fresh: false }));
-    log.deep.push({ id: DEEP_LAYERS[i].id, time: +r.time.toFixed(1), hits: r.hits, result: r.result });
-    if (r.result === 'over') {
-      // The machine stopped: up to the maze (or the hall) for a new game, then all the way back down.
-      idle(s, DEEP.transition * (i + 1));
-      where = 'maze';
-      if (!newGameSomewhere()) return { win: false, result: 'out of coins', time: s.t, ...log };
-      setDriver('bot');
-      idle(s, DEEP.transition * (i + 1) + (where === 'cabinet' ? DEEP.transition : 0));
-      i--;
-      continue;
-    }
-    if (!r.win || s.t > cap) return { win: false, result: `stuck in ${DEEP_LAYERS[i].id}`, time: s.t, ...log };
-    idle(s, tap(s) + DEEP.transition);
-  }
+  if ((f = deepRound(false))) return fail(f);
+
+  // The bonus layer, from the lobby; its win flips the 256 switch on.
+  log.reached = 'adder';
+  const a = seg('adder', runAdder(s));
+  if (!a.win) return fail('stuck in adder');
+  markAdderWon();
+  idle(s, tap(s) + DEEP.transition);
+
+  if ((f = deepRound(true))) return fail(f);
+
+  // Up to the maze, which now plays level 256 (repaired by the hard wins).
+  log.reached = 'maze-256';
+  round = 256;
+  where = 'maze';
+  idle(s, tap(s) + DEEP.transition);
+  if ((f = clearMaze(false))) return fail(`${f} at 256`);
+  idle(s, LEVELS.creditsDelay);
+  log.reached = 'credits';
   return { win: true, result: 'win', time: s.t, coinsLeft: coins(), ...log };
 }
 
 export const LAYERS = ['maze', 'cabinet', 'hall', 'hall-chase', ...DEEP_LAYERS.map((L) => L.id), 'adder'];
 
-// One run of a layer by name.
-export function runLayer(name, s) {
+// One run of a layer by name. o.hard: deep layers with their hard numbers; o.over: { <id>: numbers } merged over
+// DEEP.<id> for the run.
+export function runLayer(name, s, o = {}) {
   if (name === 'maze') return runMaze(s, { mode: 'swipe' });
   if (name === 'cabinet') return runMaze(s, { mode: 'stick' });
   if (name === 'hall') return runHall(s, { scenario: 'coins' });
   if (name === 'hall-chase') return runHall(s, { scenario: 'chase' });
-  if (name === 'playthrough') return runPlaythrough(s);
+  if (name === 'playthrough') return runPlaythrough(s, o);
   if (name === 'adder') return runAdder(s);
-  return runDeep(s, DEEP_LAYERS.findIndex((L) => L.id === name));
+  return runDeep(s, DEEP_LAYERS.findIndex((L) => L.id === name), { hard: !!o.hard, over: o.over?.[name] ?? null });
 }

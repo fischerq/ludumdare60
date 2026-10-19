@@ -12,6 +12,9 @@
 //   node tools/playtest.mjs --out FILE            results file (default lab/playtest/results.json); --no-save
 //   node tools/playtest.mjs --verbose             one line per run
 //   node tools/playtest.mjs --set SPEED.ghost=5   try config values (comma-separated) without editing config.js
+//   node tools/playtest.mjs --hard                the deep layers with their hard numbers (DEEP.<id>.hard, as with
+//                                                 the 256 switch on); default layers: the seven deep ones, results
+//                                                 in lab/playtest/results-hard.json. Tune with --set DEEP.ram.hard.dashSpeed=11
 // Needs network once for the pinned Z80 core (like tools/arcade_test.mjs).
 
 import './playtest/env.mjs';
@@ -25,14 +28,17 @@ const args = process.argv.slice(2);
 const opt = (name, dflt) => { const i = args.indexOf(`--${name}`); return i >= 0 ? args[i + 1] : dflt; };
 const flag = (name) => args.includes(`--${name}`);
 
-const layers = opt('layers', [...LAYERS, 'playthrough'].join(',')).split(',');
+const hard = flag('hard');
+const DEEP_IDS = LAYERS.filter((l) => CONFIG.DEEP[l]);
+const layers = opt('layers', (hard ? DEEP_IDS : [...LAYERS, 'playthrough']).join(',')).split(',');
 const levels = opt('levels', PLAYTEST.levels.join(',')).split(',').map(Number);
 const knob = opt('knob', 'all');
 const runs = Number(opt('runs', flag('quick') ? PLAYTEST.quickRuns : PLAYTEST.runs));
 const seed = Number(opt('seed', 1));
-const out = opt('out', 'lab/playtest/results.json');
+const out = opt('out', hard ? 'lab/playtest/results-hard.json' : 'lab/playtest/results.json');
 
 const unknown = layers.filter((l) => l !== 'playthrough' && !LAYERS.includes(l));
+if (hard && layers.some((l) => !DEEP_IDS.includes(l))) { console.error(`--hard: deep layers only (${DEEP_IDS.join(' ')})`); process.exit(1); }
 if (unknown.length) { console.error(`unknown layer(s): ${unknown.join(', ')}; known: ${LAYERS.join(' ')} playthrough`); process.exit(1); }
 
 const quantile = (xs, q) => {
@@ -54,7 +60,7 @@ for (const kv of sets) {
 }
 await boot();
 const started = Date.now();
-const report = { generated: new Date().toISOString().slice(0, 10), knob, runs, seed, levels, set: sets, layers: {} };
+const report = { generated: new Date().toISOString().slice(0, 10), knob, runs, seed, levels, set: sets, hard, layers: {} };
 
 for (const layer of layers) {
   const rows = [];
@@ -63,7 +69,7 @@ for (const layer of layers) {
     const results = [];
     for (let i = 0; i < runs; i++) {
       const s = session(seed + i, noise);
-      const r = runLayer(layer, s);
+      const r = runLayer(layer, s, { hard });
       r.swipesPerSec = r.time > 0 ? s.hand.swipes / r.time : 0;
       r.slips = s.hand.slips;
       results.push(r);
@@ -86,6 +92,9 @@ for (const layer of layers) {
       const seg = {};
       for (const r of results) for (const g of r.segments) (seg[g.name] ??= []).push(g.time);
       row.segmentTime = Object.fromEntries(Object.entries(seg).map(([k, v]) => [k, round(quantile(v, 0.5))]));
+      // How far runs got: the segment each run ended in (credits for a win).
+      row.reached = {};
+      for (const r of results) row.reached[r.reached] = (row.reached[r.reached] ?? 0) + 1;
     }
     rows.push(row);
   }
