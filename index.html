@@ -83,22 +83,36 @@
   <div id="boot"><div id="boot-lines"></div><div id="boot-bar"><div id="boot-fill"></div></div></div>
   <button id="mute" aria-label="Sound on or off"></button>
   <script>
-    // Boot screen: each check prints a line when it passes, the bar fills with the overall progress.
-    // Until Phaser has arrived (it can't report progress) the bar creeps towards the first step.
+    // Boot screen: one self-test line per layer below the maze; the newest line is the one being "tested".
+    // The bar runs through three phases (Phaser and the game's modules, the art, building the textures and the
+    // emulated machine), each given the share of the bar it takes in time, so the bar fills evenly and every
+    // line is the newest for the same time. Shares measured on a cold load with Chrome's 4G throttling and 4x
+    // CPU slowdown (~4.1 s, ~7.2 s, ~0.2 s). Until Phaser has arrived (it can't report progress) the bar creeps
+    // through the first phase, timed by `creepTime` (s to reach 90 % of it).
     window.bootScreen = (() => {
+      const ITEMS = ['SCREEN', 'VIDEO', 'RAM', 'BUS', 'CPU', 'LOGIC', 'INPUT'];
+      const PHASES = { code: [0, 0.36], art: [0.36, 0.98], machine: [0.98, 1] };
+      const creepTime = 4;
       const lines = document.getElementById('boot-lines'), fill = document.getElementById('boot-fill');
-      let shown = 0, creep = 0;
-      const set = (f) => { shown = Math.max(shown, Math.min(1, f)); fill.style.width = `${shown * 100}%`; };
-      const timer = setInterval(() => { creep += (0.35 - creep) * 0.08; set(creep); }, 100);
-      const line = (name) => {
-        const el = document.createElement('div');
-        el.innerHTML = `${name.padEnd(8)}<span class="ok">OK</span>`;
-        lines.appendChild(el);
+      let shown = 0, listed = 0;
+      // Line k (of n) appears when the bar passes k/n, the first one right away.
+      const set = (f) => {
+        shown = Math.max(shown, Math.min(1, f));
+        fill.style.width = `${shown * 100}%`;
+        while (listed < ITEMS.length && shown >= listed / ITEMS.length) {
+          const el = document.createElement('div');
+          el.innerHTML = `${ITEMS[listed++].padEnd(8)}<span class="ok">OK</span>`;
+          lines.appendChild(el);
+        }
       };
-      line('RAM');
+      const at = (phase, p) => { const [a, b] = PHASES[phase]; return a + (b - a) * Math.min(1, Math.max(0, p)); };
+      const t0 = performance.now();
+      const k = Math.log(10) / creepTime;
+      const timer = setInterval(() => set(at('code', 1 - Math.exp(-k * (performance.now() - t0) / 1000))), 100);
+      set(0);
       return {
-        step(name, f) { clearInterval(timer); line(name); set(f); },
-        progress(f) { clearInterval(timer); set(f); },
+        // phase: 'code', 'art' or 'machine'; p: 0..1 through it.
+        progress(phase, p) { clearInterval(timer); set(at(phase, p)); },
         done() {
           clearInterval(timer); set(1);
           const boot = document.getElementById('boot');
