@@ -60,7 +60,8 @@ export default class BootScene extends Phaser.Scene {
     const data = params.has('layer') ? { layer: Number(params.get('layer')) } : undefined;
     // ?won=n: the first n subsystems inside the cabinet count as won (for testing the unlocks).
     if (params.has('won')) setWonCount(Number(params.get('won')));
-    const target = start && this.scene.get(start) ? start : 'Menu';
+    // With ?manual the arcade hall is underneath, so closing the manual lands where the booklet lies.
+    const target = start && this.scene.get(start) ? start : params.has('manual') ? 'Hall' : 'Menu';
     // The emulated arcade machine has to be running too: the maze level is its picture.
     const machine = (world.ready ?? Promise.resolve()).catch((e) => console.error('arcade machine failed', e));
     // ?manual opens the service manual over it (for debugging the emulator on the live page).
