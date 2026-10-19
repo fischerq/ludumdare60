@@ -4,7 +4,9 @@ import { wireMask, ghostWire, subsystemOf, subsystemTiles, standFor, ghostFacing
 import { tileKey } from '../systems/tiles.js';
 import { charFrame } from '../systems/anim.js';
 import { DEEP_LAYERS } from '../systems/layers/index.js';
-import { ORDER, isUnlocked, isWon, allWon, isAdderWon, isSwitchOn, markAdderWon, setSwitch, setWonCount } from '../progress.js';
+import {
+  ORDER, isUnlocked, isWon, allWon, isAdderWon, isSwitchOn, markAdderWon, setSwitch, isHard, isHardWon, lamps, setLamp,
+} from '../progress.js';
 import { world, setLevel256 } from '../systems/arcade/world.js';
 import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
 import { addLayerButtonAt } from '../layerButton.js';
@@ -31,7 +33,8 @@ export default class LobbyScene extends Phaser.Scene {
   init(data) {
     this.from = data?.from ?? null;
     this.won = !!data?.won;
-    this.leverPulled = !!data?.lever; // the lobby restarted after the cheat lever was pulled
+    this.leverPulled = Number.isInteger(data?.lever) ? data.lever : null; // restarted after cheat lever i was pulled
+    this.fromReel = !!data?.reel; // back from the credits
   }
 
   // The map: once every subsystem is won, the adder (A) and its 256 switch (Z) stand on their reserved tiles.
@@ -92,11 +95,30 @@ export default class LobbyScene extends Phaser.Scene {
       const next = ORDER[ORDER.indexOf(deep) + 1];
       if (next && isUnlocked(next)) this.highlight = { id: next, t: LOBBY.highlightTime };
     }
-    if (this.leverPulled) Object.assign(p, { x: this.lever.x, y: this.lever.y - 1, dir: 'down' });
+    const pulled = this.levers[this.leverPulled];
+    if (pulled) Object.assign(p, this.standNext(pulled));
+    if (this.fromReel && this.reel) Object.assign(p, this.standNext(this.reel));
     this.updateCamera();
     this.refreshSubsystems();
-    if (this.leverPulled) { sfx.power(); this.say(LOBBY.text.leverPulled, 'board/portrait-adder'); }
+    if (pulled) {
+      const tx = LOBBY.text, on = lamps()[this.leverPulled];
+      sfx.power();
+      this.say(tx.leverPulled.replace('{n}', this.leverPulled + 1).replace('{state}', on ? tx.leverOn : tx.leverOff),
+        tileKey('board', `lamp-${this.leverPulled + 1}-${on ? 'on' : 'off'}`));
+    }
   }
+
+  // A free tile next to a solid part and the way to face it from there: below first.
+  standNext(at) {
+    for (const [dx, dy, dir] of [[0, 1, 'up'], [-1, 0, 'right'], [1, 0, 'left'], [0, -1, 'down']]) {
+      const c = this.h.rows[at.y + dy]?.[at.x + dx];
+      if (c && !LOBBY.solid.includes(c)) return { x: at.x + dx, y: at.y + dy, dir };
+    }
+    return {};
+  }
+
+  // The index of a lamp or lever (left to right) at a tile.
+  partIndex(list, x, y) { return list.findIndex((o) => o.x === x && o.y === y); }
 
   sx(x) { return this.ox + x * T + T / 2; }
   sy(y) { return this.oy + y * T + T / 2; }
@@ -119,6 +141,9 @@ export default class LobbyScene extends Phaser.Scene {
 
   drawMap() {
     this.subImages = {}; // id -> images whose texture shows its state
+    this.lamps = []; // the status lamps and cheat levers, left to right (lamp i, lever i)
+    this.levers = [];
+    const lit = lamps();
     this.h.rows.forEach((row, y) => [...row].forEach((c, x) => {
       const at = (key) => this.add.image(this.ox + x * T, this.oy + y * T, tileKey('board', key)).setOrigin(0);
       if (c === '#') { at('wall'); return; }
@@ -133,7 +158,11 @@ export default class LobbyScene extends Phaser.Scene {
       if (PARTS[c]) at(PARTS[c]);
       if (c === 'A') this.adderImg = at('adder-on');
       if (c === 'Z') this.switchImg = at('switch-stuck');
-      if (c === 'H') this.lever = { x, y, img: at(allWon() ? 'lever-down' : 'lever-up') };
+      if (c === 'O') { const n = this.lamps.length; this.lamps.push({ x, y, img: at(`lamp-${n + 1}-${lit[n] ? 'on' : 'off'}`) }); }
+      if (c === 'H') this.levers.push({ x, y, img: at(lit[this.levers.length] ? 'lever-down' : 'lever-up') });
+      if (c === 'N') at('sign');
+      if (c === 'F') { this.reel = { x, y }; at('reel'); }
+      if (c === 'g') at('gurke');
       const id = subsystemOf(c);
       if (id) (this.subImages[id] ??= []).push(at(`${id}-on`));
     }));
@@ -226,24 +255,31 @@ export default class LobbyScene extends Phaser.Scene {
     if (id) { this.talkTo(id); return; }
     if (f.cell === 'A') { this.talkToAdder(); return; }
     if (f.cell === 'Z') { this.useSwitch(); return; }
-    if (f.cell === 'H') { this.useLever(); return; }
+    if (f.cell === 'O') { this.talkToLamp(this.partIndex(this.lamps, f.x, f.y)); return; }
+    if (f.cell === 'H') { this.useLever(this.partIndex(this.levers, f.x, f.y)); return; }
+    if (f.cell === 'F') { this.talkToReel(); return; }
     if (f.cell === 'X') { this.say(world.halted ? tx.mechaOver : tx.mecha, 'board/portrait-mecha'); return; }
     const ghost = LOBBY.ghosts[f.cell];
     if (ghost) { this.say(tx[ghost], 'board/portrait-logic'); return; }
     const key = LOBBY.cellText[f.cell];
-    if (key) this.say(tx[key], PARTS[f.cell] ? tileKey('board', PARTS[f.cell]) : null);
+    const art = PARTS[f.cell] ?? { N: 'sign', g: 'gurke' }[f.cell];
+    if (key) this.say(tx[key], art ? tileKey('board', art) : null);
   }
 
   // A subsystem: one line about what it does; unlocked, it offers to ENTER its layer. Locked, it sleeps.
   talkTo(id) {
     const tx = LOBBY.text, i = ORDER.indexOf(id), name = LOBBY.names[id];
     if (!isUnlocked(id)) {
+      if (i === 0) { this.say(tx.crtLocked, 'board/portrait-crt'); return; }
       this.say(tx.locked.replace('{name}', name).replace('{prev}', LOBBY.names[ORDER[i - 1]]), `board/portrait-${id}-off`);
       return;
     }
-    const text = isWon(id) ? `${tx[id]} ${tx.won}` : tx[id];
+    // While the 256 switch is on (hard mode), every part not yet beaten in hard mode offers its hard layer.
+    const hard = isHard() && !isHardWon(id);
+    const text = isHard() && isHardWon(id) ? `${tx[id]} ${tx.hardWon}` : hard ? `${tx[id]} ${tx.hard}`
+      : isWon(id) ? `${tx[id]} ${tx.won}` : tx[id];
     this.say(text, `board/portrait-${id}`, [
-      { label: tx.enter, act: () => this.enter(id) },
+      { label: hard ? tx.enterHard : tx.enter, act: () => this.enter(id) },
       { label: tx.notNow },
     ]);
   }
@@ -277,12 +313,34 @@ export default class LobbyScene extends Phaser.Scene {
     ]);
   }
 
-  // The cheat lever: wakes every subsystem at once (as if each was won), so the adder shows up. One-way.
-  useLever() {
-    const tx = LOBBY.text, portrait = tileKey('board', allWon() ? 'lever-down' : 'lever-up');
-    if (allWon()) { this.say(tx.leverDown, portrait); return; }
-    this.say(tx.lever, portrait, [
-      { label: tx.pull, act: () => { sfx.click(); setWonCount(ORDER.length); this.scene.restart({ lever: true }); } },
+  // A status lamp: what it stands for and whether it's lit.
+  talkToLamp(i) {
+    const tx = LOBBY.text, on = lamps()[i];
+    this.say(tx.lamp.replace('{n}', i + 1).replace('{what}', tx.lamps[i]).replace('{state}', on ? tx.lampOn : tx.lampOff),
+      tileKey('board', `lamp-${i + 1}-${on ? 'on' : 'off'}`));
+  }
+
+  // A cheat lever: flips its lamp's achievement (src/progress.js setLamp, which also sets or clears the lamps it
+  // depends on), keeps the maze's level in step with the 256 switch, and restarts the lobby to show it.
+  useLever(i) {
+    const tx = LOBBY.text;
+    this.say(tx.lever.replaceAll('{n}', i + 1), tileKey('board', lamps()[i] ? 'lever-down' : 'lever-up'), [
+      { label: tx.pull, act: () => {
+        const was = isSwitchOn();
+        setLamp(i, !lamps()[i]);
+        if (isSwitchOn() !== was) setLevel256(isSwitchOn());
+        this.scene.restart({ lever: i });
+      } },
+      { label: tx.notNow },
+    ]);
+  }
+
+  // The film reel: WATCH zooms into it and plays the credits, which come back here.
+  talkToReel() {
+    const tx = LOBBY.text, portrait = tileKey('board', 'reel');
+    if (!this.scene.manager.keys.Credits) { this.say(`${tx.reel} ${tx.reelEmpty}`, portrait); return; }
+    this.say(tx.reel, portrait, [
+      { label: tx.watch, act: () => this.leave('Credits', { returnTo: 'Lobby', returnData: { reel: true } }, { x: this.sx(this.reel.x), y: this.sy(this.reel.y) }) },
       { label: tx.notNow },
     ]);
   }
