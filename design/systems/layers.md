@@ -28,10 +28,10 @@ bottom corners, UP left, DOWN right; the sound button sits top-right. Since 2026
 - **Coins run the machine** (`src/wallet.js`, `COINS` in config). Every fresh game costs a coin, on the maze or
   through the cabinet's coin door; the first game from the menu uses the coin you start with.
 - **Game over halts the machine**: it runs no frames (no attract mode, no bot) until a coin goes in, in every layer
-  (`world.halted` in `src/systems/arcade/world.js`). On the maze the callout says "TAP TO INSERT COIN" while you
-  have coins, otherwise "OUT OF COINS, GO LAYER UP" (cabinet, then the hall where the coins are).
+  (`world.halted` in `src/systems/arcade/world.js`). On the maze the callout shows the coin count and an INSERT COIN button while you
+  have coins, otherwise "OUT OF COINS" with a LAYER UP button (cabinet, then the hall where the coins are).
 - **Maze clear:** callout "MAZE CLEAR! WANT TO GO DEEPER?"; tap plays on for free.
-- **The cabinet** says "NEED COINS? GO LAYER UP" whenever it waits for a coin and the player has none.
+- **The cabinet** says "NEED COINS?" with a LAYER UP button whenever it waits for a coin and the player has none.
 - **Deep layers run the machine slower** than the maze, by `DEEP.machineSlowdown` (4x): down there we play with
   the signals that make each frame. Cabinet and hall run at normal speed.
 
@@ -171,3 +171,4 @@ minigame, a counter on the layer map, no unlock.*
 - 2026-10-19: A cheat lever in the board lobby, next to the edge connector, unlocks the final level (the adder) by waking every subsystem; one-way until a reload. Defaults accepted. (Quirin)
 - 2026-10-19: The cheat lever moves to the right edge of the board, above the 256 switch. (Quirin)
 - 2026-10-19: Board lobby: four status lamps (maze won, every part awake, 256 switch, hard mode) with a cheat lever under each and a sign, replacing the single cheat lever; the monitor needs a maze win first; hard mode offers each part's hard layer; a film reel plays the credits; a mini-gurke hides in the corner. (Quirin)
+- 2026-10-19: Callouts carry their action as a button inside the box (INSERT COIN, LAYER UP, PLAY AGAIN after a maze clear) instead of "TAP TO ..." / "GO LAYER UP" text; tapping elsewhere on the maze still plays on (Quirin).
