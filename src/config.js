@@ -314,7 +314,7 @@ export const DEEP = {
       '...................',
     ],
     goal: 4,             // colors delivered
-    hard: { frameTime: 9, goal: 5 }, // hard mode: a shorter frame timer, one more color
+    hard: { frameTime: 17, goal: 6 }, // hard mode: two more colors; the timer is longer than normal's, as 12 s barely fits one delivery (playtest bots, 2026-10-19)
   },
   ram: {                 // -3 work RAM, poke the game state: bit lamps flip bits in the real RAM, the write head dashes
     waitTime: 0.8,       // s the write head waits at a variable's left edge (telegraph: its bits glow red)
@@ -344,7 +344,7 @@ export const DEEP = {
       { id: 'moved', name: 'MOVE BLINKY', var: 'blinkyX' },
       { id: 'scared', name: 'SCARE BLINKY', var: 'scared' },
     ],
-    hard: { waitTime: 0.55, dashSpeed: 12, restTime: 0.15 }, // hard mode: the write head telegraphs less, dashes faster
+    hard: { waitTime: 0.3, dashSpeed: 20, restTime: 0.05 }, // hard mode: the write head telegraphs less, dashes faster
   },
   bus: {                 // -4 the spatial bus: chip rooms behind decoder doors, packets on the lanes
     cycleTime: 1.1,      // s between bus cycles shown
@@ -383,7 +383,7 @@ export const DEEP = {
       '##################',
     ],
     goal: 4,             // one data byte from each chip room
-    hard: { cycleTime: 0.85, packetSpeed: 9, readDelay: 1, doorHold: 1.2 }, // hard mode: a busier, faster bus
+    hard: { cycleTime: 0.75, packetSpeed: 10, readDelay: 1, doorHold: 1.2 }, // hard mode: a busier, faster bus
   },
   cpu: {                 // -5 Game Genie: carry a patch onto a line of the real program; the PC steps through it
     rate: 4.5,           // lines per second the program counter steps while it's in the routine on screen
@@ -412,7 +412,7 @@ export const DEEP = {
     seekSpeed: 3.6,      // tiles per second (you walk DEEP.walkSpeed)
     vectorColors: { blinky: 0xff2a3a, pinky: 0xff6a8a, inky: 0xff8a5a, clyde: 0xffb0a0 },
     goal: 4,             // stand on each ghost's target tile
-    hard: { vectorWidth: 0.6, seekTime: 8, seekSpeed: 4.2 }, // hard mode: wider vectors, faster seekers that hunt longer
+    hard: { vectorWidth: 0.7, seekTime: 8, seekSpeed: 4.5 }, // hard mode: wider vectors, faster seekers that hunt longer
   },
   input: {               // -7 fix the joystick, then play: carry the 4 cut wire ends to IN0's pins, then swipe-play
     // The board below the picture (tiles; 11 x 17, the picture and IN0's port take the rows above `top`).
@@ -441,7 +441,7 @@ export const DEEP = {
     playSpeed: 0.5,      // machine speed while you play (the deep layers run it at 1 / machineSlowdown)
     playDots: 20,        // dots to eat with the repaired stick to win
     goal: 5,             // the 4 wires and the test game
-    hard: { sparkSpeed: 4, sparkEvery: [2.5, 4.5], sparkWarn: 0.6, playDots: 30 }, // hard mode: more, faster sparks, a longer test game
+    hard: { sparkSpeed: 5, sparkEvery: [2, 3.5], sparkWarn: 0.5, sparkDelay: 1.5, playSpeed: 0.6, playDots: 30 }, // hard mode: more, faster sparks with less warning, a longer, faster test game
   },
 };
 
@@ -1153,6 +1153,6 @@ export const PLAYTEST = {
     lapseTime: 0.7,      // s one lapse lasts
   },
   readTime: 0.6,         // s to read a text box before tapping it away (hall), added at every level
-  timeCap: { maze: 240, deep: 180, hall: 90, playthrough: 2400 }, // s of game time before a run counts as lost
+  timeCap: { maze: 240, deep: 180, hall: 90, playthrough: 3600 }, // s of game time before a run counts as lost
   warmup: 20,            // s at most the machine plays before a deep-layer run starts (seeded), so runs differ
 };
