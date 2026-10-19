@@ -696,6 +696,9 @@ export const MANUAL = {
   // Wear on the paper, different on every page (seeded by the page number): chance of a coffee ring, how many
   // smudges and foxing specks (min, max). The live page stays clean apart from the yellowed edges.
   wear: { ring: 0.3, smudges: [0, 2], specks: [0, 4], seed: 60 },
+  // The printed look of figures and live drawings: how far lines wobble (px), the hatching's spacing (px), the share
+  // of pixels where the ink didn't take, and the SVG ink filter's grain (fraction eaten) and warp (px).
+  print: { wobble: 1.2, hatch: 4, dropout: 0.1, grain: 0.35, warp: 1.6 },
   colors: {
     desk: '#2a1d14', paper: '#efe2bd', paperEdge: '#c9ad74', stain: 'rgba(120, 80, 30, 0.18)',
     smudge: 'rgba(90, 60, 30, 0.12)', ink: '#2b2117', rule: '#8a7550', cover: '#5a3a22',

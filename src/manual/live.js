@@ -8,7 +8,7 @@ import { BUS } from '../systems/arcade/machine.js';
 import { readState, PHASES } from '../systems/arcade/state.js';
 import { W, H, spriteArt } from '../systems/arcade/video.js';
 
-const C = MANUAL.colors;
+const C = MANUAL.colors, PRINT = MANUAL.print;
 const hex = (n, d = 4) => n.toString(16).toUpperCase().padStart(d, '0');
 const DX = { up: 0, left: -1, down: 0, right: 1 }, DY = { up: -1, left: 0, down: 1, right: 0 };
 const GHOST_INK = { blinky: '#b02020', pinky: '#c0508a', inky: '#11807a', clyde: '#c06a10' };
@@ -16,13 +16,15 @@ const TRAIL = 8;       // footprints kept per actor
 const TRACE_EVERY = 1; // s between profiles of a frame's instructions
 const TRACE_MAX = 6000;
 const GHOST_NAMES = ['blinky', 'pinky', 'inky', 'clyde'];
+// The last real readings, kept across visits: a stopped board (game over) runs no frames, so there is nothing new
+// to sample or measure until a coin goes in.
+const last = { sample: null, prof: null };
 
 export const livePage = {
   title: '10. The live page',
   html: `<p><i>Everything below is read from the running board, ${MANUAL.liveHz} times a second.</i></p>
-    <p><button class="manual-btn live-hold" style="width:100%;font-size:16px">FREEZE VIEW</button></p>
+    <div class="live-head"><h2>The board, right now</h2><button class="live-hold">❚❚ freeze</button></div>
     <div class="live-status"></div>
-    <h2>The map</h2>
     <canvas class="live-map" style="width:100%;image-rendering:auto"></canvas>
     <p class="fig">Walls and dots from video RAM, everyone at their position in work RAM. ✕ is the tile each ghost
       last aimed for, as the program wrote it (TGT_X, TGT_Y in ghost_target).</p>
@@ -31,7 +33,7 @@ export const livePage = {
     <h2>The Z80</h2><div class="live-cpu"></div>
     <h2>Where the time goes</h2><div class="live-prof"></div>
     <h2>Memory, last frame</h2><canvas class="live-heat" style="width:100%"></canvas>
-    <p class="fig">The 64 KB address space in 256-byte pages, row by row from 0x0000: blue = read, red = written.</p>
+    <p class="fig">The 64 KB address space in 256-byte pages, row by row from 0x0000: a blue dot for reads, red for writes, bigger = busier.</p>
     <div class="live-regions"></div>
     <h2>The bus, latest cycles</h2><div class="live-bus"></div>
     <h2>Sprites</h2><div class="live-sprites"></div>
@@ -40,10 +42,11 @@ export const livePage = {
   mount(body) {
     const q = (s) => body.querySelector(s);
     const map = q('.live-map'), heat = q('.live-heat');
-    const st = { hold: false, trails: new Map(), sounds: [], prof: null, lastTrace: 0, routines: null, targets: [], hooked: null };
+    const st = { hold: false, trails: new Map(), sounds: [], lastTrace: 0, routines: null, targets: [], hooked: null };
     q('.live-hold').onclick = (e) => {
       st.hold = !st.hold;
-      e.target.textContent = st.hold ? 'RESUME VIEW' : 'FREEZE VIEW';
+      e.target.textContent = st.hold ? '▶ resume' : '❚❚ freeze';
+      e.target.classList.toggle('on', st.hold);
     };
     const offFrame = onFrame((m, sounds) => {
       for (const s of sounds) st.sounds.push(s);
@@ -65,15 +68,16 @@ export const livePage = {
       const now = performance.now() / 1000;
       if (now - st.lastTrace > TRACE_EVERY && !world.trace && !world.halted && !world.paused) {
         st.lastTrace = now;
-        requestTrace(TRACE_MAX, (steps) => { st.prof = profile(steps, st.routines); });
+        requestTrace(TRACE_MAX, (steps) => { last.prof = profile(steps, st.routines); });
       }
       const g = readState(m, S);
       drawStatus(q('.live-status'), m);
       drawMap(map, m, S, g, st);
       drawGame(q('.live-game'), m, S);
       drawActors(q('.live-actors'), g, st.targets);
+      if (m.sample) last.sample = m.sample;
       drawCpu(q('.live-cpu'), m, world.program.listing, st.routines);
-      drawProfile(q('.live-prof'), st.prof);
+      drawProfile(q('.live-prof'), last.prof ?? busProfile(m, st.routines));
       drawHeat(heat, q('.live-regions'), m);
       drawBus(q('.live-bus'), m);
       drawSprites(q('.live-sprites'), m);
@@ -102,34 +106,97 @@ const mono = (s) => `<span class="mono">${s}</span>`;
 
 function drawStatus(el, m) {
   const state = world.halted ? 'STOPPED (waiting for a coin)' : world.paused ? 'PAUSED' : 'RUNNING';
-  el.innerHTML = table(['board', 'frame', 'joystick', 'speed', 'CPU busy'], [[
-    `<b>${state}</b>`, m.frame, world.driver === 'bot' ? 'autopilot' : 'player', `${world.speed}×`,
-    `${m.busy} / ${m.frameCycles} cyc (${Math.round((m.busy / m.frameCycles) * 100)}%)`,
-  ]]);
+  // A grid of small fields that wraps onto more rows on a narrow page, the board's state across the top.
+  const field = (k, v, wide) => `<div${wide ? ' class="wide"' : ''}><span>${k}</span><b>${v}</b></div>`;
+  el.innerHTML = `<div class="live-kv">${field('board', state, true)}${field('frame', m.frame)}
+    ${field('joystick', world.driver === 'bot' ? 'autopilot' : 'player')}${field('speed', `${world.speed}×`)}
+    ${field('CPU busy', `${Math.round((m.busy / m.frameCycles) * 100)}% <small>(${m.busy} of ${m.frameCycles} cycles)</small>`, true)}</div>`;
 }
 
 // ---- the map ------------------------------------------------------------------------------------------------------
+// Drawn like a plan from an office printer of the time: walls as hatched blocks with an outline where they meet the
+// corridors, one ink plus a spot color per ghost, lines that wobble a little and ink that drops out in specks.
+const wob = (x, y, k = 0) => { // a fixed small offset per grid corner, so outlines meet and never shimmer
+  const h = Math.sin(x * 127.1 + y * 311.7 + k * 74.7) * 43758.5453;
+  return (h - Math.floor(h) - 0.5) * PRINT.wobble;
+};
+
+function hatch(ctx, ink) {
+  const p = document.createElement('canvas');
+  p.width = p.height = PRINT.hatch * 2;
+  const c = p.getContext('2d');
+  c.strokeStyle = ink;
+  c.lineWidth = 1;
+  c.beginPath();
+  for (let k = -1; k <= 2; k++) { c.moveTo(k * PRINT.hatch - 1, PRINT.hatch * 2 + 1); c.lineTo(k * PRINT.hatch + PRINT.hatch * 2 + 1, -1); }
+  c.stroke();
+  return ctx.createPattern(p, 'repeat');
+}
+
+// Specks where the ink didn't take: knocked out of whatever was drawn, the same specks every update.
+const grains = new Map();
+function dropout(ctx, w, h) {
+  const key = `${w}x${h}`;
+  if (!grains.has(key)) {
+    const g = document.createElement('canvas');
+    g.width = w; g.height = h;
+    const gc = g.getContext('2d'), img = gc.createImageData(w, h);
+    let seed = 60;
+    const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 2 ** 32; };
+    for (let i = 0; i < w * h; i++) img.data[i * 4 + 3] = rnd() < PRINT.dropout ? 90 + rnd() * 165 : 0;
+    gc.putImageData(img, 0, 0);
+    grains.set(key, g);
+  }
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.drawImage(grains.get(key), 0, 0);
+  ctx.restore();
+}
+
 function drawMap(cv, m, S, g, st) {
   const T = 16, dpr = Math.min(2, window.devicePixelRatio || 1);
   if (cv.width !== W * T * dpr) { cv.width = W * T * dpr; cv.height = H * T * dpr; }
   const ctx = cv.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, W * T, H * T);
-  // Walls as ink hatching, dots as specks, read straight from VRAM.
+  st.hatch ??= hatch(ctx, 'rgba(43,33,23,0.55)');
+  const wall = (x, y) => x >= 0 && y >= 0 && x < W && y < H && m.vram[tileOffset(x, y)] >= CELL.wall;
+  const pt = (x, y) => [x * T + wob(x, y), y * T + wob(x, y, 1)];
+  // Walls, read straight from VRAM: hatched, outlined only along the corridors.
+  ctx.fillStyle = st.hatch;
+  ctx.strokeStyle = C.ink;
+  ctx.lineWidth = 1.3;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (wall(x, y)) ctx.fillRect(x * T, y * T, T, T);
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
-      const c = m.vram[tileOffset(x, y)];
-      if (c >= CELL.wall) {
-        ctx.fillStyle = 'rgba(43,33,23,0.75)';
-        ctx.fillRect(x * T + 1, y * T + 1, T - 2, T - 2);
-      } else if (c === CELL.dot || c === CELL.power) {
+      if (!wall(x, y)) continue;
+      const edge = (x1, y1, x2, y2) => { ctx.moveTo(...pt(x1, y1)); ctx.lineTo(...pt(x2, y2)); };
+      if (!wall(x, y - 1)) edge(x, y, x + 1, y);
+      if (!wall(x, y + 1)) edge(x, y + 1, x + 1, y + 1);
+      if (!wall(x - 1, y)) edge(x, y, x, y + 1);
+      if (!wall(x + 1, y)) edge(x + 1, y, x + 1, y + 1);
+    }
+  }
+  ctx.stroke();
+  // Dots as specks, power pellets as a ringed dot, the house door in red.
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const c = m.vram[tileOffset(x, y)], cx = x * T + T / 2, cy = y * T + T / 2;
+      if (c === CELL.dot || c === CELL.power) {
         ctx.fillStyle = C.ink;
         ctx.beginPath();
-        ctx.arc(x * T + T / 2, y * T + T / 2, c === CELL.power ? 4 : 1.5, 0, Math.PI * 2);
+        ctx.arc(cx, cy, c === CELL.power ? 2.5 : 1.4, 0, Math.PI * 2);
         ctx.fill();
+        if (c === CELL.power) { ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.stroke(); }
       } else if (c === CELL.door) {
-        ctx.fillStyle = C.accent;
-        ctx.fillRect(x * T, y * T + T / 2 - 1, T, 2);
+        ctx.strokeStyle = C.accent;
+        ctx.beginPath();
+        ctx.moveTo(x * T, cy - 1.5); ctx.lineTo(x * T + T, cy - 1.5); ctx.moveTo(x * T, cy + 1.5); ctx.lineTo(x * T + T, cy + 1.5);
+        ctx.stroke();
+        ctx.strokeStyle = C.ink;
       }
     }
   }
@@ -137,12 +204,12 @@ function drawMap(cv, m, S, g, st) {
   for (const a of actors) {
     // A few footsteps: where it was on earlier updates, fading.
     const tr = st.trails.get(a.name) ?? [];
-    const last = tr[tr.length - 1];
-    if (!last || Math.hypot(last.x - a.x, last.y - a.y) > 0.4) tr.push({ x: a.x, y: a.y, dir: a.dir });
+    const lastStep = tr[tr.length - 1];
+    if (!lastStep || Math.hypot(lastStep.x - a.x, lastStep.y - a.y) > 0.4) tr.push({ x: a.x, y: a.y, dir: a.dir });
     if (tr.length > TRAIL) tr.shift();
     st.trails.set(a.name, tr);
     tr.forEach((p, i) => {
-      ctx.globalAlpha = (i / tr.length) * 0.3;
+      ctx.globalAlpha = (i / tr.length) * 0.45;
       ctx.fillStyle = a.ink;
       const side = i % 2 ? 2.5 : -2.5, ox = (DY[p.dir] ?? 0) * side, oy = (DX[p.dir] ?? 0) * side;
       ctx.beginPath();
@@ -154,6 +221,7 @@ function drawMap(cv, m, S, g, st) {
     const tg = a.name !== 'pac-man' ? target(a, st.targets[GHOST_NAMES.indexOf(a.name)]) : null;
     if (tg) {
       ctx.strokeStyle = a.ink;
+      ctx.lineWidth = 1;
       ctx.setLineDash([3, 3]);
       ctx.beginPath();
       ctx.moveTo(a.x * T + T / 2, a.y * T + T / 2);
@@ -163,23 +231,39 @@ function drawMap(cv, m, S, g, st) {
       ctx.lineWidth = 2;
       const cx = tg.x * T + T / 2, cy = tg.y * T + T / 2;
       ctx.beginPath(); ctx.moveTo(cx - 4, cy - 4); ctx.lineTo(cx + 4, cy + 4); ctx.moveTo(cx + 4, cy - 4); ctx.lineTo(cx - 4, cy + 4); ctx.stroke();
-      ctx.lineWidth = 1;
     }
-    // The name on a little banner, like ink labels on a map.
+    // The figure itself (Pac-Man a wedge facing his way, ghosts a little ghost; afraid ones only outlined in blue).
     const px = a.x * T + T / 2, py = a.y * T + T / 2;
-    ctx.fillStyle = a.frightened ? C.blue : a.ink;
-    ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = ctx.strokeStyle = a.frightened ? C.blue : a.ink;
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    if (a.name === 'pac-man') {
+      const ang = Math.atan2(DY[a.dir] ?? 0, DX[a.dir] ?? 1);
+      ctx.moveTo(px, py);
+      ctx.arc(px, py, 6, ang + 0.6, ang - 0.6 + Math.PI * 2);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      ctx.arc(px, py - 1, 5, Math.PI, 0);
+      ctx.lineTo(px + 5, py + 5);
+      for (let k = 1; k <= 4; k++) ctx.lineTo(px + 5 - k * 2.5, py + (k % 2 ? 3 : 5));
+      ctx.closePath();
+      if (a.frightened) ctx.stroke(); else ctx.fill();
+    }
+    // The name lettered next to it, knocked out of the hatching by a paper halo.
     ctx.font = `bold 10px ${MANUAL.font}`;
     const label = a.name === 'pac-man' ? 'PAC-MAN' : `${a.name.toUpperCase()}${a.frightened ? ' (afraid)' : a.state !== 'active' ? ` (${a.state})` : ''}`;
-    const w = ctx.measureText(label).width + 6;
-    const lx = Math.max(0, Math.min(W * T - w, px - w / 2)), ly = py - 16 < 0 ? py + 8 : py - 16;
-    ctx.fillStyle = 'rgba(239,226,189,0.85)';
-    ctx.fillRect(lx, ly, w, 11);
-    ctx.strokeStyle = a.ink;
-    ctx.strokeRect(lx + 0.5, ly + 0.5, w - 1, 10);
+    const w = ctx.measureText(label).width;
+    const lx = Math.max(1, Math.min(W * T - w - 1, px - w / 2)), ly = py - 10 < 10 ? py + 18 : py - 10;
+    ctx.lineWidth = 3.5;
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = C.paper;
+    ctx.strokeText(label, lx, ly);
     ctx.fillStyle = a.ink;
-    ctx.fillText(label, lx + 3, ly + 9);
+    ctx.fillText(label, lx, ly);
   }
+  ctx.lineWidth = 1;
+  dropout(ctx, cv.width, cv.height);
 }
 
 // The target the program last wrote for a ghost, while it's one the ghost is following (active and not
@@ -216,17 +300,21 @@ function drawActors(el, g, targets) {
 }
 
 function drawCpu(el, m, listing, routines) {
-  const smp = m.sample;
-  if (!smp) { el.innerHTML = '<p>(waiting for a frame to run…)</p>'; return; }
+  // The newest look at the CPU mid-frame; none yet (the board stopped before this page opened) → the CPU as it
+  // sits now, asleep on HALT after its last frame.
+  const smp = m.sample ?? last.sample ?? { frame: m.frame, cycle: m.busy, cpu: m.cpu.getState(), asleep: true };
   const c = smp.cpu, f = c.flags, f2 = c.flags_prime ?? {};
   const h2 = (v) => mono(hex(v ?? 0, 2)), h4 = (v) => mono(hex(v ?? 0));
   const bit = (v) => `<span style="${v ? `color:${C.accent};font-weight:700` : 'opacity:0.4'}">${v ? 1 : 0}</span>`;
   // The source lines around PC (the program's own listing, as the board assembled it).
   const at = listing.findIndex((l) => l.addr === c.pc && l.bytes.length);
   const around = at < 0 ? [] : listing.slice(Math.max(0, at - 3), at + 4);
-  el.innerHTML = `<p style="font-size:13px">The CPU caught in the middle of frame ${smp.frame}, at cycle ${smp.cycle}
-      of ${m.frameCycles}, in <b>${routineAt(routines, c.pc)}</b>. A new moment every update; after its work each
-      frame it sleeps on HALT until the next vblank.</p>`
+  const stopped = world.halted ? ' The board is stopped, so this is the last moment it ran.' : '';
+  el.innerHTML = `<p style="font-size:13px">${smp.asleep
+    ? `The CPU after frame ${smp.frame}, asleep on HALT in <b>${routineAt(routines, c.pc)}</b>.${stopped}`
+    : `The CPU caught in the middle of frame ${smp.frame}, at cycle ${smp.cycle} of ${m.frameCycles}, in
+      <b>${routineAt(routines, c.pc)}</b>. A new moment every update; after its work each frame it sleeps on HALT
+      until the next vblank.${stopped}`}</p>`
     + table(['', 'A', 'F', 'B', 'C', 'D', 'E', 'H', 'L'], [
       ['main', h2(c.a), h2(flagsByte(f)), h2(c.b), h2(c.c), h2(c.d), h2(c.e), h2(c.h), h2(c.l)],
       ["shadow", h2(c.a_prime), h2(flagsByte(f2)), h2(c.b_prime), h2(c.c_prime), h2(c.d_prime), h2(c.e_prime), h2(c.h_prime), h2(c.l_prime)],
@@ -266,12 +354,29 @@ function profile(steps, map) {
   for (const s of steps) { const r = routineAt(map, s.pc); counts.set(r, (counts.get(r) ?? 0) + 1); }
   return { total: steps.length, top: [...counts].sort((a, b) => b[1] - a[1]).slice(0, 10) };
 }
+// Until a frame has been traced: the program bytes the CPU read in the last frame (its opcodes, plus a few tables),
+// by routine, from the bus log. A stopped board keeps that log, so this always has the last frame that ran.
+function busProfile(m, map) {
+  const r = m.frameRange(0);
+  if (!r) return null;
+  const counts = new Map(), N = m.busAddr.length;
+  let total = 0;
+  for (let i = r.from; i < r.to; i++) {
+    const j = i % N, a = m.busAddr[j];
+    if (m.busKind[j] || a > MAP.rom[1]) continue; // reads from the ROM only
+    const n = routineAt(map, a);
+    counts.set(n, (counts.get(n) ?? 0) + 1);
+    total++;
+  }
+  return total ? { total, top: [...counts].sort((a, b) => b[1] - a[1]).slice(0, 10), bytes: true } : null;
+}
 function drawProfile(el, prof) {
-  if (!prof) { el.innerHTML = '<p>(measuring one frame…)</p>'; return; }
+  if (!prof) { el.innerHTML = '<p>(no frame has run since the machine powered on)</p>'; return; }
   const max = prof.top[0]?.[1] ?? 1;
-  el.innerHTML = `<p style="font-size:13px">Instructions in one recent frame, by routine (${prof.total} in all${prof.total >= TRACE_MAX ? '+' : ''}):</p>`
-    + table(['routine', 'instr', '%', ''], prof.top.map(([n, k]) => [n, k, Math.round((k / prof.total) * 100),
-      `<span style="display:inline-block;height:9px;background:${C.ink};width:${(k / max) * 100}%"></span>`]));
+  el.innerHTML = `<p style="font-size:13px">${prof.bytes ? 'Program bytes read in the last frame' : 'Instructions in one recent frame'},
+      by routine (${prof.total} in all${!prof.bytes && prof.total >= TRACE_MAX ? '+' : ''}):</p>`
+    + table(['routine', prof.bytes ? 'bytes' : 'instr', '%', ''], prof.top.map(([n, k]) => [n, k, Math.round((k / prof.total) * 100),
+      `<span class="bar" style="width:${(k / max) * 100}%"></span>`]));
 }
 
 function drawHeat(cv, el, m) {
@@ -291,15 +396,25 @@ function drawHeat(cv, el, m) {
       if (k & BUS.write) { writes[page]++; byRegion[reg][1]++; } else { reads[page]++; byRegion[reg][0]++; }
     }
   }
+  // Halftone: a dot per page whose size says how busy it was, reads in blue ink, writes in red printed a touch
+  // off register, like a two-color job.
   const maxR = Math.max(1, ...reads), maxW = Math.max(1, ...writes);
   ctx.clearRect(0, 0, 16 * cell, 16 * cell);
+  ctx.strokeStyle = 'rgba(43,33,23,0.35)';
+  ctx.setLineDash([1, 2]);
+  ctx.beginPath();
+  for (let k = 0; k <= 16; k++) { ctx.moveTo(k * cell + 0.5, 0); ctx.lineTo(k * cell + 0.5, 16 * cell); ctx.moveTo(0, k * cell + 0.5); ctx.lineTo(16 * cell, k * cell + 0.5); }
+  ctx.stroke();
+  ctx.setLineDash([]);
+  const dot = (x, y, f, ink) => { ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(x, y, 1.2 + 6.5 * Math.sqrt(f), 0, Math.PI * 2); ctx.fill(); };
+  ctx.globalCompositeOperation = 'multiply';
   for (let p = 0; p < 256; p++) {
     const x = (p % 16) * cell, y = Math.floor(p / 16) * cell;
-    ctx.strokeStyle = 'rgba(43,33,23,0.25)';
-    ctx.strokeRect(x + 0.5, y + 0.5, cell - 1, cell - 1);
-    if (reads[p]) { ctx.fillStyle = `rgba(36,71,122,${0.15 + 0.85 * Math.sqrt(reads[p] / maxR)})`; ctx.fillRect(x + 1, y + 1, cell - 2, (cell - 2) / 2); }
-    if (writes[p]) { ctx.fillStyle = `rgba(154,42,26,${0.15 + 0.85 * Math.sqrt(writes[p] / maxW)})`; ctx.fillRect(x + 1, y + cell / 2, cell - 2, (cell - 2) / 2); }
+    if (reads[p]) dot(x + cell * 0.42, y + cell * 0.45, reads[p] / maxR, C.blue);
+    if (writes[p]) dot(x + cell * 0.6, y + cell * 0.58, writes[p] / maxW, C.accent);
   }
+  ctx.globalCompositeOperation = 'source-over';
+  dropout(ctx, cv.width, cv.height);
   el.innerHTML = table(['region', 'reads', 'writes'], Object.entries(byRegion).map(([k, [rd, wr]]) => [k, rd, wr]));
 }
 

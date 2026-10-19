@@ -9,7 +9,7 @@ const hex = (n, d = 4) => `0x${n.toString(16).toUpperCase().padStart(d, '0')}`;
 const W = MAZE.layout[0].length, H = MAZE.layout.length;
 const cyclesPerFrame = Math.round(ARCADE.clockHz / ARCADE.frameHz);
 
-// ---- figure helpers: ink on paper, a slightly hand-drawn feel from the stroke and the font -----------------------
+// ---- figure helpers: ink on paper, printed through the manual's ink filter (grain and a slight warp, index.js) ----
 let figN = 0;
 function svg(w, h, body, caption) {
   const id = `ah${figN++}`;
@@ -17,7 +17,7 @@ function svg(w, h, body, caption) {
     font-size="11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
     <defs><marker id="${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0 0 L10 5 L0 10 z" fill="currentColor" stroke="none"/></marker></defs>
-    ${body.replaceAll('ARROW', `url(#${id})`)}</svg>${caption ? `<p class="fig">${caption}</p>` : ''}`;
+    <g filter="url(#mk-ink)">${body.replaceAll('ARROW', `url(#${id})`)}</g></svg>${caption ? `<p class="fig">${caption}</p>` : ''}`;
 }
 const t = (x, y, s, o = {}) => `<text x="${x}" y="${y}" fill="currentColor" stroke="none" text-anchor="${o.a ?? 'middle'}"
   font-size="${o.size ?? 11}" ${o.bold ? 'font-weight="700"' : ''} ${o.color ? `style="fill:${o.color}"` : ''}>${s}</text>`;

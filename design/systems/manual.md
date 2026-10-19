@@ -49,3 +49,8 @@ Marauder's-Map-style live view of the machine's state, detailed enough to debug 
   sampled mid-frame (it looked static because it was read on the HALT between frames), ghost targets read from
   the emulated program instead of recomputed in JS. Paper wear varies per page instead of the same coffee ring on
   every page. (Quirin)
+- 2026-10-19: Live page: the status is a wrapping grid under one heading ("The board, right now") that also covers
+  the map; freeze is a small toggle next to it. A stopped board keeps showing its last readings (CPU on HALT, the
+  last frame's program reads by routine). Figures print through an ink filter (grain, slight warp, multiply onto
+  the paper); the map is a hatched plan with dropout specks, the memory grid a two-color halftone. ?manual opens
+  over the hall, and closing re-measures the screen so the game isn't left shrunk. (Quirin)

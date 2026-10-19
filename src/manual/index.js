@@ -44,6 +44,10 @@ export function openManual(onClose) {
     window.removeEventListener('keydown', onKey, true);
     root.remove();
     root = null;
+    // Mobile browsers can leave the page scrolled or resized under a tall overlay: put it back and let Phaser
+    // measure the screen again, so the game fills it like before.
+    window.scrollTo(0, 0);
+    requestAnimationFrame(() => window.game?.scale.refresh());
     onClose?.();
   };
   const onKey = (e) => {
@@ -111,7 +115,19 @@ function paper(i, clean) {
 // Yellowed paper (each page's wear comes from paper()), a typewriter face.
 function injectStyle() {
   if (document.getElementById('manual-style')) return;
-  const C = MANUAL.colors;
+  const C = MANUAL.colors, P = MANUAL.print;
+  // The ink filter the figures print through (src/manual/pages.js): grain eats specks out of the ink, a slow warp
+  // makes ruled lines wander a little, like a worn office copier.
+  const defs = document.createElement('div');
+  defs.innerHTML = `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <filter id="mk-ink" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="4" result="grain"/>
+      <feColorMatrix in="grain" type="luminanceToAlpha" result="ga"/>
+      <feComposite in="SourceGraphic" in2="ga" operator="arithmetic" k1="0" k2="1" k3="-${P.grain}" k4="0" result="inked"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="2" seed="9" result="warp"/>
+      <feDisplacementMap in="inked" in2="warp" scale="${P.warp}" xChannelSelector="R" yChannelSelector="G"/>
+    </filter></defs></svg>`;
+  document.body.append(defs.firstChild);
   const style = el('style');
   style.id = 'manual-style';
   style.textContent = `
@@ -125,7 +141,22 @@ function injectStyle() {
     padding-bottom: 6px; margin: 4px 44px 14px 0; }
   .manual-page h2 { font-size: 17px; text-transform: uppercase; margin: 18px 0 6px; }
   .manual-page p { margin: 0 0 10px; }
-  .manual-page svg { display: block; width: 100%; height: auto; margin: 10px 0 14px; }
+  .manual-page svg { display: block; width: 100%; height: auto; margin: 10px 0 14px; mix-blend-mode: multiply; }
+  .manual-page canvas { mix-blend-mode: multiply; }
+  .manual-page .live-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .manual-page .live-hold { font: 13px ${MANUAL.font}; color: ${C.ink}; background: none; border: 1px solid ${C.rule};
+    border-radius: 3px; padding: 6px 12px; min-height: 36px; white-space: nowrap; }
+  .manual-page .live-hold.on { color: ${C.accent}; border-color: ${C.accent}; }
+  .manual-page .live-kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 0;
+    border-top: 1px solid ${C.rule}; border-left: 1px solid ${C.rule}; margin: 6px 0 12px; }
+  .manual-page .live-kv > div { border-right: 1px solid ${C.rule}; border-bottom: 1px solid ${C.rule}; padding: 3px 7px; }
+  .manual-page .live-kv > div.wide { grid-column: 1 / -1; }
+  .manual-page .live-kv span { display: block; font-size: 11px; opacity: 0.75; }
+  .manual-page .live-kv b { font-size: 14px; font-family: ${MANUAL.mono}; }
+  .manual-page .live-kv small { font-weight: 400; font-size: 11px; }
+  .manual-page td:has(.bar) { width: 35%; }
+  .manual-page .bar { display: inline-block; height: 9px; border: 1px solid ${C.ink}; box-sizing: border-box;
+    background: repeating-linear-gradient(45deg, ${C.ink} 0 1px, transparent 1px 3px); }
   .manual-page .fig { font-size: 13px; text-align: center; font-style: italic; margin-top: -8px; }
   .manual-page table { border-collapse: collapse; font-size: 14px; margin: 6px 0 12px; width: 100%; }
   .manual-page td, .manual-page th { border: 1px solid ${C.rule}; padding: 3px 6px; text-align: left; vertical-align: top; }
