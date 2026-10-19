@@ -88,7 +88,8 @@ the arcade as a place.
     picture and its switch are gone). The camera looks down on it from a little above (`HALL.globe3d.pitch`), so the
     settled globe shows the top of the meadow and the base's rim. The glass has a 52 px radius; the unicorn is about
     a fifth bigger than at first; the base is a flat stand (14 px tall, same width as before). Inside: the unicorn on
-    a green meadow hill, a fluffy cloud fixed overhead (upper left, behind the horn). The note
+    a green meadow hill with eight daisies (Gänseblümchen), a small fluffy cloud fixed off to the left and a small
+    moon at the top. The note
     (`assets/arcade/globe-note.png`, written in the 3x5 pixel font) is taped under the stand. The globe is
     a model of colored spheres (`src/settings/globe-model.json`: unicorn shapes, the cloud, mane and tail strands, the
     meadow mound and the base) drawn by a small pixel renderer (`src/systems/globeRender.js`, 152x152 art px at the hall's
@@ -100,7 +101,8 @@ the arcade as a place.
     it along on a spring, so the globe turns any way (tip it, spin it, upside down) about its glass center; it never
     slides across the screen. The base is heavy: let go and it swings back upright, wobbling a little. The water
     lags behind the glass, and that lag stirs it; glitter flakes ride the water, sink slowly and flash as they
-    tumble. Mane and tail are 12 thick bead chains that float in the water, trail behind turns and fall back into shape;
+    tumble. The mane is 12 short strands down the neck (two per rainbow color, one each side, swept back so every color
+    shows), the tail 6 long ones; all are thick bead chains that float in the water, trail behind turns and fall back into shape;
     they collide with the unicorn's body, so they never pass through it.
     A tap jolts the globe, spins it a little and churns the water, with the chime. Arrow keys tip it, Space shakes.
   - Not built: a lab bench for the globe (add one if the feel needs tuning), 3D in the hall tile.
@@ -181,3 +183,4 @@ the arcade as a place.
 - 2026-10-20: The other machines get the maze game's arcade HUD: 1UP and HIGH SCORE across the top (best per machine
   in localStorage), spare lives as icons right of LAYER UP; Kong's HELP! moved left of the lady, out from under the
   sound button. (Quirin)
+- 2026-10-19: Snow globe: the cloud smaller and moved off to the left, a small moon at the top, eight daisies (Gänseblümchen) on the meadow, the mane split into 12 shorter strands swept back so it flows. (Quirin) Claude picked the moon's and daisies' spots and the swept-back mane shape.
