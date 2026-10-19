@@ -14,5 +14,8 @@
   "people": {
     "Maximilian Konrad": "Max",
     "Quirin Niedernhuber": "Quirin"
+  },
+  "prompt_kinds": {
+    "00d8a3e0-14": "nudge"
   }
 }
