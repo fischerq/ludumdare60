@@ -10,14 +10,14 @@
    "index": 1,
    "seq": 104,
    "date": "2026-10-20",
-   "duration_s": 251,
+   "duration_s": 268,
    "prompt": "Tweak the snow globe. Make the globe and the unicorn bigger, leave the base as is. Should change the perspective on the globe a bit, should look at if from a bit diagonally above if settled. Drop the flat mode",
    "followups": [],
    "images": [],
    "claude_images": [
     "media/01f0c190-1-c1.jpg"
    ],
-   "reply": "Checking for an open PR on this branch, then logging, committing and pushing.",
+   "reply": "I've made the globe and the unicorn bigger, given it a slightly-from-above view, and removed FLAT mode. It's pushed in PR https://github.com/fischerq/ludumdare60/pull/104.\n\n- **Bigger:** the glass radius goes from 36 to 44 px. The unicorn, its mane and tail, and the snow mound grow by the same amount (about a fifth). The base is the same size; it just sits a bit lower so the glass still rests in its rim. I also raised the glitter from 240 to 340 flakes so the bigger glass doesn't look emptier.\n- **Perspective:** the camera now looks down at a slight angle (`pitch: 0.35` rad, about 20°, in `src/config.js`). Once the globe settles you see the top of the snow and the base's rim. Grabbing, turning and shaking work as before. The picture area grows to 152 px so the base still fits however the globe is turned.\n- **FLAT mode removed:** the switch button, the F key, the old flat picture (`assets/arcade/globe-big.png`) and its code are gone. The small globe in the hall is unchanged.\n\nThe design doc and its decision log are updated. I checked a settled frame in a headless phone-size browser with no console errors, and saved that screenshot to the making-of page.\n\nOn the phone: open LOOK CLOSER on the snow globe, let it settle and check that the angle from above looks right. Then turn it hard and flip it over to make sure the base never gets cut off. If the angle is too much or too little, it's the one `pitch` number.\n\nPlan usage is at 32% (5-hour) and 40% (weekly).",
    "progress_notes": [
     "I'm reworking the 3D globe model now (bigger glass and unicorn, base kept as is, camera tilted down from above) and taking out the FLAT mode.",
     "Now the physics: gravity comes from a pitched camera, and the globe starts in its tilted rest pose.",
@@ -26,7 +26,8 @@
     "Now HallScene: strip the flat branch, the switch button and globe.js.",
     "Now BootScene: drop the flat `globe-big` texture and its PNG.",
     "Code's done. I'm taking a headless screenshot of the globe close-up to check it.",
-    "Looks right: seen from slightly above, the snow top and the base's rim are visible. Publishing the shot and updating the docs."
+    "Looks right: seen from slightly above, the snow top and the base's rim are visible. Publishing the shot and updating the docs.",
+    "Checking for an open PR on this branch, then logging, committing and pushing."
    ],
    "tools": {
     "Bash": 22,
@@ -34,22 +35,104 @@
     "mcp__claude-code-remote__list_events": 2,
     "Edit": 1,
     "Read": 1,
-    "mcp__github__list_pull_requests": 1
+    "mcp__github__list_pull_requests": 1,
+    "mcp__github__create_pull_request": 1
    },
-   "api_requests": 26,
+   "api_requests": 28,
    "usage": {
     "claude-opus-5-5": {
-     "input": 52,
+     "input": 56,
      "cache_write_5m": 0,
-     "cache_write_1h": 84311,
-     "cache_read": 2802267,
-     "output": 17501,
+     "cache_write_1h": 85480,
+     "cache_read": 3063832,
+     "output": 18626,
      "thinking": 5711,
-     "cost_usd": 1.585169
+     "cost_usd": 1.66935
     }
    },
-   "cost_usd": 1.585169,
-   "commits": [],
+   "cost_usd": 1.66935,
+   "commits": [
+    {
+     "sha": "82768ce423c3324a35adfb7cfedba6754b0838ab",
+     "subject": "Snow globe: bigger glass and unicorn, seen from a little above; drop FLAT mode"
+    },
+    {
+     "sha": "0c860e9c7104d34f39d88c48d58ccaf975d702f2",
+     "subject": "Merge pull request #104 from fischerq/ccr-33a95e3c-6i9j5t"
+    },
+    {
+     "sha": "10110bc62cfc12320fb9cedd206adde1d9639369",
+     "subject": "Merge origin/main into claude/arcade-machines-gameboy-n1uhod"
+    },
+    {
+     "sha": "0ec001e242e30a8e8e2d37f3c995093db31e224b",
+     "subject": "Merge origin/main into ccr-bbf23964-q78gu3"
+    },
+    {
+     "sha": "44121c350b817a61eec868012d8995077a331ae6",
+     "subject": "Merge pull request #97 from fischerq/ccr-bbf23964-q78gu3"
+    },
+    {
+     "sha": "209cdeba2495e3423b94668ca33eececbe366af2",
+     "subject": "Merge origin/main into claude/arcade-machines-gameboy-n1uhod"
+    },
+    {
+     "sha": "8b535c04417f4953571f2a08558f7ce086dddab2",
+     "subject": "Boot screen: OKs in the title yellow"
+    },
+    {
+     "sha": "985a911112a216fe68804ff7efb3d2c6a2b753ae",
+     "subject": "Hall: playable side machines, broken Galaxian, Game Boy Color, walk into our cabinet"
+    },
+    {
+     "sha": "9206d190c9455c6c584b99421bda082aa914330c",
+     "subject": "Merge pull request #105 from fischerq/ccr-9fd8e86d-zfr5rw"
+    },
+    {
+     "sha": "da309fbf790ad83992ec1fc6b52cb78148d285b3",
+     "subject": "Merge origin/main into claude/arcade-machines-gameboy-n1uhod"
+    },
+    {
+     "sha": "1b0043e5eb0d41ac850198c15827549c8e76944f",
+     "subject": "Merge origin/main into claude/arcade-machines-gameboy-n1uhod"
+    },
+    {
+     "sha": "de9acd846ceb403d35a09707cbfa3e86c7c708d1",
+     "subject": "Merge origin/main into claude/arcade-machines-gameboy-n1uhod"
+    },
+    {
+     "sha": "238b48769189575b5e269e4479e2e51235da8c79",
+     "subject": "Log: other arcade machines, Game Boy, walk into our cabinet"
+    },
+    {
+     "sha": "678dc24aba29933b1edecbb000dd7e5ce4ff9a18",
+     "subject": "Merge origin/claude/arcade-machines-gameboy-n1uhod"
+    },
+    {
+     "sha": "fd507f52079a42e67ea1ca354a7030a38d2ecd77",
+     "subject": "Merge origin/main into claude/anna-elsa-sweater-placement-wm23p7"
+    },
+    {
+     "sha": "b1b54577b85bcfeebd8e54e156fa112fb097099c",
+     "subject": "Hall: Anna and Elsa sweater lies in the middle of the rug instead of the back wall"
+    },
+    {
+     "sha": "aca480d98cb5bffcfc914ff29bf99f034318fde3",
+     "subject": "Merge pull request #106 from fischerq/claude/anna-elsa-sweater-placement-wm23p7"
+    },
+    {
+     "sha": "7f5f999292a6d6df59406e4ff55f8b6e2dba81f1",
+     "subject": "Merge origin/main into claude/arcade-machines-gameboy-n1uhod"
+    },
+    {
+     "sha": "b973dde2053e42fd76f3c158482ea56e7b44c187",
+     "subject": "Log: merge conflict fix"
+    },
+    {
+     "sha": "16446e5f2ed14f86536d1bba1d4e74f43aab2f79",
+     "subject": "Merge pull request #103 from fischerq/claude/arcade-machines-gameboy-n1uhod"
+    }
+   ],
    "entrypoint": "remote_mobile",
    "branch": "ccr-33a95e3c-6i9j5t",
    "plan_usage": {
@@ -64,13 +147,76 @@
      "delta": 0.0
     }
    }
+  },
+  {
+   "index": 2,
+   "seq": 110,
+   "date": "2026-10-20",
+   "duration_s": 491,
+   "prompt": "Make the globe bigger, the stand flatter. Make the manr thicker, and make sure the simulated hair doesnt clip into the body. Change the color of the floor in the globe to a green meadow. Add a fluffy cloud overhead. Add the note on the bottom of the stand",
+   "followups": [],
+   "images": [],
+   "claude_images": [
+    "media/01f0c190-2-c1.jpg",
+    "media/01f0c190-2-c2.jpg"
+   ],
+   "reply": "Hair physics costs 0.4 ms a frame. Now the docs, screenshots and the PR.",
+   "progress_notes": [
+    "PR #104 is already merged, so I'm restarting the branch from main and then working on the globe.",
+    "Now the physics side: props, hair collision, and rest shapes pushed clear of the body.",
+    "Now the renderer: the meadow rename and the note on the bottom cap.",
+    "Config: meadow and cloud colors, the note's colors and text, then the note texture in BootScene.",
+    "Shooting the settled globe and an upside-down one (to check the note), with the script from last turn.",
+    "The settled view looks right. The note doesn't show on the flipped base, so I'm debugging that.",
+    "Still on the note: it hits the base's bottom face but no note pixel gets written. Narrowing down why.",
+    "The note reads correctly. Quick numeric check that the hair stays out of the body while the globe is shaken:"
+   ],
+   "tools": {
+    "Bash": 32,
+    "Read": 3,
+    "mcp__claude-code-remote__list_events": 2
+   },
+   "api_requests": 34,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 68,
+     "cache_write_5m": 0,
+     "cache_write_1h": 42591,
+     "cache_read": 5303404,
+     "output": 27788,
+     "thinking": 12948,
+     "cost_usd": 1.957441
+    }
+   },
+   "cost_usd": 1.957441,
+   "commits": [],
+   "entrypoint": "remote_mobile",
+   "branch": "ccr-33a95e3c-6i9j5t",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.32,
+     "end": 0.51,
+     "delta": 0.19
+    },
+    "seven_day": {
+     "start": 0.4,
+     "end": 0.45,
+     "delta": 0.05
+    }
+   }
   }
  ],
  "totals": {
-  "prompts": 1,
-  "cost_usd": 1.585169,
-  "output_tokens": 17501,
-  "input_tokens": 2886630
+  "prompts": 2,
+  "cost_usd": 3.626791,
+  "output_tokens": 46414,
+  "input_tokens": 8495431
  },
- "reported_by_claude_code": null
+ "reported_by_claude_code": {
+  "total_usd": 1.7022423000000002,
+  "by_model": {
+   "claude-haiku-5-5": 0.000133,
+   "claude-opus-5-5": 1.702109
+  }
+ }
 }
