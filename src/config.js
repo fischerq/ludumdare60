@@ -731,6 +731,8 @@ export const LOBBY = {
     '###########',
   ],
   solid: '#MmKJDWEVRBCL1234AZXOHNFg',
+  pacMouth: [0.14, 0.28, 0.42, 0.56, 0.7, 0.82, 0.94], // rad, half the mouth of board/pac-0..6 (never shut)
+  pacIdleFrame: 3,       // board/pac-* frame shown while he stands still
   mechaRate: 2,          // blinks per second of Mecha-Pac's antenna (X, by the joystick: the bot)
   reserved: { adder: { x: 8, y: 16 }, switch: { x: 9, y: 16 } },
   // Map character -> deep layer id (src/systems/layers/). The monitor is all six of its tiles.
@@ -763,6 +765,7 @@ export const LOBBY = {
     // Mecha-Pac, the bot: a steel Pac-Man with a red visor, rivets and an antenna.
     mecha: 0xa8b0bc, mechaLight: 0xe0e6ee, mechaDark: 0x5a6270, visor: 0x20242c, visorEye: 0xff3020,
     antenna: 0x40ff60, foot: 0x3a4048,
+    pacBody: 0x50f088, pacEdge: 0x0c3a1c, pacShine: 0xd8ffe8, // Pac-Man in here: signal green (board/pac-*)
     // The status lamps 1..4 (maze yellow, board green, 256 red, hard mode violet): off glass, lit bulb, glow.
     lamps: [
       { off: 0x4a4420, glass: 0x7a7040, on: 0xffe040, glow: 0x6a5a20 },

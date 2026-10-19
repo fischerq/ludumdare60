@@ -1170,6 +1170,14 @@ export default class BootScene extends Phaser.Scene {
       rect(set, 15, 0, 3, 1, f ? K.mechaDark : K.antenna);
     };
     [0, 1].forEach((f) => this.pixels(`board/mecha-${f}`, S, S, (set) => mecha(set, f)));
+    // Pac-Man inside the machine: the maze's chomper in signal green, a blip of current on the board.
+    // board/pac-0..6 face right and chomp 0..6 and back like maze/pac-*; the mouth never shuts, so the scene can
+    // turn him for up and down and his heading always shows.
+    LOBBY.pacMouth.forEach((m, i) => this.pixels(`board/pac-${i}`, S, S, (set) => {
+      this.chomper(set, K.pacEdge, 11.5, m);
+      this.chomper(set, K.pacBody, 10.5, m);
+      [[11, 8], [10, 9], [9, 11], [12, 7]].forEach(([x, y]) => set(x, y, K.pacShine));
+    }));
     this.pixels('board/portrait-mecha', P, P, (set) => {
       rect(set, 0, 0, P, P, K.pcbDark);
       mecha((x, y, c) => set(x + 8, y + 9, c), 0);
