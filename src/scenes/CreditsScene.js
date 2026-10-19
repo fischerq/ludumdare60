@@ -40,6 +40,8 @@ export default class CreditsScene extends Phaser.Scene {
     this.stopAt = CREDITS.endY - y; // container y at which THE END sits at endY
     this.ended = false;
     this.endTime = 0;
+    this.leaving = false; // the scene object is reused: without this, the second roll could never leave
+    this.armed = false;
 
     this.prompt = this.add.text(cx, GAME_HEIGHT - 300, CREDITS.endPrompt, {
       fontFamily: UI.arcadeFont, fontSize: S.prompt.size, color: S.prompt.color,

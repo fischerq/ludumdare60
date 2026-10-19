@@ -83,6 +83,7 @@ export default class LobbyScene extends Phaser.Scene {
     this.pac = actor('board/pac-3');
     // The four ghosts on their wires to the brain, looking at it.
     this.ghosts = [];
+    this.mecha = null;
     this.h.rows.forEach((row, y) => [...row].forEach((c, x) => {
       const name = LOBBY.ghosts[c];
       if (name) this.ghosts.push({ name, x, y, dir: ghostFacing(this.h, x, y), s: actor(`maze/ghost-${name}-down-0`) });
@@ -146,6 +147,8 @@ export default class LobbyScene extends Phaser.Scene {
     this.subImages = {}; // id -> images whose texture shows its state
     this.lamps = []; // the status lamps and cheat levers, left to right (lamp i, lever i)
     this.levers = [];
+    // The scene object outlives a restart: drop the parts the last layout had (a lever can take the adder away).
+    this.adderImg = this.switchImg = this.reel = null;
     const lit = lamps();
     this.h.rows.forEach((row, y) => [...row].forEach((c, x) => {
       const at = (key) => this.add.image(this.ox + x * T, this.oy + y * T, tileKey('board', key)).setOrigin(0);
