@@ -117,7 +117,7 @@ function deepRun(s, L, bot, fresh) {
     } else {
       Object.assign(c, { env, t });
       const want = decideDeep(bot, c);
-      for (const d of s.hand.update(t, DT, want, (dd) => player.next === dd || player.dir === dd)) steerWalker(player, d);
+      for (const d of s.hand.update(s.t, DT, want, (dd) => player.next === dd || player.dir === dd)) steerWalker(player, d); // session time: the hand's clock runs on across layers
       stepWalker(player, (L.walkSpeed ?? DEEP.walkSpeed) * DT, open);
       const r = L.update(st, env);
       if (r === 'dot') dots++;
@@ -214,7 +214,8 @@ function wireRepairs() {
 //   256       up to the maze, now on level 256 (a coin per game, the hall when out), until it's cleared: the end.
 // Every move between layers costs its transition time, every text box its reading time. Segments are named after
 // what's played (maze, cabinet, hall, the layer ids, adder, <id>-hard, maze-256, cabinet-256).
-export function runPlaythrough(s) {
+// o.over: { <id>: numbers, '<id>-hard': numbers } merged over DEEP.<id> for that layer's runs (difficulty levels).
+export function runPlaythrough(s, o = {}) {
   wireRepairs();
   setLamp(0, false); // a new session: nothing won, level 256 unrepaired
   resetWallet();
@@ -263,7 +264,7 @@ export function runPlaythrough(s) {
     for (let i = 0; i < DEEP_LAYERS.length; i++) {
       const id = DEEP_LAYERS[i].id, name = hard ? `${id}-hard` : id;
       log.reached = name;
-      const r = seg(name, runDeep(s, i, { fresh: false, hard }));
+      const r = seg(name, runDeep(s, i, { fresh: false, hard, over: o.over?.[name] ?? null }));
       log.deep.push({ id: name, time: +r.time.toFixed(1), hits: r.hits, result: r.result });
       if (r.result === 'over') {
         // The machine stopped: up to the maze (or the hall) for a new game, then all the way back down.
@@ -319,7 +320,7 @@ export function runLayer(name, s, o = {}) {
   if (name === 'cabinet') return runMaze(s, { mode: 'stick' });
   if (name === 'hall') return runHall(s, { scenario: 'coins' });
   if (name === 'hall-chase') return runHall(s, { scenario: 'chase' });
-  if (name === 'playthrough') return runPlaythrough(s);
+  if (name === 'playthrough') return runPlaythrough(s, o);
   if (name === 'adder') return runAdder(s);
   return runDeep(s, DEEP_LAYERS.findIndex((L) => L.id === name), { hard: !!o.hard, over: o.over?.[name] ?? null });
 }
