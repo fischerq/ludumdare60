@@ -141,6 +141,30 @@ const Z80 = await loadZ80();
   }));
   check('level 256 garbles the right half only', k.read(S.LEVEL) === 255 && right > 150 && left === 0, `right ${right} left ${left}`);
   check('level 256 can\'t be cleared', dots < readState(k, S).pellets, `${dots} dots on screen, ${readState(k, S).pellets} to go`);
+  // Repairs: every strip's paths come back from MAZE_ROM, the garbage on the walls stays, and the dots add up
+  // (mid-round an empty cell stays empty: it may have been eaten).
+  const repaired = (m, name, mid = false) => {
+    let noisy = 0, bad = 0, dots = 0;
+    MAZE.layout.forEach((row, y) => [...row].forEach((ch, x) => {
+      const c = m.vram[tileOffset(x, y)];
+      const was = { '#': CELL.wall, '-': CELL.door, T: CELL.tunnel, G: CELL.house, '.': CELL.dot, o: CELL.power }[ch] ?? CELL.empty;
+      if (ch === '#') { if (c < CELL.wall) bad++; else if (c !== CELL.wall) noisy++; } else if (c !== was && !(c === CELL.empty && mid)) bad++;
+      if (c === CELL.dot || c === CELL.power) dots++;
+    }));
+    check(name, bad === 0 && noisy > 40 && dots === readState(m, S).pellets,
+      `${noisy} noisy walls, ${bad} wrong cells, ${dots} dots on screen, ${readState(m, S).pellets} to go`);
+  };
+  const r = createMachine(Z80, { rom: prog.rom });
+  for (let i = 0; i < 3; i++) r.runFrame();
+  start(r);
+  r.ram[S.LEVEL - 0x4c00] = 254;
+  r.ram[S.PHASE - 0x4c00] = PH('cleared');
+  r.ram[S.REPAIRS - 0x4c00] = 0x7f;
+  start(r);
+  repaired(r, 'repaired level 256 keeps noisy walls and can be cleared');
+  k.ram[S.REPAIRS - 0x4c00] = 0x7f;
+  k.runFrame(); k.runFrame();
+  repaired(k, 'mid-round repair too (empty cells stay empty)', true);
 }
 
 if (failed) { console.error(`${failed} failed`); process.exit(1); }

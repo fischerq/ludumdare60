@@ -64,7 +64,7 @@ export function generatedSource() {
     const r0 = Math.floor((k * H) / n), r1 = Math.floor(((k + 1) * H) / n);
     lines.push(`        dw MAZE_ROM+${r0 * W + x0}, ${MAP.vram[0] + r0 * VRAM_STRIDE + x0}`, `        db ${r1 - r0} ; rows ${r0}..${r1 - 1}`);
   }
-  lines.push(`REPAIR_COUNT equ ${n}`);
+  lines.push(`REPAIR_COUNT equ ${n}`, `REPAIR_ALL equ ${(1 << n) - 1}`);
   const t = (v) => Math.round(v);
   lines.push('GHOST_INIT:        ; start x px, start y px, release frames (words), corner x, corner y (tiles), skirt anim');
   for (const g of GHOSTS) {

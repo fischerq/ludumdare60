@@ -67,6 +67,7 @@ COIN_LAST       equ RAM+0x31        ; the coin switch last frame
 LEVEL           equ RAM+0x32        ; round counter, one byte: 0 = level 1, 255 = level 256
 REPAIRS         equ RAM+0x33        ; level 256 strips to repair, a bit each (set by the host: the hard-mode wins)
 REPAIRED        equ RAM+0x34        ; strips repaired this round
+REPAIR_FRESH    equ RAM+0x35        ; 1 while repair runs at the start of a round (nothing eaten yet)
 
 ; Actors: Pac-Man, then the four ghosts (blinky, pinky, inky, clyde), 32 bytes each.
 ACTORS          equ RAM+0x40
@@ -321,14 +322,19 @@ start_round:
         call draw_fruit
         xor a                       ; a fresh round: the overflow just drew the garbage again
         ld (REPAIRED), a
+        inc a
+        ld (REPAIR_FRESH), a
         call repair
+        xor a
+        ld (REPAIR_FRESH), a
         call reset_actors
         jp to_ready
 
-; Level 256 only: puts back the clean maze (cells from MAZE_ROM, palette 1) on every strip of the garbage half
-; whose bit is set in REPAIRS and not yet in REPAIRED (REPAIR_TABLE, top to bottom). Runs at the start of a
-; round and every frame, so a repair shows at once. A dot under the garbage was never eaten (garbage blocks
-; Pac-Man) and is still counted in PELLETS, so with every strip back the maze can be cleared.
+; Level 256 only: makes every strip of the garbage half whose bit is set in REPAIRS and not yet in REPAIRED
+; (REPAIR_TABLE, top to bottom) playable again, without cleaning it up: the paths come back from MAZE_ROM, the
+; garbage on the walls stays. Runs at the start of a round and every frame, so a repair shows at once. A dot under
+; the garbage was never eaten (garbage blocks Pac-Man) and is still counted in PELLETS, so with every strip
+; repaired the maze can be cleared.
 repair:
         ld a, (LEVEL)
         inc a
@@ -354,9 +360,35 @@ repair:
 .skip:  ld de, 5
         add hl, de
         djnz .strip
+        ld a, (REPAIRED)            ; every strip repaired: the dots to go are the ones on screen (mid-round, a dot
+        cp REPAIR_ALL               ; hidden under a zero byte can't be told from an eaten one), so it can be cleared
+        ret nz
+        ld hl, 0
+        ld de, VRAM
+        ld c, MAZE_H
+.crow:  ld b, MAZE_W
+.ccell: ld a, (de)
+        cp CELL_DOT
+        jr z, .count
+        cp CELL_POWER
+        jr nz, .cnext
+.count: inc hl
+.cnext: inc de
+        djnz .ccell
+        ex de, hl
+        push bc
+        ld bc, VRAM_STRIDE-MAZE_W
+        add hl, bc
+        pop bc
+        ex de, hl
+        dec c
+        jr nz, .crow
+        ld (PELLETS), hl
         ret
 
-; One strip, HL at its REPAIR_TABLE entry.
+; One strip, HL at its REPAIR_TABLE entry. Per cell: a wall in MAZE_ROM keeps its garbage if that blocks (the
+; maze keeps its shape, drawn in noise) and is a clean wall otherwise; every other cell gets MAZE_ROM's code and
+; palette 1 (paths, dots, the door, the house). Mid-round, an empty cell stays empty: its dot may have been eaten.
 repair_strip:
         ld e, (hl)                  ; DE: source in MAZE_ROM
         inc hl
@@ -371,24 +403,44 @@ repair_strip:
         ld d, b
         ld e, c                     ; DE: video RAM
 .row:   push af
-        push de
-        ld bc, SHELF_COLS
-        ldir                        ; the row's cells
-        ex (sp), hl                 ; HL: the row in video RAM, source on the stack
         push hl
-        ld a, h                     ; palette 1 in color RAM, same place 0x400 higher
-        add a, high(CRAM-VRAM)
-        ld h, a
+        push de
         ld b, SHELF_COLS
-.pal:   ld (hl), 1
-        inc hl
-        djnz .pal
-        pop hl
+.cell:  ld a, (de)
+        ld c, a                     ; C: what's on screen
+        ld a, (hl)
+        cp CELL_WALL
+        jr nz, .path
+        ld a, c                     ; a wall: garbage that blocks stays
+        cp CELL_WALL
+        jr nc, .next
+        ld a, CELL_WALL
+        jr .put
+.path:  ld a, c
+        or a
+        jr nz, .rom                 ; something on screen: garbage, or the dot itself
+        ld a, (REPAIR_FRESH)
+        or a
+        jr z, .next                 ; mid-round and empty: maybe eaten, leave it
+.rom:   ld a, (hl)
+.put:   ld (de), a
+        ld a, d                     ; palette 1 in color RAM, same place 0x400 higher
+        add a, high(CRAM-VRAM)
+        ld d, a
+        ld a, 1
+        ld (de), a
+        ld a, d
+        sub high(CRAM-VRAM)
+        ld d, a
+.next:  inc hl
+        inc de
+        djnz .cell
+        pop hl                      ; HL: the row in video RAM
         ld de, VRAM_STRIDE          ; next row in video RAM
         add hl, de
         ex de, hl
         pop hl                      ; next row in MAZE_ROM
-        ld bc, MAZE_W-SHELF_COLS
+        ld bc, MAZE_W
         add hl, bc
         pop af
         dec a
