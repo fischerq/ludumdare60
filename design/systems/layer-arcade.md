@@ -45,6 +45,21 @@ the arcade as a place.
   turn it (it rights itself when let go), tap it to shake, tap outside to put it down. Turning stirs the water and
   the glitter flies, then slowly settles (rules in `src/systems/globe.js`, numbers in `HALL.globe`); a soft chime
   plays. The note is in the text only. *(Quirin, defaults accepted 2026-10-19)*
+  - **3D close-up** *(decided, Quirin, defaults accepted 2026-10-19)*: LOOK CLOSER now shows the globe in 3D by
+    default; a big button under the hint switches to the FLAT picture above and back (F on a keyboard). The globe is
+    a model of colored spheres (`src/settings/globe-model.json`: unicorn shapes, mane and tail strands, the snowy
+    mound and the base) drawn by a small pixel renderer (`src/systems/globeRender.js`, 136x136 art px at the hall's
+    4x): three light bands per part with a 2x2 dither at their edges, a 1 px outline wherever the depth jumps,
+    glitter as single pixels, the glass rim and a shine that stays put while the globe turns. Colors come from
+    `assets/arcade/globe-palette.png` (one row per part: outline, dark, mid, light; rows in `HALL.globe3d.palette`).
+    No library, no tinting.
+  - **Physics** (`src/systems/globe3d.js`, numbers in `HALL.globe3d`): a finger grabs the spot it lands on and pulls
+    it along on a spring, so the globe turns any way (tip it, spin it, upside down) about its glass center; it never
+    slides across the screen. The base is heavy: let go and it swings back upright, wobbling a little. The water
+    lags behind the glass, and that lag stirs it; glitter flakes ride the water, sink slowly and flash as they
+    tumble. Mane and tail are 12 bead chains that float in the water, trail behind turns and fall back into shape.
+    A tap jolts the globe, spins it a little and churns the water, with the chime. Arrow keys tip it, Space shakes.
+  - Not built: a lab bench for the globe (add one if the feel needs tuning), 3D in the hall tile.
 - **Portraits:** the text box shows a large portrait (48x48, `HALL.portraitSize`) in a frame on its top left edge:
   ghosts and the owner have their own (`arcade/portrait-<name>.png`, `portrait-ghosts` for the four together),
   things show their tile at 3x (a machine its top half). Pickup and chase messages have none.
@@ -95,3 +110,4 @@ the arcade as a place.
   out; the mini-Gurke moves to the top right plant's spot. (Quirin)
 - 2026-10-19: The ghost visitors face down (toward the player) while standing at their machines, so their faces show. (Quirin)
 - 2026-10-19: A snow globe in the bottom left corner (pink base, white unicorn with rainbow mane and tail, glitter), with a note taped to the bottom; LOOK CLOSER to turn and shake it and make the glitter fly. Defaults accepted (place, close-up overlay, tilt and shake instead of a full spin, note in the text, a chime). (Quirin)
+- 2026-10-19: The snow globe close-up in 3D (sphere model drawn as pixel art, grab-anywhere rotation, heavy base that rights it, simulated glitter, mane and tail, tap to jolt), with a 3D/FLAT switch to the old picture. Defaults accepted (own renderer, 136 px, palette PNG + model JSON for Max, no bench). (Quirin)

@@ -656,7 +656,7 @@ export default class BootScene extends Phaser.Scene {
   // ghost visitors with their cap on (seen from behind when walking up).
   // The snow globe in the hall: its tile (arcade/snow-globe) and the close-up (arcade/globe-big, 96x112) of a white
   // unicorn with a rainbow mane and tail on a snowy mound, in a glass sphere on a pink base. The glitter is drawn
-  // live over the close-up (src/systems/globe.js).
+  // live over the close-up (src/systems/globe.js). Also the 3D close-up's palette (arcade/globe-palette).
   makeSnowGlobe(rect, tile, shadow) {
     const G = HALL.globe, R = G.rainbow;
     const ellipse = (set, cx, cy, rx, ry, c) => {
@@ -723,6 +723,9 @@ export default class BootScene extends Phaser.Scene {
       line(set, 20, 89, 15, 104, 1, G.baseLight);
       [[30, 95], [48, 97], [66, 95]].forEach(([x, y]) => ellipse(set, x, y, 3, 3, G.baseLight)); // dots on the base
     });
+    // The 3D close-up's colors (HALL.globe3d.palette): one row per part, columns outline, dark, mid, light.
+    const P = HALL.globe3d.palette, rows = Object.keys(P);
+    this.pixels('arcade/globe-palette', 4, rows.length, (set) => rows.forEach((k, y) => P[k].forEach((c, x) => set(x, y, c))));
   }
 
   makeHallCharacters() {
