@@ -277,7 +277,12 @@ def export_session(path, commits, next_seq, window):
         if isinstance(att, dict) and att.get("type") == "queued_command" \
                 and (att.get("origin") or {}).get("kind") == "human" and att.get("commandMode", "prompt") == "prompt":
             # A message the human sent while Claude was still working on this turn.
-            msg = REMINDER_RE.sub("", att.get("prompt") or "").strip()
+            # The prompt is a string, or a content list when the message carried an image (published with the turn's).
+            raw = att.get("prompt") or ""
+            if isinstance(raw, list):
+                cur["images_raw"] += prompt_images({"message": {"content": raw}})
+                raw = "\n".join(c.get("text", "") for c in raw if isinstance(c, dict) and c.get("type") == "text")
+            msg = REMINDER_RE.sub("", raw).strip()
             if msg:
                 cur["followups"].append({"text": msg, "after_reply_index": len(cur["texts"])})
             continue

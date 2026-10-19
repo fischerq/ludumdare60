@@ -1,0 +1,79 @@
+{
+ "session_id": "ac92c2ae-f8b3-5c09-ba8a-ca7b29785504",
+ "title": "Loading screen state durations",
+ "session_url": "https://claude.ai/code/session_017C8tgdWjF3e3y7LWJCiEDM",
+ "claude_code_version": "2.1.303",
+ "first_date": "2026-10-19",
+ "last_date": "2026-10-19",
+ "turns": [
+  {
+   "index": 1,
+   "seq": 88,
+   "date": "2026-10-19",
+   "time": "09:06",
+   "duration_s": 231,
+   "prompt": "Loading screen spends lots of time in this state.\nCalibrate it, add a few more items to the list (should show all the lower layers) calibrate the durations so that they all show as top item for the same time",
+   "followups": [
+    {
+     "text": "Here is the screenshot",
+     "after_reply_index": 0
+    }
+   ],
+   "images": [
+    "media/ac92c2ae-1-u1.jpg"
+   ],
+   "claude_images": [
+    "media/ac92c2ae-1-c1.jpg"
+   ],
+   "reply": "The log exporter crashes on the mid-turn message with an image; fixing that.",
+   "progress_notes": [
+    "Looking into the boot screen: the \"ROM\" step covers the whole art download, so it sits there for most of the load. Next I'll time each phase and re-space the lines.",
+    "The new boot list works; now checking that each line stays on top equally long (first lines weren't captured by my timer yet).",
+    "Works. Checking the branch's PR, then committing."
+   ],
+   "tools": {
+    "Bash": 19,
+    "ToolSearch": 2,
+    "mcp__claude-code-remote__list_events": 2,
+    "Read": 1,
+    "mcp__github__list_pull_requests": 1,
+    "Edit": 1
+   },
+   "api_requests": 23,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 46,
+     "cache_write_5m": 0,
+     "cache_write_1h": 58506,
+     "cache_read": 2049746,
+     "output": 13152,
+     "thinking": 4461,
+     "cost_usd": 1.141221
+    }
+   },
+   "cost_usd": 1.141221,
+   "commits": [],
+   "entrypoint": "remote_mobile",
+   "branch": "ccr-3c71f8de-gyff5u",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0,
+     "end": 0,
+     "delta": 0
+    },
+    "seven_day": {
+     "start": 0.28,
+     "end": 0.28,
+     "delta": 0.0
+    }
+   }
+  }
+ ],
+ "totals": {
+  "prompts": 1,
+  "cost_usd": 1.141221,
+  "output_tokens": 13152,
+  "input_tokens": 2108298
+ },
+ "reported_by_claude_code": null
+}
