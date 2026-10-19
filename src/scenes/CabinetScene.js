@@ -21,7 +21,7 @@ export default class CabinetScene extends Phaser.Scene {
 
   init(data) {
     this.fromAbove = data?.from === 'above';
-    // From the maze's game over (TAP TO INSERT COIN): open the coin mechanism as soon as the zoom-out ends.
+    // From the maze's game over (the INSERT COIN button): open the coin mechanism as soon as the zoom-out ends.
     this.coinNext = !!data?.coin;
   }
 
@@ -73,9 +73,7 @@ export default class CabinetScene extends Phaser.Scene {
       if (this.mode === 'insert' || this.mode === 'intro') { sfx.frightOff(); this.layerDown({ continue: true }); }
     }, { zoom: CABINET.zoom });
     // Up one layer: the arcade hall this cabinet stands in, where the coins are.
-    this.layerUpBtn = addLayerButtonAt(this, 'up', () => {
-      if (this.mode === 'insert' || this.mode === 'intro') { sfx.frightOff(); this.mode = 'gone'; this.scene.start('Hall', { from: 'cabinet' }); }
-    }, { zoom: CABINET.zoom });
+    this.layerUpBtn = addLayerButtonAt(this, 'up', () => this.layerUp(), { zoom: CABINET.zoom });
 
     this.cam = this.cameras.main.setOrigin(0, 0).setRoundPixels(true);
     this.setIntro(this.introT);
@@ -306,9 +304,14 @@ export default class CabinetScene extends Phaser.Scene {
     this.mechText.setText(text).setColor(failed ? P.failColor : m.phase === 'switch' ? P.okColor : P.textColor);
   }
 
+  layerUp() {
+    if (this.mode === 'insert' || this.mode === 'intro') { sfx.frightOff(); this.mode = 'gone'; this.scene.start('Hall', { from: 'cabinet' }); }
+  }
+
   // Out of coins: point the player up to the arcade hall, where the coins are.
   needCoins() {
-    this.callout ??= showCallout(this, this.screenPos.x + 84, this.screenPos.y + 100, 'NEED COINS?\nGO LAYER UP', 1);
+    this.callout ??= showCallout(this, this.screenPos.x + 84, this.screenPos.y + 100, 'NEED COINS?', 1,
+      { label: 'LAYER UP', onTap: () => this.layerUp() });
   }
 
   setupPauseOnHide() {
