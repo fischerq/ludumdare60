@@ -853,6 +853,22 @@ export const MUSIC = {
         { type: 'noise', filter: 'lowpass', freq: 350, vol: 0.12 },
       ],
     },
+    // The board lobby inside the cabinet: the transformer's hum breathing slowly, a clock ticking once a second,
+    // a low drone and the game's bleeps muffled through the board. Calm enough to read text boxes over.
+    lobby: {
+      bpm: 60, root: 43, vol: 0.8, // G, one step = a quarter second
+      tracks: [
+        { wave: 'tri', len: 30, vol: 0.16, notes: '0' + ' .'.repeat(31) + ' -2' + ' .'.repeat(31) },
+        { wave: 'sine', len: 6, vol: 0.05, oct: 12, notes: '. . . . . . . . 7 . . . . . . . . . . . . . . . 10 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .' },
+      ],
+      textures: [
+        { type: 'tone', wave: 'sine', freq: 50, vol: 0.07 },
+        { type: 'tone', wave: 'tri', freq: 100, vol: 0.025, lfo: { rate: 0.13, depth: 0.6 } }, // transformer buzz, breathing
+        { type: 'noise', filter: 'bandpass', freq: 180, vol: 0.03 },
+        { type: 'ticks', every: 4, freq: 2500, vol: 0.025 },
+        { type: 'blips', chance: 0.03, lo: 64, hi: 88, len: 1, wave: 'square', vol: 0.04, lp: 700 },
+      ],
+    },
     // The original has no music: just the siren, a little higher and faster every stage of dots eaten.
     maze: {
       textures: [

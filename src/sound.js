@@ -209,6 +209,14 @@ function startBed(id) {
       o.connect(g).connect(out);
       o.start(t);
       b.nodes.push(o);
+      if (tx.lfo) { // optional slow swell: the gain wobbles by depth (0 to 1) of vol, rate times a second
+        const l = ctx.createOscillator(), lg = ctx.createGain();
+        l.frequency.value = tx.lfo.rate; lg.gain.value = tx.vol * tx.lfo.depth / 2;
+        g.gain.value = tx.vol * (1 - tx.lfo.depth / 2);
+        l.connect(lg).connect(g.gain);
+        l.start(t);
+        b.nodes.push(l);
+      }
       if (tx.type === 'siren') b.siren = { tx, o, g };
     } else if (tx.type === 'noise') {
       const src = ctx.createBufferSource(), g = ctx.createGain();

@@ -17,6 +17,9 @@ Every layer sounds different and fits its tech, so the player hears where they a
   (`MUSIC.fade`). The start screen has its own tune (below).
   - **Hall:** the arcade is not busy: just the radio loop and now and then a bleep from one of the machines.
   - **Cabinet:** the machine's mains hum and fan, the same radio muffled behind you.
+  - **Board lobby (2026-10-19):** inside the running machine, calm enough to read text boxes over: the mains hum
+    with a slowly breathing transformer buzz, a soft clock tick once a second, a low drone and the game's bleeps
+    muffled through the board. Its own bed (`lobby`), no longer the cabinet's.
   - **Maze:** like the original, no music: the siren, rising in 5 stages as the dots go; silent while ghosts are
     frightened (the fright wobble plays instead), before the start and after game over.
   - **Deep layers (CRT to input wires):** the machine's sound chip playing Tron-style synth, each layer its own
@@ -30,7 +33,7 @@ Every layer sounds different and fits its tech, so the player hears where they a
 - **Mute:** one ♪ / × button bottom left over every scene (an HTML button); the choice is kept in localStorage.
 
 ## Slice scope
-- Build: the synth engine, the 10 beds, the siren tied to the dots, crossfades, the mute button.
+- Build: the synth engine, the beds (one per layer, the start screen and the lobby), the siren tied to the dots, crossfades, the mute button.
 - Not now: the jukebox lab bench, beds reacting to gameplay beyond the siren, sound for the mini-gurke.
 
 ## Open questions
@@ -41,3 +44,4 @@ Every layer sounds different and fits its tech, so the player hears where they a
   the machine, FM synth-pop radio in the hall). Hall is quiet: radio plus the odd machine bleep. Maze keeps the
   original's siren only. Other defaults (crossfade, mute button) accepted.
 - 2026-10-19: The start screen gets background music, an original wavetable tune (replaces "the menu is silent"). Defaults accepted; Claude made the first tap start the music where phones block sound, since the menu's first tap otherwise starts the game at once. (Quirin)
+- 2026-10-19: lobby gets its own bed (Quirin)
