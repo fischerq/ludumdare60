@@ -38,6 +38,8 @@ export default class CabinetScene extends Phaser.Scene {
     this.machine = world.machine;
     this.S = world.program.symbols;
     this.credit = 0;
+    this.callout = null; // the scene object is reused: an old NEED COINS? box is gone with the last visit
+    this.noCoinT = undefined;
     setDriver('bot');
     if (!world.paidGame) world.halted = true;
     this.best = 0;
