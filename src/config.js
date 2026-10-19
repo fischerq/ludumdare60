@@ -285,7 +285,7 @@ export const DEEP = {
     levels: { cap: { beamPeriod: 5.5, bonusTime: 6 } }, // levels: a faster beam, shorter bonus scans
   },
   signals: {             // -2 the video board: a race against the frame timer, tile pixels via the palette to the DAC
-    frameTime: 12,       // s on the frame timer; at zero the pixels you carry are dropped and a new tile is fetched
+    frameTime: 16,       // s on the frame timer (was 12: only 35% at bot noise 0.5); at zero the pixels you carry are dropped and a new tile is fetched
     pixels: 3,           // pixels taken from the fetched tile per delivery
     paletteSize: 8,      // palette entries: the most common colors of the picture, every pixel maps to the nearest
     dropTime: 0.4,       // s delivered pixels take to drop from you into the DAC's slots
@@ -324,7 +324,7 @@ export const DEEP = {
       '...................',
     ],
     goal: 4,             // colors delivered
-    levels: { cap: { frameTime: 11 } }, // levels: a slightly shorter frame timer (conservative, not calibrated)
+    levels: { cap: { frameTime: 10 } }, // levels: a shorter frame timer (9 s is about one perfect delivery: unwinnable)
   },
   ram: {                 // -3 work RAM, poke the game state: bit lamps flip bits in the real RAM, the write head dashes
     waitTime: 0.8,       // s the write head waits at a variable's left edge (telegraph: its bits glow red)
@@ -414,7 +414,7 @@ export const DEEP = {
       { name: 'PAC EATS ANY GHOST', routine: 'check_hits', line: 'jr z, .death', above: 11, text: 'NOP  NOP', nop: true },
     ],
     goal: 4,             // patches written
-    levels: { cap: { rate: 10, grace: 0.2, awayTime: 0.2 } }, // levels: the program counter steps faster
+    levels: { cap: { rate: 6, grace: 0.45 } }, // levels: the program counter steps faster, less grace after a hit
   },
   logic: {               // -6 line of sight: crossing a ghost's target vector sends a seeker after you
     vectorWidth: 0.45,   // tiles: how close to a target vector line counts as crossing it
