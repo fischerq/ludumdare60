@@ -66,7 +66,7 @@ export function runAdder(s) {
   while (st.t < PLAYTEST.timeCap.deep) {
     let want = null;
     if (st.hitT <= 0 && st.p.hop <= 0 && !s.hand.pending.length) want = plan(st, st.t + reaction, reaction);
-    for (const d of s.hand.update(st.t, DT, want, () => false)) { hop(st, d); hops++; s.hand.intent = null; }
+    for (const d of s.hand.update(s.t, DT, want, () => false)) { hop(st, d); hops++; s.hand.intent = null; }
     for (const e of stepAdder(st, DT)) if (e.type === 'overflow') result = 'win';
     s.t += DT;
     if (result === 'win') break;

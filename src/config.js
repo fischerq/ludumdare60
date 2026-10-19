@@ -1153,6 +1153,6 @@ export const PLAYTEST = {
     lapseTime: 0.7,      // s one lapse lasts
   },
   readTime: 0.6,         // s to read a text box before tapping it away (hall), added at every level
-  timeCap: { maze: 240, deep: 180, hall: 90, playthrough: 2400 }, // s of game time before a run counts as lost
+  timeCap: { maze: 240, deep: 180, hall: 90, playthrough: 3600 }, // s of game time before a run counts as lost
   warmup: 20,            // s at most the machine plays before a deep-layer run starts (seeded), so runs differ
 };

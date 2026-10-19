@@ -50,10 +50,11 @@
     const NAMES = {
       maze: ['Maze', 'The arcade game, swipes'], cabinet: ['Cabinet', 'The same game on the joystick'],
       hall: ['Arcade hall: coins', 'Pick up every coin, tap our cabinet'], 'hall-chase': ['Arcade hall: chase', 'Talk to the angry ghost, get out the door'],
-      crt: ['-1 Inside the screen', 'Set the adjustments, dodge the beam'], signals: ['-2 Video board', 'Carry colors to the DAC'],
+      crt: ['-1 Inside the screen', 'Set the adjustments, dodge the beam'], signals: ['-2 Video board', 'Beat the frame timer: pixels via the palette to the DAC'],
       ram: ['-3 Work RAM', 'Game state bytes, dodge the write head'], vram: ['-3 Video RAM (old)', 'Pellet bytes, dodge the write head'], bus: ['-4 System bus', 'Into every chip room'],
       cpu: ['-5 The CPU', 'CALL warps into routines'], logic: ['-6 Game logic', 'Stand on each ghost target'],
-      input: ['-7 Input wires', 'Steer Pac-Man into the corners'], playthrough: ['Full playthrough', 'Menu to the bottom layer, with coins and the hall'],
+      input: ['-7 Input wires', 'Steer Pac-Man into the corners'], adder: ['Bonus: the adder', "The round counter's +1"],
+      playthrough: ['Full playthrough', 'Menu to the credits: maze, deep layers, adder, hard mode, level 256, with coins and the hall'],
     };
     const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const W = 160, H = 100, L = 26, R = 6, T = 6, B = 18;
@@ -91,19 +92,28 @@
         <td>${esc(Object.entries(r.results).map(([k, v]) => `${k} ${v}`).join(', '))}</td>${extra.map((e) => `<td>${esc(e[1](r))}</td>`).join('')}</tr>`).join('')}</table></details>`;
     }
 
+    const segs = (r) => Object.entries(r.segmentTime ?? {}).map(([k, v]) => `${k} ${v}`).join(', ');
+    const reached = (r) => Object.entries(r.reached ?? {}).map(([k, v]) => `${k} ${v}`).join(', ');
+    const cards = (data, hard) => Object.entries(data.layers).map(([id, rows]) => {
+      const [title, note] = NAMES[id] ?? [id, ''];
+      const extra = id === 'playthrough' ? [['coins found', (r) => r.coinsFound], ['games', (r) => r.mazeGames], ['hall visits', (r) => r.hallVisits],
+        ['ended in', reached], ['median s per segment', segs]] : [];
+      return `<section class="pt-card"><h2>${esc(title)}${hard ? ' (hard)' : ''}</h2><p>${esc(note)}</p>
+        <div class="pt-charts"><figure><figcaption>Won</figcaption>${winChart(rows)}</figure>
+        <figure><figcaption>Time to solve</figcaption>${timeChart(rows)}</figure></div>
+        ${table(rows, extra)}</section>`;
+    }).join('');
+    const meta = (data) => `${data.runs} runs per noise level, knob "${data.knob}", seed ${data.seed}, run on ${data.generated} (${data.seconds} s)`;
     try {
       const res = await fetch('./playtest/results.json', { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      document.getElementById('meta').textContent = `${data.runs} runs per noise level, knob "${data.knob}", seed ${data.seed}, run on ${data.generated} (${data.seconds} s). Noise 0 is the bare bot, 1 a sloppy player.`;
-      document.getElementById('grid').innerHTML = Object.entries(data.layers).map(([id, rows]) => {
-        const [title, note] = NAMES[id] ?? [id, ''];
-        const extra = id === 'playthrough' ? [['coins found', (r) => r.coinsFound], ['games', (r) => r.mazeGames], ['hall visits', (r) => r.hallVisits]] : [];
-        return `<section class="pt-card"><h2>${esc(title)}</h2><p>${esc(note)}</p>
-          <div class="pt-charts"><figure><figcaption>Won</figcaption>${winChart(rows)}</figure>
-          <figure><figcaption>Time to solve</figcaption>${timeChart(rows)}</figure></div>
-          ${table(rows, extra)}</section>`;
-      }).join('');
+      let text = `${meta(data)}. Noise 0 is the bare bot, 1 a sloppy player.`, html = cards(data, false);
+      // Hard mode (the 256 switch on): node tools/playtest.mjs --hard.
+      const hr = await fetch('./playtest/results-hard.json', { cache: 'no-store' }).catch(() => null);
+      if (hr?.ok) { const hd = await hr.json(); text += ` Hard mode: ${meta(hd)}.`; html += cards(hd, true); }
+      document.getElementById('meta').textContent = text;
+      document.getElementById('grid').innerHTML = html;
     } catch (e) {
       document.getElementById('grid').innerHTML = `<p class="pt-empty">No results yet (${esc(e.message)}). Run <code>node tools/playtest.mjs</code> and commit <code>lab/playtest/results.json</code>.</p>`;
     }

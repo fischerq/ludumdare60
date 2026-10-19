@@ -34,23 +34,19 @@ const crt = {
   },
 };
 
-// -2 the video board: grab a color index at a fetcher pin, carry it to the palette pins, then the DAC pins;
-// the hardware sprites and the sound chip's pulse are deadly.
+// -2 the video board: a race against the frame timer. Take the marked pixels in the fetched tile, step on the
+// lit palette entries of the pixels carried, then into the DAC. Nothing is deadly, so only walls block.
 const SIG = DEEP.signals.layout;
-const pins = (ch) => SIG.flatMap((row, y) => [...row].map((v, x) => (v === ch ? { x, y } : null))).filter(Boolean);
-const SIG_PINS = { p: pins('p'), d: pins('d') };
+const SIG_CELLS = SIG.flatMap((row, y) => [...row].map((_, x) => ({ x, y })));
 const signals = {
-  frame(c) { c.ghosts = spritesOf(c.m, SPRITE.ghost, SPRITE.points); },
   targets(c) {
-    const carry = c.st.carry, cols = SIG[0].length;
-    if (!carry) return [...c.st.sparks].filter(([, s]) => c.t - s.t < DEEP.signals.sparkLife - 0.5).map(([k]) => ({ x: k % cols, y: Math.floor(k / cols) }));
-    return SIG_PINS[carry.stage === 'index' ? 'p' : 'd'];
+    const st = c.st, L = c.L;
+    if (!st.frame) return [];
+    if (st.carry.length < DEEP.signals.pixels) return st.frame.marks.filter((mk) => !mk.taken).map((mk) => ({ x: mk.cx, y: mk.cy }));
+    const need = new Set(st.carry.filter((cc) => !cc.color).map((cc) => cc.e));
+    if (need.size) return SIG_CELLS.filter((p) => need.has(L.swatchAt(p.x, p.y)));
+    return SIG_CELLS.filter((p) => L.inDac(p.x, p.y));
   },
-  blocked(c, x, y, eta) {
-    if (c.L.inPulse(x, y)) return true;
-    return c.ghosts.some((g) => Math.max(Math.abs(g.x - x), Math.abs(g.y - y)) < 1.5 + eta * ghostSpeed);
-  },
-  score: (c, x, y) => Math.min(9, ...c.ghosts.map((g) => manhattan(g, { x, y }))),
 };
 
 // -3 work RAM: walk onto the blinking bit lamps (they move an objective on), keep off the other lamps (stepping on
