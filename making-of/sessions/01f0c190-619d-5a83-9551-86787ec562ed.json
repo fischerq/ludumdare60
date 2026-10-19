@@ -152,7 +152,7 @@
    "index": 2,
    "seq": 110,
    "date": "2026-10-20",
-   "duration_s": 491,
+   "duration_s": 513,
    "prompt": "Make the globe bigger, the stand flatter. Make the manr thicker, and make sure the simulated hair doesnt clip into the body. Change the color of the floor in the globe to a green meadow. Add a fluffy cloud overhead. Add the note on the bottom of the stand",
    "followups": [],
    "images": [],
@@ -160,7 +160,7 @@
     "media/01f0c190-2-c1.jpg",
     "media/01f0c190-2-c2.jpg"
    ],
-   "reply": "Hair physics costs 0.4 ms a frame. Now the docs, screenshots and the PR.",
+   "reply": "I've made all the globe changes and put them in a new PR, https://github.com/fischerq/ludumdare60/pull/108, because #104 was already merged. I checked both a resting and a tipped-over globe in a headless phone-size browser.\n\n- **Bigger globe, flatter stand:** the glass radius goes from 44 to 52 px. The unicorn stays the same size, since you only asked for the globe this time. The stand is as wide as before but half as tall.\n- **Thicker hair, no clipping:** the mane and tail are about 60% thicker. They now bump against the unicorn's body instead of passing through it, and their resting shape no longer overlaps it either. In a 10-second shaking test no hair went into the body.\n- **Meadow and cloud:** the floor is a green meadow hill, and the small globe in the hall is green too. A fluffy cloud sits fixed overhead at the upper left, behind the horn.\n- **The note:** \"MY SISTER LOVED THIS ONE AS A KID.\" is now on a small paper taped to the bottom of the stand. You read it by tipping the globe so its bottom faces you; if you flip it straight upside down you see the bottom almost edge-on and the note doesn't show. Max can redraw it as its own image, `assets/arcade/globe-note.png`.\n\nI picked the cloud's position and put the note only on the underside; both are logged in the design doc and easy to change. Screenshots of both views are on the making-of page.\n\n**To test on the phone:** open LOOK CLOSER, shake the globe hard and watch whether the mane and tail ever go into the body. Then drag the bottom toward you until the note is readable.\n\nPlan usage is at 51% (5-hour) and 45% (weekly).",
    "progress_notes": [
     "PR #104 is already merged, so I'm restarting the branch from main and then working on the globe.",
     "Now the physics side: props, hair collision, and rest shapes pushed clear of the body.",
@@ -169,27 +169,115 @@
     "Shooting the settled globe and an upside-down one (to check the note), with the script from last turn.",
     "The settled view looks right. The note doesn't show on the flipped base, so I'm debugging that.",
     "Still on the note: it hits the base's bottom face but no note pixel gets written. Narrowing down why.",
-    "The note reads correctly. Quick numeric check that the hair stays out of the body while the globe is shaken:"
+    "The note reads correctly. Quick numeric check that the hair stays out of the body while the globe is shaken:",
+    "Hair physics costs 0.4 ms a frame. Now the docs, screenshots and the PR.",
+    "Pushed; opening the new PR."
    ],
    "tools": {
     "Bash": 32,
     "Read": 3,
-    "mcp__claude-code-remote__list_events": 2
+    "mcp__claude-code-remote__list_events": 2,
+    "mcp__github__create_pull_request": 1
    },
-   "api_requests": 34,
+   "api_requests": 36,
    "usage": {
     "claude-opus-5-5": {
-     "input": 68,
+     "input": 72,
      "cache_write_5m": 0,
-     "cache_write_1h": 42591,
-     "cache_read": 5303404,
-     "output": 27788,
-     "thinking": 12948,
-     "cost_usd": 1.957441
+     "cache_write_1h": 43968,
+     "cache_read": 5653654,
+     "output": 29063,
+     "thinking": 12991,
+     "cost_usd": 2.064023
     }
    },
-   "cost_usd": 1.957441,
-   "commits": [],
+   "cost_usd": 2.064023,
+   "commits": [
+    {
+     "sha": "f75f620344b7b3f7d91ec729a9235b97d27a3957",
+     "subject": "Merge origin/main into claude/arcade-machines-gameboy-n1uhod"
+    },
+    {
+     "sha": "1248f3a6bee1f513ea0740c501f2bf340779960b",
+     "subject": "Log: questions for the Game Boy's starter scene"
+    },
+    {
+     "sha": "3b8b58bc2070f21ff63335e22b83a410840f58b1",
+     "subject": "Snow globe: bigger glass, flat stand, meadow, cloud, thick hair that avoids the body, note under the base"
+    },
+    {
+     "sha": "3d0bfce7e62edd73953643368b2a695b1c3f5632",
+     "subject": "Merge pull request #108 from fischerq/ccr-33a95e3c-6i9j5t"
+    },
+    {
+     "sha": "58dac59ccef545009d367ac2751033bceaf3061f",
+     "subject": "Merge origin/main into claude/arcade-machines-gameboy-n1uhod"
+    },
+    {
+     "sha": "670f1ac6e73171d26bd27b93d30810ccb8351729",
+     "subject": "Hall machines: reset the leave guard each game so a second win (or LAYER UP) gets back to the hall"
+    },
+    {
+     "sha": "ae9665ae01ddef65c01f77d733f04f32f7786490",
+     "subject": "Merge origin/main into ccr-baeda07b-lkzvt0"
+    },
+    {
+     "sha": "df7b00bd413358445df45f31a9bba3abb1f5d8e4",
+     "subject": "Merge origin/main into ccr-368b67e4-ewfd82"
+    },
+    {
+     "sha": "059cf100581a6a88cd2fda8ca597f0491e2a05a3",
+     "subject": "Merge pull request #109 from fischerq/ccr-baeda07b-lkzvt0"
+    },
+    {
+     "sha": "5862c59e1c9cf0bfcd978dfacf9b4a7e31ec16b6",
+     "subject": "Merge origin/main into claude/arcade-machines-gameboy-n1uhod"
+    },
+    {
+     "sha": "f2910a9dd3a370f4c934fbe76b74740c20e83023",
+     "subject": "Merge origin/main into ccr-368b67e4-ewfd82"
+    },
+    {
+     "sha": "c57ac6755c3d3dcb1f052632b20c5d803fe97ac1",
+     "subject": "Game Boy: batteries under the plant, the start of Pokemon Red with mini-Gurken"
+    },
+    {
+     "sha": "3a021f232cd9fbf62966ef492b54e6dd23bd5b28",
+     "subject": "Merge origin/main into claude/arcade-machines-gameboy-n1uhod"
+    },
+    {
+     "sha": "71b5990f4b9e8df0aa46aa683a19e27238146a09",
+     "subject": "Log: Game Boy starter scene"
+    },
+    {
+     "sha": "8f5a55b7dcb7bd74269fac6e2ddd082e838abcec",
+     "subject": "Merge origin/claude/arcade-machines-gameboy-n1uhod"
+    },
+    {
+     "sha": "74b2f064bc900e33cf5ec58ca8bf6f0e6413532c",
+     "subject": "Game Boy Color is yellow"
+    },
+    {
+     "sha": "aaded943e184db178f34a974c0cca0c2361e2e00",
+     "subject": "Log: yellow Game Boy"
+    },
+    {
+     "sha": "1fa45e59bcb5b76c7a1897d6ee09849aeb72bd24",
+     "subject": "Log: Gurken, jars, carrying"
+    },
+    {
+     "sha": "e8b505bb027e2f06b624a79b4d905a4866f1ff17",
+     "subject": "Gurk Boy: Gurken in pickle jars, yours named MINI-GURKE and carried"
+    },
+    {
+     "sha": "cbc4a80a5722310286c602bf9595858002158908",
+     "subject": "Merge pull request #107 from fischerq/claude/arcade-machines-gameboy-n1uhod"
+    },
+    {
+     "sha": "5ea54217d89d2210b145fd113b9077c4ba7e3ccb",
+     "subject": "Merge origin/main into ccr-368b67e4-ewfd82"
+    }
+   ],
    "entrypoint": "remote_mobile",
    "branch": "ccr-33a95e3c-6i9j5t",
    "plan_usage": {
@@ -204,19 +292,89 @@
      "delta": 0.05
     }
    }
+  },
+  {
+   "index": 3,
+   "seq": 114,
+   "date": "2026-10-20",
+   "duration_s": 170,
+   "prompt": "Make the cloud smaller, move it off-center. Add a small moon above as well.\n\nThe mane doesnt flow nicely. Maybe make it a bit shorter and split into more strands?",
+   "followups": [
+    {
+     "text": "Ads a few Gänseblümchen in the meadow",
+     "after_reply_index": 1
+    }
+   ],
+   "images": [],
+   "claude_images": [
+    "media/01f0c190-3-c1.jpg"
+   ],
+   "reply": "Every mane color now shows as a band, and the daisies read as small white flowers with yellow centers. Re-checking the hair collision, then docs and PR.",
+   "progress_notes": [
+    "PR #108 is merged too, so the branch restarts from main again. Now: a smaller cloud moved off to the left, a small moon up top, and a mane of 12 shorter strands.",
+    "Adding a few daisies (Gänseblümchen) on the meadow too: each one is four white petal spheres around a yellow center, sitting on the hill's surface.",
+    "The moon and cloud look right. The daisies are too small to tell apart from glitter, and the mane reads as a lump at the neck, so I'm zooming in on the neck.",
+    "Found it: the strands hang straight down the back of the neck, so the top (red) one covers the rest. I'll angle them backward like a crest so every color shows as a band, and make the daisies bigger."
+   ],
+   "tools": {
+    "Bash": 8,
+    "Read": 3,
+    "mcp__claude-code-remote__list_events": 2
+   },
+   "api_requests": 10,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 20,
+     "cache_write_5m": 0,
+     "cache_write_1h": 13878,
+     "cache_read": 1829827,
+     "output": 7956,
+     "thinking": 2564,
+     "cost_usd": 0.636189
+    }
+   },
+   "cost_usd": 0.636189,
+   "commits": [
+    {
+     "sha": "4cd4a167a3aec19b523aa6bbc5345bc1394bd2b0",
+     "subject": "Playtest fixes: lobby crash after a lever pull, credits stuck on the second roll, cabinet NEED COINS gone on the second visit"
+    },
+    {
+     "sha": "0099f17f9a39f22ad35f31bed69b2b6d04a8f213",
+     "subject": "Merge pull request #110 from fischerq/ccr-368b67e4-ewfd82"
+    },
+    {
+     "sha": "a6234d3f52347ce5d1ae3d6bce1e6fc6650d7992",
+     "subject": "Merge origin/main into ccr-33a95e3c-6i9j5t"
+    }
+   ],
+   "entrypoint": "remote_mobile",
+   "branch": "ccr-33a95e3c-6i9j5t",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.17,
+     "end": 0.19,
+     "delta": 0.02
+    },
+    "seven_day": {
+     "start": 0.5,
+     "end": 0.51,
+     "delta": 0.01
+    }
+   }
   }
  ],
  "totals": {
-  "prompts": 2,
-  "cost_usd": 3.626791,
-  "output_tokens": 46414,
-  "input_tokens": 8495431
+  "prompts": 3,
+  "cost_usd": 4.369562,
+  "output_tokens": 55645,
+  "input_tokens": 10690787
  },
  "reported_by_claude_code": {
-  "total_usd": 1.7022423000000002,
+  "total_usd": 3.8084088999999994,
   "by_model": {
    "claude-haiku-5-5": 0.000133,
-   "claude-opus-5-5": 1.702109
+   "claude-opus-5-5": 3.808276
   }
  }
 }

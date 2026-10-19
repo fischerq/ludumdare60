@@ -617,6 +617,9 @@ export const HALL = {
       glitter4: [0x584080, 0x584080, 0xd0a0ff, 0xf4e8ff],
       glass: [0x9ac8e0, 0x18303f, 0x1c3448, 0xffffff], // rim, (unused), water, shine
       cloud: [0x6c84a8, 0xbccce4, 0xe8f0fa, 0xffffff],
+      moon: [0x7a6a30, 0xd8c878, 0xf4e8a8, 0xfffbe0],
+      daisy: [0x7888a0, 0xd8dce8, 0xf4f6fc, 0xffffff],
+      daisyHeart: [0x8a5a08, 0xd09a20, 0xffd23f, 0xfff4c0],
     },
     // The note taped under the base (assets/arcade/globe-note.png): flip the globe over to read it.
     note: {
