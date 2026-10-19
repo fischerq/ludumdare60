@@ -13,10 +13,10 @@ export const COLORS = {
   door: 0xffb8de,
   mazeFlash: 0xdedede,  // the maze blinks this color when it's cleared
   dot: 0xffb897,
-  pac: 0xffff00,
-  ghosts: { blinky: 0xff0000, pinky: 0xffb8de, inky: 0x00ffde, clyde: 0xffb847 },
-  eyeWhite: 0xdedede,
-  pupil: 0x2121de,
+  pac: 0xffde00,      // Max's Pac-Man yellow
+  ghosts: { blinky: 0xd32734, pinky: 0xffb8de, inky: 0x00ffde, clyde: 0xffb847 },
+  eyeWhite: 0xfdfdf8,  // ghost eyes as Max drew Blinky and Clyde
+  pupil: 0x2d93dd,
   fright: 0x2121de,
   frightFace: 0xffb897,
   frightFlash: 0xdedede,
