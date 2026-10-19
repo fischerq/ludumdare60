@@ -66,14 +66,15 @@ the arcade as a place.
   [service manual](manual.md) over the paused hall.
 - **The snow globe** (`w`, bottom left corner): a pink base, a white unicorn with a rainbow mane and tail, lots of
   glitter. Talking to it: one line with the note taped to the bottom ("MY SISTER LOVED THIS ONE AS A KID."), then
-  LOOK CLOSER / CLOSE. LOOK CLOSER shows it big over the dimmed hall (`arcade/globe-big`, 96x112): drag sideways to
-  turn it (it rights itself when let go), tap it to shake, tap outside to put it down. Turning stirs the water and
-  the glitter flies, then slowly settles (rules in `src/systems/globe.js`, numbers in `HALL.globe`); a soft chime
-  plays. The note is in the text only. *(Quirin, defaults accepted 2026-10-19)*
-  - **3D close-up** *(decided, Quirin, defaults accepted 2026-10-19)*: LOOK CLOSER now shows the globe in 3D by
-    default; a big button under the hint switches to the FLAT picture above and back (F on a keyboard). The globe is
+  LOOK CLOSER / CLOSE. LOOK CLOSER shows it big over the dimmed hall: turn it, tap it to shake, tap outside to put
+  it down. Turning stirs the water and the glitter flies, then slowly settles; a soft chime plays. The note is in the
+  text only. *(Quirin, defaults accepted 2026-10-19)*
+  - **3D close-up** *(decided, Quirin, defaults accepted 2026-10-19)*: LOOK CLOSER shows the globe in 3D (the FLAT
+    picture and its switch are gone). The camera looks down on it from a little above (`HALL.globe3d.pitch`), so the
+    settled globe shows the top of the snow and the base's rim. The glass (44 px radius) and the unicorn are about
+    a fifth bigger than at first; the base kept its size. The globe is
     a model of colored spheres (`src/settings/globe-model.json`: unicorn shapes, mane and tail strands, the snowy
-    mound and the base) drawn by a small pixel renderer (`src/systems/globeRender.js`, 136x136 art px at the hall's
+    mound and the base) drawn by a small pixel renderer (`src/systems/globeRender.js`, 152x152 art px at the hall's
     4x): three light bands per part with a 2x2 dither at their edges, a 1 px outline wherever the depth jumps,
     glitter as single pixels, the glass rim and a shine that stays put while the globe turns. Colors come from
     `assets/arcade/globe-palette.png` (one row per part: outline, dark, mid, light; rows in `HALL.globe3d.palette`).
@@ -149,4 +150,5 @@ the arcade as a place.
 - 2026-10-19: A snow globe in the bottom left corner (pink base, white unicorn with rainbow mane and tail, glitter), with a note taped to the bottom; LOOK CLOSER to turn and shake it and make the glitter fly. Defaults accepted (place, close-up overlay, tilt and shake instead of a full spin, note in the text, a chime). (Quirin)
 - 2026-10-19: The snow globe close-up in 3D (sphere model drawn as pixel art, grab-anywhere rotation, heavy base that rights it, simulated glitter, mane and tail, tap to jolt), with a 3D/FLAT switch to the old picture. Defaults accepted (own renderer, 136 px, palette PNG + model JSON for Max, no bench). (Quirin)
 - 2026-10-19: More decoration: a long-limbed red/pink plush rabbit, an Urmel figurine on a stand that cycles iceberg with egg, egg under a blanket, small Urmel with a milk bottle, Urmel saying OKOPUSPAPAT, a blue paper on the floor saying BLAU! (10% GRÜN!), an old Anna and Elsa sweater on the side. (Quirin) Claude picked the spots (rabbit under the claw machine, Urmel in the bottom right corner, paper below the rug, sweater on the back wall's right side).
+- 2026-10-19: Snow globe close-up: glass and unicorn bigger (glass radius 36 to 44, unicorn scaled with it), base unchanged; the camera looks down from a little above (0.35 rad) so the settled globe is seen diagonally from above; the FLAT mode and its switch dropped. (Quirin)
 - 2026-10-19: The other cabinets become playable, one level each for a coin (Space Invaders, Asteroids, Donkey Kong); Galaxian is broken and eats the coin; a Game Boy Color with Pokemon Red lies on the floor, batteries dead; walking into our cabinet zooms straight down, talking to it asks PLAY / NOT NOW; a mini-Gurke hidden in each game; each machine gets its own background track. Defaults accepted (full-screen scene per game, touch controls, no reward, no bot). (Quirin) Claude picked where the mini-Gurke hides in each game and wrote the dialog lines.

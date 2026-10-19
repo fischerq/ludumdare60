@@ -2,7 +2,7 @@ import { GAME_WIDTH, GAME_HEIGHT, COLORS, LOBBY, PIXEL, UI } from '../config.js'
 import { createHall, stepHall, facing, pacPos } from '../systems/hall.js';
 import { wireMask, ghostWire, subsystemOf, subsystemTiles, standFor, ghostFacing } from '../systems/lobby.js';
 import { tileKey } from '../systems/tiles.js';
-import { charFrame } from '../systems/anim.js';
+import { charFrame, PAC_CYCLE } from '../systems/anim.js';
 import { DEEP_LAYERS } from '../systems/layers/index.js';
 import {
   ORDER, isUnlocked, isWon, allWon, isAdderWon, isSwitchOn, markAdderWon, setSwitch, isHard, isHardWon, lamps, setLamp,
@@ -10,6 +10,9 @@ import {
 import { world, setLevel256 } from '../systems/arcade/world.js';
 import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
 import { addLayerButtonAt } from '../layerButton.js';
+
+// board/pac-* face right: mirrored for left, turned for up and down (like the maze's Pac-Man).
+const PAC_TURN = { up: -Math.PI / 2, down: Math.PI / 2 };
 
 const T = PIXEL.tile;
 const KEYS = {
@@ -77,7 +80,7 @@ export default class LobbyScene extends Phaser.Scene {
     this.introT = this.from ? 0 : 1;
 
     const actor = (key) => this.add.image(0, 0, key);
-    this.pac = actor('arcade/pac-up-0');
+    this.pac = actor('board/pac-3');
     // The four ghosts on their wires to the brain, looking at it.
     this.ghosts = [];
     this.h.rows.forEach((row, y) => [...row].forEach((c, x) => {
@@ -446,8 +449,9 @@ export default class LobbyScene extends Phaser.Scene {
     this.refreshSubsystems();
 
     const p = this.h.pac;
-    const frame = p.moving ? charFrame('pac', (p.steps + p.t) / LOBBY.walkSpeed, 2) : 0;
-    this.place(this.pac.setTexture(`arcade/pac-${p.dir === 'left' ? 'right' : p.dir}-${frame}`).setFlipX(p.dir === 'left'), pacPos(this.h));
+    // The maze's round Pac-Man in the board's colors, turned like in the maze; standing still, his mouth stays half open.
+    const frame = p.moving ? PAC_CYCLE[charFrame('pac', (p.steps + p.t) / LOBBY.walkSpeed, PAC_CYCLE.length)] : LOBBY.pacIdleFrame;
+    this.place(this.pac.setTexture(`board/pac-${frame}`).setFlipX(p.dir === 'left').setRotation(PAC_TURN[p.dir] ?? 0), pacPos(this.h));
     if (this.mecha) this.place(this.mecha.s.setTexture(`board/mecha-${world.halted ? 1 : Math.floor(this.t * LOBBY.mechaRate) % 2}`), this.mecha);
     for (const g of this.ghosts) this.place(g.s.setTexture(`maze/ghost-${g.name}-${g.dir}-${charFrame(g.name, this.t, 2)}`), g);
     this.updateCamera();
