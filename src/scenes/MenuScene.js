@@ -1,4 +1,4 @@
-import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, PIXEL, UI } from '../config.js';
+import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, PIXEL, UI, MENU } from '../config.js';
 import { unlockAudio, setBed, audioRunning, isMuted } from '../sound.js';
 import { fxSeconds, animFrame, PAC_CYCLE } from '../systems/anim.js';
 
@@ -13,29 +13,36 @@ export default class MenuScene extends Phaser.Scene {
     setBed('menu');
     unlockAudio();
     const cx = GAME_WIDTH / 2;
-    const cy = GAME_HEIGHT / 2;
 
-    this.add.text(cx, cy - 300, GAME_TITLE.toUpperCase(), {
+    this.add.text(cx, MENU.titleY, GAME_TITLE.toUpperCase(), {
       fontFamily: UI.arcadeFont, fontSize: 48, color: COLORS.textReady,
     }).setOrigin(0.5);
 
-    // The cast, arcade attract-screen style.
-    const sprite = (x, key) => this.add.image(x, cy - 100, key)
-      .setScale(PIXEL.sprite * PIXEL.zoom / this.textures.get(key).getSourceImage().width);
+    // The big layer cake with the arcade machine standing on top, both 1:1.
+    this.add.image(MENU.cakeX, MENU.cakeY, 'menu/cake').setOrigin(0);
+    this.add.image(MENU.machineX, MENU.machineY, 'cabinet/machine').setOrigin(0);
+
+    // The machine's screen runs the attract show: the cast chases across a row of dots, clipped to the picture.
+    const S = MENU.screen, sx = MENU.machineX + S.x, sy = MENU.machineY + S.y;
+    this.screen = { x: sx, w: S.w };
+    const clip = this.make.graphics({ add: false }).fillRect(sx, sy, S.w, S.h).createGeometryMask();
+    const rowY = sy + MENU.castY;
+    this.dots = [];
+    for (let x = sx + MENU.dotGap / 2; x < sx + S.w; x += MENU.dotGap) {
+      this.dots.push(this.add.image(x, rowY, 'maze/dot'));
+    }
     // Animated like in the maze: a single still frame of Max's chomp can read oddly on its own.
-    this.pac = sprite(cx - 180, 'maze/pac-0');
-    this.ghosts = Object.keys(COLORS.ghosts).map((name, i) => [name, sprite(cx - 60 + i * 80, `maze/ghost-${name}-left-0`)]);
+    const sprite = (key) => this.add.image(0, rowY, key).setMask(clip)
+      .setScale(PIXEL.sprite / this.textures.get(key).getSourceImage().width);
+    this.pac = sprite('maze/pac-0');
+    this.ghosts = Object.keys(COLORS.ghosts).map((name) => [name, sprite(`maze/ghost-${name}-right-0`)]);
     this.t = 0;
 
-    const prompt = this.add.text(cx, cy + 120, 'TAP TO START', {
-      fontFamily: UI.arcadeFont, fontSize: 36, color: COLORS.text,
-    }).setOrigin(0.5);
+    const prompt = this.add.text(sx + S.w / 2, sy + MENU.promptY, 'TAP TO\nSTART', {
+      fontFamily: UI.arcadeFont, fontSize: MENU.promptSize, color: COLORS.text, align: 'center',
+    }).setOrigin(0.5).setLineSpacing(12);
 
     this.tweens.add({ targets: prompt, alpha: 0.2, duration: fxSeconds('tapPrompt') * 1000, yoyo: true, repeat: -1 });
-
-    this.add.text(cx, GAME_HEIGHT - 260, 'SWIPE TO TURN\nEAT ALL THE DOTS', {
-      fontFamily: UI.arcadeFont, fontSize: 24, color: COLORS.textDim, align: 'center',
-    }).setOrigin(0.5).setLineSpacing(16);
 
     // Footer links in one row. Big padded hit areas; tapping one must not start the game.
     const links = [['Making-Of', './making-of/'], ['Lab', './lab/'], ['Impressum', './impressum/']].map(([label, url], i) => {
@@ -63,7 +70,14 @@ export default class MenuScene extends Phaser.Scene {
 
   update(_time, delta) {
     this.t += delta / 1000;
+    // The cast runs left to right (Pac-Man in front, the ghosts after him), eats the dots and comes round again.
+    const { x, w } = this.screen, n = this.ghosts.length;
+    const lap = w + (n + 2) * MENU.castGap;
+    const pacX = x - MENU.castGap + ((this.t * MENU.castSpeed) % lap);
+    this.pac.x = Math.round(pacX);
+    this.ghosts.forEach(([, g], i) => { g.x = Math.round(pacX - (i + 2) * MENU.castGap); });
+    this.dots.forEach((dot) => dot.setVisible(dot.x > pacX));
     this.pac.setTexture(`maze/pac-${PAC_CYCLE[animFrame(this.t, UI.menuPacAnim, PAC_CYCLE.length)]}`);
-    this.ghosts.forEach(([name, g]) => g.setTexture(`maze/ghost-${name}-left-${animFrame(this.t, UI.menuGhostAnim, 2)}`));
+    this.ghosts.forEach(([name, g]) => g.setTexture(`maze/ghost-${name}-right-${animFrame(this.t, UI.menuGhostAnim, 2)}`));
   }
 }

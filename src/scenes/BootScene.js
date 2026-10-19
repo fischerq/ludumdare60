@@ -1,4 +1,4 @@
-import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP, LOBBY, LEVELS, ADDER } from '../config.js';
+import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP, LOBBY, LEVELS, ADDER, MENU } from '../config.js';
 import { tinyText } from '../systems/layers/font.js';
 import { mazeTiles, tileKey } from '../systems/tiles.js';
 import { world } from '../systems/arcade/world.js';
@@ -63,6 +63,7 @@ export default class BootScene extends Phaser.Scene {
     this.makeDeep();
     this.makeBoard();
     this.makeAdder();
+    this.makeCake();
     // Wait for the arcade font so text doesn't render in the fallback first (give up after 2 s).
     const font = document.fonts?.load(`8px ${UI.arcadeFont}`) ?? Promise.resolve();
     const timeout = new Promise((r) => setTimeout(r, 2000));
@@ -126,6 +127,74 @@ export default class BootScene extends Phaser.Scene {
         if (dx * dx + dy * dy <= r * r) set(x, y, color);
       }
     }
+  }
+
+  // The start screen's layer cake (MENU.cake, shown 1:1): an oblique slab like the cabinet, one band per layer of
+  // the game, top to bottom, on a plate. The machine stands on its top (drawn by the scene).
+  makeCake() {
+    const C = MENU.cake, d = C.depth, total = C.layers.reduce((a, l) => a + l.h, 0);
+    const L = C.rim + 8, R = L + C.w, yt = d / 2 + 2, yb = yt + total;
+    const P = (x, y, dd) => [x + dd / 2, y - dd / 2];
+    const W = R + C.rim + (d + 16) / 2 + 4, H = yb + 8 + 8 + 4;
+    const rect = (set, x, y, w, h, c) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) set(i, j, c); };
+    const text = (set, str, x, y, k, color) => tinyText({ fillRect: (fx, fy, w, h) => rect(set, fx, fy, w, h, color) }, str, x, y, k);
+    this.pixels('menu/cake', W, H, (set) => {
+      // Plate: a thin slab sticking out around the cake.
+      const p0 = L - C.rim, p1 = R + C.rim;
+      this.poly(set, [P(p1, yb, -16), P(p1, yb, d + 16), P(p1, yb + 8, d + 16), P(p1, yb + 8, -16)], C.plateSide);
+      this.poly(set, [P(p0, yb, -16), P(p1, yb, -16), P(p1, yb, d + 16), P(p0, yb, d + 16)], C.plate);
+      this.poly(set, [P(p0, yb, -16), P(p1, yb, -16), P(p1, yb + 8, -16), P(p0, yb + 8, -16)], C.plateSide);
+      // The bands: front face and right side.
+      let y = yt;
+      const band = {};
+      for (const l of C.layers) {
+        this.poly(set, [[R, y], P(R, y, d), P(R, y + l.h, d), [R, y + l.h]], l.side);
+        rect(set, L, y, C.w, l.h, l.front);
+        band[l.name] = { y, h: l.h, ...l };
+        y += l.h;
+      }
+      this.poly(set, [[L, yt], [R, yt], P(R, yt, d), P(L, yt, d)], C.top);
+      // The cabinet: frosting running down over it.
+      const f = band.frosting, cab = band.cabinet;
+      for (let x = L + 6, i = 0; x < R - 14; x += 26, i++) {
+        const len = 8 + ((i * 7) % 5) * 5;
+        rect(set, x, cab.y, 12, len, C.drip);
+        rect(set, x + 2, cab.y + len, 8, 2, C.drip);
+      }
+      rect(set, L, f.y + f.h - 2, C.w, 2, C.drip);
+      // Sprinkles on top.
+      for (let i = 0; i < 60; i++) {
+        const u = ((i * 97) % 101) / 101, v = ((i * 61) % 53) / 53;
+        const [sx, sy] = P(L + 10 + u * (C.w - 20), yt, 6 + v * (d - 12));
+        const c = C.sprinkles[i % C.sprinkles.length];
+        if (i % 2) rect(set, Math.round(sx), Math.round(sy), 4, 2, c); else rect(set, Math.round(sx), Math.round(sy), 2, 4, c);
+      }
+      // The maze: double walls along the top and bottom, a row of dots with power pellets.
+      const m = band.maze;
+      for (const wy of [m.y + 5, m.y + 9, m.y + m.h - 11, m.y + m.h - 7]) rect(set, L, wy, C.w, 2, m.line);
+      for (let x = L + 16, i = 0; x < R - 8; x += 24, i++) {
+        if (i % 6 === 2) { rect(set, x - 4, m.y + m.h / 2 - 2, 8, 4, m.dot); rect(set, x - 2, m.y + m.h / 2 - 4, 4, 8, m.dot); }
+        else rect(set, x - 2, m.y + m.h / 2 - 2, 4, 4, m.dot);
+      }
+      // The board: copper traces with vias between black chips.
+      const b = band.board;
+      for (let k = 0; k < 3; k++) {
+        const ty = b.y + 12 + k * 20;
+        rect(set, L, ty, C.w, 2, b.line);
+        for (let x = L + 30 + k * 40; x < R - 8; x += 130) { rect(set, x - 3, ty - 3, 8, 8, b.line); rect(set, x - 1, ty - 1, 4, 4, b.front); }
+      }
+      for (let x = L + 70; x + 48 < R; x += 150) {
+        rect(set, x, b.y + 16, 48, 32, 0x111111);
+        for (let px = x + 4; px < x + 46; px += 8) { rect(set, px, b.y + 12, 3, 4, 0xc8c8c8); rect(set, px, b.y + 48, 3, 4, 0xc8c8c8); }
+        rect(set, x + 3, b.y + 19, 3, 3, 0x555555);
+      }
+      // The deep layers: bits.
+      const dp = band.deep;
+      const bits = '0110100011010010111001011000110100101110';
+      for (let r = 0; r < 3; r++) {
+        text(set, bits.slice(r * 7) + bits.slice(0, r * 7), L + 10, dp.y + 8 + r * 16, 3, r === 1 ? COLORS.pac : dp.line);
+      }
+    });
   }
 
   // The arcade hall (layer 3), a cozy top-down room: tileset assets/arcade/ (16x16 each), plus the coin.
