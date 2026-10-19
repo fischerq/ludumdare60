@@ -1,0 +1,535 @@
+{
+ "generated": "2026-10-19",
+ "knob": "all",
+ "runs": 20,
+ "seed": 1,
+ "levels": [
+  0,
+  0.25,
+  0.5,
+  0.75,
+  1
+ ],
+ "set": [],
+ "hard": true,
+ "layers": {
+  "crt": [
+   {
+    "level": 0,
+    "winRate": 1,
+    "time": {
+     "p25": 28.8,
+     "median": 28.8,
+     "p75": 28.8
+    },
+    "hits": 0.1,
+    "swipesPerSec": 2.77,
+    "results": {
+     "win": 20
+    }
+   },
+   {
+    "level": 0.25,
+    "winRate": 1,
+    "time": {
+     "p25": 28.8,
+     "median": 33.8,
+     "p75": 48.8
+    },
+    "hits": 0.45,
+    "swipesPerSec": 1.7,
+    "results": {
+     "win": 20
+    }
+   },
+   {
+    "level": 0.5,
+    "winRate": 1,
+    "time": {
+     "p25": 36.3,
+     "median": 48.8,
+     "p75": 81.3
+    },
+    "hits": 2.3,
+    "swipesPerSec": 1.41,
+    "results": {
+     "win": 20
+    }
+   },
+   {
+    "level": 0.75,
+    "winRate": 0.75,
+    "time": {
+     "p25": 52.4,
+     "median": 88.8,
+     "p75": 138.8
+    },
+    "hits": 6.65,
+    "swipesPerSec": 1.14,
+    "results": {
+     "win": 15,
+     "timeout": 5
+    }
+   },
+   {
+    "level": 1,
+    "winRate": 0.65,
+    "time": {
+     "p25": 58.8,
+     "median": 84.9,
+     "p75": 128.8
+    },
+    "hits": 7.7,
+    "swipesPerSec": 0.95,
+    "results": {
+     "win": 13,
+     "timeout": 7
+    }
+   }
+  ],
+  "signals": [
+   {
+    "level": 0,
+    "winRate": 1,
+    "time": {
+     "p25": 84.3,
+     "median": 94,
+     "p75": 102.8
+    },
+    "hits": 0,
+    "swipesPerSec": 1.36,
+    "results": {
+     "win": 20
+    }
+   },
+   {
+    "level": 0.25,
+    "winRate": 0.1,
+    "time": {
+     "p25": 153.6,
+     "median": 158.2,
+     "p75": 162.9
+    },
+    "hits": 0,
+    "swipesPerSec": 1.42,
+    "results": {
+     "timeout": 18,
+     "win": 2
+    }
+   },
+   {
+    "level": 0.5,
+    "winRate": 0,
+    "time": {
+     "p25": null,
+     "median": null,
+     "p75": null
+    },
+    "hits": 0,
+    "swipesPerSec": 1.82,
+    "results": {
+     "timeout": 20
+    }
+   },
+   {
+    "level": 0.75,
+    "winRate": 0,
+    "time": {
+     "p25": null,
+     "median": null,
+     "p75": null
+    },
+    "hits": 0,
+    "swipesPerSec": 1.59,
+    "results": {
+     "timeout": 20
+    }
+   },
+   {
+    "level": 1,
+    "winRate": 0,
+    "time": {
+     "p25": null,
+     "median": null,
+     "p75": null
+    },
+    "hits": 0,
+    "swipesPerSec": 1.21,
+    "results": {
+     "timeout": 20
+    }
+   }
+  ],
+  "ram": [
+   {
+    "level": 0,
+    "winRate": 1,
+    "time": {
+     "p25": 9.5,
+     "median": 9.9,
+     "p75": 10.3
+    },
+    "hits": 0.05,
+    "swipesPerSec": 2.19,
+    "results": {
+     "win": 20
+    }
+   },
+   {
+    "level": 0.25,
+    "winRate": 1,
+    "time": {
+     "p25": 10.7,
+     "median": 11.8,
+     "p75": 12.4
+    },
+    "hits": 0,
+    "swipesPerSec": 1.74,
+    "results": {
+     "win": 20
+    }
+   },
+   {
+    "level": 0.5,
+    "winRate": 1,
+    "time": {
+     "p25": 25.5,
+     "median": 29.1,
+     "p75": 36.4
+    },
+    "hits": 0.25,
+    "swipesPerSec": 2.06,
+    "results": {
+     "win": 20
+    }
+   },
+   {
+    "level": 0.75,
+    "winRate": 0.8,
+    "time": {
+     "p25": 73.4,
+     "median": 105.2,
+     "p75": 137.6
+    },
+    "hits": 1.2,
+    "swipesPerSec": 1.59,
+    "results": {
+     "win": 16,
+     "timeout": 4
+    }
+   },
+   {
+    "level": 1,
+    "winRate": 0.2,
+    "time": {
+     "p25": 101.2,
+     "median": 114.1,
+     "p75": 133.6
+    },
+    "hits": 1.75,
+    "swipesPerSec": 1.19,
+    "results": {
+     "timeout": 16,
+     "win": 4
+    }
+   }
+  ],
+  "bus": [
+   {
+    "level": 0,
+    "winRate": 1,
+    "time": {
+     "p25": 21.1,
+     "median": 24.2,
+     "p75": 33.9
+    },
+    "hits": 0.65,
+    "swipesPerSec": 29.5,
+    "results": {
+     "win": 20
+    }
+   },
+   {
+    "level": 0.25,
+    "winRate": 1,
+    "time": {
+     "p25": 26.7,
+     "median": 36.6,
+     "p75": 45.7
+    },
+    "hits": 1.7,
+    "swipesPerSec": 3.51,
+    "results": {
+     "win": 20
+    }
+   },
+   {
+    "level": 0.5,
+    "winRate": 0.95,
+    "time": {
+     "p25": 68.6,
+     "median": 88.7,
+     "p75": 134.2
+    },
+    "hits": 9,
+    "swipesPerSec": 1.96,
+    "results": {
+     "win": 19,
+     "timeout": 1
+    }
+   },
+   {
+    "level": 0.75,
+    "winRate": 0.05,
+    "time": {
+     "p25": 139,
+     "median": 139,
+     "p75": 139
+    },
+    "hits": 8,
+    "swipesPerSec": 1.65,
+    "results": {
+     "timeout": 19,
+     "win": 1
+    }
+   },
+   {
+    "level": 1,
+    "winRate": 0,
+    "time": {
+     "p25": null,
+     "median": null,
+     "p75": null
+    },
+    "hits": 8.75,
+    "swipesPerSec": 1.3,
+    "results": {
+     "timeout": 20
+    }
+   }
+  ],
+  "cpu": [
+   {
+    "level": 0,
+    "winRate": 1,
+    "time": {
+     "p25": 17.9,
+     "median": 18,
+     "p75": 24.2
+    },
+    "hits": 1.65,
+    "swipesPerSec": 3.05,
+    "results": {
+     "win": 20
+    }
+   },
+   {
+    "level": 0.25,
+    "winRate": 1,
+    "time": {
+     "p25": 19.9,
+     "median": 24.4,
+     "p75": 52.8
+    },
+    "hits": 8.65,
+    "swipesPerSec": 1.24,
+    "results": {
+     "win": 20
+    }
+   },
+   {
+    "level": 0.5,
+    "winRate": 1,
+    "time": {
+     "p25": 35.5,
+     "median": 71.4,
+     "p75": 122.1
+    },
+    "hits": 16.15,
+    "swipesPerSec": 1.35,
+    "results": {
+     "win": 20
+    }
+   },
+   {
+    "level": 0.75,
+    "winRate": 0.4,
+    "time": {
+     "p25": 54.7,
+     "median": 77,
+     "p75": 96.1
+    },
+    "hits": 23.9,
+    "swipesPerSec": 1.2,
+    "results": {
+     "win": 8,
+     "timeout": 12
+    }
+   },
+   {
+    "level": 1,
+    "winRate": 0.35,
+    "time": {
+     "p25": 66.1,
+     "median": 96.8,
+     "p75": 104.7
+    },
+    "hits": 25.3,
+    "swipesPerSec": 0.95,
+    "results": {
+     "timeout": 13,
+     "win": 7
+    }
+   }
+  ],
+  "logic": [
+   {
+    "level": 0,
+    "winRate": 1,
+    "time": {
+     "p25": 24.1,
+     "median": 29.2,
+     "p75": 42.2
+    },
+    "hits": 0,
+    "swipesPerSec": 18.25,
+    "results": {
+     "win": 20
+    }
+   },
+   {
+    "level": 0.25,
+    "winRate": 1,
+    "time": {
+     "p25": 18.2,
+     "median": 30,
+     "p75": 54.7
+    },
+    "hits": 0.9,
+    "swipesPerSec": 2.87,
+    "results": {
+     "win": 20
+    }
+   },
+   {
+    "level": 0.5,
+    "winRate": 0.95,
+    "time": {
+     "p25": 33.3,
+     "median": 49,
+     "p75": 64.2
+    },
+    "hits": 3.2,
+    "swipesPerSec": 1.82,
+    "results": {
+     "win": 19,
+     "timeout": 1
+    }
+   },
+   {
+    "level": 0.75,
+    "winRate": 0.9,
+    "time": {
+     "p25": 35.1,
+     "median": 65,
+     "p75": 154.9
+    },
+    "hits": 3.7,
+    "swipesPerSec": 1.32,
+    "results": {
+     "win": 18,
+     "timeout": 2
+    }
+   },
+   {
+    "level": 1,
+    "winRate": 0.9,
+    "time": {
+     "p25": 55.9,
+     "median": 131.7,
+     "p75": 157.5
+    },
+    "hits": 5.75,
+    "swipesPerSec": 1.01,
+    "results": {
+     "win": 18,
+     "timeout": 2
+    }
+   }
+  ],
+  "input": [
+   {
+    "level": 0,
+    "winRate": 1,
+    "time": {
+     "p25": 26.5,
+     "median": 26.5,
+     "p75": 26.6
+    },
+    "hits": 0,
+    "swipesPerSec": 1.25,
+    "results": {
+     "win": 20
+    }
+   },
+   {
+    "level": 0.25,
+    "winRate": 1,
+    "time": {
+     "p25": 29.4,
+     "median": 30,
+     "p75": 31.5
+    },
+    "hits": 0,
+    "swipesPerSec": 1.3,
+    "results": {
+     "win": 20
+    }
+   },
+   {
+    "level": 0.5,
+    "winRate": 1,
+    "time": {
+     "p25": 38.6,
+     "median": 42.1,
+     "p75": 43.9
+    },
+    "hits": 0.7,
+    "swipesPerSec": 1.28,
+    "results": {
+     "win": 20
+    }
+   },
+   {
+    "level": 0.75,
+    "winRate": 1,
+    "time": {
+     "p25": 48.6,
+     "median": 71,
+     "p75": 99.2
+    },
+    "hits": 1.75,
+    "swipesPerSec": 1.22,
+    "results": {
+     "win": 20
+    }
+   },
+   {
+    "level": 1,
+    "winRate": 0.45,
+    "time": {
+     "p25": 79.5,
+     "median": 92,
+     "p75": 138.1
+    },
+    "hits": 4.55,
+    "swipesPerSec": 1.15,
+    "results": {
+     "timeout": 11,
+     "win": 9
+    }
+   }
+  ]
+ },
+ "seconds": 1518
+}

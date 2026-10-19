@@ -80,6 +80,20 @@ player who knows the game".*
   0). Adder 100/100/80/0/0. Every deep layer is cleared at 0.25 in under 30 s median. **Not measured:** the video
   board (signals) bot is out of date since that layer's rework (it calls `inPulse`, and the layer needs a DOM canvas
   for its tile snapshot), and the full playthrough crashes on it, so there is no end-to-end number this round.
+- 2026-10-19 (video board bot fixed, whole-game playthrough, hard sweep): win rate at noise 0 / 0.25 / 0.5 / 0.75 / 1.
+  Video board 100/100/35/0/0 (median 37 / 53 / 137 s): a perfect run needs about 9 s per delivery against the 12 s
+  frame timer, so a slower player loses most frames; the tightest layer by far. Other layers as in the line above.
+  **Hard mode** (`--hard`, the hard blocks as they are): screen 100/100/100/75/65, video board 100/10/0/0/0 (the 9 s
+  timer is shorter than a perfect delivery: practically unwinnable), RAM 100/100/100/80/20 (no slower than
+  normal), bus 100/100/95/5/0, CPU 100/100/100/40/35 (hits 0.5 → 8.7 at 0.25), logic 100/100/95/90/90, input
+  100/100/100/100/45. **Playthrough** to the credits: 25% at noise 0 (median 583 s, about 10 min) and 25% at 0.25
+  (922 s, about 15 min); from 0.5 up the maze isn't cleared with the coins there are. Losses: at 0 the logic layer
+  hits its 180 s cap (12 of 20 in hard, 3 in normal), at 0.25 the hard video board (8) and logic (7). Logic is
+  won every time on its own but slows down a lot after the CPU layer's patches, which stay on (the machine's game
+  changes; noise 0, logic after the CPU: normal 25 to 144 s, hard 3 of 8 runs time out). Median segment times at
+  0.25: maze 91 s, cabinet 81, hall 13, crt 24, signals 47, ram 10, bus 30, cpu 20, logic 122, input 24, adder 48,
+  crt-hard 29, signals-hard 180 (cap), ram-hard 12, bus-hard 31, cpu-hard 20, logic-hard 109, input-hard 26,
+  level 256 67 to 83 s. Hard numbers measured but not retuned (per-layer levels replace them).
 
 ## Slice scope
 - Build: the CLI, the bots, the noise model, the playthrough, the results page.
