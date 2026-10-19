@@ -11,7 +11,17 @@ const hex = (c) => `#${c.toString(16).padStart(6, '0')}`;
 const S = 32;
 const DIRS4 = ['left', 'right', 'up', 'down'];
 const LOOK = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
-const EYE_WHITE = ['.####.', '######', '######', '######', '######', '######', '######', '.####.'];
+// Max's ghost (assets/maze/ghost-blinky-*): the dome above 13 full rows, the skirt per frame, the eyes per direction
+// (w white, p pupil; a small forehead eye and two big ones).
+const GHOST_DOME = ['......########......', '....############....', '...##############...', '...##############...',
+  '..################..', '..################..', '.##################.'];
+const GHOST_SKIRT = [['##.####.####.####.##', '#...##...##...##...#'], ['.####.####.####.####', '..##...##...##...##.']];
+const GHOST_EYES = {
+  right: [['.ww.', 'wwpp', 'wwpp', 'wwpp'], ['.www.', 'wwwww', 'wwppp', 'wwppp', 'wwppp']],
+  left: [['.ww.', 'ppww', 'ppww', 'ppww'], ['.www.', 'wwwww', 'pppww', 'pppww', 'pppww']],
+  down: [['.ww.', 'wppw', 'wppw', 'wppw'], ['.www.', 'wwwww', 'wpppw', 'wpppw', 'wpppw']],
+  up: [['.pp.', 'wppw', 'wwww', 'wwww'], ['.ppp.', 'wpppw', 'wpppw', 'wwwww', 'wwwww']],
+};
 
 // Loads the art from assets/ (one PNG per texture key, listed in assets/export.json) and draws a code
 // placeholder, pixel by pixel at native size, for any key whose file is missing: 16x16 sprites, the 'maze'
@@ -171,7 +181,7 @@ export default class BootScene extends Phaser.Scene {
       for (let y = 3; y < 10; y++) {
         for (let x = 5; x < 12; x++) {
           const dx = x + 0.5 - 8, dy = y + 0.5 - 6.5;
-          if (dx * dx + dy * dy <= 12.5 && !(dx > 0 && Math.abs(dy) < dx)) set(x, y, 0xffff00);
+          if (dx * dx + dy * dy <= 12.5 && !(dx > 0 && Math.abs(dy) < dx)) set(x, y, COLORS.pac);
         }
       }
       rect(set, 4, 10, 8, 1, 0xffb897);
@@ -179,9 +189,12 @@ export default class BootScene extends Phaser.Scene {
     tile('poster-ghost', (set) => {
       wallpaper(set);
       rect(set, 3, 1, 10, 11, 0x101030);
-      rect(set, 5, 4, 6, 6, 0xff0000); rect(set, 6, 3, 4, 1, 0xff0000);
-      set(5, 10, 0xff0000); set(8, 10, 0xff0000); set(10, 10, 0xff0000);
-      rect(set, 6, 5, 2, 2, 0xffffff); rect(set, 9, 5, 1, 2, 0xffffff);
+      // Max's Blinky in small: three eyes looking right.
+      const red = COLORS.ghosts.blinky;
+      rect(set, 5, 4, 6, 6, red); rect(set, 6, 3, 4, 1, red);
+      set(5, 10, red); set(7, 10, red); set(8, 10, red); set(10, 10, red);
+      set(7, 4, COLORS.eyeWhite); set(8, 4, COLORS.pupil);
+      [6, 9].forEach((x) => { set(x - 1, 6, COLORS.eyeWhite); set(x, 6, COLORS.pupil); set(x - 1, 7, COLORS.eyeWhite); set(x, 7, COLORS.pupil); });
     });
     tile('clock', (set) => {
       wallpaper(set);
@@ -521,40 +534,39 @@ export default class BootScene extends Phaser.Scene {
     this.pixels('maze/life', S, S, (set) => this.chomper(set, COLORS.pac, 13.2, 0.6, Math.PI));
   }
 
-  // Ghost body: a dome, straight sides and four skirt teeth that shift half a tooth in frame 1.
-  ghostBody(set, color, f) {
-    for (let y = 2; y < 31; y++) {
-      for (let x = 2; x < 30; x++) {
-        const dx = x + 0.5 - 16, dy = y + 0.5 - 15;
-        if (y < 15 && dx * dx + dy * dy > 14 * 14) continue;
-        if (y >= 27 && y - 26 > 4 - Math.abs(((x - 2 + 0.5 + f * 3.5) % 7) - 3.5)) continue;
-        set(x, y, color);
-      }
-    }
+  // Ghost body after Max's Blinky and Clyde: 20 px wide, a stepped dome, skirt teeth that shift in frame 1. Walking
+  // up or down, the ghost stands a pixel taller (top one row higher). (ox, oy) moves the whole ghost.
+  ghostBody(set, color, f, dir = 'right', ox = 0, oy = 0) {
+    const tall = dir === 'up' || dir === 'down' ? 1 : 0;
+    const rows = [...GHOST_DOME, ...Array(13 + tall).fill('#'.repeat(20)), ...GHOST_SKIRT[f]];
+    this.bitmap(set, rows, color, 6 + ox, 5 - tall + oy);
   }
 
-  // Eyes looking `dir`: the whites shift two pixels that way, the pupils sit at that edge.
-  ghostEyes(set, dir) {
-    const [dx, dy] = LOOK[dir];
-    for (const ex of [8, 18]) {
-      const x0 = ex + dx * 2, y0 = 9 + dy * 2;
-      this.bitmap(set, EYE_WHITE, COLORS.eyeWhite, x0, y0);
-      this.bitmap(set, ['####', '####', '####', '####'], COLORS.pupil, x0 + 1 + dx, y0 + 2 + dy * 2);
-    }
+  // Three eyes looking `dir`, as Max drew them: a small one on the forehead above two big ones.
+  ghostEyes(set, dir, ox = 0, oy = 0) {
+    const tall = dir === 'up' || dir === 'down' ? 1 : 0;
+    const [small, big] = GHOST_EYES[dir];
+    const eye = (rows, x, y) => {
+      this.bitmap(set, rows.map((r) => r.replace(/p/g, '.').replace(/w/g, '#')), COLORS.eyeWhite, x + ox, y - tall + oy);
+      this.bitmap(set, rows.map((r) => r.replace(/w/g, '.').replace(/p/g, '#')), COLORS.pupil, x + ox, y - tall + oy);
+    };
+    eye(small, 14, 10); eye(big, 10, 16); eye(big, 17, 16);
   }
 
   // The maze level's ghosts, one sprite per state: maze/ghost-<name>-<dir>-<frame> (body and eyes),
   // maze/ghost-fright-<frame>, maze/ghost-flash-<frame> (shared by all four), maze/eyes-<dir> (eaten, eyes only).
   makeGhosts() {
+    // Frightened: Max's body with a small face, three square eyes (like his three eyes) and a zigzag mouth.
     const frightened = (set, f, body, face) => {
       this.ghostBody(set, body, f);
-      for (const ex of [10, 18]) this.bitmap(set, ['####', '####', '####', '####'], face, ex, 11);
-      for (let x = 6; x < 26; x++) { const z = Math.floor((x - 6) / 3) % 2 * 2; set(x, 19 + z, face); set(x, 20 + z, face); }
+      this.bitmap(set, ['##', '##'], face, 15, 10);
+      for (const ex of [11, 18]) this.bitmap(set, ['###', '###', '###'], face, ex, 15);
+      for (let x = 8; x < 24; x++) set(x, 21 - Math.floor((x - 8) / 2) % 2, face);
     };
     [0, 1].forEach((f) => {
       for (const [name, color] of Object.entries(COLORS.ghosts)) {
         for (const dir of DIRS4) {
-          this.pixels(`maze/ghost-${name}-${dir}-${f}`, S, S, (set) => { this.ghostBody(set, color, f); this.ghostEyes(set, dir); });
+          this.pixels(`maze/ghost-${name}-${dir}-${f}`, S, S, (set) => { this.ghostBody(set, color, f, dir); this.ghostEyes(set, dir); });
         }
       }
       this.pixels(`maze/ghost-fright-${f}`, S, S, (set) => frightened(set, f, COLORS.fright, COLORS.frightFace));
@@ -570,6 +582,7 @@ export default class BootScene extends Phaser.Scene {
     const K = HALL.colors;
     const rect = (set, x, y, w, h, c) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) set(i, j, c); };
     const feet = (set, f) => { rect(set, 10, f ? 27 : 28, 5, 3, K.shoe); rect(set, 17, f ? 28 : 27, 5, 3, K.shoe); };
+    const shift = (set, ox, oy) => (x, y, c) => set(x + ox, y + oy, c);
     const pac = {
       right: (set, f) => { feet(set, f); this.chomper(set, COLORS.pac, 12.5, f ? 0.6 : 0.2, 0, 16, 15); rect(set, 17, 7, 2, 3, K.pacFace); },
       up: (set, f) => { feet(set, f); this.chomper(set, COLORS.pac, 12.5, 0, 0, 16, 15); },
@@ -581,25 +594,24 @@ export default class BootScene extends Phaser.Scene {
         if (f) rect(set, 13, 20, 6, 2, K.pacFace);
       },
     };
-    const brim = { right: [22, 6, 9, 2], left: [1, 6, 9, 2], down: [6, 7, 20, 2] };
-    const cap = (set, dir) => {
-      for (let y = 1; y < 7; y++) {
-        for (let x = 0; x < S; x++) {
-          const dx = x + 0.5 - 16, dy = y + 0.5 - 15;
-          if (dx * dx + dy * dy <= 14.5 * 14.5) set(x, y, K.cap);
-        }
-      }
-      if (brim[dir]) rect(set, ...brim[dir], K.cap);
-      rect(set, 15, 1, 2, 1, 0xffffff);
+    // The visitors are Max's maze ghosts standing on the hall floor (moved down to Pac-Man's feet) with a cap on,
+    // its brim pointing where they walk (none from behind).
+    const GROUND = 4;
+    const brim = { right: [24, 8, 4, 1], left: [4, 8, 4, 1], down: [9, 8, 14, 1] };
+    const cap = (set, dir, ox = 0, oy = 0) => {
+      const s = shift(set, ox, oy - (dir === 'up' || dir === 'down' ? 1 : 0));
+      [[13, 6], [11, 10], [9, 14], [8, 16], [8, 16], [8, 16]].forEach(([x, w], i) => rect(s, x, 3 + i, w, 1, K.cap));
+      if (brim[dir]) rect(s, ...brim[dir], K.cap);
+      rect(s, 15, 3, 2, 1, 0xffffff);
     };
     [0, 1].forEach((f) => {
       for (const [dir, draw] of Object.entries(pac)) this.pixels(`arcade/pac-${dir}-${f}`, S, S, (set) => draw(set, f));
       for (const [name, color] of Object.entries(COLORS.ghosts)) {
         for (const dir of DIRS4) {
           this.pixels(`arcade/ghost-${name}-${dir}-${f}`, S, S, (set) => {
-            this.ghostBody(set, color, f);
-            if (dir !== 'up') this.ghostEyes(set, dir);
-            cap(set, dir);
+            this.ghostBody(set, color, f, dir, 0, GROUND);
+            if (dir !== 'up') this.ghostEyes(set, dir, 0, GROUND);
+            cap(set, dir, 0, GROUND);
           });
         }
       }
@@ -619,20 +631,18 @@ export default class BootScene extends Phaser.Scene {
 
     // Text box portraits, 48x48 (HALL.portraitSize): each ghost from the front, all four together, the owner.
     const P = HALL.portraitSize;
-    const shift = (set, ox, oy) => (x, y, c) => set(x + ox, y + oy, c);
     const face = (set, name, ox, oy) => {
-      const s = shift(set, ox, oy);
-      this.ghostBody(s, COLORS.ghosts[name], 0);
-      this.ghostEyes(s, 'down');
-      cap(s, 'down');
+      this.ghostBody(set, COLORS.ghosts[name], 0, 'down', ox, oy);
+      this.ghostEyes(set, 'down', ox, oy);
+      cap(set, 'down', ox, oy);
     };
     for (const name of Object.keys(COLORS.ghosts)) {
-      this.pixels(`arcade/portrait-${name}`, P, P, (set) => { rect(set, 0, 0, P, P, K.portraitBg); face(set, name, 8, 12); });
+      this.pixels(`arcade/portrait-${name}`, P, P, (set) => { rect(set, 0, 0, P, P, K.portraitBg); face(set, name, 8, 10); });
     }
     this.pixels('arcade/portrait-ghosts', P, P, (set) => {
       rect(set, 0, 0, P, P, K.portraitBg);
-      face(set, 'pinky', -4, 2); face(set, 'inky', 20, 2);
-      face(set, 'blinky', -8, 20); face(set, 'clyde', 24, 20);
+      face(set, 'pinky', -1, -1); face(set, 'inky', 17, -1);
+      face(set, 'blinky', -6, 18); face(set, 'clyde', 22, 18);
     });
     this.pixels('arcade/portrait-owner', P, P, (set) => {
       rect(set, 0, 0, P, P, K.portraitBg);
