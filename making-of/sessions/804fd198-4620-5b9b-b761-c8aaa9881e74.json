@@ -106,6 +106,14 @@
     {
      "sha": "1a3339eeb0c233d98f353fc7b31de164b957b695",
      "subject": "Maze HUD shows LEVEL n in the top-left corner like the other layers"
+    },
+    {
+     "sha": "bb4a3a7e1b9c76051c9277247735ac6b9f5c366b",
+     "subject": "Merge origin/main into ccr-08424e5b-jo1p82"
+    },
+    {
+     "sha": "4fb187a41a077b9205be1d880f29c3ed2c3615fd",
+     "subject": "Level 256 repairs keep the corruption: walls stay garbage, paths come back"
     }
    ],
    "entrypoint": "remote_mobile",
@@ -128,34 +136,35 @@
    "seq": 104,
    "date": "2026-10-19",
    "time": "23:43",
-   "duration_s": 83,
+   "duration_s": 91,
    "prompt": "Hold up, the broken one is the pacman in the arcade lobby. Should also give it a different sprite in the lower lobby",
    "followups": [],
    "images": [],
    "claude_images": [],
-   "reply": "Merged. Now looking at the hall and board-lobby Pac-Man.",
+   "reply": "Plan usage is now at 29% of the 5-hour limit and 39% weekly. The merge with `main` and the log update are pushed to PR #97: https://github.com/fischerq/ludumdare60/pull/97\n\nI'm waiting for your answers to the six questions above before I touch any Pac-Man art.",
    "progress_notes": [
     "The merge isn't in the tree yet, so I'm merging main and fixing the conflict first.",
-    "Resolving the generated files the same way the sync tool does, then committing the merge."
+    "Resolving the generated files the same way the sync tool does, then committing the merge.",
+    "Merged. Now looking at the hall and board-lobby Pac-Man."
    ],
    "tools": {
     "Bash": 10,
     "mcp__claude-code-remote__list_events": 2,
     "Read": 1
    },
-   "api_requests": 11,
+   "api_requests": 12,
    "usage": {
     "claude-opus-5-5": {
-     "input": 22,
+     "input": 24,
      "cache_write_5m": 0,
-     "cache_write_1h": 9754,
-     "cache_read": 1333275,
-     "output": 4348,
-     "thinking": 2029,
-     "cost_usd": 0.431735
+     "cache_write_1h": 12396,
+     "cache_read": 1460593,
+     "output": 4509,
+     "thinking": 2087,
+     "cost_usd": 0.481563
     }
    },
-   "cost_usd": 0.431735,
+   "cost_usd": 0.481563,
    "commits": [
     {
      "sha": "b88eca1f768714bdb8e425137f9b67577bed2a6c",
@@ -166,7 +175,23 @@
      "subject": "Merge remote-tracking branch 'origin/main' into ccr-bbf23964-q78gu3"
     },
     {
+     "sha": "e7533666013255077f6fdef76ccb3d8e3e146422",
+     "subject": "Merge origin/main into ccr-08424e5b-jo1p82"
+    },
+    {
+     "sha": "428d5109b170557b6dd6968dadeb6cae99b0ef04",
+     "subject": "Update AI-use log"
+    },
+    {
      "sha": "63fe4dfca27c9894207a70446ab73aac5f56f773",
+     "subject": "Merge origin/main into ccr-bbf23964-q78gu3"
+    },
+    {
+     "sha": "df10aebdc9aa05c961a7077e89a05c272ce22c17",
+     "subject": "Merge pull request #102 from fischerq/ccr-08424e5b-jo1p82"
+    },
+    {
+     "sha": "5fe7c40d25b2b867f9de472e8d1e25c4e30d0109",
      "subject": "Merge origin/main into ccr-bbf23964-q78gu3"
     }
    ],
@@ -175,7 +200,57 @@
    "plan_usage": {
     "five_hour": {
      "start": 0.29,
-     "end": 0.29,
+     "end": 0.3,
+     "delta": 0.01
+    },
+    "seven_day": {
+     "start": 0.39,
+     "end": 0.39,
+     "delta": 0.0
+    }
+   }
+  },
+  {
+   "index": 3,
+   "seq": 105,
+   "date": "2026-10-19",
+   "time": "23:49",
+   "duration_s": 22,
+   "prompt": "Give me the questions again",
+   "followups": [],
+   "images": [],
+   "claude_images": [],
+   "reply": "",
+   "progress_notes": [],
+   "tools": {
+    "Bash": 4,
+    "mcp__claude-code-remote__list_events": 1
+   },
+   "api_requests": 4,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 8,
+     "cache_write_5m": 0,
+     "cache_write_1h": 1983,
+     "cache_read": 523805,
+     "output": 962,
+     "thinking": 56,
+     "cost_usd": 0.139897
+    }
+   },
+   "cost_usd": 0.139897,
+   "commits": [
+    {
+     "sha": "b3a48749d5173dd89d5598a1ae726ff9d17c50c2",
+     "subject": "Merge origin/main into ccr-bbf23964-q78gu3"
+    }
+   ],
+   "entrypoint": "remote_mobile",
+   "branch": "ccr-bbf23964-q78gu3",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.3,
+     "end": 0.3,
      "delta": 0.0
     },
     "seven_day": {
@@ -187,10 +262,10 @@
   }
  ],
  "totals": {
-  "prompts": 2,
-  "cost_usd": 1.957456,
-  "output_tokens": 19673,
-  "input_tokens": 4677093
+  "prompts": 3,
+  "cost_usd": 2.147181,
+  "output_tokens": 20796,
+  "input_tokens": 5332851
  },
  "reported_by_claude_code": {
   "total_usd": 1.5560454999999993,
