@@ -6,7 +6,6 @@ import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
 import { addLayerButtonAt } from '../layerButton.js';
 import { coins, addCoin, coinTaken, loseCoins } from '../wallet.js';
 import { openManual } from '../manual/index.js';
-import { createGlobe, turnGlobe, shakeGlobe, stepGlobe } from '../systems/globe.js';
 import { buildModel, createGlobe3d, grabGlobe3d, dragGlobe3d, releaseGlobe3d, shakeGlobe3d, stepGlobe3d } from '../systems/globe3d.js';
 import { createView, renderGlobe, pickGlobe } from '../systems/globeRender.js';
 
@@ -269,16 +268,13 @@ export default class HallScene extends Phaser.Scene {
     this.say(HALL.pacManual, portrait, [{ label: HALL.menu.readMore, act: read }, { label: HALL.menu.close }]);
   }
 
-  // The snow globe up close, over the dimmed hall: in 3D (grab it anywhere and turn it, tap to shake, the heavy base
-  // rights it) or FLAT (the picture: drag sideways to turn it, tap to shake). The button below switches; tap outside to
-  // put it down.
+  // The snow globe up close, over the dimmed hall, in 3D: grab it anywhere and turn it, tap to shake, the heavy base
+  // rights it. Tap outside to put it down.
   openGlobe() {
-    const G = HALL.globe, V = HALL.globe3d, fixed = (o) => o.setScrollFactor(0).setDepth(2e6);
+    const V = HALL.globe3d, fixed = (o) => o.setScrollFactor(0).setDepth(2e6);
     if (!this.globeUi) {
       const x = Math.round(this.viewW / 2), y = Math.round(this.viewH / 2 - 12);
       const dim = fixed(this.add.graphics()).fillStyle(0x000000, 0.85).fillRect(0, 0, this.viewW, this.viewH);
-      const img = fixed(this.add.image(x, y, 'arcade/globe-big').setOrigin(G.center.x / G.size.w, G.center.y / G.size.h));
-      const gfx = fixed(this.add.graphics()).setPosition(x, y);
       if (!this.textures.exists('globe-3d')) this.textures.createCanvas('globe-3d', V.view, V.view);
       const img3d = fixed(this.add.image(x, y, 'globe-3d'));
       const below = y + V.view / 2 + 2;
@@ -286,26 +282,15 @@ export default class HallScene extends Phaser.Scene {
         fontFamily: UI.arcadeFont, fontSize: 8, color: COLORS.textDim, resolution: 1, align: 'center',
         wordWrap: { width: this.viewW - 24 }, lineSpacing: 4,
       }).setOrigin(0.5, 0));
-      // The 3D / FLAT switch: a big button under the hint.
-      const btn = { x: x - 28, y: Math.round(below + hint.height + 4), w: 56, h: 18 };
-      const btnBox = fixed(this.add.graphics()).fillStyle(0x1c3448, 1).fillRect(btn.x, btn.y, btn.w, btn.h)
-        .lineStyle(1, 0x9ac8e0, 1).strokeRect(btn.x + 0.5, btn.y + 0.5, btn.w - 1, btn.h - 1);
-      const btnText = fixed(this.add.text(x, btn.y + btn.h / 2, '', {
-        fontFamily: UI.arcadeFont, fontSize: 8, color: '#ffffff', resolution: 1,
-      }).setOrigin(0.5, 0.5));
-      this.globeUi = { x, y, img, gfx, img3d, btn, btnText, all: [dim, img, gfx, img3d, hint, btnBox, btnText] };
+      this.globeUi = { x, y, all: [dim, img3d, hint] };
       this.globeView = createView(V, this.globePalette());
       this.globeModel = buildModel(this.cache.json.get('globe-model'));
     }
     this.globeUi.all.forEach((o) => o.setVisible(true));
-    this.globe = createGlobe();
     this.globe3 = createGlobe3d(this.globeModel);
     this.globeDrag = null;
-    this.globeKey = 0;
     this.globeKeys = new Set();
     this.mode = 'globe';
-    this.setGlobeFlat(!!this.globeFlat);
-    shakeGlobe(this.globe);
     shakeGlobe3d(this.globe3);
     sfx.glitter();
   }
@@ -322,13 +307,6 @@ export default class HallScene extends Phaser.Scene {
       const i = (y * c.width + x) * 4;
       return (d[i] << 16) | (d[i + 1] << 8) | d[i + 2];
     })]));
-  }
-
-  setGlobeFlat(flat) {
-    const u = this.globeUi;
-    this.globeFlat = flat;
-    u.img.setVisible(flat); u.gfx.setVisible(flat); u.img3d.setVisible(!flat);
-    u.btnText.setText(flat ? HALL.text.globe3d : HALL.text.globeFlat);
   }
 
   closeGlobe() {
@@ -348,42 +326,19 @@ export default class HallScene extends Phaser.Scene {
     return pickGlobe(V, this.globe3, a.x + V.W / 2, a.y + V.W / 2);
   }
 
-  // Is screen point p on the globe?
-  onGlobe(p) {
-    if (!this.globeFlat) return !!this.globePick(p);
-    const G = HALL.globe, a = this.globeLocal(p), x = a.x + G.center.x, y = a.y + G.center.y;
-    return x >= 0 && y >= 0 && x < G.size.w && y < G.size.h;
-  }
-
-  onGlobeButton(p) {
-    const b = this.globeUi.btn, x = p.x / HALL.zoom, y = p.y / HALL.zoom;
-    return x >= b.x - 4 && x < b.x + b.w + 4 && y >= b.y - 4 && y < b.y + b.h + 4;
-  }
-
   stepGlobeView(dt) {
-    if (!this.globeFlat) {
-      const g = this.globe3, k = this.globeKeys, T3 = HALL.globe3d.keyTorque;
-      // Arrow keys tip it: left/right roll it, up/down tip it toward you or away.
-      g.torque = [(k.has('down') ? 1 : 0) - (k.has('up') ? 1 : 0), 0, (k.has('left') ? 1 : 0) - (k.has('right') ? 1 : 0)].map((v) => v * T3);
-      stepGlobe3d(g, dt);
-      const tex = this.textures.get('globe-3d');
-      tex.getContext().putImageData(renderGlobe(this.globeView, g), 0, 0);
-      tex.refresh();
-      return;
-    }
-    const g = this.globe;
-    if (this.globeKey) turnGlobe(g, g.angle + this.globeKey * dt * 2);
-    stepGlobe(g, dt, !!this.globeDrag?.moved || !!this.globeKey);
-    const { img, gfx } = this.globeUi;
-    img.setRotation(g.angle);
-    gfx.setRotation(g.angle).clear();
-    for (const sp of g.specks) gfx.fillStyle(sp.color, 1).fillRect(Math.round(sp.x), Math.round(sp.y), 1, 1);
+    const g = this.globe3, k = this.globeKeys, T3 = HALL.globe3d.keyTorque;
+    // Arrow keys tip it: left/right roll it, up/down tip it toward you or away.
+    g.torque = [(k.has('down') ? 1 : 0) - (k.has('up') ? 1 : 0), 0, (k.has('left') ? 1 : 0) - (k.has('right') ? 1 : 0)].map((v) => v * T3);
+    stepGlobe3d(g, dt);
+    const tex = this.textures.get('globe-3d');
+    tex.getContext().putImageData(renderGlobe(this.globeView, g), 0, 0);
+    tex.refresh();
   }
 
   // A finger down on the close-up: grab the 3D globe where it landed.
   globeDown(p) {
-    this.globeDrag = { x: p.x, id: p.id, angle: this.globe.angle, moved: false, at: this.time.now };
-    if (this.globeFlat) return;
+    this.globeDrag = { id: p.id, moved: false, at: this.time.now };
     const pt = this.globePick(p);
     if (pt) grabGlobe3d(this.globe3, pt);
   }
@@ -391,9 +346,7 @@ export default class HallScene extends Phaser.Scene {
   globeMove(p) {
     const gd = this.globeDrag;
     if (!gd || p.id !== gd.id || !p.isDown) return;
-    const dx = p.x - gd.x;
-    if (!gd.moved && Math.abs(dx) + Math.abs(p.y - p.downY) >= HALL.dragDeadzone) { gd.moved = true; sfx.glitter(); }
-    if (this.globeFlat) { if (gd.moved) turnGlobe(this.globe, gd.angle + dx * HALL.globe.dragTurn); return; }
+    if (!gd.moved && Math.abs(p.x - p.downX) + Math.abs(p.y - p.downY) >= HALL.dragDeadzone) { gd.moved = true; sfx.glitter(); }
     const a = this.globeLocal(p), j = this.globe3.jolt;
     dragGlobe3d(this.globe3, a.x - j.x, -(a.y - j.y));
   }
@@ -405,9 +358,8 @@ export default class HallScene extends Phaser.Scene {
     const grabbed = !!this.globe3.grab;
     releaseGlobe3d(this.globe3);
     if (gd.moved || this.time.now - gd.at >= HALL.tapTime) return;
-    if (this.onGlobeButton(p)) { this.setGlobeFlat(!this.globeFlat); sfx.click(); return; }
-    if (grabbed || (this.globeFlat && this.onGlobe(p))) {
-      if (this.globeFlat) shakeGlobe(this.globe); else shakeGlobe3d(this.globe3);
+    if (grabbed) {
+      shakeGlobe3d(this.globe3);
       sfx.glitter();
     } else this.closeGlobe();
   }
@@ -452,11 +404,9 @@ export default class HallScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown', (e) => {
       unlockAudio();
       if (this.mode === 'globe') {
-        if (e.code === 'Space') { if (this.globeFlat) shakeGlobe(this.globe); else shakeGlobe3d(this.globe3); sfx.glitter(); }
+        if (e.code === 'Space') { shakeGlobe3d(this.globe3); sfx.glitter(); }
         if (e.code === 'Enter' || e.code === 'Escape') this.closeGlobe();
-        if (e.code === 'KeyF') { this.setGlobeFlat(!this.globeFlat); sfx.click(); }
         if (KEYS[e.code]) this.globeKeys.add(KEYS[e.code]);
-        if (KEYS[e.code] === 'left' || KEYS[e.code] === 'right') this.globeKey = KEYS[e.code] === 'left' ? -1 : 1;
         return;
       }
       if (e.code === 'Space' || e.code === 'Enter') this.interact();
@@ -471,7 +421,6 @@ export default class HallScene extends Phaser.Scene {
     });
     this.input.keyboard?.on('keyup', (e) => {
       if (KEYS[e.code] === this.keyDir) this.keyDir = null;
-      if (KEYS[e.code] === 'left' || KEYS[e.code] === 'right') this.globeKey = 0;
       this.globeKeys?.delete(KEYS[e.code]);
     });
   }
