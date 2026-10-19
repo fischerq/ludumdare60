@@ -5,6 +5,7 @@
 
 import { ADDER, PLAYTEST } from '../../src/config.js';
 import { createAdder, stepAdder, hop, open, pulseHits } from '../../src/systems/layers/adder.js';
+import { adderConfig } from '../../src/systems/layers/levels.js';
 
 const DT = 1 / 60, Q = 0.05;        // s per search step
 const HORIZON = 80, AHEAD = 7, BEHIND = 2, MARGIN = 0.15;
@@ -57,9 +58,10 @@ export function plan(st, t0, reaction) {
   return best && best[3] !== 'wait' ? best[3] : null;
 }
 
-// One run: the bot plays until the carry overflows or the time cap. s: a playtest session (seeded hand and random).
-export function runAdder(s) {
-  const st = createAdder(s.seed);
+// One run: the bot plays until the carry overflows or the time cap. s: a playtest session (seeded hand and random);
+// level: the adder's level (src/systems/layers/levels.js).
+export function runAdder(s, level = 1) {
+  const st = createAdder(s.seed, adderConfig(level));
   const reaction = s.noise.reaction; // its mean (the hand jitters it by +-50%)
   let result = 'timeout', hops = 0;
   const t0 = s.t;

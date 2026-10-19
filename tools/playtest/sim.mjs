@@ -5,7 +5,6 @@
 
 import { DEEP, HALL, COINS, PLAYTEST, LEVELS } from '../../src/config.js';
 import { world, startWorld, tickWorld, newGame, setDriver, setSpeed, pressDir, holdDir, onFrame, setRound, setRepairs, currentRound } from '../../src/systems/arcade/world.js';
-import { setHard } from '../../src/systems/layers/hard.js';
 import { ORDER, onChange, isHardWon, setLamp, markMazeWon, markWon, markAdderWon, markHardWon } from '../../src/progress.js';
 import { loadProgram } from '../../src/systems/arcade/program.js';
 import { readState } from '../../src/systems/arcade/state.js';
@@ -19,6 +18,7 @@ import { rng, createHand } from './noise.mjs';
 import { runAdder } from './adder.mjs';
 import { art } from './canvas.mjs';
 import { revertPatches } from '../../src/systems/layers/cpu.js';
+import { setLevel, startLevel } from '../../src/systems/layers/levels.js';
 
 const DT = 1 / 60;
 
@@ -77,15 +77,15 @@ export function runMaze(s, { mode = 'swipe', fresh = true } = {}) {
 
 // One deep layer (index into DEEP_LAYERS), as DeepScene runs it: the machine runs DEEP.machineSlowdown times slower
 // and the in-game bot plays the maze unless the layer steers it. fresh: start a new game and let it run a seeded
-// while first, so runs see different machine states. hard: play with the layer's hard numbers, switched in the way
-// DeepScene does (src/systems/layers/hard.js). over: other numbers to try, merged over DEEP.<id> for this run only
-// (for difficulty levels later).
-export function runDeep(s, index, { fresh = true, hard = false, over = null } = {}) {
+// while first, so runs see different machine states. level: play that level's numbers (src/systems/layers/levels.js,
+// swapped in the way DeepScene does and put back after); hard: start at DEEP.hardLevel, as with the 256 switch on.
+// over: other numbers to try, merged over DEEP.<id> for this run only.
+export function runDeep(s, index, { fresh = true, level = 1, hard = false, over = null } = {}) {
   const L = DEEP_LAYERS[index], bot = DEEP_BOTS[L.id];
-  setHard(L.id, hard);
+  setLevel(L.id, hard ? startLevel(true) : level);
   const C = DEEP[L.id], saved = over ? Object.fromEntries(Object.keys(over).map((k) => [k, C[k]])) : null;
   if (over) Object.assign(C, over);
-  try { return deepRun(s, L, bot, fresh); } finally { if (saved) Object.assign(C, saved); setHard(L.id, false); }
+  try { return deepRun(s, L, bot, fresh); } finally { if (saved) Object.assign(C, saved); setLevel(L.id, 1); }
 }
 
 function deepRun(s, L, bot, fresh) {
@@ -313,14 +313,14 @@ export function runPlaythrough(s, o = {}) {
 
 export const LAYERS = ['maze', 'cabinet', 'hall', 'hall-chase', ...DEEP_LAYERS.map((L) => L.id), 'adder'];
 
-// One run of a layer by name. o.hard: deep layers with their hard numbers; o.over: { <id>: numbers } merged over
-// DEEP.<id> for the run.
+// One run of a layer by name. o.level: the deep layers and the adder at that level (default 1); o.hard: the
+// deep layers at DEEP.hardLevel; o.over: { <id>: numbers } merged over DEEP.<id> for the run.
 export function runLayer(name, s, o = {}) {
   if (name === 'maze') return runMaze(s, { mode: 'swipe' });
   if (name === 'cabinet') return runMaze(s, { mode: 'stick' });
   if (name === 'hall') return runHall(s, { scenario: 'coins' });
   if (name === 'hall-chase') return runHall(s, { scenario: 'chase' });
   if (name === 'playthrough') return runPlaythrough(s, o);
-  if (name === 'adder') return runAdder(s);
-  return runDeep(s, DEEP_LAYERS.findIndex((L) => L.id === name), { hard: !!o.hard, over: o.over?.[name] ?? null });
+  if (name === 'adder') return runAdder(s, o.level ?? 1);
+  return runDeep(s, DEEP_LAYERS.findIndex((L) => L.id === name), { level: o.level ?? 1, hard: !!o.hard, over: o.over?.[name] ?? null });
 }
