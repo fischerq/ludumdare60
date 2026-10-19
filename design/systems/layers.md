@@ -172,3 +172,4 @@ minigame, a counter on the layer map, no unlock.*
 - 2026-10-19: The cheat lever moves to the right edge of the board, above the 256 switch. (Quirin)
 - 2026-10-19: Board lobby: four status lamps (maze won, every part awake, 256 switch, hard mode) with a cheat lever under each and a sign, replacing the single cheat lever; the monitor needs a maze win first; hard mode offers each part's hard layer; a film reel plays the credits; a mini-gurke hides in the corner. (Quirin)
 - 2026-10-19: Callouts carry their action as a button inside the box (INSERT COIN, LAYER UP, PLAY AGAIN after a maze clear) instead of "TAP TO ..." / "GO LAYER UP" text; tapping elsewhere on the maze still plays on (Quirin).
+- 2026-10-19: The maze HUD shows `LEVEL n` in the top-left corner like the other layers (the machine's round counter); 1UP and HIGH SCORE move down a little to make room. (Quirin)
