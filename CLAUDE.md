@@ -2,7 +2,8 @@
 
 Game jam project: **Layers of Pac** (working title; mini-gurke is now an easter egg) for Ludum Dare 60, a mobile-first Phaser 3 browser game deployed
 to Netlify as a static site. Keep branding light: who made it and where lives in one note on the making-of page
-(`about` in `making-of/meta.json`), not in the game or README.
+(`about` in `making-of/meta.json`), not in the game or README. The one exception is the in-game credits screen
+(`CreditsScene`, texts in `CREDITS` in `src/config.js`, see `design/systems/credits.md`), which Quirin asked for.
 
 When the title changes, update `GAME_TITLE` in `src/config.js`, `<title>` in `index.html`, `title` in
 `making-of/meta.json` and the README heading.

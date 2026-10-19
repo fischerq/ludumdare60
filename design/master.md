@@ -55,6 +55,7 @@ bonus. See [movement](systems/movement.md).
 | Emulated arcade machine (runs the maze game, feeds every layer) | built (plan steps 1-9) | [emulator](systems/emulator.md) | none yet |
 | Playtest bots (difficulty per layer, full playthrough) | built | [playtest](systems/playtest.md) | `/lab/playtest.html` |
 | Audio (background sound per layer) | decided, first slice built | [audio](systems/audio.md) | none yet |
+| Credits / final screen (arcade staff roll) | decided, first slice built | [credits](systems/credits.md) | none |
 | Mini-gurke easter egg | proposed | [layers](systems/layers.md#mini-gurke-easter-egg--proposed) | none |
 
 ## Vertical slice · decided
