@@ -2,6 +2,7 @@
 // Node's fetch can't read, so file URLs are read from disk. Import this before anything that imports config.js.
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { Canvas } from './canvas.mjs';
 
 const netFetch = globalThis.fetch;
 globalThis.fetch = async (url, opts) => {
@@ -10,3 +11,6 @@ globalThis.fetch = async (url, opts) => {
   try { return new Response(await readFile(fileURLToPath(u), 'utf8')); } catch { return new Response('', { status: 404 }); }
 };
 console.info = () => {}; // config.js reports the animation file on load
+
+// The video board layer renders the maze picture into a canvas (tools/playtest/canvas.mjs, a small software one).
+globalThis.document ??= { createElement: (tag) => (tag === 'canvas' ? new Canvas() : null) };

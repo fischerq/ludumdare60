@@ -15,6 +15,7 @@ import { DEEP_BOTS, decideDeep, mazeBot } from './bots.mjs';
 import { plan, evade, manhattan } from './plan.mjs';
 import { rng, createHand } from './noise.mjs';
 import { runAdder } from './adder.mjs';
+import { art } from './canvas.mjs';
 import { revertPatches } from '../../src/systems/layers/cpu.js';
 
 const DT = 1 / 60;
@@ -97,7 +98,7 @@ export function runDeep(s, index, { fresh = true } = {}) {
     tickWorld(DT * 1000);
     t += DT;
     s.t += DT;
-    const env = { id: L.id, P: DEEP.style[L.id], m, S, t, dt: DT, player, sounds: sounds.splice(0), art: null };
+    const env = { id: L.id, P: DEEP.style[L.id], m, S, t, dt: DT, player, sounds: sounds.splice(0), art };
     const open = (x, y) => L.open(st, env, x, y);
     if (hitT > 0) {
       hitT -= DT;

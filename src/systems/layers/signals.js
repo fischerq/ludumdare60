@@ -101,6 +101,10 @@ export default {
     return ch !== '#' && !NAMES[ch];
   },
 
+  // For the playtest bot: the palette entry under a cell (-1 if none) and whether a cell is inside the DAC.
+  swatchAt,
+  inDac: (x, y) => inside(BOX.D, x, y),
+
   left(st, t) {
     return Math.max(0, C.frameTime - (t - st.frameT));
   },
