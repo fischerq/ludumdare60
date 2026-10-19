@@ -134,32 +134,33 @@
    "seq": 96,
    "date": "2026-10-19",
    "time": "17:50",
-   "duration_s": 358,
+   "duration_s": 372,
    "prompt": "Add claude to the credits",
    "followups": [],
    "images": [],
    "claude_images": [],
-   "reply": "The bot for the reworked video board layer is out of date: it needs a browser canvas and no longer matches the mechanic. I'm running the full sweep without that layer for now.",
+   "reply": "Three of the four PRs are open:\n- **Lobby sound:** #85\n- **Credits screen:** #87, with Claude listed under CODE\n- **Lamps, levers, sign, film reel and mini-gurke:** #89\n\nHard mode and the full playtest are still running. I'll send all PR links with what to test when they finish. `lab/playtest/results.json` is left uncommitted until the sweep finishes and overwrites it.",
    "progress_notes": [
-    "I asked the agent building the credits screen to add Claude, under a \"CODE\" heading after PROMPTS and GRAPHICS. I'll send you the credits PR link when it's done. The lobby lamps and hard-mode agents and the bot playtest are still running."
+    "I asked the agent building the credits screen to add Claude, under a \"CODE\" heading after PROMPTS and GRAPHICS. I'll send you the credits PR link when it's done. The lobby lamps and hard-mode agents and the bot playtest are still running.",
+    "The bot for the reworked video board layer is out of date: it needs a browser canvas and no longer matches the mechanic. I'm running the full sweep without that layer for now."
    ],
    "tools": {
-    "Bash": 8,
+    "Bash": 10,
     "SendMessage": 3
    },
-   "api_requests": 104,
+   "api_requests": 108,
    "usage": {
     "claude-opus-5-5": {
-     "input": 212,
-     "cache_write_5m": 109308,
-     "cache_write_1h": 14916,
-     "cache_read": 12096945,
-     "output": 5575,
-     "thinking": 900,
-     "cost_usd": 3.197605
+     "input": 222,
+     "cache_write_5m": 110329,
+     "cache_write_1h": 16591,
+     "cache_read": 12663847,
+     "output": 6626,
+     "thinking": 1205,
+     "cost_usd": 3.35055
     }
    },
-   "cost_usd": 3.197605,
+   "cost_usd": 3.35055,
    "commits": [
     {
      "sha": "21e6ba605b3316bc34cfe05a69a8e9601eb24498",
@@ -192,6 +193,14 @@
     {
      "sha": "f417c33f874768f00d7465f7ea3f48bcdc1ea7c7",
      "subject": "Making-of: screenshots keyed by the transcript id; shot.js back to hex session ids"
+    },
+    {
+     "sha": "524f3cddbabc8c208eb35185d74995a846f41e43",
+     "subject": "Update AI-use log"
+    },
+    {
+     "sha": "9c5972ffb0548271e4d5d9968636d45c508df0ca",
+     "subject": "Screenshot of the repaired level 256"
     }
    ],
    "entrypoint": "remote_mobile",
@@ -212,9 +221,9 @@
  ],
  "totals": {
   "prompts": 3,
-  "cost_usd": 7.321623,
-  "output_tokens": 30301,
-  "input_tokens": 19295244
+  "cost_usd": 7.474568,
+  "output_tokens": 31352,
+  "input_tokens": 19864852
  },
  "reported_by_claude_code": null
 }
