@@ -18,11 +18,16 @@ const KEYS = {
   KeyA: 'left', KeyD: 'right', KeyW: 'up', KeyS: 'down',
 };
 // Tiles of the hall's tileset (assets/arcade/) by map character: on the wall, and standing on the floor.
-const DECOR = { '|': 'wall-face', '^': 'window', '*': 'poster-pac', '+': 'poster-ghost', '@': 'clock' };
+const DECOR = { '|': 'wall-face', '^': 'window', '*': 'poster-pac', '+': 'poster-ghost', '@': 'clock', a: 'sweater' };
 const ON_FLOOR = {
   '=': 'counter', M: 'change-top', m: 'change-bottom', C: 'claw-top', c: 'claw-bottom', Q: 'soda-top',
   q: 'soda-bottom', w: 'snow-globe', '%': 'plant', '!': 'bin', k: 'counter-gurke', j: 'counter-jar', u: 'mini-gurke', s: 'counter-sign', n: 'manual-stack', p: 'manual-pac',
+  h: 'rabbit', e: 'urmel-0', l: 'paper',
 };
+
+// The Urmel figurine's stage (HALL.urmel, arcade/urmel-<n>): kept for the session, like the coins. The first talk
+// shows the iceberg it starts as, every later one the next stage.
+const urmel = { stage: 0, talked: false };
 
 // The text box portrait for a map character: the owner's own, otherwise the thing's tile (a machine's top half).
 function portraitFor(c) {
@@ -122,6 +127,7 @@ export default class HallScene extends Phaser.Scene {
         at(`rug-${v}${h}`);
       } else if ('RBGVY'.includes(c)) at(`cab-top-${c.toLowerCase()}`);
       else if ('rbgvy'.includes(c)) at(`cab-bottom-${c}`);
+      else if (c === 'e') this.urmelImg = at(`urmel-${urmel.stage}`);
       else if (ON_FLOOR[c]) at(ON_FLOOR[c]);
     }));
   }
@@ -237,6 +243,14 @@ export default class HallScene extends Phaser.Scene {
       ]);
     } else if (HALL.cellText[f.cell] === 'globe') {
       this.say(tx.globe, portrait, [{ label: tx.globeLook, act: () => this.openGlobe() }, { label: tx.globeClose }]);
+    } else if (HALL.cellText[f.cell] === 'urmel') {
+      if (urmel.talked) urmel.stage = (urmel.stage + 1) % HALL.urmel.length;
+      urmel.talked = true;
+      const key = tileKey('arcade', `urmel-${urmel.stage}`);
+      this.urmelImg.setTexture(key);
+      this.say(HALL.urmel[urmel.stage], key);
+    } else if (HALL.cellText[f.cell] === 'paper') {
+      this.say(Math.random() < HALL.paperRareChance ? tx.paperRare : tx.paper, portrait);
     } else if (HALL.cellText[f.cell] === 'pacManual') {
       this.readPacManual(portrait);
     } else if (HALL.cellText[f.cell]) {
