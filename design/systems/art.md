@@ -103,6 +103,7 @@ Sizes are in image pixels at native resolution. Transparent background.
 | `board/<id>-<on/off/lit>` | 16x16 | 18 files | The subsystems with faces, id = signals (video board), ram (work RAM), bus, cpu, logic (the brain), input (the joystick): `on` awake (unlocked), `off` asleep (locked, dim, eyes shut), `lit` just unlocked (outlined in its layer's accent, blinks with `on`). |
 | `board/mecha-<0/1>`, `board/portrait-mecha` | 32x32, 48x48 | 3 files | Mecha-Pac, the bot, by the joystick (facing left at it): frame 0 antenna lit and visor eye left, frame 1 antenna dark and eye right (also shown still after a game over). |
 | `board/portrait-<id>`, `board/portrait-<id>-off` | 48x48 | 13 files | Text box portraits of the subsystems, awake and asleep (`crt` is the monitor, never asleep). The other parts show their tile at 3x. |
+| `board/lamp-<1..4>-<off/on>`, `board/lever-<up/down>`, `board/sign`, `board/reel`, `board/gurke` | 16x16 | 13 files | The four status lamps (maze yellow, board green, 256 red, hard mode violet; dark or lit), the cheat lever under each (up or pulled down), the sign next to them, the film reel (credits) and mini-gurke, the easter egg pickle. |
 
 Characters are 32x32; tiles and pellets stay at tile resolution. Text uses the Press Start 2P pixel font.
 
@@ -163,3 +164,4 @@ Characters are 32x32; tiles and pellets stay at tile resolution. Text uses the P
 - 2026-10-18: New tileset `assets/board/` for the board lobby inside the cabinet: PCB floor, auto-joined traces and harness, the cabinet's parts, and every subsystem with a face in three states (awake, asleep, lit) plus portraits; work RAM's layer art is `assets/deep/ram/` (video RAM's `assets/deep/vram/` is gone). (Quirin, defaults accepted)
 - 2026-10-19: Max's Blinky and Clyde (three eyes, 20 px body, his red, white and blue) are the template for every ghost: the code draws Pinky, Inky, frightened, flash, eaten eyes, the hall visitors (his ghosts with a cap, standing at Pac-Man's feet), the portraits and the ghost poster from it; Pac-Man's yellow is his `#ffde00`. (Quirin)
 - 2026-10-19: `board/mecha-0/1` and `board/portrait-mecha`: Mecha-Pac, the bot, in the board lobby. (Quirin)
+- 2026-10-19: Board lobby art: four status lamps (off/on each, own colors), cheat levers, a sign, a film reel and mini-gurke as 16x16 tiles in `assets/board/`. (Quirin)

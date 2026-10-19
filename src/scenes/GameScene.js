@@ -2,7 +2,7 @@ import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KE
 import { createSwipe, swipeInput } from '../systems/swipe.js';
 import { sfx, unlockAudio, setAudioPaused, setBed, setSiren } from '../sound.js';
 import { addLayerButtonAt } from '../layerButton.js';
-import { isSwitchOn } from '../progress.js';
+import { isSwitchOn, markMazeWon } from '../progress.js';
 import { showCallout } from '../callout.js';
 import { coins, spendCoin } from '../wallet.js';
 import { world, onFrame, pressDir, pressStart, setDriver, newGame, setRound } from '../systems/arcade/world.js';
@@ -173,7 +173,8 @@ export default class GameScene extends Phaser.Scene {
       case 'death': sfx.frightOff(); sfx.death(); break;
       case 'clear': sfx.frightOff(); sfx.clear(); break;
       case 'over': this.finish(false); break;
-      case 'cleared': this.finish(true); break;
+      // The player cleared the maze (lamp 1): that wakes the monitor in the lobby. The bot only plays off this layer.
+      case 'cleared': if (world.driver === 'player') markMazeWon(); this.finish(true); break;
       default: break;
     }
   }
