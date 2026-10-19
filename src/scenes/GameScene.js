@@ -1,4 +1,4 @@
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY, COINS, MUSIC, LEVELS } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KEY, COINS, MUSIC, LEVELS, DEEP } from '../config.js';
 import { createSwipe, swipeInput } from '../systems/swipe.js';
 import { sfx, unlockAudio, setAudioPaused, setBed, setSiren } from '../sound.js';
 import { addLayerButtonAt } from '../layerButton.js';
@@ -90,14 +90,16 @@ export default class GameScene extends Phaser.Scene {
   }
 
   makeHud() {
-    this.text(32, 24, '1UP', COLORS.text);
-    this.scoreText = this.text(32, 44, '00', COLORS.text);
+    // LEVEL n in the top-left corner, like every other layer's HUD (the machine's round counter).
+    this.levelText = this.text(8, 8, '', COLORS.textDim);
+    this.text(32, 34, '1UP', COLORS.text);
+    this.scoreText = this.text(32, 54, '00', COLORS.text);
     let best = 0;
     try { best = Number(localStorage.getItem(BEST_KEY)) || 0; } catch (e) { /* private mode */ }
     this.best = best;
     // Top center like the arcade original; the top-right corner is the sound button's.
-    this.text(this.viewW / 2, 24, 'HIGH SCORE', COLORS.text).setOrigin(0.5, 0);
-    this.bestText = this.text(this.viewW / 2, 44, String(best || '00'), COLORS.text).setOrigin(0.5, 0);
+    this.text(this.viewW / 2, 34, 'HIGH SCORE', COLORS.text).setOrigin(0.5, 0);
+    this.bestText = this.text(this.viewW / 2, 54, String(best || '00'), COLORS.text).setOrigin(0.5, 0);
 
     const mazeBottom = this.oy + H * T;
     this.readyText = this.text(this.sx(MAZE.houseExit.x), this.oy + 13 * T + 2, 'READY!', COLORS.textReady)
@@ -241,6 +243,7 @@ export default class GameScene extends Phaser.Scene {
   render(time) {
     const g = this.g = readState(this.machine, this.S);
     this.scoreText.setText(String(g.score || '00'));
+    this.levelText.setText(`${DEEP.levelLabel} ${currentRound()}`);
     if (g.score > this.best) this.bestText.setText(String(g.score));
     this.readyText.setVisible(g.phase === 'ready');
     this.lifeIcons.forEach((icon, i) => icon.setVisible(i < g.lives - 1));
