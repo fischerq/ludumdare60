@@ -290,6 +290,7 @@ export default class BootScene extends Phaser.Scene {
       shadow(set);
     });
     this.makeSnowGlobe(rect, tile, shadow);
+    this.makeHallToys(rect, tile, shadow, wallpaper);
     tile('change-top', (set) => { rect(set, 2, 2, 12, 14, K.change); rect(set, 4, 4, 8, 3, 0x30ff60); });
     tile('change-bottom', (set) => { rect(set, 2, 0, 12, 13, K.change); rect(set, 6, 4, 4, 4, 0x202020); shadow(set); });
     tile('claw-top', (set) => {
@@ -652,6 +653,100 @@ export default class BootScene extends Phaser.Scene {
   }
 
   // The arcade hall's characters, top-down, feet at the bottom of the 32x32 sprite, two walk frames each:
+  // More things in the hall: the long-limbed plush rabbit (arcade/rabbit), the Urmel figurine on its stand in four
+  // stages (arcade/urmel-0 iceberg with the egg, 1 egg under a blanket, 2 small Urmel with a milk bottle, 3 Urmel
+  // talking), the blue paper on the floor (arcade/paper, drawn over the floor tile) and the old Anna and Elsa
+  // sweater on the back wall (arcade/sweater).
+  makeHallToys(rect, tile, shadow, wallpaper) {
+    const K = HALL.colors;
+    const ellipse = (set, cx, cy, rx, ry, c) => {
+      for (let y = Math.floor(cy - ry); y < Math.ceil(cy + ry); y++) {
+        for (let x = Math.floor(cx - rx); x < Math.ceil(cx + rx); x++) {
+          if (((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 <= 1) set(x, y, c);
+        }
+      }
+    };
+    tile('rabbit', (set) => {
+      shadow(set);
+      // Long floppy ears, then the arms and legs sprawled out, then the body and head on top.
+      rect(set, 5, 0, 2, 5, K.rabbit); rect(set, 9, 0, 2, 5, K.rabbit);
+      set(5, 1, K.rabbitLight); set(5, 2, K.rabbitLight); set(10, 1, K.rabbitLight); set(10, 2, K.rabbitLight);
+      [[4, 9], [3, 10], [2, 11], [1, 12], [1, 13]].forEach(([x, y]) => rect(set, x, y, 2, 1, K.rabbitDark));
+      [[10, 9], [11, 10], [12, 11], [13, 12], [13, 13]].forEach(([x, y]) => rect(set, x, y, 2, 1, K.rabbitDark));
+      [[5, 12], [4, 13], [3, 14], [2, 15]].forEach(([x, y]) => rect(set, x, y, 2, 1, K.rabbit));
+      [[9, 12], [10, 13], [11, 14], [12, 15]].forEach(([x, y]) => rect(set, x, y, 2, 1, K.rabbit));
+      rect(set, 5, 9, 6, 4, K.rabbit); rect(set, 6, 10, 4, 2, K.rabbitLight);
+      rect(set, 4, 4, 8, 5, K.rabbit); rect(set, 5, 3, 6, 1, K.rabbit); rect(set, 4, 8, 8, 1, K.rabbitDark);
+      set(6, 5, K.toyEye); set(9, 5, K.toyEye);
+      set(7, 6, K.rabbitNose); set(8, 6, K.rabbitNose); set(5, 7, K.rabbitLight); set(10, 7, K.rabbitLight);
+    });
+    // The stand: a small wooden pedestal the figurine stands on.
+    const stand = (set) => {
+      shadow(set);
+      rect(set, 3, 11, 10, 3, K.table); rect(set, 3, 11, 10, 1, K.counterTop); rect(set, 4, 13, 8, 1, K.counter);
+    };
+    const egg = (set, cx, cy) => {
+      ellipse(set, cx, cy, 2.5, 3.2, K.egg);
+      set(cx - 1, cy - 2, K.eggSpot); set(cx, cy, K.eggSpot); set(cx - 2, cy + 1, K.eggSpot);
+    };
+    const urmel = (set, x, y, big) => {
+      const s = big ? 1 : 0;
+      ellipse(set, x + 3, y + 7 + s, 3 + s, 3 + s, K.urmel);       // body
+      ellipse(set, x + 3, y + 7 + s, 1.6 + s, 2 + s, K.urmelLight); // belly
+      ellipse(set, x + 3, y + 3, 3 + s * 0.5, 2.5, K.urmel);       // head
+      rect(set, x + 5, y + 3, 2 + s, 2, K.urmel);                  // the round snout
+      set(x + 6 + s, y + 3, K.urmelDark);
+      set(x + 1, y + 1, K.urmelDark); set(x + 5, y + 1, K.urmelDark); // little ears
+      set(x + 3, y + 2, K.toyEye);
+      rect(set, x + 1, y + 10 + s * 2, 2, 1, K.urmelDark); rect(set, x + 4, y + 10 + s * 2, 2, 1, K.urmelDark); // feet
+    };
+    tile('urmel-0', (set) => {
+      stand(set);
+      rect(set, 4, 4, 8, 7, K.ice); rect(set, 5, 2, 5, 2, K.ice); rect(set, 6, 1, 2, 1, K.ice);
+      rect(set, 4, 4, 1, 7, K.iceLight); rect(set, 5, 2, 1, 2, K.iceLight);
+      rect(set, 11, 5, 1, 6, K.iceShade); rect(set, 9, 3, 1, 1, K.iceShade);
+      egg(set, 8, 7);
+    });
+    tile('urmel-1', (set) => {
+      stand(set);
+      ellipse(set, 8, 6, 3.5, 4.5, K.egg);
+      set(7, 3, K.eggSpot); set(9, 5, K.eggSpot); set(6, 6, K.eggSpot);
+      rect(set, 3, 7, 10, 4, K.blanket);
+      for (let x = 3; x < 13; x += 2) { set(x, 7, K.blanketCheck); set(x + 1, 9, K.blanketCheck); }
+    });
+    tile('urmel-2', (set) => {
+      stand(set);
+      urmel(set, 3, 0, false);
+      // The milk bottle at its snout, tipped up.
+      rect(set, 10, 2, 2, 4, K.milk); rect(set, 9, 1, 1, 2, K.teat); rect(set, 10, 6, 2, 1, K.iceShade);
+    });
+    tile('urmel-3', (set) => {
+      stand(set);
+      urmel(set, 2, -1, true);
+      set(9, 4, K.toyEye); // the open mouth
+      // A tiny speech bubble.
+      rect(set, 11, 0, 5, 4, K.bubble); set(11, 4, K.bubble);
+      set(12, 1, K.toyEye); set(14, 1, K.toyEye); set(13, 2, K.toyEye);
+    });
+    tile('paper', (set) => {
+      rect(set, 3, 5, 10, 7, K.paper); rect(set, 4, 4, 9, 1, K.paper); rect(set, 3, 11, 9, 1, K.paperEdge);
+      rect(set, 12, 5, 1, 6, K.paperEdge);
+      rect(set, 5, 7, 5, 1, K.paperInk); set(10, 7, K.paperInk); set(11, 6, K.paperInk); set(11, 8, K.paperInk);
+    });
+    tile('sweater', (set) => {
+      wallpaper(set);
+      rect(set, 7, 0, 2, 1, K.hanger); rect(set, 4, 1, 8, 1, K.hanger);
+      rect(set, 4, 2, 8, 9, K.sweater); rect(set, 2, 2, 2, 8, K.sweater); rect(set, 12, 2, 2, 8, K.sweater);
+      rect(set, 4, 10, 8, 1, K.sweaterDark); rect(set, 2, 9, 2, 1, K.sweaterDark); rect(set, 12, 9, 2, 1, K.sweaterDark);
+      rect(set, 7, 2, 2, 1, K.sweaterDark); // the collar
+      // Elsa (left) and Anna (right), small and faded.
+      rect(set, 5, 4, 2, 1, K.elsaHair); set(5, 5, K.elsaHair); set(6, 5, K.skin); rect(set, 5, 6, 2, 3, K.elsaDress);
+      rect(set, 9, 4, 2, 1, K.annaHair); set(10, 5, K.annaHair); set(9, 5, K.skin); rect(set, 9, 6, 2, 3, K.annaDress);
+      set(8, 3, K.iceLight); set(4, 8, K.iceLight); set(11, 3, K.iceLight); // snowflakes
+      [[3, 4], [13, 6], [7, 9], [10, 2]].forEach(([x, y]) => set(x, y, K.sweaterFuzz)); // pilling
+    });
+  }
+
   // arcade/pac-<right|up|down>-<frame> (the game flips right for left) and arcade/ghost-<name>-<dir>-<frame>, the
   // ghost visitors with their cap on (seen from behind when walking up).
   // The snow globe in the hall: its tile (arcade/snow-globe) and the close-up (arcade/globe-big, 96x112) of a white
