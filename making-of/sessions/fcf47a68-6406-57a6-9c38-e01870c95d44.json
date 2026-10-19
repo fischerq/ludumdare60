@@ -134,7 +134,7 @@
    "seq": 96,
    "date": "2026-10-19",
    "time": "17:50",
-   "duration_s": 1093,
+   "duration_s": 1099,
    "prompt": "Add claude to the credits",
    "followups": [],
    "images": [],
@@ -146,22 +146,22 @@
     "Three of the four PRs are open:\n- **Lobby sound:** #85\n- **Credits screen:** #87, with Claude listed under CODE\n- **Lamps, levers, sign, film reel and mini-gurke:** #89\n\nHard mode and the full playtest are still running. I'll send all PR links with what to test when they finish. `lab/playtest/results.json` is left uncommitted until the sweep finishes and overwrites it."
    ],
    "tools": {
-    "Bash": 13,
+    "Bash": 14,
     "SendMessage": 3
    },
-   "api_requests": 122,
+   "api_requests": 123,
    "usage": {
     "claude-opus-5-5": {
-     "input": 250,
+     "input": 252,
      "cache_write_5m": 232411,
-     "cache_write_1h": 21578,
-     "cache_read": 14629282,
-     "output": 7618,
+     "cache_write_1h": 22005,
+     "cache_read": 14775467,
+     "output": 7917,
      "thinking": 1249,
-     "cost_usd": 4.413895
+     "cost_usd": 4.452536
     }
    },
-   "cost_usd": 4.413895,
+   "cost_usd": 4.452536,
    "commits": [
     {
      "sha": "21e6ba605b3316bc34cfe05a69a8e9601eb24498",
@@ -224,12 +224,8 @@
      "subject": "Merge origin/main into ccr-f176db9b-jw0u93"
     },
     {
-     "sha": "03888b633d91af853c74f8472ac76e173d53ce90",
-     "subject": "WIP on ccr-f176db9b-jw0u93: 23a134d Merge origin/main into ccr-f176db9b-jw0u93"
-    },
-    {
-     "sha": "e7b6789fcd161fd9f9e882e70ffa5ef5360db049",
-     "subject": "index on ccr-f176db9b-jw0u93: 23a134d Merge origin/main into ccr-f176db9b-jw0u93"
+     "sha": "b132c4368bb4bd343e0915d51b3e63449806135a",
+     "subject": "Update AI-use log"
     },
     {
      "sha": "488ce5afe33060e52fd828a90dbd3e13e9902bd1",
@@ -254,9 +250,9 @@
  ],
  "totals": {
   "prompts": 3,
-  "cost_usd": 8.537913,
-  "output_tokens": 32344,
-  "input_tokens": 21957384
+  "cost_usd": 8.576554,
+  "output_tokens": 32643,
+  "input_tokens": 22103998
  },
  "reported_by_claude_code": null
 }
