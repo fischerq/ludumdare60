@@ -1,5 +1,5 @@
 import { GAME_TITLE, GAME_WIDTH, GAME_HEIGHT, COLORS, PIXEL, UI } from '../config.js';
-import { unlockAudio, setBed } from '../sound.js';
+import { unlockAudio, setBed, audioRunning, isMuted } from '../sound.js';
 import { fxSeconds, animFrame, PAC_CYCLE } from '../systems/anim.js';
 
 export default class MenuScene extends Phaser.Scene {
@@ -8,7 +8,10 @@ export default class MenuScene extends Phaser.Scene {
   }
 
   create() {
-    setBed(null);
+    // The start screen's tune. Browsers only allow sound after a tap: where it can't start on its own (phones),
+    // the first tap starts the music and the next one the game.
+    setBed('menu');
+    unlockAudio();
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;
 
@@ -47,8 +50,8 @@ export default class MenuScene extends Phaser.Scene {
     let started = false;
     const start = () => {
       if (started) return;
+      if (!audioRunning() && !isMuted()) { unlockAudio(); return; }
       started = true;
-      unlockAudio();
       this.scene.start('Game');
     };
     this.input.on('pointerdown', (pointer, over) => {

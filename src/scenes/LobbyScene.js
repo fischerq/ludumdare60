@@ -4,7 +4,7 @@ import { wireMask, ghostWire, subsystemOf, subsystemTiles, standFor, ghostFacing
 import { tileKey } from '../systems/tiles.js';
 import { charFrame } from '../systems/anim.js';
 import { DEEP_LAYERS } from '../systems/layers/index.js';
-import { ORDER, isUnlocked, isWon, allWon, isAdderWon, isSwitchOn, markAdderWon, setSwitch } from '../progress.js';
+import { ORDER, isUnlocked, isWon, allWon, isAdderWon, isSwitchOn, markAdderWon, setSwitch, setWonCount } from '../progress.js';
 import { world, setLevel256 } from '../systems/arcade/world.js';
 import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
 import { addLayerButtonAt } from '../layerButton.js';
@@ -31,6 +31,7 @@ export default class LobbyScene extends Phaser.Scene {
   init(data) {
     this.from = data?.from ?? null;
     this.won = !!data?.won;
+    this.leverPulled = !!data?.lever; // the lobby restarted after the cheat lever was pulled
   }
 
   // The map: once every subsystem is won, the adder (A) and its 256 switch (Z) stand on their reserved tiles.
@@ -91,8 +92,10 @@ export default class LobbyScene extends Phaser.Scene {
       const next = ORDER[ORDER.indexOf(deep) + 1];
       if (next && isUnlocked(next)) this.highlight = { id: next, t: LOBBY.highlightTime };
     }
+    if (this.leverPulled) Object.assign(p, { x: this.lever.x, y: this.lever.y - 1, dir: 'down' });
     this.updateCamera();
     this.refreshSubsystems();
+    if (this.leverPulled) { sfx.power(); this.say(LOBBY.text.leverPulled, 'board/portrait-adder'); }
   }
 
   sx(x) { return this.ox + x * T + T / 2; }
@@ -130,6 +133,7 @@ export default class LobbyScene extends Phaser.Scene {
       if (PARTS[c]) at(PARTS[c]);
       if (c === 'A') this.adderImg = at('adder-on');
       if (c === 'Z') this.switchImg = at('switch-stuck');
+      if (c === 'H') this.lever = { x, y, img: at(allWon() ? 'lever-down' : 'lever-up') };
       const id = subsystemOf(c);
       if (id) (this.subImages[id] ??= []).push(at(`${id}-on`));
     }));
@@ -222,6 +226,7 @@ export default class LobbyScene extends Phaser.Scene {
     if (id) { this.talkTo(id); return; }
     if (f.cell === 'A') { this.talkToAdder(); return; }
     if (f.cell === 'Z') { this.useSwitch(); return; }
+    if (f.cell === 'H') { this.useLever(); return; }
     if (f.cell === 'X') { this.say(world.halted ? tx.mechaOver : tx.mecha, 'board/portrait-mecha'); return; }
     const ghost = LOBBY.ghosts[f.cell];
     if (ghost) { this.say(tx[ghost], 'board/portrait-logic'); return; }
@@ -269,6 +274,16 @@ export default class LobbyScene extends Phaser.Scene {
     this.say(on ? tx.switchOn : tx.switchOff, 'board/portrait-switch', [
       { label: on ? tx.flipOff : tx.flipOn, act: () => { sfx.click(); setSwitch(!on); setLevel256(!on); } },
       { label: tx.leave },
+    ]);
+  }
+
+  // The cheat lever: wakes every subsystem at once (as if each was won), so the adder shows up. One-way.
+  useLever() {
+    const tx = LOBBY.text, portrait = tileKey('board', allWon() ? 'lever-down' : 'lever-up');
+    if (allWon()) { this.say(tx.leverDown, portrait); return; }
+    this.say(tx.lever, portrait, [
+      { label: tx.pull, act: () => { sfx.click(); setWonCount(ORDER.length); this.scene.restart({ lever: true }); } },
+      { label: tx.notNow },
     ]);
   }
 

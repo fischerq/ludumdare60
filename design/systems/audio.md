@@ -14,7 +14,7 @@ Every layer sounds different and fits its tech, so the player hears where they a
   hall plays 80s FM synth-pop (two-operator FM like a DX7, plus a noise/sine drum kit), heard through a small
   speaker (band-pass filter).
 - **One bed per layer** (`MUSIC.beds`), started by each scene on create; switching layers crossfades
-  (`MUSIC.fade`). The menu is silent.
+  (`MUSIC.fade`). The start screen has its own tune (below).
   - **Hall:** the arcade is not busy: just the radio loop and now and then a bleep from one of the machines.
   - **Cabinet:** the machine's mains hum and fan, the same radio muffled behind you.
   - **Maze:** like the original, no music: the siren, rising in 5 stages as the dots go; silent while ghosts are
@@ -23,6 +23,10 @@ Every layer sounds different and fits its tech, so the player hears where they a
     key, tempo and texture from its tech: CRT flyback whine and buzz, the video board's pixel-clock ticks, the
     VRAM refresh pulse, data chatter on the bus, a fast clocked arpeggio in the CPU, a step sequencer in the game
     logic, hum and switch clicks in the input wires.
+  - **Start screen (2026-10-19):** an upbeat original tune on the wavetable chip (pulse lead, triangle bass, a soft
+    organ arpeggio, C major, about 15 s loop; not the Pac-Man melody). Where the browser blocks sound until a tap
+    (phones), the first tap starts the music and the second starts the game; with sound already allowed or muted,
+    one tap starts the game. *(proposed)*
 - **Mute:** one ♪ / × button bottom left over every scene (an HTML button); the choice is kept in localStorage.
 
 ## Slice scope
@@ -36,3 +40,4 @@ Every layer sounds different and fits its tech, so the player hears where they a
 - 2026-10-18: Background sound for every layer, synthesized like the era's hardware (Namco-style wavetables for
   the machine, FM synth-pop radio in the hall). Hall is quiet: radio plus the odd machine bleep. Maze keeps the
   original's siren only. Other defaults (crossfade, mute button) accepted.
+- 2026-10-19: The start screen gets background music, an original wavetable tune (replaces "the menu is silent"). Defaults accepted; Claude made the first tap start the music where phones block sound, since the menu's first tap otherwise starts the game at once. (Quirin)

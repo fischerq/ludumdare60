@@ -39,6 +39,12 @@ the arcade as a place.
   one, or arrows + Enter): three give a one-line blurb, Galaxian's was ripped out. Ours lies on its own next to it
   (`p`, a yellowed booklet with Pac-Man on the cover) and offers READ MORE, which opens the
   [service manual](manual.md) over the paused hall.
+- **The snow globe** (`w`, bottom left corner): a pink base, a white unicorn with a rainbow mane and tail, lots of
+  glitter. Talking to it: one line with the note taped to the bottom ("MY SISTER LOVED THIS ONE AS A KID."), then
+  LOOK CLOSER / CLOSE. LOOK CLOSER shows it big over the dimmed hall (`arcade/globe-big`, 96x112): drag sideways to
+  turn it (it rights itself when let go), tap it to shake, tap outside to put it down. Turning stirs the water and
+  the glitter flies, then slowly settles (rules in `src/systems/globe.js`, numbers in `HALL.globe`); a soft chime
+  plays. The note is in the text only. *(Quirin, defaults accepted 2026-10-19)*
 - **Portraits:** the text box shows a large portrait (48x48, `HALL.portraitSize`) in a frame on its top left edge:
   ghosts and the owner have their own (`arcade/portrait-<name>.png`, `portrait-ghosts` for the four together),
   things show their tile at 3x (a machine its top half). Pickup and chase messages have none.
@@ -88,3 +94,4 @@ the arcade as a place.
   centered behind; our manual gets its own tile next to the stack on one table, the stack's fourth booklet is ripped
   out; the mini-Gurke moves to the top right plant's spot. (Quirin)
 - 2026-10-19: The ghost visitors face down (toward the player) while standing at their machines, so their faces show. (Quirin)
+- 2026-10-19: A snow globe in the bottom left corner (pink base, white unicorn with rainbow mane and tail, glitter), with a note taped to the bottom; LOOK CLOSER to turn and shake it and make the glitter fly. Defaults accepted (place, close-up overlay, tilt and shake instead of a full spin, note in the text, a chime). (Quirin)

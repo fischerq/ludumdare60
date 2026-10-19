@@ -214,6 +214,7 @@ export default class BootScene extends Phaser.Scene {
       rect(set, 6, 2, 2, 2, 0xffe0e0); set(9, 2, 0xffd23f); // tickets sticking out
       shadow(set);
     });
+    this.makeSnowGlobe(rect, tile, shadow);
     tile('change-top', (set) => { rect(set, 2, 2, 12, 14, K.change); rect(set, 4, 4, 8, 3, 0x30ff60); });
     tile('change-bottom', (set) => { rect(set, 2, 0, 12, 13, K.change); rect(set, 6, 4, 4, 4, 0x202020); shadow(set); });
     tile('claw-top', (set) => {
@@ -578,6 +579,77 @@ export default class BootScene extends Phaser.Scene {
   // The arcade hall's characters, top-down, feet at the bottom of the 32x32 sprite, two walk frames each:
   // arcade/pac-<right|up|down>-<frame> (the game flips right for left) and arcade/ghost-<name>-<dir>-<frame>, the
   // ghost visitors with their cap on (seen from behind when walking up).
+  // The snow globe in the hall: its tile (arcade/snow-globe) and the close-up (arcade/globe-big, 96x112) of a white
+  // unicorn with a rainbow mane and tail on a snowy mound, in a glass sphere on a pink base. The glitter is drawn
+  // live over the close-up (src/systems/globe.js).
+  makeSnowGlobe(rect, tile, shadow) {
+    const G = HALL.globe, R = G.rainbow;
+    const ellipse = (set, cx, cy, rx, ry, c) => {
+      for (let y = Math.floor(cy - ry); y < Math.ceil(cy + ry); y++) {
+        for (let x = Math.floor(cx - rx); x < Math.ceil(cx + rx); x++) {
+          if (((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 <= 1) set(x, y, c);
+        }
+      }
+    };
+    // A thick line of w x w dots.
+    const line = (set, x0, y0, x1, y1, w, c) => {
+      const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 2) + 1;
+      for (let i = 0; i <= n; i++) rect(set, Math.round(x0 + (x1 - x0) * i / n), Math.round(y0 + (y1 - y0) * i / n), w, w, c);
+    };
+    tile('snow-globe', (set) => {
+      shadow(set);
+      ellipse(set, 8, 6.5, 5.5, 5.5, G.glassEdge);
+      ellipse(set, 8, 6.5, 4.5, 4.5, G.glass);
+      rect(set, 4, 9, 8, 2, G.snow);
+      rect(set, 6, 7, 3, 2, G.unicorn); set(9, 6, G.unicorn); set(10, 5, G.horn); // the unicorn
+      set(5, 8, R[0]); set(6, 6, R[2]); set(8, 6, R[4]); // its rainbow
+      set(5, 4, G.colors[0]); set(10, 3, G.colors[1]); set(7, 3, G.colors[3]); set(11, 7, G.colors[0]); // glitter
+      set(6, 3, G.glassLight);
+      rect(set, 3, 11, 10, 3, G.base); rect(set, 4, 10, 8, 1, G.rim); rect(set, 3, 13, 10, 1, G.baseDark);
+    });
+    const { w, h } = G.size, { x: cx, y: cy } = G.center;
+    this.pixels('arcade/globe-big', w, h, (set) => {
+      const glassR = G.radius + 4;
+      const inside = (x, y) => (x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 <= (glassR - 1) ** 2;
+      const glass = (x, y, c) => { if (inside(x, y)) set(x, y, c); };
+      ellipse(set, cx, cy, glassR, glassR, G.glassEdge);
+      ellipse(set, cx, cy, glassR - 1, glassR - 1, G.glass);
+      // The snowy mound the unicorn stands on.
+      ellipse(glass, cx, cy + 34, 34, 10, G.snowShade);
+      ellipse(glass, cx, cy + 33, 33, 9, G.snow);
+      // The tail: six rainbow strands curling down behind.
+      R.forEach((c, i) => line(set, 34, 55 + i * 0.6, 26 - i * 0.4, 62 + i * 1.6, 2, c));
+      // Legs and hooves (the far ones a shade darker), then the body.
+      [[37, G.unicornShade], [51, G.unicornShade], [40, G.unicorn], [55, G.unicorn]].forEach(([x, c]) => {
+        rect(set, x, 63, 3, 10, c); rect(set, x, 72, 3, 2, G.hoof);
+      });
+      ellipse(set, 46, 60, 13, 7, G.unicorn);
+      rect(set, 37, 64, 18, 1, G.unicornShade);
+      // Neck and head.
+      this.poly(set, [[52, 56], [58, 42], [64, 44], [59, 61]], G.unicorn);
+      ellipse(set, 63, 44, 6, 4.5, G.unicorn);
+      ellipse(set, 68, 46.5, 3.5, 3, G.unicorn);
+      set(69, 47, G.unicornShade); set(70, 46, G.hoof); // nostril, cheek blush
+      this.poly(set, [[58, 41], [61, 37], [62, 41]], G.unicorn); // ear
+      rect(set, 63, 43, 2, 2, G.eye); set(63, 43, 0xffffff);
+      // The golden horn with its spiral.
+      this.poly(set, [[62, 40], [65, 40], [69, 28]], G.horn);
+      [[64, 37], [65, 34], [67, 31]].forEach(([x, y]) => set(x, y, 0xfff4c0));
+      // The mane: six rainbow strands down the back of the neck.
+      R.forEach((c, i) => line(set, 59 - i * 0.9, 38 + i * 0.5, 52 - i * 1.1, 56 + i * 0.3, 2, c));
+      // A shine on the glass.
+      for (let a = 3.6; a < 4.5; a += 0.04) set(Math.round(cx + Math.cos(a) * (glassR - 5)), Math.round(cy + Math.sin(a) * (glassR - 5)), G.glassLight);
+      rect(set, cx - 26, cy - 22, 2, 2, G.glassLight);
+      // The pink base with a golden rim.
+      this.poly(set, [[16, 85], [80, 85], [88, 110], [8, 110]], G.base);
+      rect(set, 8, 106, 81, 4, G.baseDark);
+      rect(set, 18, 82, 60, 4, G.rim);
+      rect(set, 18, 82, 60, 1, 0xfff4c0);
+      line(set, 20, 89, 15, 104, 1, G.baseLight);
+      [[30, 95], [48, 97], [66, 95]].forEach(([x, y]) => ellipse(set, x, y, 3, 3, G.baseLight)); // dots on the base
+    });
+  }
+
   makeHallCharacters() {
     const K = HALL.colors;
     const rect = (set, x, y, w, h, c) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) set(i, j, c); };
@@ -900,6 +972,16 @@ export default class BootScene extends Phaser.Scene {
       else { r(7, 11, 2, 3, stuck ? K.legOff : K.leg); r(6.5, 13.5, 3, 1, stuck ? K.legOff : K.eye); }
       if (on) { r(12, 12, 1, 1, A.line); } else if (!stuck) { r(12, 12, 1, 1, K.slot); }
     };
+    // The cheat lever by the edge connector: a big service lever on a plate, up (ready) or down (pulled).
+    for (const state of ['up', 'down']) tile(`lever-${state}`, (set) => {
+      floor(set);
+      rect(set, 3, 10, 10, 5, K.chip); rect(set, 3, 10, 10, 1, K.chipLight);
+      rect(set, 4, 12, 3, 1, K.warn); rect(set, 9, 12, 3, 1, K.warn); // the yellow TEST tag stripes
+      rect(set, 6, 9, 4, 2, K.legOff); // pivot
+      const top = state === 'up' ? 1 : 6, x = state === 'up' ? 9 : 4;
+      for (let y = top + 2; y < 10; y++) rect(set, Math.round(x + (8 - x) * (y - top) / (10 - top)), y, 1, 1, K.leg);
+      rect(set, x - 1, top, 3, 3, K.slot); set(x - 1, top, 0xff9a90); // the red knob
+    });
     for (const state of ['stuck', 'off', 'on']) tile(`switch-${state}`, (set) => { island(set, 'adder', state === 'stuck' ? 'off' : 'on'); toggle(set, 1, state); });
     this.pixels('board/portrait-switch', P, P, (set) => {
       rect(set, 0, 0, P, P, A.bg);

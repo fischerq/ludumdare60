@@ -486,7 +486,7 @@ export const HALL = {
     '#.O.....!.#',
     '#ksj...oM.#',
     '#..o....m.#',
-    '#.....np..#',
+    '#w....np..#',
     '#####D#####',
   ],
   zoom: 4,               // screen px per art px in the hall (the other layers use 2): cozier, bigger characters
@@ -519,6 +519,28 @@ export const HALL = {
   noticeTime: 0.9,       // s the "!" shows before the ghosts speak
   choiceLine: 14,        // art px per choice line in the text box (a 56 px tall tap target at 4x)
   portraitSize: 48,      // art px of a text box portrait (arcade/portrait-*.png); tiles are shown 3x to fill it
+  // The snow globe (w, bottom left), looked at up close (arcade/globe-big, 96x112, shown at the hall's zoom):
+  // drag sideways to turn it, the glitter swirls and slowly settles. Glitter rules in src/systems/globe.js.
+  globe: {
+    size: { w: 96, h: 112 },
+    center: { x: 48, y: 46 }, // the glass sphere's center in the art, px
+    radius: 34,          // px the glitter stays inside (the glass is 10 px wider; below that the base starts)
+    count: 160,          // glitter specks
+    gravity: 14,         // px/s² down (the water slows it a lot)
+    drag: 2.2,           // 1/s: how fast the water takes the glitter's speed
+    swirl: 30,           // rad/s of water spin per rad the globe is turned
+    stir: 20,            // stirred-up water per rad the globe is turned (either way)
+    jitter: 400,         // px/s² of random kick per unit of spin and stir
+    maxTilt: 0.5,        // rad the globe turns at most either way
+    dragTurn: 0.006,     // rad per screen px dragged
+    springBack: 3,       // 1/s: let go and it rights itself
+    tapShake: 8,         // rad/s of swirl a tap on the globe gives
+    colors: [0xff9ad8, 0xffd23f, 0xffffff, 0x9ad8ff, 0xd0a0ff],
+    glass: 0xd6eef8, glassLight: 0xffffff, glassEdge: 0x8ab8d0, snow: 0xf4f8ff, snowShade: 0xc8d8e8,
+    base: 0xff7ac0, baseDark: 0xd04a98, baseLight: 0xffb8e0, rim: 0xffd23f,
+    unicorn: 0xffffff, unicornShade: 0xd8d8e8, horn: 0xffd23f, hoof: 0xc8a0c0, eye: 0x202030,
+    rainbow: [0xff4040, 0xff9a30, 0xffe040, 0x50d050, 0x40a0ff, 0xa060e0],
+  },
   chase: {
     speed: 3.2,          // tiles per second (Pac-Man walks 4)
     time: 20,            // s until they give up
@@ -533,7 +555,7 @@ export const HALL = {
   cellText: {
     R: 'r', r: 'r', B: 'b', b: 'b', G: 'g', g: 'g', V: 'v', v: 'v', '=': 'counter', M: 'change', m: 'change',
     D: 'door', '%': 'plant', '!': 'bin', C: 'claw', c: 'claw', Q: 'soda', q: 'soda', '^': 'door', '*': 'posterPac',
-    '+': 'posterGhost', '@': 'clock', O: 'owner', k: 'gurke', j: 'jar', u: 'miniGurke', s: 'sign', n: 'manuals', p: 'pacManual',
+    '+': 'posterGhost', '@': 'clock', O: 'owner', k: 'gurke', j: 'jar', u: 'miniGurke', s: 'sign', n: 'manuals', p: 'pacManual', w: 'globe',
   },
   text: {
     blinky: "I'M NOT A GHOST. I'M JUST... VERY PALE.",
@@ -566,6 +588,10 @@ export const HALL = {
     gurke: "THAT'S A... GURKE! SOMEONE TOOK A BITE. I THINK THE OWNER LIKES THEM.",
     jar: 'A JAR OF CORNICHONS. TINY PICKLES, FLOATING.',
     miniGurke: 'THAT JUST REALLY LOOKS LIKE A... MINI-GURKE!',
+    globe: "A SNOW GLOBE: A UNICORN IN A SEA OF GLITTER. A NOTE IS TAPED TO THE BOTTOM: 'MY SISTER LOVED THIS ONE AS A KID.'",
+    globeLook: 'LOOK CLOSER',
+    globeClose: 'CLOSE',
+    globeHint: 'DRAG TO TURN IT. TAP OUTSIDE TO PUT IT DOWN.',
     manuals: 'A STACK OF MANUALS. WHICH ONE?',
     rippedOut: 'HUH, THIS ONE WAS RIPPED OUT.',
   },
@@ -604,7 +630,7 @@ export const LOBBY = {
     '#W.=.S=.=.#',
     '#=.=..=.=.#',
     '#===E====.#',
-    '#.V--.....#',
+    '#.V--H....#',
     '#...-..1..#',
     '#.R--..~..#',
     '#...-2~L~3#',
@@ -613,7 +639,7 @@ export const LOBBY = {
     '#...B.....#',
     '###########',
   ],
-  solid: '#MmKJDWEVRBCL1234AZX',
+  solid: '#MmKJDWEVRBCL1234AZXH',
   mechaRate: 2,          // blinks per second of Mecha-Pac's antenna (X, by the joystick: the bot)
   reserved: { adder: { x: 8, y: 16 }, switch: { x: 9, y: 16 } },
   // Map character -> deep layer id (src/systems/layers/). The monitor is all six of its tiles.
@@ -687,6 +713,11 @@ export const LOBBY = {
     leave: 'LEAVE IT',
     mecha: "MECHA-PAC: BEEP. BUSY PLAYING. I'M ON THE JOYSTICK WHILE YOU'RE IN HERE. EVERY LIFE I LOSE IS YOURS.",
     mechaOver: 'MECHA-PAC: BEEP... GAME OVER. I LOST YOUR LAST LIFE. A COIN STARTS A NEW GAME.',
+    // The cheat lever (H, by the edge connector): pulling it wakes every subsystem, so the adder shows up.
+    lever: 'SOMEONE LEFT A SERVICE LEVER IN HERE. A TAG SAYS: TEST ONLY. WAKES EVERY PART AT ONCE.',
+    leverDown: 'THE SERVICE LEVER IS DOWN. EVERY PART OF THE MACHINE IS AWAKE.',
+    leverPulled: 'CLUNK! EVERY PART OF THE MACHINE WAKES UP. BY THE BUS, THE ADDER LIGHTS UP: THE ROUND COUNTER.',
+    pull: 'PULL IT',
   },
   // Which text a tile shows when you face it and tap (keys into `text`); subsystems and ghosts are handled apart.
   cellText: { K: 'speaker', D: 'door', W: 'power', E: 'edge', '#': 'wall' },
@@ -752,6 +783,22 @@ export const MUSIC = {
     square: 'ffffffffffffffff0000000000000000',
   },
   beds: {
+    // The start screen: an upbeat tune on the machine's wavetable chip (our own melody, not the Pac-Man one).
+    // C major, a chord a bar: C F C G | F G Am C.
+    menu: {
+      bpm: 132, root: 60, vol: 0.8,
+      tracks: [
+        { wave: 'pulse', len: 1.6, vol: 0.2, notes:
+          '12 . 7 . 9 . 12 . 14 . 12 . 9 . 7 . 9 . . 7 9 . 12 . 7 . . . . . . . ' +
+          '12 . 7 . 9 . 12 . 16 . 14 . 12 . 9 . 14 . . 11 14 . 19 . 14 . . . . . . . ' +
+          '9 . 12 . 17 . 16 . 14 . 12 . 9 . 12 . 11 . . 9 7 . 9 . 11 . . . 7 . . . ' +
+          '9 . 12 . 16 . 12 . 9 . 12 . 14 . 16 . 19 . 17 . 16 . 14 . 12 . . . . . . .' },
+        { wave: 'tri', vol: 0.4, oct: -24, notes: [0, 5, 0, 7, 5, 7, 9, 0].map((r) => `${r} . ${r + 12} . `.repeat(4)).join('') },
+        { wave: 'organ', vol: 0.07, oct: 12, notes: [[0, 4, 7], [5, 9, 12], [0, 4, 7], [7, 11, 14], [5, 9, 12], [7, 11, 14], [9, 12, 16], [0, 4, 7]]
+          .map((c) => `${c[0]} ${c[1]} ${c[2]} ${c[1]} `.repeat(4)).join('') },
+      ],
+      textures: [{ type: 'ticks', every: 4, freq: 7000, vol: 0.04 }],
+    },
     // Quiet arcade: the radio behind the counter, now and then a bleep from one of the machines.
     hall: {
       ...RADIO_SONG, vol: 0.9,
