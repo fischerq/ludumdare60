@@ -496,19 +496,19 @@ export const ADDER = {
 export const HALL = {
   layout: [
     '###########',
-    '#^|^*@+^|^#',
+    '#^|^*@+^a^#',
     '#%RB.Y.VGu#',
     '#.rb.y.vg.#',
     '#.1.oS..2.#',
     '#.........#',
     '#C.~~~~~.Q#',
     '#c3~~~~~4q#',
-    '#..~~~~~..#',
-    '#o.......o#',
+    '#h.~~~~~..#',
+    '#o.....l.o#',
     '#.O.....!.#',
     '#ksj...oM.#',
     '#..o....m.#',
-    '#w....np..#',
+    '#w....np.e#',
     '#####D#####',
   ],
   zoom: 4,               // screen px per art px in the hall (the other layers use 2): cozier, bigger characters
@@ -531,6 +531,14 @@ export const HALL = {
     gurke: 0x3a8a30, gurkeLight: 0x6ab850, gurkeDark: 0x2a6020, gurkeInside: 0xd8e8a0, // the pickles
     jarGlass: 0xc8e0c8, jarLid: 0xc0a040, table: 0x9a6a3a,
     signPaper: 0xf2e6c0, signEdge: 0xb89a60, signInk: 0x3a2a18, // the sign and our yellowed manual
+    // The plush rabbit (h), the Urmel figurine on its stand (e), the blue paper (l), the old sweater (a).
+    rabbit: 0xe87a8a, rabbitLight: 0xf6b4bc, rabbitDark: 0xb04a5a, rabbitNose: 0xd02840, toyEye: 0x2a1018,
+    ice: 0xc8f0ff, iceLight: 0xffffff, iceShade: 0x80b8d8, egg: 0xf4ecd0, eggSpot: 0xc8b890,
+    blanket: 0x5a8ad0, blanketCheck: 0xf2c94c, milk: 0xffffff, teat: 0xd09060,
+    urmel: 0x7ac0a8, urmelLight: 0xc0ead8, urmelDark: 0x4a8a78, bubble: 0xffffff,
+    paper: 0x4a7ae0, paperEdge: 0x3058b0, paperInk: 0xffffff,
+    sweater: 0x7a6aa8, sweaterDark: 0x5a4a88, sweaterFuzz: 0x9a8ac0, hanger: 0x8a8a96,
+    elsaHair: 0xf4f0d0, elsaDress: 0x8ad0f0, annaHair: 0xb04a20, annaDress: 0x3a7a5a, skin: 0xf0c8a8,
     cabinets: { r: 0xd03030, b: 0x3060d0, g: 0x30a050, v: 0x8040c0, y: 0xf2c200 },
   },
   ghosts: { 1: 'blinky', 2: 'pinky', 3: 'inky', 4: 'clyde' },
@@ -637,6 +645,7 @@ export const HALL = {
     R: 'r', r: 'r', B: 'b', b: 'b', G: 'g', g: 'g', V: 'v', v: 'v', '=': 'counter', M: 'change', m: 'change',
     D: 'door', '%': 'plant', '!': 'bin', C: 'claw', c: 'claw', Q: 'soda', q: 'soda', '^': 'door', '*': 'posterPac',
     '+': 'posterGhost', '@': 'clock', O: 'owner', k: 'gurke', j: 'jar', u: 'miniGurke', s: 'sign', n: 'manuals', p: 'pacManual', w: 'globe',
+    h: 'rabbit', e: 'urmel', l: 'paper', a: 'sweater',
   },
   text: {
     blinky: "I'M NOT A GHOST. I'M JUST... VERY PALE.",
@@ -675,6 +684,10 @@ export const HALL = {
     globeHint: 'DRAG TO TURN IT, TAP IT TO SHAKE. TAP OUTSIDE TO PUT IT DOWN.',
     globeFlat: 'FLAT',
     globe3d: '3D',
+    rabbit: 'A STUFFED RABBIT WITH VERY LONG, FLOPPY ARMS AND LEGS. IT MUST HAVE ESCAPED THE CLAW MACHINE.',
+    sweater: 'AN OLD SWEATER WITH ANNA AND ELSA ON IT. WASHED A HUNDRED TIMES, STILL LOVED.',
+    paper: 'A BLUE PIECE OF PAPER. IT JUST SAYS: BLAU!',
+    paperRare: 'A BLUE PIECE OF PAPER. IT JUST SAYS: GRÜN!',
     manuals: 'A STACK OF MANUALS. WHICH ONE?',
     rippedOut: 'HUH, THIS ONE WAS RIPPED OUT.',
   },
@@ -685,6 +698,15 @@ export const HALL = {
     { title: 'ASTEROIDS', text: 'ASTEROIDS MANUAL. CHAPTER 1: ADJUSTING THE VECTOR MONITOR. CHAPTER 2: PLEASE DO NOT ADJUST THE VECTOR MONITOR.' },
     { title: 'DONKEY KONG', text: 'DONKEY KONG MANUAL. A WHOLE PAGE ON HOW TO CLEAN THE JOYSTICK. SOMEONE SPILLED COLA ON IT.' },
     { title: 'GALAXIAN', ripped: true },
+  ],
+  paperRareChance: 0.1,  // how often the blue paper says GRÜN! instead of BLAU!
+  // The Urmel figurine on its stand (e): each time you talk to it, it shows the next stage (arcade/urmel-<n>),
+  // then starts over. It starts as the iceberg.
+  urmel: [
+    'A FIGURINE ON A STAND: AN ICEBERG. SOMETHING IS FROZEN INSIDE... AN EGG?',
+    'THE ICE IS GONE. THE EGG IS TUCKED IN UNDER A LITTLE BLANKET.',
+    'THE EGG HATCHED! A SMALL URMEL DRINKS FROM A MILK BOTTLE.',
+    "THE URMEL LOOKS RIGHT AT YOU: 'OKOPUSPAPAT!'",
   ],
   pacManual: 'LAYERS OF PAC: SERVICE MANUAL. EVERY LAYER OF THIS MACHINE, FROM THE CABINET DOWN TO THE WIRES.',
   menu: {
