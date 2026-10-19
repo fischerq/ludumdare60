@@ -554,7 +554,7 @@ export const HALL = {
   // The snow globe (w, bottom left): the hall tile's colors (arcade/snow-globe). The close-up is HALL.globe3d.
   globe: {
     colors: [0xff9ad8, 0xffd23f, 0xffffff, 0x9ad8ff, 0xd0a0ff],
-    glass: 0xd6eef8, glassLight: 0xffffff, glassEdge: 0x8ab8d0, snow: 0xf4f8ff,
+    glass: 0xd6eef8, glassLight: 0xffffff, glassEdge: 0x8ab8d0, meadow: 0x5cb848,
     base: 0xff7ac0, baseDark: 0xd04a98, rim: 0xffd23f, unicorn: 0xffffff, horn: 0xffd23f,
     rainbow: [0xff4040, 0xff9a30, 0xffe040, 0x50d050, 0x40a0ff, 0xa060e0],
   },
@@ -581,7 +581,7 @@ export const HALL = {
     stirRate: 1.5,       // stir per rad/s of lag per s
     stirDecay: 0.7,      // 1/s: how fast the stirred-up water calms down
     jitter: 160,         // px/s² of random kick per unit of stir
-    flakes: 340,         // glitter flakes
+    flakes: 420,         // glitter flakes
     glitterColors: 5,    // glitter0..4 rows of the palette
     sink: 6,             // px/s a flake sinks at in still water
     flakeDrag: 3,        // 1/s: how fast a flake takes the water's speed
@@ -601,7 +601,7 @@ export const HALL = {
       horn: [0x7a4a08, 0xd09a20, 0xffd23f, 0xfff4c0],
       hoof: [0x5a3a58, 0xa080a0, 0xc8a0c0, 0xe8c8e0],
       eye: [0x101018, 0x202030, 0x202030, 0x50507a],
-      snow: [0x506880, 0xb8cce0, 0xe0eaf6, 0xffffff],
+      meadow: [0x1e4a1e, 0x3c8c34, 0x5cb848, 0x9ae070],
       base: [0x5a1040, 0xc0408c, 0xff7ac0, 0xffb8e0],
       rim: [0x7a4a08, 0xc89018, 0xffd23f, 0xfff4c0],
       mane0: [0x601010, 0xc02020, 0xff4040, 0xff9090],
@@ -616,6 +616,13 @@ export const HALL = {
       glitter3: [0x305878, 0x305878, 0x9ad8ff, 0xe8f8ff],
       glitter4: [0x584080, 0x584080, 0xd0a0ff, 0xf4e8ff],
       glass: [0x9ac8e0, 0x18303f, 0x1c3448, 0xffffff], // rim, (unused), water, shine
+      cloud: [0x6c84a8, 0xbccce4, 0xe8f0fa, 0xffffff],
+    },
+    // The note taped under the base (assets/arcade/globe-note.png): flip the globe over to read it.
+    note: {
+      size: { w: 46, h: 30 },
+      lines: ['MY SISTER', 'LOVED THIS', 'ONE AS A', 'KID.'],
+      paper: 0xfff4d0, paperEdge: 0xd8c898, ink: 0x2c4c9c, tape: 0xe4e8d8,
     },
   },
   chase: {

@@ -40,6 +40,8 @@ export default class MiniGameScene extends Phaser.Scene {
     this.keys = new Set();
     this.ending = 0;
     this.flash = 0;
+    this.gone = false; // the scene object is reused: without this, every game after the first could never leave
+    this.anchor = null;
     this.drawStatic();
     const font = (color) => ({ fontFamily: UI.arcadeFont, fontSize: 8, color, resolution: 1 });
     this.scoreText = this.add.text(4, 4, '', font(MINI.colors.score)).setDepth(10);

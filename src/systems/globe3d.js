@@ -35,19 +35,42 @@ function resample(path, n) {
   return out;
 }
 
-// The model file as spheres (the unicorn), strands (rest shapes), the snowy mound and the base.
-export function buildModel(json) {
-  const off = json.offset ?? [0, 0, 0], at = (p, m = 1) => [p[0] + off[0], p[1] + off[1], p[2] * m + off[2]];
-  const spheres = [];
-  for (const s of json.shapes) {
-    for (const m of s.mirror ? [1, -1] : [1]) {
-      if (s.at) { spheres.push({ p: at(s.at, m), r: s.r, part: s.part }); continue; }
-      const [r0, r1 = r0] = [].concat(s.r), a = at(s.from, m), b = at(s.to, m);
-      const n = Math.max(1, Math.ceil(len([b[0] - a[0], b[1] - a[1], b[2] - a[2]]) / (Math.min(r0, r1) * 0.5)));
-      for (let i = 0; i <= n; i++) spheres.push({ p: lerp(a, b, i / n), r: r0 + ((r1 - r0) * i) / n, part: s.part });
-    }
+// Push point p (a bead of radius r) out of every sphere in `bodies`.
+function pushOut(p, r, bodies) {
+  for (const b of bodies) {
+    const d = [p[0] - b.p[0], p[1] - b.p[1], p[2] - b.p[2]], dl = len(d), min = b.r + r;
+    if (dl >= min) continue;
+    const k = dl > 1e-6 ? min / dl : 0;
+    if (k) for (let i = 0; i < 3; i++) p[i] = b.p[i] + d[i] * k; else p[1] = b.p[1] + min;
   }
-  const strands = json.strands.map((s) => ({ part: s.part, r: s.r ?? json.strandR, rest: resample(s.path.map((p) => at(p)), s.beads) }));
+}
+
+// The model file as spheres (the unicorn and the props), strands (rest shapes), the meadow and the base.
+export function buildModel(json) {
+  const spheres = [], unicorn = [];
+  const add = (list, off, into) => {
+    const at = (p, m = 1) => [p[0] + off[0], p[1] + off[1], p[2] * m + off[2]];
+    for (const s of list) {
+      for (const m of s.mirror ? [1, -1] : [1]) {
+        if (s.at) { into.push({ p: at(s.at, m), r: s.r, part: s.part }); continue; }
+        const [r0, r1 = r0] = [].concat(s.r), a = at(s.from, m), b = at(s.to, m);
+        const n = Math.max(1, Math.ceil(len([b[0] - a[0], b[1] - a[1], b[2] - a[2]]) / (Math.min(r0, r1) * 0.5)));
+        for (let i = 0; i <= n; i++) into.push({ p: lerp(a, b, i / n), r: r0 + ((r1 - r0) * i) / n, part: s.part });
+      }
+    }
+    return at;
+  };
+  const off = json.offset ?? [0, 0, 0], at = add(json.shapes, off, unicorn);
+  add(json.props ?? [], [0, 0, 0], spheres);
+  spheres.unshift(...unicorn);
+  const strands = json.strands.map((s) => {
+    const r = s.r ?? json.strandR, rest = resample(s.path.map((p) => at(p)), s.beads);
+    // The body spheres this strand can reach, and its resting shape moved clear of them (the root stays put).
+    const reach = rest.slice(1).reduce((a, p, i) => a + len([p[0] - rest[i][0], p[1] - rest[i][1], p[2] - rest[i][2]]), 0);
+    const bodies = unicorn.filter((b) => len([b.p[0] - rest[0][0], b.p[1] - rest[0][1], b.p[2] - rest[0][2]]) < reach + b.r + r);
+    for (let it = 0; it < 4; it++) for (let b = 1; b < rest.length; b++) pushOut(rest[b], r, bodies);
+    return { part: s.part, r, rest, bodies };
+  });
   return { glassR: json.glassR, mound: json.mound, base: json.base, spheres, strands };
 }
 
@@ -64,7 +87,7 @@ export function createGlobe3d(model, cfg = HALL.globe3d, rand = Math.random) {
     model, cfg, rand, q: [Math.cos(cfg.pitch / 2), Math.sin(cfg.pitch / 2), 0, 0], down: gravityDir(cfg), w: [0, 0, 0], water: [0, 0, 0], stir: 0,
     jolt: { x: 0, y: 0, vx: 0, vy: 0 }, grab: null, torque: [0, 0, 0], flakes: [],
   };
-  // Glitter starts settled on the snow.
+  // Glitter starts settled on the meadow.
   const { center: mc, r: mr } = model.mound;
   for (let i = 0; i < cfg.flakes; i++) {
     const a = rand() * Math.PI * 2, d = Math.sqrt(rand()) * (model.glassR - 12), x = Math.cos(a) * d, z = Math.sin(a) * d;
@@ -172,11 +195,15 @@ function substep(g, h) {
         for (let i = 0; i < 3; i++) { p[b][i] -= d[i] * e * share; if (b > 1) p[b - 1][i] += d[i] * e * share; }
       }
     }
-    for (let b = 1; b < p.length; b++) { const d = len(p[b]); if (d > rin) p[b] = p[b].map((x) => (x * rin) / d); }
+    for (let b = 1; b < p.length; b++) {
+      pushOut(p[b], s.r, s.bodies); // hair floats around the unicorn, never through it
+      const d = len(p[b]);
+      if (d > rin) p[b] = p[b].map((x) => (x * rin) / d);
+    }
   }
 }
 
-// Keep a point inside the glass and above the snow, sliding along them.
+// Keep a point inside the glass and above the meadow, sliding along them.
 function contain(p, v, rin, mc, mr, h) {
   const d = len(p);
   if (d > rin) {
