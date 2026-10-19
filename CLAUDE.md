@@ -106,7 +106,9 @@ Every human prompt and its token usage/cost is published in `making-of/` as a sc
 - The exporter only reads prompts, Claude's visible replies, tool names and token counts. Tool outputs, system
   prompts and thinking stay out. If a prompt ever contains a secret, tell the user before committing the log.
 - Messages the user sends while Claude is working are logged as `followups` on that turn automatically.
-- The timeline row for a prompt is the prompt's own first sentence; don't write summaries.
+- The timeline row for a prompt is the prompt itself (the full prompt for a real ask, the first sentence for a nudge);
+  don't write summaries. `making-of.js` guesses ask vs. nudge (merge conflicts, "defaults", "yes"); fix a wrong guess
+  in `prompt_kinds` in `meta.json`.
 - Tokens and the model per prompt are the main numbers; the headline cost is the share of the subscription
   (`plan`, `plan_price_month` and `plan_currency` in `meta.json`; the billed price is 214,20 € a month). API list prices are reference only.
 - **Screenshots:** images pasted into prompts are published automatically (status bar cropped, resized). **Every

@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="pac">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Making Of</title>
   <link rel="icon" href="data:,">
   <script src="./theme.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/press-start-2p@5.0.20/index.css">
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -38,7 +39,7 @@
     <button role="tab" id="tab-timeline" aria-selected="true" aria-controls="timeline">Timeline</button>
     <button role="tab" id="tab-convos" aria-selected="false" aria-controls="convos">Conversations</button>
   </div>
-  <div class="order-row wrap"><button id="order" type="button" aria-label="Switch the order">Newest first ↓</button></div>
+  <div class="order-row wrap"><label class="only-intent"><input type="checkbox" id="only-intent"> Hide nudges</label><button id="order" type="button" aria-label="Switch the order">Newest first ↓</button></div>
 
   <main class="wrap">
     <section id="timeline" role="tabpanel" aria-labelledby="tab-timeline"><p class="empty">Loading…</p></section>

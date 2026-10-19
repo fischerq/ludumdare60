@@ -36,6 +36,49 @@
   color-scheme: dark;
 }
 
+/* Making-of: the start screen's arcade palette. Dark is the start screen itself (black, yellow title, white text);
+   light inverts it (yellow paper, black ink). */
+:root.pac {
+  --bg: #ffe94d;
+  --surface: #fff8c9;
+  --surface-2: #fff1a0;
+  --text: #111008;
+  --muted: #5c5520;
+  --line: #e0c728;
+  --accent: #111008;
+  --accent-strong: #111008;
+  --accent-ink: #ffe600;
+  --me-bg: #111008;
+  --me-text: #ffe600;
+  --them-bg: #fffbe3;
+  --chip: #ffe14a;
+  --code-bg: #fff1a0;
+  --shadow: 0 1px 0 rgba(17, 16, 8, .18);
+  --nudge: #a8961f;
+}
+:root.pac[data-theme="dark"] {
+  --bg: #000000;
+  --surface: #121109;
+  --surface-2: #0a0a05;
+  --text: #f4f1e0;
+  --muted: #9a9478;
+  --line: #2e2b16;
+  --accent: #ffe600;
+  --accent-strong: #ffe600;
+  --accent-ink: #000000;
+  --me-bg: #ffe600;
+  --me-text: #000000;
+  --them-bg: #17160c;
+  --chip: #1d1b0e;
+  --code-bg: #0a0a05;
+  --shadow: none;
+  --nudge: #5d5830;
+}
+.pac h1 { font-family: "Press Start 2P", "Courier New", monospace; font-size: clamp(20px, 5.4vw, 30px); line-height: 1.35;
+  letter-spacing: 0; color: var(--accent-strong); }
+.pac .stat .v { font-family: "Press Start 2P", "Courier New", monospace; font-size: clamp(14px, 4vw, 18px); letter-spacing: 0; margin-bottom: 6px; }
+.pac .item::before { border-radius: 50%; }
+
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
@@ -103,11 +146,26 @@ main { margin-top: 8px; }
 .kicker { display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px; font-weight: 700; letter-spacing: .06em;
   text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
 .item:not(.manual) .kicker { color: var(--accent-strong); }
-.kicker .tok { text-transform: none; letter-spacing: 0; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+.kicker .tok { flex: none; white-space: nowrap; text-transform: none; letter-spacing: 0; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
 .item .line { display: block; font-weight: 560; }
 .more-dots { color: var(--muted); font-weight: 700; }
 /* Open: the row's sentence becomes the first chat message, so it isn't shown twice. */
 .item:not(.manual) details[open] .line { display: none; }
+/* Prompts are tagged by intent: a real ask shows in full, a nudge (merge conflicts, "defaults") is a small grey row. */
+.item.intent .line { white-space: pre-wrap; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 7;
+  -webkit-box-orient: vertical; overflow: hidden; }
+.item.intent details { border-left: 4px solid var(--accent); }
+.item.nudge { margin-bottom: 4px; }
+.item.nudge::before { width: 8px; height: 8px; left: 6px; top: 12px; background: var(--nudge, var(--muted)); }
+.item.nudge details { background: none; border: 1px dashed var(--line); box-shadow: none; }
+.item.nudge summary { padding: 5px 12px 6px; }
+.item.nudge .kicker { color: var(--muted) !important; font-size: 10.5px; margin-bottom: 0; }
+.item.nudge .line { font-weight: 400; font-size: 14px; color: var(--muted); }
+.tag { display: inline-block; vertical-align: 1px; white-space: nowrap; margin-left: 6px; padding: 0 6px; border-radius: 4px; font-size: 10px;
+  letter-spacing: .06em; color: var(--muted); border: 1px solid var(--line); }
+.only-intent { display: flex; gap: 6px; align-items: center; font-size: 13px; font-weight: 600; color: var(--muted); margin-right: auto; cursor: pointer; }
+.only-intent input { width: 18px; height: 18px; accent-color: var(--accent); }
+body.hide-nudges .item.nudge { display: none; }
 .item .body { padding: 2px 12px 14px; }
 .item.manual .body { padding: 0 14px 14px; }
 
