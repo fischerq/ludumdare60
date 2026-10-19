@@ -64,6 +64,13 @@ player who knows the game".*
   everywhere). The full playthrough now reaches the bottom: 85% with no noise, about 6 minutes (the input layer is
   the rest). At 0.25 it still fails on time caps (logic, bus) and coins; from 0.5 up the maze bot can't clear the
   maze with the coins there are, which is the bot's limit as much as the maze's.
+- 2026-10-19 (rerun after the RAM/CPU/input rework, coin minigame and bot deaths): win rate at noise 0 / 0.25 /
+  0.5 / 0.75 / 1. Maze 100/80/0/0/0, cabinet 100/70/0/0/0 (unchanged: still the hardest part for slow reactions).
+  Hall 100/100/100/100/35, chase 100/95/90/35/15. Deep: crt 100/100/100/90/75, ram 100/100/100/75/10,
+  bus 100/100/95/20/0, cpu 100/100/95/80/75, logic 100/100/100/70/75, input 100/100/100/100/60 (was 60% even at
+  0). Adder 100/100/80/0/0. Every deep layer is cleared at 0.25 in under 30 s median. **Not measured:** the video
+  board (signals) bot is out of date since that layer's rework (it calls `inPulse`, and the layer needs a DOM canvas
+  for its tile snapshot), and the full playthrough crashes on it, so there is no end-to-end number this round.
 
 ## Slice scope
 - Build: the CLI, the bots, the noise model, the playthrough, the results page.
