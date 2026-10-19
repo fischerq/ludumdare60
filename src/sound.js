@@ -88,6 +88,10 @@ export const sfx = {
     tone(1200, 0.06, { vol: 0.4 });
     tone(1600, 0.12, { at: 0.08, vol: 0.4 });
   },
+  // The snow globe's glitter swirling: a few soft, high chimes.
+  glitter() {
+    [2093, 2637, 3136, 2349, 3520].forEach((f, i) => tone(f, 0.35, { type: 'sine', vol: 0.08, at: i * 0.06 + Math.random() * 0.03 }));
+  },
   // The joystick's microswitch clicking over.
   click() {
     tone(2400, 0.015, { type: 'square', vol: 0.25 });
@@ -125,6 +129,8 @@ let noise = null;
 const waves = {};
 
 export function isMuted() { return muted; }
+// Is sound actually playing (unlocked by a tap and not suspended)?
+export function audioRunning() { return ctx?.state === 'running'; }
 export function toggleMute() {
   muted = !muted;
   try { localStorage.setItem('muted', muted ? '1' : '0'); } catch (e) { /* ignore */ }

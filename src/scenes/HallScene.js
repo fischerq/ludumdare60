@@ -6,6 +6,7 @@ import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
 import { addLayerButtonAt } from '../layerButton.js';
 import { coins, addCoin, coinTaken, loseCoins } from '../wallet.js';
 import { openManual } from '../manual/index.js';
+import { createGlobe, turnGlobe, shakeGlobe, stepGlobe } from '../systems/globe.js';
 
 const T = PIXEL.tile;
 const KEYS = {
@@ -16,7 +17,7 @@ const KEYS = {
 const DECOR = { '|': 'wall-face', '^': 'window', '*': 'poster-pac', '+': 'poster-ghost', '@': 'clock' };
 const ON_FLOOR = {
   '=': 'counter', M: 'change-top', m: 'change-bottom', C: 'claw-top', c: 'claw-bottom', Q: 'soda-top',
-  q: 'soda-bottom', '%': 'plant', '!': 'bin', k: 'counter-gurke', j: 'counter-jar', u: 'mini-gurke', s: 'counter-sign', n: 'manual-stack', p: 'manual-pac',
+  q: 'soda-bottom', w: 'snow-globe', '%': 'plant', '!': 'bin', k: 'counter-gurke', j: 'counter-jar', u: 'mini-gurke', s: 'counter-sign', n: 'manual-stack', p: 'manual-pac',
 };
 
 // The text box portrait for a map character: the owner's own, otherwise the thing's tile (a machine's top half).
@@ -71,7 +72,7 @@ export default class HallScene extends Phaser.Scene {
     }
     // Characters fill one tile, centered on it, like a Pokémon game; lower ones are drawn in front.
     const actor = (key) => this.add.image(0, 0, key);
-    this.npcSprites = this.h.npcs.map((n) => actor(`arcade/ghost-${n.name}-up-0`));
+    this.npcSprites = this.h.npcs.map((n) => actor(`arcade/ghost-${n.name}-down-0`));
     this.pac = actor('arcade/pac-up-0');
     // The shop owner, asleep behind the counter.
     this.owners = [];
@@ -222,6 +223,8 @@ export default class HallScene extends Phaser.Scene {
       else this.say(tx.yNeedCoins.replace('{n}', coins()).replace('{need}', COINS.perGame), portrait);
     } else if (HALL.cellText[f.cell] === 'manuals') {
       this.say(tx.manuals, portrait, HALL.manuals.map((m) => ({ label: m.title, act: () => this.say(m.ripped ? tx.rippedOut : m.text, portrait) })));
+    } else if (HALL.cellText[f.cell] === 'globe') {
+      this.say(tx.globe, portrait, [{ label: tx.globeLook, act: () => this.openGlobe() }, { label: tx.globeClose }]);
     } else if (HALL.cellText[f.cell] === 'pacManual') {
       this.readPacManual(portrait);
     } else if (HALL.cellText[f.cell]) {
@@ -240,6 +243,51 @@ export default class HallScene extends Phaser.Scene {
     this.say(HALL.pacManual, portrait, [{ label: HALL.menu.readMore, act: read }, { label: HALL.menu.close }]);
   }
 
+  // The snow globe up close, over the dimmed hall: drag sideways to turn it, tap it to shake, tap outside to put it down.
+  openGlobe() {
+    const G = HALL.globe, fixed = (o) => o.setScrollFactor(0).setDepth(2e6);
+    if (!this.globeUi) {
+      const x = Math.round(this.viewW / 2), y = Math.round(this.viewH / 2 - 12);
+      const dim = fixed(this.add.graphics()).fillStyle(0x000000, 0.85).fillRect(0, 0, this.viewW, this.viewH);
+      const img = fixed(this.add.image(x, y, 'arcade/globe-big').setOrigin(G.center.x / G.size.w, G.center.y / G.size.h));
+      const gfx = fixed(this.add.graphics()).setPosition(x, y);
+      const hint = fixed(this.add.text(this.viewW / 2, y + G.size.h - G.center.y + 10, HALL.text.globeHint, {
+        fontFamily: UI.arcadeFont, fontSize: 8, color: COLORS.textDim, resolution: 1, align: 'center',
+        wordWrap: { width: this.viewW - 24 }, lineSpacing: 4,
+      }).setOrigin(0.5, 0));
+      this.globeUi = { x, y, img, gfx, all: [dim, img, gfx, hint] };
+    }
+    this.globeUi.all.forEach((o) => o.setVisible(true));
+    this.globe = createGlobe();
+    this.globeDrag = null;
+    this.globeKey = 0;
+    this.mode = 'globe';
+    shakeGlobe(this.globe);
+    sfx.glitter();
+  }
+
+  closeGlobe() {
+    this.globeUi.all.forEach((o) => o.setVisible(false));
+    this.mode = 'walk';
+    sfx.click();
+  }
+
+  // Is screen point p on the globe (its picture, unturned)?
+  onGlobe(p) {
+    const G = HALL.globe, u = this.globeUi, x = p.x / HALL.zoom - (u.x - G.center.x), y = p.y / HALL.zoom - (u.y - G.center.y);
+    return x >= 0 && y >= 0 && x < G.size.w && y < G.size.h;
+  }
+
+  stepGlobeView(dt) {
+    const g = this.globe;
+    if (this.globeKey) turnGlobe(g, g.angle + this.globeKey * dt * 2);
+    stepGlobe(g, dt, !!this.globeDrag?.moved || !!this.globeKey);
+    const { img, gfx } = this.globeUi;
+    img.setRotation(g.angle);
+    gfx.setRotation(g.angle).clear();
+    for (const sp of g.specks) gfx.fillStyle(sp.color, 1).fillRect(Math.round(sp.x), Math.round(sp.y), 1, 1);
+  }
+
   goDown() {
     if (this.mode === 'outro') return;
     this.closeText(true);
@@ -252,11 +300,19 @@ export default class HallScene extends Phaser.Scene {
     this.anchor = null;
     this.input.on('pointerdown', (p, over) => {
       unlockAudio();
+      if (this.mode === 'globe') { this.globeDrag = { x: p.x, id: p.id, angle: this.globe.angle, moved: false, at: this.time.now }; return; }
       if (this.mode === 'intro') { this.introT = 1; return; } // tap to skip the zoom-out
       if (over.includes(this.layerBtn)) return;
       this.anchor = { x: p.x, y: p.y, id: p.id, at: this.time.now, moved: false };
     });
     this.input.on('pointermove', (p) => {
+      const gd = this.globeDrag;
+      if (this.mode === 'globe' && gd && p.id === gd.id && p.isDown) {
+        const dx = p.x - gd.x;
+        if (!gd.moved && Math.abs(dx) >= HALL.dragDeadzone) { gd.moved = true; sfx.glitter(); }
+        if (gd.moved) turnGlobe(this.globe, gd.angle + dx * HALL.globe.dragTurn);
+        return;
+      }
       const a = this.anchor;
       if (!a || p.id !== a.id || !p.isDown) return;
       const dx = p.x - a.x, dy = p.y - a.y;
@@ -267,6 +323,15 @@ export default class HallScene extends Phaser.Scene {
       this.held = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
     });
     this.input.on('pointerup', (p) => {
+      const gd = this.globeDrag;
+      if (this.mode === 'globe') {
+        if (!gd || p.id !== gd.id) return;
+        this.globeDrag = null;
+        if (!gd.moved && this.time.now - gd.at < HALL.tapTime) {
+          if (this.onGlobe(p)) { shakeGlobe(this.globe); sfx.glitter(); } else this.closeGlobe();
+        }
+        return;
+      }
       const a = this.anchor;
       if (!a || p.id !== a.id) return;
       this.anchor = null;
@@ -276,6 +341,12 @@ export default class HallScene extends Phaser.Scene {
 
     this.input.keyboard?.on('keydown', (e) => {
       unlockAudio();
+      if (this.mode === 'globe') {
+        if (e.code === 'Space') { shakeGlobe(this.globe); sfx.glitter(); }
+        if (e.code === 'Enter' || e.code === 'Escape') this.closeGlobe();
+        if (KEYS[e.code] === 'left' || KEYS[e.code] === 'right') this.globeKey = KEYS[e.code] === 'left' ? -1 : 1;
+        return;
+      }
       if (e.code === 'Space' || e.code === 'Enter') this.interact();
       if (this.choices && (KEYS[e.code] === 'up' || KEYS[e.code] === 'down')) {
         const n = this.choices.length;
@@ -286,7 +357,10 @@ export default class HallScene extends Phaser.Scene {
       if (this.choices) return;
       if (KEYS[e.code]) { this.keyDir = KEYS[e.code]; if (this.talking) this.closeText(); }
     });
-    this.input.keyboard?.on('keyup', (e) => { if (KEYS[e.code] === this.keyDir) this.keyDir = null; });
+    this.input.keyboard?.on('keyup', (e) => {
+      if (KEYS[e.code] === this.keyDir) this.keyDir = null;
+      if (KEYS[e.code] === 'left' || KEYS[e.code] === 'right') this.globeKey = 0;
+    });
   }
 
   setupPauseOnHide() {
@@ -321,7 +395,7 @@ export default class HallScene extends Phaser.Scene {
     // Screen-fixed UI would scale with the zoom; show it only at the normal zoom.
     const showUi = this.mode === 'walk';
     this.coinText.setVisible(showUi);
-    const textBox = [this.box, this.boxText, this.coinText, this.portraitFrame, this.portrait, ...this.choiceTexts];
+    const textBox = [this.box, this.boxText, this.coinText, this.portraitFrame, this.portrait, ...this.choiceTexts, ...(this.globeUi?.all ?? [])];
     this.children.list.filter((o) => o.scrollFactorX === 0 && !textBox.includes(o))
       .forEach((o) => o.setVisible(showUi));
   }
@@ -336,6 +410,8 @@ export default class HallScene extends Phaser.Scene {
     } else if (this.mode === 'outro') {
       this.introT -= dt / HALL.outroTime;
       if (this.introT <= 0) { this.mode = 'gone'; this.scene.start('Cabinet', { from: 'above' }); return; }
+    } else if (this.mode === 'globe') {
+      this.stepGlobeView(dt);
     } else if (this.mode === 'walk' && this.notice > 0) {
       // The "!" is up: everyone freezes, then the ghosts say it together.
       this.notice -= dt;
