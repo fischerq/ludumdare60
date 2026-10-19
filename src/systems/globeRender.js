@@ -1,15 +1,17 @@
 // Draws the 3D snow globe (src/systems/globe3d.js) as pixel art into an RGBA buffer, with no Phaser: the glass and
-// its water, the base and the snowy mound ray-cast per pixel, the unicorn and its strands as shaded spheres, a 1 px
-// outline wherever the depth jumps, glitter as single pixels, then the glass rim and its highlight. Every color is
-// one of the palette's (assets/arcade/globe-palette.png: per part outline, dark, mid, light), lit in three bands.
+// its water, the base (with the note under it) and the meadow ray-cast per pixel, the unicorn, its strands and the
+// cloud as shaded spheres, a 1 px outline wherever the depth jumps, glitter as single pixels, then the glass rim and
+// its highlight. Every color is one of the palette's (assets/arcade/globe-palette.png: per part outline, dark, mid,
+// light), lit in three bands; the note is drawn as it is in assets/arcade/globe-note.png.
 
 import { quatMatrix, toLocal } from './globe3d.js';
 
 const BAYER = [0, 0.5, 0.75, 0.25];
 const Z0 = 200; // the camera plane, world z (in front of everything)
 
-// palette: { part: [outline, dark, mid, light] as 0xRRGGBB }, its keys in the order of the PNG's rows.
-export function createView(cfg, palette) {
+// palette: { part: [outline, dark, mid, light] as 0xRRGGBB }, its keys in the order of the PNG's rows. note: the
+// ImageData of the note under the base (optional), its top edge toward the front of the globe.
+export function createView(cfg, palette, note = null) {
   const W = cfg.view, parts = Object.keys(palette);
   const abgr = (c) => (0xff000000 | ((c & 0xff) << 16) | (c & 0xff00) | ((c >> 16) & 0xff)) >>> 0;
   const L = cfg.light, ll = Math.hypot(...L);
@@ -19,6 +21,7 @@ export function createView(cfg, palette) {
     b0: cfg.bands[0], b1: cfg.bands[1], dither: cfg.dither,
     light: L.map((x) => x / ll), image: new ImageData(W, W),
     z: new Float32Array(W * W), id: new Uint8Array(W * W), cx: W / 2, cy: W / 2,
+    note: note && { w: note.width, h: note.height, px: new Uint32Array(note.data.buffer.slice(0)) },
   };
 }
 
@@ -77,9 +80,10 @@ export function renderGlobe(v, g) {
   const put = (i, part, lvl, depth) => { z[i] = depth; id[i] = part; px[i] = pal[part - 1][lvl]; };
   const glassId = v.ids.glass, maxR = W / 2 + 2;
 
-  // Ray-cast pass: the water behind everything, then the mound (snow inside the glass) and the base. Each frustum is
-  // only tried inside the disc its bounding sphere covers on screen.
-  const dl = toLocal(m, [0, 0, -1]), mound = mdl.mound, snowId = v.ids.snow, o = [0, 0, 0];
+  // Ray-cast pass: the water behind everything, then the mound (the meadow inside the glass) and the base. Each
+  // frustum is only tried inside the disc its bounding sphere covers on screen.
+  const dl = toLocal(m, [0, 0, -1]), mound = mdl.mound, meadowId = v.ids.meadow, o = [0, 0, 0];
+  const note = v.note, last = mdl.base[mdl.base.length - 1];
   const frusta = mdl.base.map((f) => {
     const mid = (f.y[0] + f.y[1]) / 2, c = [m[1] * mid, m[4] * mid, m[7] * mid];
     const r = Math.hypot((f.y[0] - f.y[1]) / 2, Math.max(...f.r)) + 1;
@@ -101,7 +105,7 @@ export function renderGlobe(v, g) {
             const p = [o[0] + dl[0] * tin, o[1] + dl[1] * tin, o[2] + dl[2] * tin];
             const c = mh[0] >= gh[0] ? mound.center : [0, 0, 0], r = mh[0] >= gh[0] ? mound.r : R;
             const s = ((p[0] - c[0]) * Ll[0] + (p[1] - c[1]) * Ll[1] + (p[2] - c[2]) * Ll[2]) / r;
-            put(i, snowId, band(v, s, x, y), Z0 - tin);
+            put(i, meadowId, band(v, s, x, y), Z0 - tin);
           }
         }
       }
@@ -109,7 +113,14 @@ export function renderGlobe(v, g) {
         const ex = x + 0.5 - fr.sx, ey = y + 0.5 - fr.sy;
         if (ex * ex + ey * ey > fr.r2) continue;
         const t = frustumHit(o, dl, fr.f);
-        if (t > 0 && Z0 - t > z[i]) put(i, fr.id, band(v, hitN[0] * Ll[0] + hitN[1] * Ll[1] + hitN[2] * Ll[2], x, y), Z0 - t);
+        if (!(t > 0 && Z0 - t > z[i])) continue;
+        put(i, fr.id, band(v, hitN[0] * Ll[0] + hitN[1] * Ll[1] + hitN[2] * Ll[2], x, y), Z0 - t);
+        // The note taped under the base: its pixel at the hit point, unless it's see-through there.
+        if (note && fr.f === last && hitN[1] < -0.999) {
+          const u = Math.floor(o[0] + dl[0] * t + note.w / 2), w = Math.floor(note.h / 2 - (o[2] + dl[2] * t));
+          const c = u >= 0 && w >= 0 && u < note.w && w < note.h ? note.px[w * note.w + u] : 0;
+          if (c >>> 24 > 127) px[i] = c;
+        }
       }
     }
   }

@@ -323,7 +323,7 @@ export default class HallScene extends Phaser.Scene {
         wordWrap: { width: this.viewW - 24 }, lineSpacing: 4,
       }).setOrigin(0.5, 0));
       this.globeUi = { x, y, all: [dim, img3d, hint] };
-      this.globeView = createView(V, this.globePalette());
+      this.globeView = createView(V, this.globePalette(), this.texturePixels('arcade/globe-note'));
       this.globeModel = buildModel(this.cache.json.get('globe-model'));
     }
     this.globeUi.all.forEach((o) => o.setVisible(true));
@@ -335,16 +335,20 @@ export default class HallScene extends Phaser.Scene {
     sfx.glitter();
   }
 
-  // The palette PNG's colors, by part (rows in the order of HALL.globe3d.palette).
-  globePalette() {
-    const src = this.textures.get('arcade/globe-palette').getSourceImage(), rows = Object.keys(HALL.globe3d.palette);
-    const c = document.createElement('canvas');
+  // A loaded texture's pixels as ImageData.
+  texturePixels(key) {
+    const src = this.textures.get(key).getSourceImage(), c = document.createElement('canvas');
     c.width = src.width; c.height = src.height;
     const ctx = c.getContext('2d');
     ctx.drawImage(src, 0, 0);
-    const d = ctx.getImageData(0, 0, c.width, c.height).data;
+    return ctx.getImageData(0, 0, c.width, c.height);
+  }
+
+  // The palette PNG's colors, by part (rows in the order of HALL.globe3d.palette).
+  globePalette() {
+    const { data: d, width } = this.texturePixels('arcade/globe-palette'), rows = Object.keys(HALL.globe3d.palette);
     return Object.fromEntries(rows.map((k, y) => [k, [0, 1, 2, 3].map((x) => {
-      const i = (y * c.width + x) * 4;
+      const i = (y * width + x) * 4;
       return (d[i] << 16) | (d[i + 1] << 8) | d[i + 2];
     })]));
   }
