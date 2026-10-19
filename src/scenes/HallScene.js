@@ -177,7 +177,7 @@ export default class HallScene extends Phaser.Scene {
   makeUi() {
     const fixed = (o) => o.setScrollFactor(0);
     this.ui = [];
-    this.coinText = fixed(this.add.text(6, 14, '', { fontFamily: UI.arcadeFont, fontSize: 8, color: COLORS.textReady, resolution: 1 }));
+    this.coinText = fixed(this.add.text(6, 14, '', { fontFamily: UI.arcadeFont, fontSize: UI.hudPx / HALL.zoom, color: COLORS.textReady, resolution: HALL.zoom / 2 }));
     this.ui.push(this.coinText);
     this.layerBtn = addLayerButtonAt(this, 'down', () => this.goDown(), { zoom: HALL.zoom, scale: 2 / HALL.zoom, fixed: true });
 

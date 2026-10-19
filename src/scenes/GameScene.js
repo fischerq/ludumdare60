@@ -89,23 +89,28 @@ export default class GameScene extends Phaser.Scene {
     return this.add.text(x, y, str, { fontFamily: UI.arcadeFont, fontSize: 16, color, resolution: 1 });
   }
 
+  // HUD text at the size every game shares (UI.hudPx screen px).
+  hudText(x, y, str, color) {
+    return this.add.text(x, y, str, { fontFamily: UI.arcadeFont, fontSize: UI.hudPx / PIXEL.zoom, color, resolution: 1 });
+  }
+
   makeHud() {
     // LEVEL n in the top-left corner, like every other layer's HUD (the machine's round counter).
-    this.levelText = this.text(8, 8, '', COLORS.textDim);
-    this.text(32, 34, '1UP', COLORS.text);
-    this.scoreText = this.text(32, 54, '00', COLORS.text);
+    this.levelText = this.hudText(8, 8, '', COLORS.textDim);
+    this.hudText(32, 34, '1UP', COLORS.text);
+    this.scoreText = this.hudText(32, 50, '00', COLORS.text);
     let best = 0;
     try { best = Number(localStorage.getItem(BEST_KEY)) || 0; } catch (e) { /* private mode */ }
     this.best = best;
     // Top center like the arcade original; the top-right corner is the sound button's.
-    this.text(this.viewW / 2, 34, 'HIGH SCORE', COLORS.text).setOrigin(0.5, 0);
-    this.bestText = this.text(this.viewW / 2, 54, String(best || '00'), COLORS.text).setOrigin(0.5, 0);
+    this.hudText(this.viewW / 2, 34, 'HIGH SCORE', COLORS.text).setOrigin(0.5, 0);
+    this.bestText = this.hudText(this.viewW / 2, 50, String(best || '00'), COLORS.text).setOrigin(0.5, 0);
 
     const mazeBottom = this.oy + H * T;
     this.readyText = this.text(this.sx(MAZE.houseExit.x), this.oy + 13 * T + 2, 'READY!', COLORS.textReady)
       .setOrigin(0.5, 0);
-    // How to play, under the maze until the first turn (it used to be on the start screen).
-    this.hint = this.text(this.viewW / 2, mazeBottom + 52, 'SWIPE TO TURN\nEAT ALL THE DOTS', COLORS.textDim)
+    // How to play, above the maze until the first turn (instructions go on top in every game).
+    this.hint = this.hudText(this.viewW / 2, MAZE.hintY, 'SWIPE TO TURN\nEAT ALL THE DOTS', COLORS.textDim)
       .setOrigin(0.5, 0).setAlign('center').setLineSpacing(8);
     this.mazeBottom = mazeBottom;
     this.addLayerButtons();

@@ -180,4 +180,7 @@ the arcade as a place.
 - 2026-10-19: The Game Boy moves onto the rug (left of the sweater); batteries to pick up under the potted plant; with them it plays the start of Pokemon Red with mini-Gurken: choose a starter in the professor's lab, the rival takes the counter and fights you, leaving the lab turns the Game Boy off. Defaults accepted (on-screen D-pad, grass/fire/water mini-Gurken BLATTGURK, FEUERGURK, SALZGURK, a short fight, once per session, own names RED/BLUE/PROF. DILL, own tunes). (Quirin)
 - 2026-10-19: The Game Boy Color is yellow, in the hall and up close. (Quirin)
 - 2026-10-19: Game Boy game: the kinds are Gurken, not mini-Gurken; the one you pick is named MINI-GURKE; the balls become pickle jars with colored lids; the device is the GURK BOY COLOR playing GURKEMON RED; RED visibly carries his Gurke after choosing. (Quirin) Claude picked the jars, the brand name, the nickname moment ("RED NAMES IT MINI-GURKE!") and an orange carried fire Gurke (red vanished on RED's shirt).
+- 2026-10-20: The other machines get the maze game's arcade HUD: 1UP and HIGH SCORE across the top (best per machine
+  in localStorage), spare lives as icons right of LAYER UP; Kong's HELP! moved left of the lady, out from under the
+  sound button. (Quirin)
 - 2026-10-19: Snow globe: the cloud smaller and moved off to the left, a small moon at the top, eight daisies (Gänseblümchen) on the meadow, the mane split into 12 shorter strands swept back so it flows. (Quirin) Claude picked the moon's and daisies' spots and the swept-back mane shape.

@@ -166,7 +166,8 @@ export default {
     // The CPU block.
     const cpu = { x: 1, y: PORT.y - 2 };
     ctx.fillStyle = css(P.line);
-    tinyText(ctx, 'Z80', cpu.x * S + Math.floor((3 * S - 11) / 2), PORT.y * S + Math.floor((S - 5) / 2));
+    const k = DEEP.labelScale;
+    tinyText(ctx, 'Z80', cpu.x * S + Math.floor((3 * S - 11 * k) / 2), PORT.y * S + Math.floor((S - 5 * k) / 2), k);
     // Doors: open (a gap) while the decoder selects their chip; room labels and their data byte.
     for (const [chip, d] of Object.entries(DOORS)) {
       const open = doorOpen(st, chip, t), left = (st.openUntil[chip] ?? 0) - t;
@@ -178,7 +179,7 @@ export default {
         ctx.globalAlpha = 1;
       } else { ctx.fillStyle = css(0xffffff, 0.15 + 0.1 * Math.sin(t * 10)); ctx.fillRect(d.x * S, d.y * S, S, S); }
       ctx.fillStyle = css(open ? 0xffffff : P.dot);
-      tinyText(ctx, NAMES[chip], (d.x + 1) * S + 2, (d.y - 2) * S + 2);
+      tinyText(ctx, NAMES[chip], (d.x + 1) * S + 2, (d.y - 2) * S + 2, k);
       if (!st.done.has(chip)) dot(ctx, env, 'special', CENTERS[chip].x, CENTERS[chip].y, S);
     }
     for (const k of st.drops.keys()) { const [x, y] = k.split(',').map(Number); dot(ctx, env, 'dot', x, y, S); }
