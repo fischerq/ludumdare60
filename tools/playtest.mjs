@@ -60,12 +60,14 @@ const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : nu
 
 // --set SPEED.ghost=5,DEEP.bus.cycleTime=1.4: try config values without editing src/config.js (before the
 // program is assembled, so maze numbers count too).
-const sets = opt('set', '') ? opt('set', '').split(',') : [];
+// Values may be JSON arrays (DEEP.input.levels.cap.sparkEvery=[2,3]); commas inside brackets don't split.
+const splitTop = (str) => { const out = ['']; let d = 0; for (const ch of str) { d += ch === '[' ? 1 : ch === ']' ? -1 : 0; if (ch === ',' && !d) out.push(''); else out[out.length - 1] += ch; } return out; };
+const sets = opt('set', '') ? splitTop(opt('set', '')) : [];
 for (const kv of sets) {
   const [path, v] = kv.split('='), keys = path.split('.'), last = keys.pop();
   const obj = keys.reduce((o, k) => o?.[k], CONFIG);
   if (!obj || !(last in obj)) { console.error(`--set: no config value ${path}`); process.exit(1); }
-  obj[last] = Number(v);
+  obj[last] = JSON.parse(v);
 }
 await boot();
 const started = Date.now();

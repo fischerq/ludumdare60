@@ -282,7 +282,7 @@ export const DEEP = {
     bonusModes: ['columns', 'up'], // taken in turn: column by column left to right, row by row bottom to top
     msgTime: 3,          // s an adjustment's message stays in the status line
     labelScale: 2,       // art px per font pixel of the pads' names
-    levels: { cap: { beamPeriod: 8, bonusTime: 9 } }, // levels: a faster beam, shorter bonus scans
+    levels: { cap: { beamPeriod: 5.5, bonusTime: 6 } }, // levels: a faster beam, shorter bonus scans
   },
   signals: {             // -2 the video board: a race against the frame timer, tile pixels via the palette to the DAC
     frameTime: 12,       // s on the frame timer; at zero the pixels you carry are dropped and a new tile is fetched
@@ -354,7 +354,7 @@ export const DEEP = {
       { id: 'moved', name: 'MOVE BLINKY', var: 'blinkyX' },
       { id: 'scared', name: 'SCARE BLINKY', var: 'scared' },
     ],
-    levels: { cap: { waitTime: 0.4, dashSpeed: 16, restTime: 0.1 } }, // levels: the write head telegraphs less, dashes faster
+    levels: { cap: { waitTime: 0.1, dashSpeed: 12, restTime: 0 } }, // levels: the write head telegraphs less, dashes faster
   },
   bus: {                 // -4 the spatial bus: chip rooms behind decoder doors, packets on the lanes
     cycleTime: 1.1,      // s between bus cycles shown
@@ -393,7 +393,7 @@ export const DEEP = {
       '##################',
     ],
     goal: 4,             // one data byte from each chip room
-    levels: { cap: { cycleTime: 0.75, packetSpeed: 10, readDelay: 1, doorHold: 1.2 } }, // levels: a busier, faster bus
+    levels: { cap: { cycleTime: 0.55, packetSpeed: 13, readDelay: 0.75, doorHold: 0.9 } }, // levels: a busier, faster bus
   },
   cpu: {                 // -5 Game Genie: carry a patch onto a line of the real program; the PC steps through it
     rate: 4.5,           // lines per second the program counter steps while it's in the routine on screen
@@ -414,7 +414,7 @@ export const DEEP = {
       { name: 'PAC EATS ANY GHOST', routine: 'check_hits', line: 'jr z, .death', above: 11, text: 'NOP  NOP', nop: true },
     ],
     goal: 4,             // patches written
-    levels: { cap: { rate: 7, grace: 0.35 } }, // levels: the program counter steps faster
+    levels: { cap: { rate: 10, grace: 0.2, awayTime: 0.2 } }, // levels: the program counter steps faster
   },
   logic: {               // -6 line of sight: crossing a ghost's target vector sends a seeker after you
     vectorWidth: 0.45,   // tiles: how close to a target vector line counts as crossing it
@@ -422,7 +422,7 @@ export const DEEP = {
     seekSpeed: 3.6,      // tiles per second (you walk DEEP.walkSpeed)
     vectorColors: { blinky: 0xff2a3a, pinky: 0xff6a8a, inky: 0xff8a5a, clyde: 0xffb0a0 },
     goal: 4,             // stand on each ghost's target tile
-    levels: { cap: { vectorWidth: 0.7, seekTime: 8, seekSpeed: 4.5 } }, // levels: wider vectors, faster seekers that hunt longer
+    levels: { cap: { vectorWidth: 2, seekTime: 20, seekSpeed: 6 } }, // levels: wider vectors, faster seekers that hunt longer
   },
   input: {               // -7 fix the joystick, then play: carry the 4 cut wire ends to IN0's pins, then swipe-play
     // The board below the picture (tiles; 11 x 17, the picture and IN0's port take the rows above `top`).
@@ -451,7 +451,7 @@ export const DEEP = {
     playSpeed: 0.5,      // machine speed while you play (the deep layers run it at 1 / machineSlowdown)
     playDots: 20,        // dots to eat with the repaired stick to win
     goal: 5,             // the 4 wires and the test game
-    levels: { cap: { sparkSpeed: 5, sparkEvery: [2, 3.5], sparkWarn: 0.5, sparkDelay: 1.5, playSpeed: 0.6 } }, // levels: more, faster sparks with less warning, a faster test game
+    levels: { cap: { sparkSpeed: 12, sparkEvery: [0.45, 0.9], sparkWarn: 0.15, sparkDelay: 0.4, playSpeed: 1 } }, // levels: more, faster sparks with less warning, a faster test game
   },
 };
 
@@ -476,7 +476,7 @@ export const ADDER = {
   overflowTime: 2.8,     // s of the OVERFLOW moment before the layer ends
   transition: 0.35,      // s of zooming in and out
   // Levels (like the deep layers, DEEP.capLevel): faster, denser lanes up to the cap, then they stay there.
-  levels: { cap: { speed: [2.2, 4.4], gap: [[2.4, 4.8], [1.8, 3.6]] } },
+  levels: { cap: { speed: [2.1, 4.2], gap: [[2.4, 4.8], [1.8, 3.6]] } },
   // Tron look like the deep layers (bg, floor grid, neon line and its halo); pulses use DEEP.hazard (deadly).
   style: {
     bg: 0x0c0a02, grid: 0x2a2408, line: 0xffe02a, glow: 0x4a400a,
