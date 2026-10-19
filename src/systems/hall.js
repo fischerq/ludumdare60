@@ -15,7 +15,7 @@ export function createHall(layout = HALL.layout, { solid = SOLID, speed = HALL.w
   const h = { rows: layout, w: layout[0].length, h: layout.length, coins: new Set(), npcs: [], got: 0, pac: null, chase: null, solid, speed };
   layout.forEach((row, y) => [...row].forEach((c, x) => {
     if (c === 'o') h.coins.add(`${x},${y}`);
-    if (ghosts[c]) h.npcs.push({ name: ghosts[c], x, y, home: { x, y }, dir: 'up', moving: false, from: null, t: 0 });
+    if (ghosts[c]) h.npcs.push({ name: ghosts[c], x, y, home: { x, y }, dir: 'down', moving: false, from: null, t: 0 });
     if (c === 'S') h.pac = { x, y, dir: 'up', moving: false, from: null, t: 0, steps: 0 };
   }));
   return h;
@@ -96,7 +96,7 @@ export function startChase(h) {
 // Everyone back to their machine, calm again.
 export function endChase(h) {
   h.chase = null;
-  for (const n of h.npcs) Object.assign(n, { x: n.home.x, y: n.home.y, dir: 'up', moving: false, t: 0 });
+  for (const n of h.npcs) Object.assign(n, { x: n.home.x, y: n.home.y, dir: 'down', moving: false, t: 0 });
 }
 
 // Where each ghost heads, like in the maze (numbers scaled down for a small room).

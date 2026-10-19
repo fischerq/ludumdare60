@@ -71,7 +71,7 @@ export default class HallScene extends Phaser.Scene {
     }
     // Characters fill one tile, centered on it, like a Pokémon game; lower ones are drawn in front.
     const actor = (key) => this.add.image(0, 0, key);
-    this.npcSprites = this.h.npcs.map((n) => actor(`arcade/ghost-${n.name}-up-0`));
+    this.npcSprites = this.h.npcs.map((n) => actor(`arcade/ghost-${n.name}-down-0`));
     this.pac = actor('arcade/pac-up-0');
     // The shop owner, asleep behind the counter.
     this.owners = [];

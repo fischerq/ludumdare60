@@ -87,3 +87,4 @@ the arcade as a place.
 - 2026-10-18: The counter is three tiles (Gurke, a paper sign that alone says BACK IN 5 MIN, jar) with the owner
   centered behind; our manual gets its own tile next to the stack on one table, the stack's fourth booklet is ripped
   out; the mini-Gurke moves to the top right plant's spot. (Quirin)
+- 2026-10-19: The ghost visitors face down (toward the player) while standing at their machines, so their faces show. (Quirin)
