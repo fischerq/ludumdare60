@@ -7,7 +7,8 @@ import { world, setDriver, holdDir, onFrame, setSpeed } from '../systems/arcade/
 import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
 import { addLayerButtonAt } from '../layerButton.js';
 import { showCallout } from '../callout.js';
-import { markWon } from '../progress.js';
+import { markWon, isHard, markHardWon, hardWonCount, ORDER } from '../progress.js';
+import { setHard } from '../systems/layers/hard.js';
 
 const KEYS = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
@@ -28,6 +29,9 @@ export default class DeepScene extends Phaser.Scene {
     this.index = Phaser.Math.Clamp(data.layer ?? 0, 0, DEEP_LAYERS.length - 1);
     this.L = DEEP_LAYERS[this.index];
     this.P = DEEP.style[this.L.id];
+    // With the 256 switch on the layer plays its hard variant (DEEP.<id>.hard over its numbers).
+    this.hard = isHard();
+    setHard(this.L.id, this.hard);
     setBed(this.L.id);
     this.machine = world.machine;
     this.S = world.program.symbols;
@@ -76,6 +80,7 @@ export default class DeepScene extends Phaser.Scene {
     // Centered in the space left of the sound button (top-right corner); long subtitles wrap.
     const tw = vw - 68, tx = 8 + tw / 2;
     text(tx, 12, this.L.title, css(this.P.line));
+    if (this.hard) text(8, 2, DEEP.hardLabel, css(DEEP.hazard)).setOrigin(0, 0);
     text(tx, 30, this.L.subtitle, COLORS.textDim).setWordWrapWidth(tw);
     this.counter = text(vw / 2, vh - BOTTOM + 8, '');
     this.info = text(vw / 2, vh - BOTTOM + 22, '', COLORS.textDim);
@@ -192,10 +197,15 @@ export default class DeepScene extends Phaser.Scene {
   }
 
   // Goal reached: the layer is won (src/progress.js), which wakes the next subsystem; back to the lobby.
+  // In hard mode the win also repairs this layer's strip of level 256 (src/progress.js, applied by main.js).
   cleared() {
     sfx.clear();
     const next = markWon(this.L.id);
-    const woke = next ? `\n${LOBBY.names[next]}\nWOKE UP` : '';
+    let woke = next ? `\n${LOBBY.names[next]}\nWOKE UP` : '';
+    if (this.hard) {
+      markHardWon(this.L.id);
+      woke = `\nLEVEL 256\nREPAIRED ${hardWonCount()}/${ORDER.length}`;
+    }
     showCallout(this, GAME_WIDTH / ZOOM / 2, this.oy + 40, `LAYER CLEAR!${woke}`, 1);
     this.time.delayedCall(LOBBY.clearDelay * 1000, () => this.go({ from: this.L.id, won: true }));
   }

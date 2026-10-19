@@ -212,6 +212,23 @@ is a hit (the dots eaten so far stay). Removed: the pads that steered Pac-Man, t
 corner objectives and the crawling spark. Playtest bot (quick runs): 100% up to noise 0.75 (23 s with no noise, about
 100 s at 0.75), 20% at full noise.
 
+## Hard mode · decided (Quirin, 2026-10-19; numbers Claude's)
+While the lobby's 256 switch is on, every deep layer plays a hard variant; winning one in hard mode repairs its strip
+of level 256 (see [arcade-maze.md](arcade-maze.md#levels-and-the-kill-screen--decided-built-2026-10-18)), all seven
+make it winnable (the fourth lobby lamp).
+- Data-driven: each layer's `hard` block in `DEEP.<id>` (src/config.js) is merged over its numbers while it plays
+  (`src/systems/layers/hard.js`, set by DeepScene on every start, so turning the switch off restores them). A red
+  HARD marker sits left of the title. LAYER CLEAR in hard mode also calls `markHardWon` and says
+  `LEVEL 256 REPAIRED n/7`.
+- Numbers (normal → hard): screen beam 13 → 10 s per picture, bonus scans 15 → 10 s; video board frame timer
+  12 → 9 s and 5 colors instead of 4; work RAM write head waits 0.8 → 0.55 s, dashes 9 → 12 bits/s, rests
+  0.25 → 0.15 s; bus cycles every 1.1 → 0.85 s, packets 7 → 9 tiles/s, reads wait 1.3 → 1 s, doors hold
+  1.6 → 1.2 s; CPU 4.5 → 6 lines/s, grace 0.6 → 0.4 s; logic vectors 0.45 → 0.6 tiles wide, seekers 3.6 → 4.2
+  tiles/s (you walk 5) and hunt 6 → 8 s; input sparks 3 → 4 tiles/s, every 2.5-4.5 s (was 3.5-6), warn 0.8 → 0.6 s,
+  test game 20 → 30 dots.
+- Not now: different objectives or layouts per layer in hard mode, a hard variant of the adder.
+- `?hard=n` (testing): everything up to the 256 switch won, the switch on, the first n layers won in hard mode.
+
 ## Goals vs. what the part does · open (review 2026-10-18)
 Quirin asked that a layer's goals connect to what its component achieves (the screen's adjustments now fix the
 picture). How the other layers do on that, to decide later:
@@ -280,3 +297,6 @@ picture). How the other layers do on that, to decide later:
   Playtest quick runs: 100% at noise 0, 60-80% at 0.5-1 with many more hits. (Quirin asked; Claude picked the numbers)
 - 2026-10-19: Input: grabbing the stick restarts the round with a full maze; with the CPU's patches the bot had eaten
   nearly all dots by then, so the test game was a near-empty maze at double speed. Patches stay on. (Quirin asked; Claude's fix)
+- 2026-10-19: Hard mode: with the 256 switch on every deep layer plays a `hard` block of tighter numbers (faster
+  hazards, shorter windows, one more color on the video board, a longer test game on the input layer); its win
+  repairs a strip of level 256. (Quirin; numbers Claude's)

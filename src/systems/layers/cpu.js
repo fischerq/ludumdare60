@@ -91,7 +91,7 @@ export default {
   subtitle: 'CARRY PATCHES ONTO THE PROGRAM\nDODGE THE PROGRAM COUNTER',
   cols: COLS, rows: ROWS,
   start: { x: 0, y: TOP + N - 1 },
-  goal: C.goal,
+  get goal() { return C.goal; }, // read live: hard mode can change it (hard.js)
   dots: false,
 
   init({ m }) {

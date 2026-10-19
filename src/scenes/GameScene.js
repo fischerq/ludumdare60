@@ -5,7 +5,7 @@ import { addLayerButtonAt } from '../layerButton.js';
 import { isSwitchOn, markMazeWon } from '../progress.js';
 import { showCallout } from '../callout.js';
 import { coins, spendCoin } from '../wallet.js';
-import { world, onFrame, pressDir, pressStart, setDriver, newGame, setRound } from '../systems/arcade/world.js';
+import { world, onFrame, pressDir, pressStart, setDriver, newGame, setRound, currentRound } from '../systems/arcade/world.js';
 import { drawPlayfield, W, H, SCREEN_H } from '../systems/arcade/video.js';
 import { readState } from '../systems/arcade/state.js';
 
@@ -197,6 +197,13 @@ export default class GameScene extends Phaser.Scene {
     if (this.ended) return;
     this.ended = true;
     this.saveBest();
+    // Level 256 cleared (only possible once the hard-mode wins repaired it): the game is beaten, the credits roll.
+    // The machine's round counter wraps to level 1 on the next START (its one byte, like the original's).
+    if (cleared && currentRound() === 256 && this.scene.manager.keys.Credits) {
+      showCallout(this, this.viewW / 2, this.oy + 12 * T, LEVELS.beatenText);
+      this.time.delayedCall(LEVELS.creditsDelay * 1000, () => this.leave('Credits', { returnTo: 'Menu' }));
+      return;
+    }
     const broke = !cleared && coins() < COINS.perGame;
     const text = cleared ? 'MAZE CLEAR!\n\nWANT TO GO\nDEEPER?\n\nTAP TO PLAY AGAIN'
       : broke ? 'GAME OVER\n\nOUT OF COINS\nGO LAYER UP'

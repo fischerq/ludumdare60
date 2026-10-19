@@ -3,7 +3,7 @@ import { tinyText } from '../systems/layers/font.js';
 import { mazeTiles, tileKey } from '../systems/tiles.js';
 import { world } from '../systems/arcade/world.js';
 import { openManual } from '../manual/index.js';
-import { setWonCount } from '../progress.js';
+import { setWonCount, setLamp, markHardWon, ORDER } from '../progress.js';
 
 const hex = (c) => `#${c.toString(16).padStart(6, '0')}`;
 
@@ -73,6 +73,9 @@ export default class BootScene extends Phaser.Scene {
     const data = params.has('layer') ? { layer: Number(params.get('layer')) } : undefined;
     // ?won=n: the first n subsystems inside the cabinet count as won (for testing the unlocks).
     if (params.has('won')) setWonCount(Number(params.get('won')));
+    // ?hard=n: everything up to the 256 switch won and the switch on (the deep layers play hard), and the first n
+    // layers won in hard mode (their strips of level 256 repaired; 7 makes it winnable).
+    if (params.has('hard')) { setLamp(2, true); ORDER.slice(0, Number(params.get('hard'))).forEach(markHardWon); }
     // With ?manual the arcade hall is underneath, so closing the manual lands where the booklet lies.
     const target = start && this.scene.get(start) ? start : params.has('manual') ? 'Hall' : 'Menu';
     // The emulated arcade machine has to be running too: the maze level is its picture.
