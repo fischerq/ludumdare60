@@ -958,6 +958,75 @@ export const UI = {
   menuGhostAnim: 15,
 };
 
+// Credits / final screen, classic arcade staff roll. See design/systems/credits.md.
+export const CREDITS = {
+  // The roll, top to bottom. kind: title | heading | role | name | note | thanks | emoji | gap. Pixel font only draws ASCII, so the
+  // emoji line is its own text object in the system font (emoji: true).
+  lines: [
+    { kind: 'title', text: GAME_TITLE.toUpperCase() },
+    { kind: 'gap' },
+    { kind: 'heading', text: 'STAFF' },
+    { kind: 'gap' },
+    { kind: 'role', text: 'PROMPTS' },
+    { kind: 'name', text: 'QUIRIN "ZERA"' },
+    { kind: 'gap' },
+    { kind: 'role', text: 'GRAPHICS' },
+    { kind: 'name', text: 'MAX "SADARENKO"' },
+    { kind: 'gap' },
+    { kind: 'role', text: 'CODE' },
+    { kind: 'name', text: 'CLAUDE' },
+    { kind: 'note', text: 'BY ANTHROPIC\nVIA CLAUDE CODE' },
+    { kind: 'gap' },
+    { kind: 'gap' },
+    { kind: 'heading', text: 'SPECIAL THANKS' },
+    { kind: 'gap' },
+    { kind: 'thanks', text: "ZERA'S WIFE\nAND KIDS" },
+    { kind: 'emoji', text: '\u{1F401}\u{1F426}' }, // mouse, bird
+  ],
+  // Held on screen when the roll has passed.
+  endTitle: 'THE END',
+  endLine: 'THANK YOU\nFOR PLAYING',
+  endPrompt: 'TAP TO CONTINUE',
+  back: 'BACK',
+  style: {
+    title: { size: 44, color: '#ffe600' },
+    heading: { size: 36, color: '#ff2020' },
+    role: { size: 28, color: '#00ffde' },
+    name: { size: 32, color: '#ffffff' },
+    note: { size: 20, color: '#9aa4bf' },
+    thanks: { size: 28, color: '#ffb8de' },
+    emoji: { size: 72 },
+    end: { size: 60, color: '#ffe600' },
+    endLine: { size: 32, color: '#ffffff' },
+    prompt: { size: 26, color: '#9aa4bf' },
+    back: { size: 28, color: '#9aa4bf' },
+  },
+  lineGap: 28,        // px between lines
+  emptyGap: 40,       // height of a gap line
+  rollSpeed: 70,      // px per second
+  fastSpeed: 420,     // px per second while the screen is held (or SPACE)
+  endY: 520,          // where THE END settles (it rolls in with the rest)
+  endGap: 760,        // px between the last credit and THE END, so the roll has left the screen when it stops
+  holdBeforeLeave: 1, // s after THE END settles before a tap leaves
+  promptBlink: 0.6,   // s per fade of TAP TO CONTINUE
+  bed: 'menu',        // sound bed (null for silence)
+  // The intermission chase across the bottom: Pac-Man runs left with the ghosts behind, then chases them back
+  // frightened. Reuses the maze textures.
+  chase: {
+    y: 1205,
+    band: 150,         // px tall black strip along the bottom the chase runs in; the roll appears above it
+    size: 64,          // screen px per character, like the menu cast
+    speed: 160,        // px per second
+    ghostGap: 70,      // px between runners
+    pacLead: 110,      // px between Pac-Man and the first ghost
+    pacAnim: 3,        // game frames per animation frame (like UI.menuPacAnim)
+    ghostAnim: 15,
+  },
+  // Big tap area for BACK, top left.
+  backPos: { x: 90, y: 70 },
+  backPad: 34,
+};
+
 // The start screen (src/scenes/MenuScene.js): the cabinet's machine (Max's assets/cabinet/machine.png) standing on
 // a big layer cake (assets/menu/cake.png), both shown 1:1, with the attract show on the machine's screen.
 // Same oblique view as the cabinet: depth goes up and to the right at 45°.
