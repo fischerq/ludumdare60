@@ -496,19 +496,19 @@ export const ADDER = {
 export const HALL = {
   layout: [
     '###########',
-    '#^|^*@+^|^#',
+    '#^|^*@+^a^#',
     '#%RB.Y.VGu#',
     '#.rb.y.vg.#',
     '#.1.oS..2.#',
     '#.........#',
     '#C.~~~~~.Q#',
     '#c3~~~~~4q#',
-    '#..~~~~~..#',
-    '#o.......o#',
+    '#h.~~~~~..#',
+    '#o.....l.o#',
     '#.O.....!.#',
     '#ksj...oM.#',
     '#..o....m.#',
-    '#w....np..#',
+    '#w....np.e#',
     '#####D#####',
   ],
   zoom: 4,               // screen px per art px in the hall (the other layers use 2): cozier, bigger characters
@@ -531,6 +531,14 @@ export const HALL = {
     gurke: 0x3a8a30, gurkeLight: 0x6ab850, gurkeDark: 0x2a6020, gurkeInside: 0xd8e8a0, // the pickles
     jarGlass: 0xc8e0c8, jarLid: 0xc0a040, table: 0x9a6a3a,
     signPaper: 0xf2e6c0, signEdge: 0xb89a60, signInk: 0x3a2a18, // the sign and our yellowed manual
+    // The plush rabbit (h), the Urmel figurine on its stand (e), the blue paper (l), the old sweater (a).
+    rabbit: 0xe87a8a, rabbitLight: 0xf6b4bc, rabbitDark: 0xb04a5a, rabbitNose: 0xd02840, toyEye: 0x2a1018,
+    ice: 0xc8f0ff, iceLight: 0xffffff, iceShade: 0x80b8d8, egg: 0xf4ecd0, eggSpot: 0xc8b890,
+    blanket: 0x5a8ad0, blanketCheck: 0xf2c94c, milk: 0xffffff, teat: 0xd09060,
+    urmel: 0x7ac0a8, urmelLight: 0xc0ead8, urmelDark: 0x4a8a78, bubble: 0xffffff,
+    paper: 0x4a7ae0, paperEdge: 0x3058b0, paperInk: 0xffffff,
+    sweater: 0x7a6aa8, sweaterDark: 0x5a4a88, sweaterFuzz: 0x9a8ac0, hanger: 0x8a8a96,
+    elsaHair: 0xf4f0d0, elsaDress: 0x8ad0f0, annaHair: 0xb04a20, annaDress: 0x3a7a5a, skin: 0xf0c8a8,
     cabinets: { r: 0xd03030, b: 0x3060d0, g: 0x30a050, v: 0x8040c0, y: 0xf2c200 },
   },
   ghosts: { 1: 'blinky', 2: 'pinky', 3: 'inky', 4: 'clyde' },
@@ -563,6 +571,65 @@ export const HALL = {
     unicorn: 0xffffff, unicornShade: 0xd8d8e8, horn: 0xffd23f, hoof: 0xc8a0c0, eye: 0x202030,
     rainbow: [0xff4040, 0xff9a30, 0xffe040, 0x50d050, 0x40a0ff, 0xa060e0],
   },
+  // The 3D close-up (the default; FLAT shows the picture above, design/systems/layer-arcade.md). The model is
+  // src/settings/globe-model.json, the physics src/systems/globe3d.js, the pixel renderer src/systems/globeRender.js.
+  // Drag anywhere on it to grab that spot and turn it any way, tap to shake; the heavy base swings it back upright.
+  globe3d: {
+    view: 136,           // art px square it's drawn into, the glass center in the middle
+    light: [-0.5, 0.65, 0.6], // toward the light (world: x right, y up, z toward you)
+    bands: [-0.05, 0.55], // brightness where dark turns mid, and mid turns light
+    dither: 0.2,         // how far the bands mix at their edges (a 2x2 checker)
+    outlineDepth: 2.5,   // px of depth jump that draws a 1 px outline
+    highlight: [1.95, 2.55], // rad (0 right, counter-clockwise) where the glass shine arc runs
+    substepRate: 120,    // physics steps per second
+    weight: 60,          // rad/s² the heavy base pulls it upright with, at a quarter turn
+    damp: 3,             // 1/s: how fast the wobble dies down when let go
+    dampHeld: 5,         // 1/s: the same while held
+    grabSpring: 0.8,     // 1/s² per px: how hard the held spot follows the finger
+    grabDamp: 0.05,      // its damping
+    keyTorque: 50,       // rad/s² the arrow keys turn it with
+    maxSpin: 30,         // rad/s at most
+    waterFollow: 1.5,    // 1/s: how fast the water catches up with the glass
+    stirRate: 1.5,       // stir per rad/s of lag per s
+    stirDecay: 0.7,      // 1/s: how fast the stirred-up water calms down
+    jitter: 160,         // px/s² of random kick per unit of stir
+    flakes: 240,         // glitter flakes
+    glitterColors: 5,    // glitter0..4 rows of the palette
+    sink: 6,             // px/s a flake sinks at in still water
+    flakeDrag: 3,        // 1/s: how fast a flake takes the water's speed
+    tumble: 0.5,         // rad of flash phase per px a flake travels
+    hairSink: 6,         // px/s² the mane and tail sag with
+    hairDrag: 5,         // 1/s: how fast they take the water's speed
+    hairStiff: 10,       // 1/s²: how strongly they keep their combed shape
+    tapSpin: 2.5,        // rad/s of random spin a tap gives
+    tapSwirl: 6,         // rad/s of random swirl a tap gives the water
+    tapStir: 4,          // stir a tap adds
+    jolt: 90,            // px/s the globe jumps with on a tap
+    joltSpring: 500,     // 1/s² back to its place
+    joltDamp: 22,        // 1/s
+    // assets/arcade/globe-palette.png: one row per part in this order, columns outline, dark, mid, light.
+    palette: {
+      body: [0x4a3c68, 0xb4acd4, 0xe2def2, 0xffffff],
+      horn: [0x7a4a08, 0xd09a20, 0xffd23f, 0xfff4c0],
+      hoof: [0x5a3a58, 0xa080a0, 0xc8a0c0, 0xe8c8e0],
+      eye: [0x101018, 0x202030, 0x202030, 0x50507a],
+      snow: [0x506880, 0xb8cce0, 0xe0eaf6, 0xffffff],
+      base: [0x5a1040, 0xc0408c, 0xff7ac0, 0xffb8e0],
+      rim: [0x7a4a08, 0xc89018, 0xffd23f, 0xfff4c0],
+      mane0: [0x601010, 0xc02020, 0xff4040, 0xff9090],
+      mane1: [0x602e08, 0xc06010, 0xff9a30, 0xffc880],
+      mane2: [0x605008, 0xc0a010, 0xffe040, 0xfff0a0],
+      mane3: [0x0c440c, 0x309030, 0x50d050, 0xa8f0a8],
+      mane4: [0x0c2860, 0x2060c0, 0x40a0ff, 0xa8d4ff],
+      mane5: [0x301050, 0x7030a8, 0xa060e0, 0xd4b0ff],
+      glitter0: [0x903068, 0x903068, 0xff9ad8, 0xffe8f6],
+      glitter1: [0x806010, 0x806010, 0xffd23f, 0xfff8d8],
+      glitter2: [0x7888a0, 0x7888a0, 0xe8f0ff, 0xffffff],
+      glitter3: [0x305878, 0x305878, 0x9ad8ff, 0xe8f8ff],
+      glitter4: [0x584080, 0x584080, 0xd0a0ff, 0xf4e8ff],
+      glass: [0x9ac8e0, 0x18303f, 0x1c3448, 0xffffff], // rim, (unused), water, shine
+    },
+  },
   chase: {
     speed: 3.2,          // tiles per second (Pac-Man walks 4)
     time: 20,            // s until they give up
@@ -578,6 +645,7 @@ export const HALL = {
     R: 'r', r: 'r', B: 'b', b: 'b', G: 'g', g: 'g', V: 'v', v: 'v', '=': 'counter', M: 'change', m: 'change',
     D: 'door', '%': 'plant', '!': 'bin', C: 'claw', c: 'claw', Q: 'soda', q: 'soda', '^': 'door', '*': 'posterPac',
     '+': 'posterGhost', '@': 'clock', O: 'owner', k: 'gurke', j: 'jar', u: 'miniGurke', s: 'sign', n: 'manuals', p: 'pacManual', w: 'globe',
+    h: 'rabbit', e: 'urmel', l: 'paper', a: 'sweater',
   },
   text: {
     blinky: "I'M NOT A GHOST. I'M JUST... VERY PALE.",
@@ -613,7 +681,13 @@ export const HALL = {
     globe: "A SNOW GLOBE: A UNICORN IN A SEA OF GLITTER. A NOTE IS TAPED TO THE BOTTOM: 'MY SISTER LOVED THIS ONE AS A KID.'",
     globeLook: 'LOOK CLOSER',
     globeClose: 'CLOSE',
-    globeHint: 'DRAG TO TURN IT. TAP OUTSIDE TO PUT IT DOWN.',
+    globeHint: 'DRAG TO TURN IT, TAP IT TO SHAKE. TAP OUTSIDE TO PUT IT DOWN.',
+    globeFlat: 'FLAT',
+    globe3d: '3D',
+    rabbit: 'A STUFFED RABBIT WITH VERY LONG, FLOPPY ARMS AND LEGS. IT MUST HAVE ESCAPED THE CLAW MACHINE.',
+    sweater: 'AN OLD SWEATER WITH ANNA AND ELSA ON IT. WASHED A HUNDRED TIMES, STILL LOVED.',
+    paper: 'A BLUE PIECE OF PAPER. IT JUST SAYS: BLAU!',
+    paperRare: 'A BLUE PIECE OF PAPER. IT JUST SAYS: GRÜN!',
     manuals: 'A STACK OF MANUALS. WHICH ONE?',
     rippedOut: 'HUH, THIS ONE WAS RIPPED OUT.',
   },
@@ -624,6 +698,15 @@ export const HALL = {
     { title: 'ASTEROIDS', text: 'ASTEROIDS MANUAL. CHAPTER 1: ADJUSTING THE VECTOR MONITOR. CHAPTER 2: PLEASE DO NOT ADJUST THE VECTOR MONITOR.' },
     { title: 'DONKEY KONG', text: 'DONKEY KONG MANUAL. A WHOLE PAGE ON HOW TO CLEAN THE JOYSTICK. SOMEONE SPILLED COLA ON IT.' },
     { title: 'GALAXIAN', ripped: true },
+  ],
+  paperRareChance: 0.1,  // how often the blue paper says GRÜN! instead of BLAU!
+  // The Urmel figurine on its stand (e): each time you talk to it, it shows the next stage (arcade/urmel-<n>),
+  // then starts over. It starts as the iceberg.
+  urmel: [
+    'A FIGURINE ON A STAND: AN ICEBERG. SOMETHING IS FROZEN INSIDE... AN EGG?',
+    'THE ICE IS GONE. THE EGG IS TUCKED IN UNDER A LITTLE BLANKET.',
+    'THE EGG HATCHED! A SMALL URMEL DRINKS FROM A MILK BOTTLE.',
+    "THE URMEL LOOKS RIGHT AT YOU: 'OKOPUSPAPAT!'",
   ],
   pacManual: 'LAYERS OF PAC: SERVICE MANUAL. EVERY LAYER OF THIS MACHINE, FROM THE CABINET DOWN TO THE WIRES.',
   menu: {

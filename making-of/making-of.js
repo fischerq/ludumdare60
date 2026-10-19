@@ -116,6 +116,23 @@ function firstSentence(text, max = 140) {
   return s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s;
 }
 
+// Is a prompt a real ask ("intent") or a small nudge that only keeps work going (merge conflicts, "defaults are
+// good", "yes")? Strip the nudge phrases; if almost nothing is left, it's a nudge. `prompt_kinds` in meta.json
+// overrides the guess per prompt, keyed "<first 8 chars of session id>-<turn index>".
+const NUDGE = [
+  /\[request interrupted by user\]/g,
+  /fix(ing)? (all |the )?merge (conflicts?|requests?)( (in|on) (the remaining pr|#?§?\d+))?/g,
+  /(the )?(suggested answers|defaults|proposals)( look| are| sound| seem)?( (all|mostly) )?( good| right| fine)?/g,
+  /\b(good proposals|go ahead|go|yes|ok(ay)?|build|do it|continue|please|execute in parallel|make one b[iu]g pr|for the rest|as described)\b/g,
+];
+function promptKind(turn, sid, overrides) {
+  const forced = overrides?.[`${sid.slice(0, 8)}-${turn.index}`];
+  if (forced) return forced;
+  let rest = turn.prompt.toLowerCase();
+  for (const re of NUDGE) rest = rest.replace(re, ' ');
+  return rest.replace(/[^a-z0-9]+/g, '').length < 12 ? 'nudge' : 'intent';
+}
+
 // Models used in a turn, as short names ("claude-opus-5-5" → "Opus 5.5").
 const MODEL_NAMES = { opus: 'Opus', sonnet: 'Sonnet', haiku: 'Haiku', fable: 'Fable', mythos: 'Mythos' };
 function modelName(id) {
@@ -271,12 +288,13 @@ function timelineItem(item, ctx) {
     wireChat(d);
     return li;
   }
-  const { turn, n } = item;
-  const first = firstSentence(turn.prompt);
-  const more = turn.prompt.replace(/\s+/g, ' ').trim().length > first.replace(/…$/, '').length + 1 || turn.images?.length;
-  li.className = 'item';
+  const { turn, n, kind } = item;
+  // A real ask shows its whole prompt (clamped to a few lines), a nudge only its first sentence.
+  const first = kind === 'intent' ? turn.prompt.trim() : firstSentence(turn.prompt);
+  const more = turn.prompt.replace(/\s+/g, ' ').trim().length > first.replace(/\s+/g, ' ').replace(/…$/, '').length + 1 || turn.images?.length;
+  li.className = `item ${kind}`;
   d.innerHTML = `
-    <summary><span class="kicker">Claude prompt #${n}${turn.time ? ` · ${esc(turn.time)}` : ''}<span class="tok">${fmtNum(totalTokens(turn))} tokens</span></span>
+    <summary><span class="kicker"><span>Claude prompt #${n}${turn.time ? ` · ${esc(turn.time)}` : ''}${kind === 'nudge' ? '<span class="tag">Nudge</span>' : ''}</span><span class="tok">${fmtNum(totalTokens(turn))} tokens</span></span>
       <span class="line">${esc(first)}${more && !first.endsWith('…') ? '<span class="more-dots"> …</span>' : ''}</span></summary>
     <div class="body chat">${chatTurn(turn, ctx)}
       <button class="open-thread" type="button">Show the whole conversation →</button>
@@ -427,10 +445,20 @@ async function main() {
   const allThreads = [...threads.values()];
 
   const items = [
-    ...sessions.flatMap((s) => s.turns.map((turn) => ({ seq: turn.seq, date: turn.date, turn, session: s, n: numbering.get(turn) }))),
+    ...sessions.flatMap((s) => s.turns.map((turn) => ({ seq: turn.seq, date: turn.date, turn, session: s, n: numbering.get(turn),
+      kind: promptKind(turn, s.session_id || '', meta.prompt_kinds) }))),
     ...[...manual, ...commits].map((entry) => ({ seq: entry.seq, date: entry.date, entry })),
   ].sort((x, y) => x.seq - y.seq);
   renderTimeline(items, ctx);
+
+  const only = $('#only-intent');
+  try { only.checked = localStorage.getItem('making-of-hide-nudges') === '1'; } catch (e) { /* not remembered */ }
+  const applyOnly = () => document.body.classList.toggle('hide-nudges', only.checked);
+  applyOnly();
+  only.addEventListener('change', () => {
+    applyOnly();
+    try { localStorage.setItem('making-of-hide-nudges', only.checked ? '1' : '0'); } catch (e) { /* not remembered */ }
+  });
 
   const btn = $('#order');
   const paint = () => { btn.textContent = newestFirst ? 'Newest first ↓' : 'Oldest first ↑'; };
