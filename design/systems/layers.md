@@ -51,7 +51,8 @@ portraits, one screen at 4x). Wire auto-joining and lookups in `src/systems/lobb
 - **The logic is a small pixel brain** with the four ghosts (their own colors, the maze ghost sprites) on wires
   in their colors to it; each ghost says its targeting rule.
 - **Locks** (`src/progress.js`, session only, no localStorage): order outside in = `DEEP_LAYERS` order, screen →
-  video board → work RAM → bus → CPU → logic → input wires. All locked except the first; a layer's LAYER CLEAR
+  video board → work RAM → bus → CPU → logic → input wires. The first (the monitor) wakes once the player clears
+  the maze (not when Mecha-Pac does; before that it says to clear the maze first); a layer's LAYER CLEAR
   unlocks the next. A locked subsystem sleeps (separate art state `-off`, eyes shut) and says it's asleep and
   which one to wake first. API: `isWon(id)`, `isUnlocked(id)`, `allWon()`, `markWon(id)` (returns the id it
   unlocked), `ORDER`; `?won=n` marks the first n won for testing.
@@ -72,9 +73,22 @@ portraits, one screen at 4x). Wire auto-joining and lookups in `src/systems/lobb
   round restarts on level 256 and the garbage is the program's own 8-bit overflow (see [arcade-maze](arcade-maze.md)).
   Before that the switch is stuck; after, tapping it offers FLIP ON / FLIP OFF (level 256 / level 1). While it's
   on, every fresh game also starts on level 256.
-- **The cheat lever** (`H`, at the right edge of the board, above the 256 switch; walkable, since it's the only way to reach the switch): a service lever with a TEST ONLY tag. Pulling it (PULL IT /
-  NOT NOW) wakes every subsystem at once, as if each was won, so the adder and the 256 switch appear: the final level
-  without the wins. One-way for the session (a reload resets it). *(Quirin, defaults accepted 2026-10-19)*
+- **Status lamps and cheat levers** (2026-10-19, replace the single cheat lever): four lamps `O` in a row at
+  (5..8, 4) with a cheat lever `H` under each at (5..8, 5), and a sign `N` at (4, 4) ("HOW DO YOU TURN THIS ON...
+  HMM, MAYBE I SHOULD RATHER PLAY."). Lamp 1: the maze won once (wakes the monitor), 2: every subsystem won, 3: the
+  256 switch unlocked (the adder won), 4: every subsystem won in hard mode (level 256 winnable). Talking to a lamp
+  says what it stands for and whether it's lit; a lever (PULL IT / NOT NOW) flips its lamp (`setLamp` in
+  `src/progress.js`, which also sets the lamps it needs or clears the ones that need it), syncs the maze's level when
+  the 256 switch changed, and restarts the lobby with Pac-Man in front of it. Art: `lamp-<n>-<off/on>`, `lever-<up/down>`.
+- **Hard mode:** while the 256 switch is on (`isHard()`), every subsystem not yet beaten in hard mode says so and
+  offers ENTER (HARD MODE), even if it was won before; the deep layer plays its hard variant and reports
+  `markHardWon`. Hard-won ones say BEATEN IN HARD MODE TOO.
+- **The film reel** (`F`, at (9, 10)): WATCH / NOT NOW zooms into it and plays the credits (`Credits` scene), which
+  come back to the lobby in front of the reel; without that scene it says the reel is empty.
+- **Mini-gurke** (`g`, bottom left corner at (1, 16)): a tiny pickle with a face; talking to it: "A TINY PICKLE.
+  MINI-GURKE SAYS HI."
+- Layout (2026-10-19): the speaker moved to the right edge (9, 1) with its harness and the coin door down that edge,
+  the joystick and Mecha-Pac to (6, 7) / (7, 7) next to the start, to make room for the lamps.
 - **Video RAM is replaced by work RAM** (see [layer-deep](layer-deep.md)): there were already many video layers.
 - Not in this slice: saving progress, lobby sound effects beyond its own bed, animated subsystems beyond the blink.
 
@@ -102,8 +116,9 @@ Things to settle before building:
   original style.
 - Token cost: an emulator is the most expensive idea on the list; ask before starting it.
 
-## Mini-gurke easter egg · proposed
+## Mini-gurke easter egg · proposed (board lobby: built)
 The game's working title becomes a hidden collectible: a small pickle hidden in some or all minigames.
+Built so far: one in the board lobby (bottom left corner, a line when you talk to it; no counter yet).
 Open: in every minigame or only a few, and whether finding them all unlocks anything. *Default: one per
 minigame, a counter on the layer map, no unlock.*
 
@@ -155,3 +170,4 @@ minigame, a counter on the layer map, no unlock.*
 - 2026-10-19: Mecha-Pac (the bot) stands by the joystick in the board lobby; he says he's busy playing. (Quirin)
 - 2026-10-19: A cheat lever in the board lobby, next to the edge connector, unlocks the final level (the adder) by waking every subsystem; one-way until a reload. Defaults accepted. (Quirin)
 - 2026-10-19: The cheat lever moves to the right edge of the board, above the 256 switch. (Quirin)
+- 2026-10-19: Board lobby: four status lamps (maze won, every part awake, 256 switch, hard mode) with a cheat lever under each and a sign, replacing the single cheat lever; the monitor needs a maze win first; hard mode offers each part's hard layer; a film reel plays the credits; a mini-gurke hides in the corner. (Quirin)

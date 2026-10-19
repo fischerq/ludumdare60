@@ -618,28 +618,30 @@ export const HALL = {
 // E edge connector (the harness plugs into the board), S start. On the board stack: V video board, R work RAM,
 // B bus, C CPU, L the logic brain with the four ghosts 1-4 (blinky, pinky, inky, clyde) on wires to it.
 // A the round counter's adder and Z its 256 switch: plain floor at LOBBY.reserved until every subsystem is won.
+// O the four status lamps (left to right = lamp 1..4, src/progress.js lamps()), H the cheat lever under each lamp,
+// N the sign next to them, F the film reel (the credits), g mini-gurke (the easter egg).
 export const LOBBY = {
   layout: [
     '###########',
-    '#.MMM...K.#',
-    '#.mmm...=.#',
-    '#..=....=.#',
-    '#..=..JX=.#',
-    '#..=..=.=.#',
-    '#..=..=.D.#',
-    '#W.=.S=.=.#',
-    '#=.=..=.=.#',
-    '#===E====.#',
-    '#.V--.....#',
+    '#.MMM....K#',
+    '#.mmm....=#',
+    '#..=.....=#',
+    '#..=NOOOO=#',
+    '#..=.HHHH=#',
+    '#..=.....D#',
+    '#W.=.SJX.=#',
+    '#=.=..=..=#',
+    '#===E=====#',
+    '#.V--....F#',
     '#...-..1..#',
     '#.R--..~..#',
     '#...-2~L~3#',
     '#.C--..~..#',
-    '#...-..4.H#',
-    '#...B.....#',
+    '#...-..4..#',
+    '#g..B.....#',
     '###########',
   ],
-  solid: '#MmKJDWEVRBCL1234AZX', // not the lever (H): it stands in front of the 256 switch, so you step over it
+  solid: '#MmKJDWEVRBCL1234AZXOHNFg',
   mechaRate: 2,          // blinks per second of Mecha-Pac's antenna (X, by the joystick: the bot)
   reserved: { adder: { x: 8, y: 16 }, switch: { x: 9, y: 16 } },
   // Map character -> deep layer id (src/systems/layers/). The monitor is all six of its tiles.
@@ -672,6 +674,16 @@ export const LOBBY = {
     // Mecha-Pac, the bot: a steel Pac-Man with a red visor, rivets and an antenna.
     mecha: 0xa8b0bc, mechaLight: 0xe0e6ee, mechaDark: 0x5a6270, visor: 0x20242c, visorEye: 0xff3020,
     antenna: 0x40ff60, foot: 0x3a4048,
+    // The status lamps 1..4 (maze yellow, board green, 256 red, hard mode violet): off glass, lit bulb, glow.
+    lamps: [
+      { off: 0x4a4420, glass: 0x7a7040, on: 0xffe040, glow: 0x6a5a20 },
+      { off: 0x1e4428, glass: 0x3a7048, on: 0x50ff80, glow: 0x2a6a3a },
+      { off: 0x4a1c1c, glass: 0x7a3a3a, on: 0xff4a3a, glow: 0x6a2a24 },
+      { off: 0x34204a, glass: 0x5a4078, on: 0xc070ff, glow: 0x4a2c6a },
+    ],
+    paper: 0xe8dcb0, paperDark: 0x8a6a40, scrawl: 0x3a3048, // the sign
+    reel: 0xb8bcc4, reelLight: 0xe8ecf0, reelDark: 0x5a5e66, film: 0x2a2018, // the film reel
+    gurke: 0x5aa83a, gurkeLight: 0x9ad860, gurkeDark: 0x2e6a22, // mini-gurke
   },
   // Who each subsystem is (its accent is the layer's own DEEP.style line color).
   names: {
@@ -687,6 +699,10 @@ export const LOBBY = {
     logic: 'THE BRAIN: THE GAME LOGIC. I TELL THE FOUR GHOSTS WHERE TO GO.',
     input: 'THE JOYSTICK. FOUR SWITCHES ON WIRES DOWN TO THE BOARD. PUSH ME AND A BIT GOES LOW.',
     locked: '{name} IS ASLEEP. ZZZ... WAKE {prev} FIRST.',
+    crtLocked: 'THE MONITOR IS ASLEEP. CLEAR THE MAZE FIRST.',
+    hard: 'THE 256 SWITCH IS ON: HARD MODE.',
+    hardWon: 'BEATEN IN HARD MODE TOO.',
+    enterHard: 'ENTER (HARD MODE)',
     won: 'ALL DONE IN THERE.',
     woke: '{name} WOKE UP!',
     allWon: 'EVERY PART OF THE MACHINE IS AWAKE.',
@@ -713,14 +729,24 @@ export const LOBBY = {
     leave: 'LEAVE IT',
     mecha: "MECHA-PAC: BEEP. BUSY PLAYING. I'M ON THE JOYSTICK WHILE YOU'RE IN HERE. EVERY LIFE I LOSE IS YOURS.",
     mechaOver: 'MECHA-PAC: BEEP... GAME OVER. I LOST YOUR LAST LIFE. A COIN STARTS A NEW GAME.',
-    // The cheat lever (H, at the right edge above the 256 switch): pulling it wakes every subsystem, so the adder shows up.
-    lever: 'SOMEONE LEFT A SERVICE LEVER IN HERE. A TAG SAYS: TEST ONLY. WAKES EVERY PART AT ONCE.',
-    leverDown: 'THE SERVICE LEVER IS DOWN. EVERY PART OF THE MACHINE IS AWAKE.',
-    leverPulled: 'CLUNK! EVERY PART OF THE MACHINE WAKES UP. BY THE BUS, THE ADDER LIGHTS UP: THE ROUND COUNTER.',
+    // The status lamps (O) and the cheat lever (H) under each: pulling one flips its lamp's achievement.
+    lamps: ['THE MAZE, WON ONCE', 'EVERY PART AWAKE', 'THE 256 SWITCH, UNLOCKED', 'HARD MODE: EVERY PART BEATEN, LEVEL 256 WINNABLE'],
+    lamp: 'LAMP {n}: {what}. {state}',
+    lampOn: 'IT IS LIT.',
+    lampOff: 'IT IS DARK.',
+    lever: 'LEVER {n}. A TAG SAYS: TEST ONLY. FLIPS LAMP {n}.',
+    leverPulled: 'CLUNK! LAMP {n} IS {state} NOW.',
+    leverOn: 'ON',
+    leverOff: 'OFF',
     pull: 'PULL IT',
+    sign: 'HOW DO YOU TURN THIS ON... HMM, MAYBE I SHOULD RATHER PLAY.',
+    reel: 'A FILM REEL. THE CREDITS OF THIS MACHINE.',
+    reelEmpty: 'THE REEL IS EMPTY.',
+    watch: 'WATCH',
+    gurke: 'A TINY PICKLE. MINI-GURKE SAYS HI.',
   },
   // Which text a tile shows when you face it and tap (keys into `text`); subsystems and ghosts are handled apart.
-  cellText: { K: 'speaker', D: 'door', W: 'power', E: 'edge', '#': 'wall' },
+  cellText: { K: 'speaker', D: 'door', W: 'power', E: 'edge', '#': 'wall', N: 'sign', g: 'gurke' },
 };
 
 // The service manual (src/manual/), opened from the booklet on the hall's table: an HTML overlay of old paper.
