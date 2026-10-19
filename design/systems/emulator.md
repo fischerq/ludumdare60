@@ -124,7 +124,9 @@ All eight defaults accepted by Quirin on 2026-10-17.
    only after step 6? *Default: step 5.*
 5. **Lives while away:** if the bot dies while the player is in another layer, what happens? *Default: the
    bot plays an endless attract-style game that doesn't cost the player's lives. Back in the maze layer, the
-   player continues the machine's game as it is.*
+   player continues the machine's game as it is.* **Changed 2026-10-19 (Quirin):** the bot plays the player's
+   (paid) game by the same rules: its deaths cost lives and its last one is GAME OVER. Only its own attract-mode
+   game (no coin in) keeps the demo dip switch.
 6. **Bot skill:** *Default: simple and readable: head for the nearest dot, avoid ghosts closer than a few
    tiles, chase frightened ghosts.*
 7. **Who controls Pac-Man in a deep layer:** *Default: the bot. In the input layer (7) the player's own
@@ -168,3 +170,4 @@ All eight defaults accepted by Quirin on 2026-10-17.
 - 2026-10-18: The level 256 glitch is a real overflow in `game.asm`: round counter byte `LEVEL` in work RAM, the level
   shelf in VRAM row 25, its 8-bit loop count wraps on level 256 and writes garbage over the right half; host API
   `setRound(n)` / `setLevel256(on)` in `world.js` pokes the counter and lets the program start the round. (Quirin)
+- 2026-10-19: The bot can die: on a paid game the demo dip switch is off while it drives, so its deaths cost the player's lives and can end the game (the machine halts at GAME OVER like after the player's). Its attract-mode game and the input layer's test game keep the switch. (Quirin)

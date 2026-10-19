@@ -23,7 +23,7 @@ export const MAP = {
 export const IN0 = { up: 0x01, left: 0x02, down: 0x04, right: 0x08, coin: 0x20 };
 export const IN1 = { start: 0x20 };
 // Dip switches (1 = on, read as is).
-export const DSW = { demo: 0x01 };   // demo: dying doesn't cost a life (set while the bot plays)
+export const DSW = { demo: 0x01 };   // demo: dying doesn't cost a life (the bot's attract-mode game, the input layer's test game)
 
 // Values the program writes to the sound latch. The host plays them with src/sound.js.
 export const SOUND = {

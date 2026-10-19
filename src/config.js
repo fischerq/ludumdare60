@@ -598,7 +598,7 @@ export const LOBBY = {
     '#.MMM...K.#',
     '#.mmm...=.#',
     '#..=....=.#',
-    '#..=..J.=.#',
+    '#..=..JX=.#',
     '#..=..=.=.#',
     '#..=..=.D.#',
     '#W.=.S=.=.#',
@@ -613,7 +613,8 @@ export const LOBBY = {
     '#...B.....#',
     '###########',
   ],
-  solid: '#MmKJDWEVRBCL1234AZ',
+  solid: '#MmKJDWEVRBCL1234AZX',
+  mechaRate: 2,          // blinks per second of Mecha-Pac's antenna (X, by the joystick: the bot)
   reserved: { adder: { x: 8, y: 16 }, switch: { x: 9, y: 16 } },
   // Map character -> deep layer id (src/systems/layers/). The monitor is all six of its tiles.
   subsystems: { M: 'crt', m: 'crt', V: 'signals', R: 'ram', B: 'bus', C: 'cpu', L: 'logic', J: 'input' },
@@ -642,6 +643,9 @@ export const LOBBY = {
     monitor: 0x18181c, bezel: 0x2a2a30, tube: 0x3a0c30, tubeLight: 0xff3cc8,
     stick: 0xd02020, panel: 0x2a2a6a, speaker: 0x2a2a2a, grill: 0x707070,
     door: 0x8a8a96, slot: 0xff3020, power: 0x5a5a62, warn: 0xf0d040, edge: 0xd8b040,
+    // Mecha-Pac, the bot: a steel Pac-Man with a red visor, rivets and an antenna.
+    mecha: 0xa8b0bc, mechaLight: 0xe0e6ee, mechaDark: 0x5a6270, visor: 0x20242c, visorEye: 0xff3020,
+    antenna: 0x40ff60, foot: 0x3a4048,
   },
   // Who each subsystem is (its accent is the layer's own DEEP.style line color).
   names: {
@@ -681,6 +685,8 @@ export const LOBBY = {
     flipOn: 'FLIP ON',
     flipOff: 'FLIP OFF',
     leave: 'LEAVE IT',
+    mecha: "MECHA-PAC: BEEP. BUSY PLAYING. I'M ON THE JOYSTICK WHILE YOU'RE IN HERE. EVERY LIFE I LOSE IS YOURS.",
+    mechaOver: 'MECHA-PAC: BEEP... GAME OVER. I LOST YOUR LAST LIFE. A COIN STARTS A NEW GAME.',
   },
   // Which text a tile shows when you face it and tap (keys into `text`); subsystems and ghosts are handled apart.
   cellText: { K: 'speaker', D: 'door', W: 'power', E: 'edge', '#': 'wall' },
