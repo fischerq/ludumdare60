@@ -1,0 +1,62 @@
+{
+ "session_id": "fcf47a68-6406-57a6-9c38-e01870c95d44",
+ "title": "Game improvement proposals",
+ "session_url": "https://claude.ai/code/session_018eR8z67RhGbpUWcDnuRhqE",
+ "claude_code_version": "2.1.303",
+ "first_date": "2026-10-19",
+ "last_date": "2026-10-19",
+ "turns": [
+  {
+   "index": 1,
+   "seq": 94,
+   "date": "2026-10-19",
+   "time": "17:23",
+   "duration_s": 47,
+   "prompt": "Give me a list of proposals to improve the game. We are close to the finish",
+   "followups": [],
+   "images": [],
+   "claude_images": [],
+   "reply": "Reading the design docs and playtest results to put together the list. Next I'll check the current difficulty numbers.",
+   "progress_notes": [],
+   "tools": {
+    "Bash": 8,
+    "mcp__claude-code-remote__list_events": 2
+   },
+   "api_requests": 8,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 16,
+     "cache_write_5m": 0,
+     "cache_write_1h": 45348,
+     "cache_read": 617280,
+     "output": 3128,
+     "thinking": 1323,
+     "cost_usd": 0.548864
+    }
+   },
+   "cost_usd": 0.548864,
+   "commits": [],
+   "entrypoint": "remote_mobile",
+   "branch": "ccr-f176db9b-jw0u93",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0,
+     "end": 0,
+     "delta": 0
+    },
+    "seven_day": {
+     "start": 0.28,
+     "end": 0.28,
+     "delta": 0.0
+    }
+   }
+  }
+ ],
+ "totals": {
+  "prompts": 1,
+  "cost_usd": 0.548864,
+  "output_tokens": 3128,
+  "input_tokens": 662644
+ },
+ "reported_by_claude_code": null
+}
