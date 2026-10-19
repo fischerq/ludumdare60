@@ -102,7 +102,9 @@ export default class GameScene extends Phaser.Scene {
     const mazeBottom = this.oy + H * T;
     this.readyText = this.text(this.sx(MAZE.houseExit.x), this.oy + 13 * T + 2, 'READY!', COLORS.textReady)
       .setOrigin(0.5, 0);
-    this.hint = this.text(this.viewW / 2, mazeBottom + 88, 'SWIPE TO TURN', COLORS.textDim).setOrigin(0.5, 0);
+    // How to play, under the maze until the first turn (it used to be on the start screen).
+    this.hint = this.text(this.viewW / 2, mazeBottom + 52, 'SWIPE TO TURN\nEAT ALL THE DOTS', COLORS.textDim)
+      .setOrigin(0.5, 0).setAlign('center').setLineSpacing(8);
     this.mazeBottom = mazeBottom;
     this.addLayerButtons();
     this.lifeIcons = [];
