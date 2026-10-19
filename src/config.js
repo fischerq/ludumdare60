@@ -630,16 +630,16 @@ export const LOBBY = {
     '#W.=.S=.=.#',
     '#=.=..=.=.#',
     '#===E====.#',
-    '#.V--H....#',
+    '#.V--.....#',
     '#...-..1..#',
     '#.R--..~..#',
     '#...-2~L~3#',
     '#.C--..~..#',
-    '#...-..4..#',
+    '#...-..4.H#',
     '#...B.....#',
     '###########',
   ],
-  solid: '#MmKJDWEVRBCL1234AZXH',
+  solid: '#MmKJDWEVRBCL1234AZX', // not the lever (H): it stands in front of the 256 switch, so you step over it
   mechaRate: 2,          // blinks per second of Mecha-Pac's antenna (X, by the joystick: the bot)
   reserved: { adder: { x: 8, y: 16 }, switch: { x: 9, y: 16 } },
   // Map character -> deep layer id (src/systems/layers/). The monitor is all six of its tiles.
@@ -713,7 +713,7 @@ export const LOBBY = {
     leave: 'LEAVE IT',
     mecha: "MECHA-PAC: BEEP. BUSY PLAYING. I'M ON THE JOYSTICK WHILE YOU'RE IN HERE. EVERY LIFE I LOSE IS YOURS.",
     mechaOver: 'MECHA-PAC: BEEP... GAME OVER. I LOST YOUR LAST LIFE. A COIN STARTS A NEW GAME.',
-    // The cheat lever (H, by the edge connector): pulling it wakes every subsystem, so the adder shows up.
+    // The cheat lever (H, at the right edge above the 256 switch): pulling it wakes every subsystem, so the adder shows up.
     lever: 'SOMEONE LEFT A SERVICE LEVER IN HERE. A TAG SAYS: TEST ONLY. WAKES EVERY PART AT ONCE.',
     leverDown: 'THE SERVICE LEVER IS DOWN. EVERY PART OF THE MACHINE IS AWAKE.',
     leverPulled: 'CLUNK! EVERY PART OF THE MACHINE WAKES UP. BY THE BUS, THE ADDER LIGHTS UP: THE ROUND COUNTER.',

@@ -972,7 +972,7 @@ export default class BootScene extends Phaser.Scene {
       else { r(7, 11, 2, 3, stuck ? K.legOff : K.leg); r(6.5, 13.5, 3, 1, stuck ? K.legOff : K.eye); }
       if (on) { r(12, 12, 1, 1, A.line); } else if (!stuck) { r(12, 12, 1, 1, K.slot); }
     };
-    // The cheat lever by the edge connector: a big service lever on a plate, up (ready) or down (pulled).
+    // The cheat lever above the 256 switch: a big service lever on a plate, up (ready) or down (pulled).
     for (const state of ['up', 'down']) tile(`lever-${state}`, (set) => {
       floor(set);
       rect(set, 3, 10, 10, 5, K.chip); rect(set, 3, 10, 10, 1, K.chipLight);

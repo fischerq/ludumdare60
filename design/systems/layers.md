@@ -72,7 +72,7 @@ portraits, one screen at 4x). Wire auto-joining and lookups in `src/systems/lobb
   round restarts on level 256 and the garbage is the program's own 8-bit overflow (see [arcade-maze](arcade-maze.md)).
   Before that the switch is stuck; after, tapping it offers FLIP ON / FLIP OFF (level 256 / level 1). While it's
   on, every fresh game also starts on level 256.
-- **The cheat lever** (`H`, by the edge connector): a service lever with a TEST ONLY tag. Pulling it (PULL IT /
+- **The cheat lever** (`H`, at the right edge of the board, above the 256 switch; walkable, since it's the only way to reach the switch): a service lever with a TEST ONLY tag. Pulling it (PULL IT /
   NOT NOW) wakes every subsystem at once, as if each was won, so the adder and the 256 switch appear: the final level
   without the wins. One-way for the session (a reload resets it). *(Quirin, defaults accepted 2026-10-19)*
 - **Video RAM is replaced by work RAM** (see [layer-deep](layer-deep.md)): there were already many video layers.
@@ -155,3 +155,4 @@ minigame, a counter on the layer map, no unlock.*
   layer's background. (Quirin)
 - 2026-10-19: Mecha-Pac (the bot) stands by the joystick in the board lobby; he says he's busy playing. (Quirin)
 - 2026-10-19: A cheat lever in the board lobby, next to the edge connector, unlocks the final level (the adder) by waking every subsystem; one-way until a reload. Defaults accepted. (Quirin)
+- 2026-10-19: The cheat lever moves to the right edge of the board, above the 256 switch. (Quirin)
