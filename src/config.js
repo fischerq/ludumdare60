@@ -496,13 +496,13 @@ export const ADDER = {
 export const HALL = {
   layout: [
     '###########',
-    '#^|^*@+^a^#',
+    '#^|^*@+^|^#',
     '#%RB.Y.VGu#',
     '#.rb.y.vg.#',
     '#.1.oS..2.#',
     '#.........#',
     '#C.~~~~~.Q#',
-    '#c3~~~~~4q#',
+    '#c3~~a~~4q#',
     '#h.~~~~~..#',
     '#o.....l.o#',
     '#.O.....!.#',
@@ -531,13 +531,13 @@ export const HALL = {
     gurke: 0x3a8a30, gurkeLight: 0x6ab850, gurkeDark: 0x2a6020, gurkeInside: 0xd8e8a0, // the pickles
     jarGlass: 0xc8e0c8, jarLid: 0xc0a040, table: 0x9a6a3a,
     signPaper: 0xf2e6c0, signEdge: 0xb89a60, signInk: 0x3a2a18, // the sign and our yellowed manual
-    // The plush rabbit (h), the Urmel figurine on its stand (e), the blue paper (l), the old sweater (a).
+    // The plush rabbit (h), the Urmel figurine on its stand (e), the blue paper (l), the old sweater on the rug (a).
     rabbit: 0xe87a8a, rabbitLight: 0xf6b4bc, rabbitDark: 0xb04a5a, rabbitNose: 0xd02840, toyEye: 0x2a1018,
     ice: 0xc8f0ff, iceLight: 0xffffff, iceShade: 0x80b8d8, egg: 0xf4ecd0, eggSpot: 0xc8b890,
     blanket: 0x5a8ad0, blanketCheck: 0xf2c94c, milk: 0xffffff, teat: 0xd09060,
     urmel: 0x7ac0a8, urmelLight: 0xc0ead8, urmelDark: 0x4a8a78, bubble: 0xffffff,
     paper: 0x4a7ae0, paperEdge: 0x3058b0, paperInk: 0xffffff,
-    sweater: 0x7a6aa8, sweaterDark: 0x5a4a88, sweaterFuzz: 0x9a8ac0, hanger: 0x8a8a96,
+    sweater: 0x7a6aa8, sweaterDark: 0x5a4a88, sweaterFuzz: 0x9a8ac0,
     elsaHair: 0xf4f0d0, elsaDress: 0x8ad0f0, annaHair: 0xb04a20, annaDress: 0x3a7a5a, skin: 0xf0c8a8,
     cabinets: { r: 0xd03030, b: 0x3060d0, g: 0x30a050, v: 0x8040c0, y: 0xf2c200 },
   },
