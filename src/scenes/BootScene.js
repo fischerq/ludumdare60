@@ -972,7 +972,7 @@ export default class BootScene extends Phaser.Scene {
       else { r(7, 11, 2, 3, stuck ? K.legOff : K.leg); r(6.5, 13.5, 3, 1, stuck ? K.legOff : K.eye); }
       if (on) { r(12, 12, 1, 1, A.line); } else if (!stuck) { r(12, 12, 1, 1, K.slot); }
     };
-    // The cheat lever above the 256 switch: a big service lever on a plate, up (ready) or down (pulled).
+    // The four cheat levers under the status lamps: a big service lever on a plate, up (ready) or down (pulled).
     for (const state of ['up', 'down']) tile(`lever-${state}`, (set) => {
       floor(set);
       rect(set, 3, 10, 10, 5, K.chip); rect(set, 3, 10, 10, 1, K.chipLight);
@@ -981,6 +981,46 @@ export default class BootScene extends Phaser.Scene {
       const top = state === 'up' ? 1 : 6, x = state === 'up' ? 9 : 4;
       for (let y = top + 2; y < 10; y++) rect(set, Math.round(x + (8 - x) * (y - top) / (10 - top)), y, 1, 1, K.leg);
       rect(set, x - 1, top, 3, 3, K.slot); set(x - 1, top, 0xff9a90); // the red knob
+    });
+    // The four status lamps (lamp-<n>-<off/on>, n = 1..4): a bulb in a wire cage on a socket, each in its own color,
+    // dark glass when off, glowing with a highlight when on.
+    LOBBY.colors.lamps.forEach((c, n) => ['off', 'on'].forEach((state) => tile(`lamp-${n + 1}-${state}`, (set) => {
+      const on = state === 'on';
+      floor(set);
+      if (on) ellipse(set, 8, 7, 7, 7, c.glow);
+      rect(set, 4, 12, 8, 3, K.chip); rect(set, 4, 12, 8, 1, K.chipLight); // the socket
+      ellipse(set, 8, 7, 4, 5, on ? c.on : c.off);
+      if (on) { rect(set, 6, 4, 2, 2, K.eye); set(8, 5, c.glow); }
+      else set(6, 5, c.glass);
+      for (const x of [3, 12]) rect(set, x, 3, 1, 8, K.legOff); // the cage
+      rect(set, 4, 1, 8, 1, K.legOff); set(3, 2, K.legOff); set(12, 2, K.legOff);
+      set(5 + n * 2, 14, K.leg); // a dot per lamp number on the socket
+    })));
+    // The sign by the lamps: a scrawled note on a post (talking to it reads it).
+    tile('sign', (set) => {
+      floor(set);
+      rect(set, 7, 9, 2, 6, K.copperDark);
+      rect(set, 1, 2, 14, 8, K.paperDark); rect(set, 2, 3, 12, 6, K.paper);
+      for (const [x, y, w] of [[3, 4, 7], [3, 6, 9], [3, 8, 5]]) rect(set, x, y, w, 1, K.scrawl);
+      set(12, 8, K.scrawl); // the question mark's dot
+    });
+    // The film reel (the credits): a silver reel on its side with film running off it.
+    tile('reel', (set) => {
+      floor(set);
+      rect(set, 8, 12, 8, 3, K.film); for (let x = 9; x < 16; x += 2) { set(x, 12, K.reelLight); set(x, 14, K.reelLight); }
+      ellipse(set, 7, 7, 6.5, 6.5, K.reelDark);
+      ellipse(set, 7, 7, 5.5, 5.5, K.reel);
+      for (const [x, y] of [[7, 3], [4, 8], [10, 8]]) ellipse(set, x + 0.5, y + 0.5, 1.6, 1.6, K.film);
+      rect(set, 6, 6, 2, 2, K.reelDark); set(5, 3, K.reelLight); set(4, 4, K.reelLight);
+    });
+    // Mini-gurke: a tiny pickle with a face, lying on the board (the easter egg).
+    tile('gurke', (set) => {
+      floor(set);
+      ellipse(set, 8, 9, 7.5, 3.6, K.gurkeDark);
+      ellipse(set, 8, 8.6, 6.5, 2.9, K.gurke);
+      for (const [x, y] of [[4, 7], [11, 7], [7, 11], [12, 10]]) set(x, y, K.gurkeLight); // bumps
+      set(6, 8, K.pupil); set(9, 8, K.pupil); set(7, 10, K.pupil); set(8, 10, K.pupil); // eyes and smile
+      set(5, 9, K.cheek); set(10, 9, K.cheek);
     });
     for (const state of ['stuck', 'off', 'on']) tile(`switch-${state}`, (set) => { island(set, 'adder', state === 'stuck' ? 'off' : 'on'); toggle(set, 1, state); });
     this.pixels('board/portrait-switch', P, P, (set) => {
