@@ -11,14 +11,14 @@
    "seq": 100,
    "date": "2026-10-19",
    "time": "22:55",
-   "duration_s": 244,
+   "duration_s": 260,
    "prompt": "Tweak the pacman sprite and its animations. Its a bit too small in comparison to the rest (take an ingame screenshot to compare), and its not visible which way its heading",
    "followups": [],
    "images": [],
    "claude_images": [
     "media/804fd198-1-c1.jpg"
    ],
-   "reply": "Now the end-of-turn usage check, log export, commit and push.",
+   "reply": "I made the maze Pac-Man bigger and his mouth now shows which way he's heading. It's in PR #97: https://github.com/fischerq/ludumdare60/pull/97\n\n**What was wrong:** In an in-game screenshot, Pac-Man was 20 px across while the ghosts are 20x22, so he looked smaller. Two of his seven chomp frames (the first and last) were plain circles, which give no direction.\n\n**What changed:**\n- **Chomp:** I redrew all seven frames at 24 px across, in Max's style (black outline, blue-white edge around the mouth). The mouth never fully closes now: the first frame is a slit and the last is the widest. In a new screenshot he's about the size of the ghosts and clearly facing left.\n- **Death:** I redrew the first five frames at the same 24 px so he doesn't shrink the moment he dies. Max's last five frames, where he shrinks away, are unchanged.\n- **Max's frames:** These were his drawn files, so I edited them in place. That drops his two squashed crescent frames from the chomp. They're still in git if he wants them back or wants to redo the bigger version himself.\n- **Elsewhere:** The menu and credits use the same frames, so he's bigger there too.\n- **Not changed:** the spare-life icons under the maze are still Max's smaller version.\n\n**To test on the phone:** turn through a few corners and check you can always tell which way he's facing, that he fits the corridors without crowding the walls, and that dying doesn't pop in size.\n\nPlan usage was at 19% of the 5-hour limit and 37% weekly at the start of this turn.",
    "progress_notes": [
     "Checking the current Pac-Man art and whether the asset files are code-drawn or Max's, then I'll grab an in-game screenshot.",
     "The maze Pac-Man PNGs are Max's drawn art (not code), so I'll edit those files. Viewing them and the game now.",
@@ -26,29 +26,88 @@
     "Pac-Man shows clearly smaller than the ghosts, and it's a plain circle at rest. Checking how the game scales it.",
     "Plan: redraw Max's 7 chomp frames bigger (body 24 px instead of 20, the ghosts are 20x22) and keep the mouth always a little open so the heading shows on every frame. Reading his exact colors first.",
     "Frames read well. Now checking in game.",
-    "Pac-Man now matches the ghosts in size and the mouth shows his heading (facing left here). Publishing the screenshot and updating the art doc."
+    "Pac-Man now matches the ghosts in size and the mouth shows his heading (facing left here). Publishing the screenshot and updating the art doc.",
+    "Now the end-of-turn usage check, log export, commit and push."
    ],
    "tools": {
     "Bash": 25,
     "Read": 6,
     "ToolSearch": 2,
     "mcp__claude-code-remote__list_events": 2,
-    "mcp__github__list_pull_requests": 1
+    "mcp__github__list_pull_requests": 1,
+    "mcp__github__create_pull_request": 1
    },
-   "api_requests": 32,
+   "api_requests": 34,
    "usage": {
     "claude-opus-5-5": {
-     "input": 64,
+     "input": 68,
      "cache_write_5m": 0,
-     "cache_write_1h": 69453,
-     "cache_read": 3031108,
-     "output": 14237,
-     "thinking": 5998,
-     "cost_usd": 1.446842
+     "cache_write_1h": 70789,
+     "cache_read": 3263185,
+     "output": 15325,
+     "thinking": 6023,
+     "cost_usd": 1.525721
     }
    },
-   "cost_usd": 1.446842,
-   "commits": [],
+   "cost_usd": 1.525721,
+   "commits": [
+    {
+     "sha": "82a30998ccacf06270928794521a766080913f25",
+     "subject": "Bigger maze Pac-Man whose mouth always shows his heading"
+    },
+    {
+     "sha": "2b27c37af5d42531a9ba343d2f4265bb05802728",
+     "subject": "Making-of: yellow/black arcade palette, tag prompts as ask or nudge"
+    },
+    {
+     "sha": "b693e4693d53b9181e88fd1e6e5bc78434e648ab",
+     "subject": "Manuals stack gets CLOSE; back gesture stays in the game and closes the manual"
+    },
+    {
+     "sha": "7c82b909f7f4280eb28edb6ed53172b707505d6f",
+     "subject": "Update AI-use log"
+    },
+    {
+     "sha": "a2d00793a69d6f8113919aa4f4de97b614d52b5f",
+     "subject": "Merge pull request #96 from fischerq/ccr-776eb623-m6bcqk"
+    },
+    {
+     "sha": "835388da7284286ba626c11d13247951b47d5aca",
+     "subject": "Merge origin/main into ccr-5427f5a1-26cndm"
+    },
+    {
+     "sha": "b9b4524c28fa092f6b510cd94214e9cdd5759a86",
+     "subject": "Merge origin/main into ccr-ea36224c-k1ux1q"
+    },
+    {
+     "sha": "630aad4f417e73eb93fc2ef8d7eb7ab03dd891d2",
+     "subject": "Merge pull request #99 from fischerq/ccr-5427f5a1-26cndm"
+    },
+    {
+     "sha": "12dc1abf812a3d9b6c56fcc248eb3462e307723c",
+     "subject": "Merge origin/main into ccr-ea36224c-k1ux1q"
+    },
+    {
+     "sha": "81e65596da6a62a93d8bfe80862f914eccce787d",
+     "subject": "Merge pull request #98 from fischerq/ccr-ea36224c-k1ux1q"
+    },
+    {
+     "sha": "5df61551eaf76a13acda7aa825c822c2806579df",
+     "subject": "Hall: plush rabbit, Urmel figurine with four stages, blue paper (BLAU!/GRÜN!), Anna and Elsa sweater"
+    },
+    {
+     "sha": "cafe4efddc73eaf8e829fb6b39fcc25e4e0401fb",
+     "subject": "Merge pull request #100 from fischerq/claude/arcade-lobby-decoration-0bpaxl"
+    },
+    {
+     "sha": "33731136dbe9b4d758751e6ebda2dc97587be66e",
+     "subject": "Merge origin/main into ccr-1b88beaa-e5gwux"
+    },
+    {
+     "sha": "1a3339eeb0c233d98f353fc7b31de164b957b695",
+     "subject": "Maze HUD shows LEVEL n in the top-left corner like the other layers"
+    }
+   ],
    "entrypoint": "remote_mobile",
    "branch": "ccr-bbf23964-q78gu3",
    "plan_usage": {
@@ -63,13 +122,81 @@
      "delta": 0.0
     }
    }
+  },
+  {
+   "index": 2,
+   "seq": 104,
+   "date": "2026-10-19",
+   "time": "23:43",
+   "duration_s": 83,
+   "prompt": "Hold up, the broken one is the pacman in the arcade lobby. Should also give it a different sprite in the lower lobby",
+   "followups": [],
+   "images": [],
+   "claude_images": [],
+   "reply": "Merged. Now looking at the hall and board-lobby Pac-Man.",
+   "progress_notes": [
+    "The merge isn't in the tree yet, so I'm merging main and fixing the conflict first.",
+    "Resolving the generated files the same way the sync tool does, then committing the merge."
+   ],
+   "tools": {
+    "Bash": 10,
+    "mcp__claude-code-remote__list_events": 2,
+    "Read": 1
+   },
+   "api_requests": 11,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 22,
+     "cache_write_5m": 0,
+     "cache_write_1h": 9754,
+     "cache_read": 1333275,
+     "output": 4348,
+     "thinking": 2029,
+     "cost_usd": 0.431735
+    }
+   },
+   "cost_usd": 0.431735,
+   "commits": [
+    {
+     "sha": "b88eca1f768714bdb8e425137f9b67577bed2a6c",
+     "subject": "Merge pull request #101 from fischerq/ccr-1b88beaa-e5gwux"
+    },
+    {
+     "sha": "1e8c7fd3de271110a98631166fd5a6ebcf674e40",
+     "subject": "Merge remote-tracking branch 'origin/main' into ccr-bbf23964-q78gu3"
+    },
+    {
+     "sha": "63fe4dfca27c9894207a70446ab73aac5f56f773",
+     "subject": "Merge origin/main into ccr-bbf23964-q78gu3"
+    }
+   ],
+   "entrypoint": "remote_mobile",
+   "branch": "ccr-bbf23964-q78gu3",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.29,
+     "end": 0.29,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.39,
+     "end": 0.39,
+     "delta": 0.0
+    }
+   }
   }
  ],
  "totals": {
-  "prompts": 1,
-  "cost_usd": 1.446842,
-  "output_tokens": 14237,
-  "input_tokens": 3100625
+  "prompts": 2,
+  "cost_usd": 1.957456,
+  "output_tokens": 19673,
+  "input_tokens": 4677093
  },
- "reported_by_claude_code": null
+ "reported_by_claude_code": {
+  "total_usd": 1.5560454999999993,
+  "by_model": {
+   "claude-haiku-5-5": 0.000132,
+   "claude-opus-5-5": 1.555914
+  }
+ }
 }
