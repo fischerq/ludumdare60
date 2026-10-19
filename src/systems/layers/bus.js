@@ -62,7 +62,7 @@ export default {
   subtitle: 'GET THE DATA FROM EVERY CHIP ROOM\nDOORS OPEN WHEN THEIR CHIP IS ADDRESSED',
   cols: COLS, rows: ROWS,
   start: { x: 5, y: 20 },
-  goal: C.goal,
+  get goal() { return C.goal; }, // read live: hard mode can change it (hard.js)
 
   init() {
     return { next: 0, selected: null, cycle: null, packets: [], drops: new Map(), done: new Set(), openUntil: {}, wasOpen: new Set() };

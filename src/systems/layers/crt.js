@@ -37,7 +37,7 @@ export default {
   subtitle: 'REPAIRS SLIP AFTER 2 PICTURES:\nSET ALL 4 FOR ONE CLEAN PICTURE',
   cols: W, rows: H,
   start: { x: 9, y: 17 },
-  goal: C.goal,
+  get goal() { return C.goal; }, // read live: hard mode can change it (hard.js)
   walkSpeed: C.walkSpeed,
   dots: false, // no dot counter: the objective is a clean picture
 

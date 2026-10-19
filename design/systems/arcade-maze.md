@@ -47,7 +47,7 @@ Pac-Man's famous [Map 256 glitch](https://pacman.fandom.com/wiki/Map_256_Glitch)
 our own Z80 program (`game.asm`), not drawn by the host.
 - **Round counter:** one byte `LEVEL` in work RAM, 0 = level 1. Clearing the maze and tapping (START on the
   cleared maze) runs `next_round`: counter + 1, maze refilled, everyone back to the start, score and lives kept.
-  A new game sets it to 0. After level 256 the byte wraps back to level 1 (never reached: 256 can't be cleared).
+  A new game sets it to 0. After level 256 the byte wraps back to level 1 (reached only once 256 is repaired).
 - **Level shelf:** the tile row under the maze (VRAM row 25), right half (cols 10..18, `LEVELS.shelfCols`), shows a
   fruit per level, right to left, at most the last 7, like the original's bottom row: cherry, strawberry, orange x2,
   apple x2, melon x2, ship x2, bell x2, then keys (`FRUIT_TABLE` in ROM, art `assets/maze/fruit-*.png`). A full
@@ -66,6 +66,19 @@ our own Z80 program (`game.asm`), not drawn by the host.
   so the program's own `next_round` runs); `setLevel256(on)` is level 256 or level 1; `currentRound()` reads it.
   `?level=256` starts every fresh maze game on that level, for testing. A lobby switch will use the API.
 - No level number on screen (the original has none either).
+- **Repairs** (Quirin, 2026-10-19): each deep layer won in hard mode (the 256 switch on, see
+  [layer-deep.md](layer-deep.md#hard-mode--decided-quirin-2026-10-19-numbers-claudes)) repairs one strip of the
+  garbage half. The half is split into `LEVELS.repairs` (7) row bands, top to bottom in layer order (screen at the
+  top, input at the bottom; 3-4 rows each). In the machine's real data: the host latches the hard wins as a bit mask
+  into the program's `REPAIRS` byte in work RAM before every frame (`setRepairs`, wired in main.js through
+  `progress.onChange`, so a lobby lever and a real win act the same). On level 256 only, the program's `repair`
+  (game.asm, called at round start after `draw_fruit` and every frame) copies `MAZE_ROM` back over each newly set
+  strip (`REPAIR_TABLE`, generated from config) with palette 1, and notes it in `REPAIRED`. Dots under garbage were
+  never eaten and are still counted in `PELLETS`, so with all seven strips back the level can be cleared, also
+  mid-round. The level shelf row keeps its garbage.
+- **Beating it:** clearing level 256 on the maze shows LEVEL 256 CLEAR! and rolls the credits
+  (`Credits` scene, back to the menu) when that scene exists, else the normal maze clear. The counter then wraps to
+  level 1 on the next START, the program's own byte; a fresh game with the switch on starts on 256 again.
 
 ## Slice scope
 - Build (done): menu, one maze, chomper, 4 ghosts, pellets, lives, score + high score, ready/death/clear
@@ -97,3 +110,6 @@ our own Z80 program (`game.asm`), not drawn by the host.
   clears go to the next level with score and lives kept, a fruit shelf under the maze whose loop overruns on level
   256 and garbles the right half (kill screen); `setRound`/`setLevel256` for a lobby switch, `?level=256`. (Quirin)
   Shelf layout (right half, a full row carries on upward), garbage tiles and "codes from the wall up block" (Claude)
+- 2026-10-19: Level 256 repairs: each hard-mode deep layer win restores one of 7 row strips of the garbage half,
+  in the program (REPAIRS byte latched by the host, `repair` copies MAZE_ROM back); clearing the repaired 256 rolls
+  the credits, then the counter wraps to level 1. (Quirin; strips and mechanism Claude's)
