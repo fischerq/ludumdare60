@@ -324,7 +324,7 @@
    "index": 5,
    "seq": 112,
    "date": "2026-10-20",
-   "duration_s": 409,
+   "duration_s": 446,
    "prompt": "Defaults are good",
    "followups": [],
    "images": [],
@@ -343,23 +343,23 @@
     "The whole flow works end to end. Checking the screenshots:"
    ],
    "tools": {
-    "Bash": 14,
-    "mcp__claude-code-remote__list_events": 1,
+    "Bash": 15,
+    "mcp__claude-code-remote__list_events": 2,
     "Read": 1
    },
-   "api_requests": 15,
+   "api_requests": 16,
    "usage": {
     "claude-opus-5-5": {
-     "input": 30,
+     "input": 32,
      "cache_write_5m": 0,
-     "cache_write_1h": 42982,
-     "cache_read": 3474702,
-     "output": 37987,
+     "cache_write_1h": 43473,
+     "cache_read": 3726496,
+     "output": 38475,
      "thinking": 12379,
-     "cost_usd": 1.798656
+     "cost_usd": 1.862711
     }
    },
-   "cost_usd": 1.798656,
+   "cost_usd": 1.862711,
    "commits": [
     {
      "sha": "3d0bfce7e62edd73953643368b2a695b1c3f5632",
@@ -380,6 +380,10 @@
     {
      "sha": "c57ac6755c3d3dcb1f052632b20c5d803fe97ac1",
      "subject": "Game Boy: batteries under the plant, the start of Pokemon Red with mini-Gurken"
+    },
+    {
+     "sha": "3a021f232cd9fbf62966ef492b54e6dd23bd5b28",
+     "subject": "Merge origin/main into claude/arcade-machines-gameboy-n1uhod"
     }
    ],
    "entrypoint": "remote_mobile",
@@ -387,22 +391,22 @@
    "plan_usage": {
     "five_hour": {
      "start": 0.5,
-     "end": 0.5,
-     "delta": 0.0
+     "end": 0.03,
+     "delta": null
     },
     "seven_day": {
      "start": 0.45,
-     "end": 0.45,
-     "delta": 0.0
+     "end": 0.47,
+     "delta": 0.02
     }
    }
   }
  ],
  "totals": {
   "prompts": 5,
-  "cost_usd": 6.284434,
-  "output_tokens": 105434,
-  "input_tokens": 12926508
+  "cost_usd": 6.348489,
+  "output_tokens": 105922,
+  "input_tokens": 13178795
  },
  "reported_by_claude_code": {
   "total_usd": 4.284759999999999,
