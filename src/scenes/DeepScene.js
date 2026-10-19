@@ -16,7 +16,7 @@ const KEYS = {
   KeyA: 'left', KeyD: 'right', KeyW: 'up', KeyS: 'down',
 };
 const ZOOM = 2;              // screen px per art px, like the maze level
-const TOP = 72, BOTTOM = 84; // art px for the title above and the buttons below the play area
+const TOP = 72, BOTTOM = 84; // art px for the title and hints above (at least; a long subtitle takes more) and the counter and buttons below the play area
 
 // One scene for all the deep layers below the maze: data.layer picks the module from src/systems/layers/.
 // Each layer is a different view of the one emulated machine; the scene adds the walking player, swipes,
@@ -62,10 +62,27 @@ export default class DeepScene extends Phaser.Scene {
 
     const vw = GAME_WIDTH / ZOOM, vh = GAME_HEIGHT / ZOOM;
     this.cameras.main.setZoom(ZOOM).setOrigin(0, 0).setRoundPixels(true).setBackgroundColor(this.P.bg);
-    this.cell = Math.floor(Math.min((vw - 16) / this.L.cols, (vh - TOP - BOTTOM) / this.L.rows));
+    // The HUD at the size every game shares (UI.hudPx screen px).
+    const text = (x, y, s, color = COLORS.text, size = UI.hudPx / ZOOM) => this.add.text(x, y, s, {
+      fontFamily: UI.arcadeFont, fontSize: size, color, align: 'center', resolution: 1,
+    }).setOrigin(0.5, 0).setLineSpacing(4).setDepth(10);
+    // LEVEL n in the top-left corner; under it the title and subtitle, centered in the space left of the sound
+    // button (top-right corner); long subtitles wrap and push the play area down.
+    const tw = vw - 68, tx = 8 + tw / 2;
+    const lv = text(8, 4, `${DEEP.levelLabel} ${this.level}`, COLORS.textDim).setOrigin(0, 0);
+    if (this.hard) text(lv.x + lv.width + 8, 4, DEEP.hardLabel, css(DEEP.hazard)).setOrigin(0, 0);
+    text(tx, 22, this.L.title, css(this.P.line));
+    const sub = text(tx, 40, this.L.subtitle, COLORS.textDim).setWordWrapWidth(tw);
+    // The layer's live hint under it (instructions go on top in every game): small, room for two lines.
+    this.info = text(vw / 2, Math.ceil(sub.y + sub.height + 4), '', css(this.P.line), 8).setWordWrapWidth(vw - 16);
+    const top = Math.max(TOP, this.info.y + 2 * (8 + 4) + 4);
+    this.counter = text(vw / 2, vh - BOTTOM + 10, '');
+    this.counterSize = UI.hudPx / ZOOM;
+
+    this.cell = Math.floor(Math.min((vw - 16) / this.L.cols, (vh - top - BOTTOM) / this.L.rows));
     const w = this.L.cols * this.cell, h = this.L.rows * this.cell;
     this.ox = Math.floor((vw - w) / 2);
-    this.oy = TOP + Math.floor((vh - TOP - BOTTOM - h) / 2);
+    this.oy = top + Math.floor((vh - top - BOTTOM - h) / 2);
     const key = `deep-${this.L.id}`;
     this.canvas = this.textures.exists(key) ? this.textures.get(key) : this.textures.createCanvas(key, w, h);
     this.add.image(this.ox, this.oy, key).setOrigin(0);
@@ -78,18 +95,6 @@ export default class DeepScene extends Phaser.Scene {
     this.hasGlow = this.textures.exists(this.glowKey(0));
     this.pacScale = (this.cell * 1.4) / this.textures.get(this.pacKey(0)).getSourceImage().width;
     this.pac = this.add.image(0, 0, this.pacKey(0)).setScale(this.pacScale);
-
-    const text = (x, y, s, color = COLORS.text, size = 8) => this.add.text(x, y, s, {
-      fontFamily: UI.arcadeFont, fontSize: size, color, align: 'center', resolution: 1,
-    }).setOrigin(0.5, 0).setLineSpacing(4);
-    // Centered in the space left of the sound button (top-right corner); long subtitles wrap.
-    const tw = vw - 68, tx = 8 + tw / 2;
-    text(tx, 12, this.L.title, css(this.P.line));
-    const lv = text(8, 2, `${DEEP.levelLabel} ${this.level}`, COLORS.textDim).setOrigin(0, 0);
-    if (this.hard) text(lv.x + lv.width + 8, 2, DEEP.hardLabel, css(DEEP.hazard)).setOrigin(0, 0);
-    text(tx, 30, this.L.subtitle, COLORS.textDim).setWordWrapWidth(tw);
-    this.counter = text(vw / 2, vh - BOTTOM + 8, '');
-    this.info = text(vw / 2, vh - BOTTOM + 22, '', COLORS.textDim);
 
     // Only up: back out into the board lobby inside the cabinet (each layer is entered from its subsystem there).
     addLayerButtonAt(this, 'up', () => this.go({ from: this.L.id, won: this.clearedOnce }), { zoom: ZOOM });
@@ -184,7 +189,11 @@ export default class DeepScene extends Phaser.Scene {
       .setVisible(this.hitT <= 0 || Math.floor(this.t * 10) % 2 === 0);
     this.drawTrail();
     const count = this.L.counter?.(this.st, env) ?? `GOALS ${Math.min(this.got, this.L.goal)}/${this.L.goal}${this.L.dots === false ? '' : `   DOTS ${this.dots}`}`;
-    this.counter.setText(`${count}${this.hits ? `   HITS ${this.hits}` : ''}`);
+    const line = `${count}${this.hits ? `   HITS ${this.hits}` : ''}`;
+    // The pixel font is monospaced: a line too long for the HUD size drops to the small size.
+    const size = line.length * UI.hudPx / ZOOM > GAME_WIDTH / ZOOM - 16 ? 8 : UI.hudPx / ZOOM;
+    if (size !== this.counterSize) { this.counterSize = size; this.counter.setFontSize(size); }
+    this.counter.setText(line);
     this.info.setText(this.L.info?.(this.st, env) ?? '');
   }
 

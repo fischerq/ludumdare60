@@ -191,7 +191,7 @@ export default class LobbyScene extends Phaser.Scene {
     const fixed = (o) => o.setScrollFactor(0);
     this.layerBtn = addLayerButtonAt(this, 'up', () => this.leave('Game'), { zoom: LOBBY.zoom, scale: 2 / LOBBY.zoom, fixed: true });
     this.title = fixed(this.add.text(this.viewW - 6, this.viewH - 8, 'INSIDE THE\nCABINET', {
-      fontFamily: UI.arcadeFont, fontSize: 8, color: COLORS.textReady, resolution: 1, lineSpacing: 4, align: 'right',
+      fontFamily: UI.arcadeFont, fontSize: UI.hudPx / LOBBY.zoom, color: COLORS.textReady, resolution: LOBBY.zoom / 2, lineSpacing: 4, align: 'right',
     }).setOrigin(1, 1));
     // RPG text box, sized to its text: at the bottom, or at the top while Pac-Man is in the lower half.
     this.box = fixed(this.add.graphics());

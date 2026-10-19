@@ -169,12 +169,12 @@ export default {
         ctx.fillRect(xx * S + 2, yy * S, S - 4, S);
       }
       ctx.fillStyle = css(P.line);
-      tinyText(ctx, NAMES[ch], x + 4, y + 4);
+      tinyText(ctx, NAMES[ch], x + 4, y + 4, DEEP.labelScale);
     }
     // VRAM: the bytes around the fetched tile.
     const V = BOX.V;
     ctx.fillStyle = css(P.dot);
-    tinyText(ctx, `${hex2(st.frame.tx)},${hex2(st.frame.ty)}`, V.x * S + 4, V.y * S + 14);
+    tinyText(ctx, `${hex2(st.frame.tx)},${hex2(st.frame.ty)}`, V.x * S + 4, V.y * S + 8 + 5 * DEEP.labelScale, DEEP.labelScale);
     // The tile fetcher: the fetched tile, 2x2 pixels per cell, in its palette colors; marked pixels blink.
     const T = BOX.T, q = S / 2;
     for (let k = 0; k < TP * TP; k++) {
@@ -198,9 +198,10 @@ export default {
       ctx.fillRect(x + 4, y + 4, w - 8, w - 8);
       if (want || done) neonBox(ctx, x + 1, y + 1, w - 2, w - 2, want && blink ? 0xffffff : P.line, P.glow);
       ctx.fillStyle = css(P.bg);
-      ctx.fillRect(x + 4, y + w - 12, 11, 8);
+      const k = DEEP.labelScale;
+      ctx.fillRect(x + 4, y + w - 6 - 6 * k, 8 * k - k + 4, 5 * k + 4);
       ctx.fillStyle = css(want ? 0xffffff : P.dot, want || done ? 1 : 0.6);
-      tinyText(ctx, hex2(e), x + 5, y + w - 10);
+      tinyText(ctx, hex2(e), x + 6, y + w - 4 - 6 * k, k);
     });
     // The DAC: delivered pixels drop from you into its slots, their red, green and blue levels rise, then they
     // leave one after the other along the video-out wire.
@@ -258,7 +259,7 @@ export default {
     ctx.fillStyle = hot ? css(DEEP.hazard, blink || t - st.dropped >= 1 ? 1 : 0.4) : css(P.line);
     ctx.fillRect(fx, fy + fh * (1 - k), fw, fh * k);
     ctx.fillStyle = '#ffffff';
-    tinyText(ctx, t - st.dropped < 1 ? 'DROP' : String(Math.ceil(left)).padStart(2, '0'), fx + 2, fy + 2);
+    tinyText(ctx, t - st.dropped < 1 ? 'DROP' : String(Math.ceil(left)).padStart(2, '0'), fx + 2, fy + 2, DEEP.labelScale);
     // What you carry follows one tile behind you: each pixel a block (gray with its palette entry), split into its
     // red, green and blue parts once the palette made it a color.
     if (st.carry.length && st.follow) {
@@ -278,7 +279,8 @@ export default {
           ctx.fillStyle = '#808080';
           ctx.fillRect(x, y, w, w);
           ctx.fillStyle = '#ffffff';
-          tinyText(ctx, String(cc.e), x + Math.floor(w / 2) - 2, y + Math.floor(w / 2) - 3);
+          const k = DEEP.labelScale;
+          tinyText(ctx, String(cc.e), x + Math.floor((w - 3 * k) / 2), y + Math.floor((w - 5 * k) / 2), k);
         }
       });
     }

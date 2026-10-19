@@ -13,7 +13,7 @@ const KEYS = {
   KeyA: 'left', KeyD: 'right', KeyW: 'up', KeyS: 'down',
 };
 const ZOOM = 2;               // screen px per art px
-const HUD = 64, BAR = 52;     // art px of the fixed readout at the top and the button bar at the bottom
+const HUD = 94, BAR = 52;     // art px of the fixed readout at the top and the button bar at the bottom
 const ABOVE = 3, BELOW = 4;   // rows of board drawn above the OVERFLOW row and below bit 0 (not walkable)
 
 // The adder bonus layer: the round counter's +1 as an 8-bit ripple-carry adder, played like Crossy Road (rules in
@@ -73,17 +73,20 @@ export default class AdderScene extends Phaser.Scene {
     const text = (x, y, s, color = COLORS.text, size = 8, origin = 0.5) => fixed(this.add.text(x, y, s, {
       fontFamily: UI.arcadeFont, fontSize: size, color, align: 'center', resolution: 1,
     }).setOrigin(origin, 0).setLineSpacing(4));
-    text(vw / 2, 6, 'BONUS: THE ADDER   COUNTER + 1', css(this.P.line));
+    // LEVEL n top-left and the title under it, at the HUD size every game shares (like the deep layers).
+    const hud = UI.hudPx / ZOOM;
+    text(8, 4, `${DEEP.levelLabel} ${this.level}`, COLORS.textDim, hud, 0);
+    text((vw - 60) / 2, 20, 'BONUS: THE ADDER', css(this.P.line), hud);
+    // How to play under the title (instructions go on top in every game).
+    this.info = text((vw - 60) / 2, 36, 'TAP: HOP UP  SWIPE: HOP THAT WAY', css(this.P.line));
     this.bitText = [];
     for (let i = 0; i < 8; i++) {
       const x = vw / 2 + (i - 3.5) * 22;
-      this.bitText.push(text(x, 20, '1', css(this.P.one), 16));
-      text(x, 38, String(7 - i), COLORS.textDim);
+      this.bitText.push(text(x, 50, '1', css(this.P.one), 16));
+      text(x, 68, String(7 - i), COLORS.textDim);
     }
-    this.valueText = text(vw / 2, 50, '', COLORS.textDim);
-    text(vw - 8, vh - BAR + 10, `${DEEP.levelLabel} ${this.level}`, COLORS.textDim, 8, 1);
-    this.info = text(vw / 2 - 34, vh - BAR + 10, 'TAP: HOP UP\nSWIPE: HOP THAT WAY', COLORS.textDim);
-    this.hitText = text(vw / 2 - 34, vh - BAR + 34, '', COLORS.textDim);
+    this.valueText = text(vw / 2, 80, '', COLORS.textDim);
+    this.hitText = text(vw / 2, vh - BAR + 18, '', COLORS.textDim);
     this.upZone = addLayerButtonAt(this, 'up', () => this.leave(), { zoom: ZOOM, fixed: true });
     this.children.list.slice(-3).forEach((o) => o.setDepth(21));
 
@@ -261,7 +264,7 @@ export default class AdderScene extends Phaser.Scene {
   refreshHud() {
     const st = this.st, bits = byteString(st);
     [...bits].forEach((b, i) => this.bitText[i].setText(b).setColor(css(b === '1' ? this.P.one : this.P.zero)));
-    this.valueText.setText(st.won ? '= 0  THE CARRY IS LOST' : `= ${byteValue(st)}`);
+    this.valueText.setText(st.won ? 'COUNTER = 0  THE CARRY IS LOST' : `COUNTER = ${byteValue(st)}`);
     st.sum.forEach((b, i) => this.sumText[i]?.setText(`S=${b}`).setColor(css(b ? this.P.one : this.P.zero)));
     for (const g of this.gates) g.img.setTexture(this.gateKey(g.g, gateOut(g.g, cinOf(st, g.bit))));
     this.hitText.setText(st.hits ? `HITS ${st.hits}` : '');

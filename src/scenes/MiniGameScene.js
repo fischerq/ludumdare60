@@ -1,4 +1,4 @@
-import { COLORS, MINI, UI } from '../config.js';
+import { COLORS, MINI, UI, BEST_KEY } from '../config.js';
 import { createInvaders, stepInvaders } from '../systems/minigames/invaders.js';
 import { createAsteroids, stepAsteroids, shipFrame } from '../systems/minigames/asteroids.js';
 import { createKong, stepKong } from '../systems/minigames/kong.js';
@@ -44,8 +44,20 @@ export default class MiniGameScene extends Phaser.Scene {
     this.anchor = null;
     this.drawStatic();
     const font = (color) => ({ fontFamily: UI.arcadeFont, fontSize: 8, color, resolution: 1 });
-    this.scoreText = this.add.text(4, 4, '', font(MINI.colors.score)).setDepth(10);
-    this.livesText = this.add.text(4, 14, '', font(MINI.colors.text)).setDepth(10);
+    const H = MINI.hud;
+    // The HUD at the size every game shares: 6 px at this zoom, drawn at twice the resolution so it stays crisp.
+    const hud = (color) => ({ ...font(color), fontSize: UI.hudPx / MINI.zoom, resolution: MINI.zoom / 2 });
+    this.add.text(H.oneUpX, H.labelY, '1UP', hud(COLORS.text)).setDepth(10);
+    this.scoreText = this.add.text(H.oneUpX, H.scoreY, '', hud(COLORS.text)).setDepth(10);
+    this.bestKey = `${BEST_KEY}.${this.id}`;
+    this.best = 0;
+    try { this.best = Number(localStorage.getItem(this.bestKey)) || 0; } catch (e) { /* private mode */ }
+    this.add.text(MINI.w / 2, H.labelY, 'HIGH SCORE', hud(COLORS.text)).setOrigin(0.5, 0).setDepth(10);
+    this.bestText = this.add.text(MINI.w / 2, H.scoreY, '', hud(COLORS.text)).setOrigin(0.5, 0).setDepth(10);
+    this.lifeIcons = [];
+    for (let i = 0; i < this.g.lives - 1; i++) {
+      this.lifeIcons.push(this.add.image(H.livesX + i * H.livesStep, H.livesY, MINI.lifeIcon[this.id]).setDepth(10));
+    }
     this.banner = this.add.text(MINI.w / 2, MINI.h / 2 - 20, '', { ...font(MINI.colors.text), align: 'center' }).setOrigin(0.5).setDepth(10);
     this.layerBtn = addLayerButtonAt(this, 'up', () => this.leave('left'), { zoom: MINI.zoom, scale: 2 / MINI.zoom });
     this.setupInput();
@@ -64,7 +76,8 @@ export default class MiniGameScene extends Phaser.Scene {
       });
       K.floors.forEach((y) => { for (let x = K.left; x < K.right; x += 8) this.add.image(x, y, 'games/kong-girder').setOrigin(0); });
       const top = K.floors[K.floors.length - 1];
-      this.add.text(K.ladyX, top - 26, 'HELP!', { fontFamily: UI.arcadeFont, fontSize: 8, color: '#ffffff', resolution: 1 }).setOrigin(0.5);
+      // Left of her, not above: the top-right corner is the sound button's.
+      this.add.text(K.ladyX - K.helpGap, top - 10, 'HELP!', { fontFamily: UI.arcadeFont, fontSize: 8, color: '#ffffff', resolution: 1 }).setOrigin(1, 0.5);
     }
   }
 
@@ -137,6 +150,7 @@ export default class MiniGameScene extends Phaser.Scene {
     if (this.gone) return;
     this.gone = true;
     sfx.click();
+    try { localStorage.setItem(this.bestKey, String(Math.max(this.g.score, this.best))); } catch (e) { /* private mode */ }
     this.scene.start('Hall', { from: 'game', game: this.id, result, score: this.g.score, gurke: this.g.gurke });
   }
 
@@ -162,8 +176,9 @@ export default class MiniGameScene extends Phaser.Scene {
     this.used = 0;
     this[`draw_${this.id}`](g);
     for (let i = this.used; i < this.pool.length; i++) this.pool[i].setVisible(false);
-    this.scoreText.setText(`SCORE ${g.score}`);
-    this.livesText.setText(`LIVES ${Math.max(0, g.lives)}`);
+    this.scoreText.setText(String(g.score || '00'));
+    this.bestText.setText(String(Math.max(g.score, this.best) || '00'));
+    this.lifeIcons.forEach((icon, i) => icon.setVisible(i < g.lives - 1));
   }
 
   draw_invaders(g) {

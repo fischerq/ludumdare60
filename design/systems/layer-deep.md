@@ -347,3 +347,6 @@ picture). How the other layers do on that, to decide later:
   repairs a strip of level 256. (Quirin; numbers Claude's)
 - 2026-10-19: levels in every layer, endless with a capped ramp; hard mode starts at level 4 (Quirin). Caps calibrated
   with the bots (Claude); video board level 1 timer 12 → 16 s so level 1 stays winnable at noise 0.5.
+- 2026-10-20: HUD: LEVEL top-left, title, subtitle and the live hint on top, only the goals counter below (1.5x text,
+  play area moves down to fit); box, chip and MODE labels in the layers at 2x. The adder's LEVEL moved to the
+  top-left with its controls under the title. (Quirin)

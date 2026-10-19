@@ -69,7 +69,8 @@ export const MAZE = {
     '#.................#',
     '###################',
   ],
-  top: 80,             // world px from the top of the screen to the maze (room for the score)
+  top: 124,            // world px from the top of the screen to the maze (room for the score and the hint)
+  hintY: 72,           // world px: how to play, between the score and the maze (instructions go on top in every game)
   pacStart: { x: 9, y: 17 },
   houseExit: { x: 9, y: 9 },   // tile just above the ghost door
   houseInside: { x: 9, y: 11 },
@@ -244,6 +245,7 @@ export const DEEP = {
   // numbers, in between a straight line, past capLevel they stay at the cap). src/systems/layers/levels.js.
   capLevel: 8,           // default level at which the ramp reaches its cap (a layer's levels.capLevel overrides it)
   levelLabel: 'LEVEL',   // HUD corner: LEVEL n
+  labelScale: 2,         // art px per font pixel of the small labels drawn in the layers (box and chip names, MODE)
   nextLabel: 'NEXT LEVEL',
   backLabel: 'BACK TO THE BOARD',
   backShort: 'BACK',     // the adder's back choice when it wasn't entered from the board
@@ -741,6 +743,10 @@ export const MINI = {
   dragDeadzone: 24,      // screen px a finger moves before it counts as a drag, not a tap
   tapTime: 250,          // ms; a touch shorter than this that didn't move is a tap
   colors: { text: '#ffffff', score: '#f2c94c', win: '#50e060', lose: '#ff4040', gurke: '#6ab850' },
+  // The HUD, laid out like the maze game's: 1UP and HIGH SCORE across the top (best per machine, in localStorage),
+  // the spare lives as icons at the bottom, right of the LAYER UP button. Art px.
+  hud: { oneUpX: 16, labelY: 2, scoreY: 10, livesX: 40, livesY: 310, livesStep: 14 },
+  lifeIcon: { invaders: 'games/inv-cannon', asteroids: 'games/ast-ship-0', kong: 'games/kong-man-walk-0' },
   // Colors of the code-drawn art (assets/games/): every sprite with its colors drawn in, no tinting.
   art: {
     alien: 0xffffff, cannon: 0x50e060, shot: 0xffffff, bomb: 0xffffff, boom: 0xff8040,
@@ -783,7 +789,7 @@ export const MINI = {
     ladders: [{ x: 140, from: 0 }, { x: 40, from: 1 }, { x: 140, from: 2 }, { x: 96, from: 3 }],
     walkSpeed: 40, climbSpeed: 30, jumpSpeed: 110, gravity: 380, ladderGrab: 6,
     throwEvery: 2.6, firstThrow: 1, barrelSpeed: 46, barrelFall: 300,
-    kongX: 24, ladyX: 152,
+    kongX: 24, ladyX: 152, helpGap: 8, // helpGap: art px between HELP! and the lady
     jumpPoints: 100, lives: 3, respawn: 1,
     gurkeX: 166, gurkeFloor: 3, gurkePoints: 300,
   },
@@ -1249,6 +1255,7 @@ export const UI = {
   fontFamily: 'system-ui, -apple-system, sans-serif',
   arcadeFont: '"Press Start 2P", "Courier New", monospace',
   hudSize: 30,
+  hudPx: 24,             // screen px of the HUD text in every game (LEVEL, 1UP / HIGH SCORE, layer titles)
   scoreSize: 56,
   titleSize: 96,
   bodySize: 44,

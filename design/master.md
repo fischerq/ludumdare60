@@ -129,3 +129,8 @@ survives only as the movement lab bench.
   unlocked one at a time; work RAM replaces video RAM. See [layers](systems/layers.md). (Quirin, defaults accepted)
 - 2026-10-19: Start screen: the cabinet's machine standing on a big layer cake (one band per layer), the attract show
   and TAP TO START on the machine's screen. The how-to-play lines moved under the maze. (Quirin)
+- 2026-10-20: One HUD across the games (Quirin): HUD text is UI.hudPx (24 screen px) everywhere (maze HUD a bit
+  smaller, deep-layer LEVEL/title/subtitle/goals line 1.5x, hall COINS, lobby title); instructions always on top
+  (the maze's how-to-play moved above the maze, the deep layers' live hint under their subtitle, the adder's
+  controls under its title); the small labels drawn inside the deep layers at 2x (DEEP.labelScale). Exceptions:
+  the cabinet's TAP THE COIN DOOR points at the door, and the coin mechanism's FLICK line stays under it.

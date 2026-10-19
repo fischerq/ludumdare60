@@ -123,9 +123,9 @@ export default {
       ctx.fillStyle = css(COLORS[s.name]);
       for (let k = 0; k < 6; k++) ctx.fillRect(x - 6 + k, y - k, 2 * (6 - k), 2 * k + 1);
       ctx.fillStyle = '#ffffff';
-      tinyText(ctx, '!', x - 1, y - 14);
+      tinyText(ctx, '!', x - Math.floor(3 * DEEP.labelScale / 2), y - 8 - 5 * DEEP.labelScale, DEEP.labelScale);
     }
     ctx.fillStyle = css(P.line);
-    tinyText(ctx, `MODE ${g.chase ? 'CHASE' : 'SCATTER'}${g.fright ? ' FRIGHT' : ''}`, 2, 2);
+    tinyText(ctx, `MODE ${g.chase ? 'CHASE' : 'SCATTER'}${g.fright ? ' FRIGHT' : ''}`, 2, 2, DEEP.labelScale);
   },
 };
