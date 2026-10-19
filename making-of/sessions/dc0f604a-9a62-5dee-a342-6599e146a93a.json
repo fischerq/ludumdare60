@@ -1,0 +1,63 @@
+{
+ "session_id": "dc0f604a-9a62-5dee-a342-6599e146a93a",
+ "title": "Unicorn snow globe",
+ "session_url": "https://claude.ai/code/session_01CTmFWdEvKxR2YKH8UTAxKe",
+ "claude_code_version": "2.1.303",
+ "first_date": "2026-10-19",
+ "last_date": "2026-10-19",
+ "turns": [
+  {
+   "index": 1,
+   "seq": 100,
+   "date": "2026-10-19",
+   "time": "22:24",
+   "duration_s": 81,
+   "prompt": "Take a pass to massively improve the quality of the unicorn snow globe. It should be a 3d model with simulated physics of the glitter /mane/tail, rendered in a way that looks like pixel art. Controls should allow dragging it in different places to freely rotate/shaking it with a tap. The base should be heavy so Gravity turns it upright again",
+   "followups": [],
+   "images": [],
+   "claude_images": [],
+   "reply": "Checking the remaining setup, then I'll ask the design questions before building (the project rules require that for a rework this size).",
+   "progress_notes": [],
+   "tools": {
+    "Bash": 6,
+    "mcp__claude-code-remote__list_events": 2,
+    "ToolSearch": 1
+   },
+   "api_requests": 7,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 14,
+     "cache_write_5m": 0,
+     "cache_write_1h": 42087,
+     "cache_read": 517886,
+     "output": 3090,
+     "thinking": 1775,
+     "cost_usd": 0.502129
+    }
+   },
+   "cost_usd": 0.502129,
+   "commits": [],
+   "entrypoint": "remote_mobile",
+   "branch": "ccr-776eb623-m6bcqk",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.15,
+     "end": 0.15,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.35,
+     "end": 0.35,
+     "delta": 0.0
+    }
+   }
+  }
+ ],
+ "totals": {
+  "prompts": 1,
+  "cost_usd": 0.502129,
+  "output_tokens": 3090,
+  "input_tokens": 559987
+ },
+ "reported_by_claude_code": null
+}
