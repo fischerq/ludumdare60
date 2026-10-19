@@ -540,7 +540,7 @@ export const HALL = {
     sweater: 0x7a6aa8, sweaterDark: 0x5a4a88, sweaterFuzz: 0x9a8ac0,
     elsaHair: 0xf4f0d0, elsaDress: 0x8ad0f0, annaHair: 0xb04a20, annaDress: 0x3a7a5a, skin: 0xf0c8a8,
     battery: 0x303030, batteryTop: 0xc0a040, batteryLabel: 0xe04020, // the two AA batteries (z)
-    gbc: 0x2aa8a8, gbcDark: 0x1a7070, gbcLight: 0x6ad8d0, gbcBezel: 0x404050, gbcScreen: 0x2a3428, gbcButton: 0xc03050, cartRed: 0xd03030, // the Game Boy Color (x)
+    gbc: 0xf0c820, gbcDark: 0xb08a10, gbcLight: 0xffe870, gbcBezel: 0x404050, gbcScreen: 0x2a3428, gbcButton: 0xc03050, cartRed: 0xd03030, // the Game Boy Color (x)
     cabinets: { r: 0xd03030, b: 0x3060d0, g: 0x30a050, v: 0x8040c0, y: 0xf2c200 },
   },
   ghosts: { 1: 'blinky', 2: 'pinky', 3: 'inky', 4: 'clyde' },
@@ -831,7 +831,7 @@ export const GB = {
   fade: 0.8,             // s the screen takes to go dark at the end
   colors: {
     text: '#202020', box: 0xf8f8f8, boxEdge: 0x202020, hp: 0x38b838, hpLow: 0xe0a020, hpCrit: 0xe03030, hpBack: 0x484848,
-    screenOff: 0x2a3428, label: '#e8e8f0',
+    screenOff: 0x2a3428, label: '#3a3a48',
     // art (assets/gameboy/)
     floor: 0xe8e0c8, floorLine: 0xc8c0a8, wall: 0x7890a8, wallDark: 0x506880, shelf: 0x8a5a30, shelfDark: 0x5a3a18,
     book: [0xd04040, 0x4070d0, 0x40a050, 0xe0c040], table: 0xb08050, tableDark: 0x806040, ball: 0xe03030,
@@ -840,7 +840,7 @@ export const GB = {
     skin: 0xf0c8a0, pants: 0x3a3a60, coat: 0xf0f0f0, coatShade: 0xb8b8c8, profHair: 0xa8a8a8, eye: 0x202020,
     gurke: 0x3a8a30, gurkeLight: 0x6ab850, gurkeDark: 0x1e5018, leaf: 0x50c050, leafDark: 0x2a7a2a,
     fire: 0xe04020, fireLight: 0xffa030, fireTip: 0xffe060, water: 0x60b0f0, waterLight: 0xc0e8ff, waterDark: 0x3070b0,
-    body: 0x2aa8a8, bodyLight: 0x6ad8d0, bodyDark: 0x1a7070, bezel: 0x404050, bezelDark: 0x2a2a38, button: 0x3a3a48,
+    body: 0xf0c820, bodyLight: 0xffe870, bodyDark: 0xb08a10, bezel: 0x404050, bezelDark: 0x2a2a38, button: 0x3a3a48,
     buttonLight: 0x6a6a7a, led: 0xff3030,
   },
   text: {

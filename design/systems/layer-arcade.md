@@ -53,7 +53,7 @@ the arcade as a place.
     into it); it lies at the right end of the second girder from the top, where the barrels fall (walk to it).
     300 points and "MINI-GURKE!"; the hall's result line mentions it.
   - Each machine has its own background bed (`MUSIC.beds.invaders`, `asteroids`, `kong`, see [audio](audio.md)).
-- **The Game Boy Color** *(decided, Quirin, defaults accepted 2026-10-19)*: a teal GBC lying on the rug, left of the
+- **The Game Boy Color** *(decided, Quirin, defaults accepted 2026-10-19)*: a yellow GBC lying on the rug, left of the
   sweater (`x`, `arcade/gameboy`) with Pokemon Red's red cartridge in it. Without batteries: you flip the switch,
   nothing, the batteries are dead. **Two AA batteries** lie below the potted plant (`z`, `arcade/batteries`): walk
   over them to pick them up (kept for the session). Then the Game Boy offers PUT THEM IN, and it plays **the start
@@ -174,3 +174,4 @@ the arcade as a place.
 - 2026-10-19: The other cabinets become playable, one level each for a coin (Space Invaders, Asteroids, Donkey Kong); Galaxian is broken and eats the coin; a Game Boy Color with Pokemon Red lies on the floor, batteries dead; walking into our cabinet zooms straight down, talking to it asks PLAY / NOT NOW; a mini-Gurke hidden in each game; each machine gets its own background track. Defaults accepted (full-screen scene per game, touch controls, no reward, no bot). (Quirin) Claude picked where the mini-Gurke hides in each game and wrote the dialog lines.
 - 2026-10-19: Snow globe close-up: glass bigger again (radius 52, unicorn kept), flat stand (14 px instead of 28), thicker mane and tail that collide with the body, a green meadow instead of snow (also in the hall tile), a fluffy cloud overhead, and the note taped under the stand (read it by tipping the globe over). (Quirin) Claude picked the cloud's spot (upper left, behind the horn) and that the note only shows on the underside.
 - 2026-10-19: The Game Boy moves onto the rug (left of the sweater); batteries to pick up under the potted plant; with them it plays the start of Pokemon Red with mini-Gurken: choose a starter in the professor's lab, the rival takes the counter and fights you, leaving the lab turns the Game Boy off. Defaults accepted (on-screen D-pad, grass/fire/water mini-Gurken BLATTGURK, FEUERGURK, SALZGURK, a short fight, once per session, own names RED/BLUE/PROF. DILL, own tunes). (Quirin)
+- 2026-10-19: The Game Boy Color is yellow, in the hall and up close. (Quirin)

@@ -658,7 +658,7 @@ export default class BootScene extends Phaser.Scene {
   }
 
   // The arcade hall's characters, top-down, feet at the bottom of the 32x32 sprite, two walk frames each:
-  // The Game Boy Color on the floor (x), seen from above: teal, its screen dark (dead batteries), Pokémon Red's
+  // The Game Boy Color on the floor (x), seen from above: yellow, its screen dark (dead batteries), Pokémon Red's
   // red cartridge sticking out at the top.
   makeGameBoy(rect, tile, shadow) {
     const K = HALL.colors;
@@ -682,7 +682,7 @@ export default class BootScene extends Phaser.Scene {
   }
 
   // The Game Boy Color's game (src/scenes/GameBoyScene.js), assets/gameboy/: the Game Boy itself (body, 180x320 with
-  // the screen hole at GB.screen), the lab's tiles, RED, BLUE and PROF. DILL (16x16), the three mini-Gurken front and
+  // the screen hole at GB.screen, yellow), the lab's tiles, RED, BLUE and PROF. DILL (16x16), the three mini-Gurken front and
   // back (32x32). Colors in GB.colors.
   makeGameBoyGame() {
     const C = GB.colors, T = 16;
@@ -702,7 +702,7 @@ export default class BootScene extends Phaser.Scene {
       }
     };
 
-    // The Game Boy: teal body, dark bezel, the D-pad, A and B, start/select and the speaker.
+    // The Game Boy: yellow body, dark bezel, the D-pad, A and B, start/select and the speaker.
     const S = GB.screen;
     art('body', 180, 320, (set) => {
       roundRect(set, 0, 0, 180, 320, 14, C.bodyDark);
