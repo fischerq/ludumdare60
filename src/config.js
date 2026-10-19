@@ -239,6 +239,9 @@ export const DEEP = {
     input:   { bg: 0x140602, grid: 0x34140a, line: 0xff6a2a, glow: 0x4a1a08, dot: 0xffb08a, dot2: 0xffffff, special: 0xffffff },
   },
   machineSlowdown: 4,    // the machine runs this many times slower in the deep layers than on the maze
+  // Hard mode (the lobby's 256 switch on): each layer's `hard` block is merged over its numbers while it plays
+  // (src/systems/layers/hard.js). Winning a layer in hard mode repairs its strip of level 256 (LEVELS.repairs).
+  hardLabel: 'HARD',     // marker left of the layer's title
   // Each layer: its own verb and enemy, and goal = the number of objectives (3 to 5) that win it.
   crt: {                 // -1 inside the tube: phosphor triads lit by a raster beam, one pixel at a time
     walkSpeed: 6.5,      // tiles per second here (faster than DEEP.walkSpeed: the beam is the only enemy)
@@ -269,6 +272,7 @@ export const DEEP = {
     bonusModes: ['columns', 'up'], // taken in turn: column by column left to right, row by row bottom to top
     msgTime: 3,          // s an adjustment's message stays in the status line
     labelScale: 2,       // art px per font pixel of the pads' names
+    hard: { beamPeriod: 10, bonusTime: 10 }, // hard mode (the 256 switch on): a faster beam, shorter bonus scans
   },
   signals: {             // -2 the video board: a race against the frame timer, tile pixels via the palette to the DAC
     frameTime: 12,       // s on the frame timer; at zero the pixels you carry are dropped and a new tile is fetched
@@ -310,6 +314,7 @@ export const DEEP = {
       '...................',
     ],
     goal: 4,             // colors delivered
+    hard: { frameTime: 9, goal: 5 }, // hard mode: a shorter frame timer, one more color
   },
   ram: {                 // -3 work RAM, poke the game state: bit lamps flip bits in the real RAM, the write head dashes
     waitTime: 0.8,       // s the write head waits at a variable's left edge (telegraph: its bits glow red)
@@ -339,6 +344,7 @@ export const DEEP = {
       { id: 'moved', name: 'MOVE BLINKY', var: 'blinkyX' },
       { id: 'scared', name: 'SCARE BLINKY', var: 'scared' },
     ],
+    hard: { waitTime: 0.55, dashSpeed: 12, restTime: 0.15 }, // hard mode: the write head telegraphs less, dashes faster
   },
   bus: {                 // -4 the spatial bus: chip rooms behind decoder doors, packets on the lanes
     cycleTime: 1.1,      // s between bus cycles shown
@@ -377,6 +383,7 @@ export const DEEP = {
       '##################',
     ],
     goal: 4,             // one data byte from each chip room
+    hard: { cycleTime: 0.85, packetSpeed: 9, readDelay: 1, doorHold: 1.2 }, // hard mode: a busier, faster bus
   },
   cpu: {                 // -5 Game Genie: carry a patch onto a line of the real program; the PC steps through it
     rate: 4.5,           // lines per second the program counter steps while it's in the routine on screen
@@ -397,6 +404,7 @@ export const DEEP = {
       { name: 'PAC EATS ANY GHOST', routine: 'check_hits', line: 'jr z, .death', above: 11, text: 'NOP  NOP', nop: true },
     ],
     goal: 4,             // patches written
+    hard: { rate: 6, grace: 0.4 }, // hard mode: the program counter steps faster
   },
   logic: {               // -6 line of sight: crossing a ghost's target vector sends a seeker after you
     vectorWidth: 0.45,   // tiles: how close to a target vector line counts as crossing it
@@ -404,6 +412,7 @@ export const DEEP = {
     seekSpeed: 3.6,      // tiles per second (you walk DEEP.walkSpeed)
     vectorColors: { blinky: 0xff2a3a, pinky: 0xff6a8a, inky: 0xff8a5a, clyde: 0xffb0a0 },
     goal: 4,             // stand on each ghost's target tile
+    hard: { vectorWidth: 0.6, seekTime: 8, seekSpeed: 4.2 }, // hard mode: wider vectors, faster seekers that hunt longer
   },
   input: {               // -7 fix the joystick, then play: carry the 4 cut wire ends to IN0's pins, then swipe-play
     // The board below the picture (tiles; 11 x 17, the picture and IN0's port take the rows above `top`).
@@ -432,6 +441,7 @@ export const DEEP = {
     playSpeed: 0.5,      // machine speed while you play (the deep layers run it at 1 / machineSlowdown)
     playDots: 20,        // dots to eat with the repaired stick to win
     goal: 5,             // the 4 wires and the test game
+    hard: { sparkSpeed: 4, sparkEvery: [2.5, 4.5], sparkWarn: 0.6, playDots: 30 }, // hard mode: more, faster sparks, a longer test game
   },
 };
 
@@ -618,28 +628,30 @@ export const HALL = {
 // E edge connector (the harness plugs into the board), S start. On the board stack: V video board, R work RAM,
 // B bus, C CPU, L the logic brain with the four ghosts 1-4 (blinky, pinky, inky, clyde) on wires to it.
 // A the round counter's adder and Z its 256 switch: plain floor at LOBBY.reserved until every subsystem is won.
+// O the four status lamps (left to right = lamp 1..4, src/progress.js lamps()), H the cheat lever under each lamp,
+// N the sign next to them, F the film reel (the credits), g mini-gurke (the easter egg).
 export const LOBBY = {
   layout: [
     '###########',
-    '#.MMM...K.#',
-    '#.mmm...=.#',
-    '#..=....=.#',
-    '#..=..JX=.#',
-    '#..=..=.=.#',
-    '#..=..=.D.#',
-    '#W.=.S=.=.#',
-    '#=.=..=.=.#',
-    '#===E====.#',
-    '#.V--.....#',
+    '#.MMM....K#',
+    '#.mmm....=#',
+    '#..=.....=#',
+    '#..=NOOOO=#',
+    '#..=.HHHH=#',
+    '#..=.....D#',
+    '#W.=.SJX.=#',
+    '#=.=..=..=#',
+    '#===E=====#',
+    '#.V--....F#',
     '#...-..1..#',
     '#.R--..~..#',
     '#...-2~L~3#',
     '#.C--..~..#',
-    '#...-..4.H#',
-    '#...B.....#',
+    '#...-..4..#',
+    '#g..B.....#',
     '###########',
   ],
-  solid: '#MmKJDWEVRBCL1234AZX', // not the lever (H): it stands in front of the 256 switch, so you step over it
+  solid: '#MmKJDWEVRBCL1234AZXOHNFg',
   mechaRate: 2,          // blinks per second of Mecha-Pac's antenna (X, by the joystick: the bot)
   reserved: { adder: { x: 8, y: 16 }, switch: { x: 9, y: 16 } },
   // Map character -> deep layer id (src/systems/layers/). The monitor is all six of its tiles.
@@ -672,6 +684,16 @@ export const LOBBY = {
     // Mecha-Pac, the bot: a steel Pac-Man with a red visor, rivets and an antenna.
     mecha: 0xa8b0bc, mechaLight: 0xe0e6ee, mechaDark: 0x5a6270, visor: 0x20242c, visorEye: 0xff3020,
     antenna: 0x40ff60, foot: 0x3a4048,
+    // The status lamps 1..4 (maze yellow, board green, 256 red, hard mode violet): off glass, lit bulb, glow.
+    lamps: [
+      { off: 0x4a4420, glass: 0x7a7040, on: 0xffe040, glow: 0x6a5a20 },
+      { off: 0x1e4428, glass: 0x3a7048, on: 0x50ff80, glow: 0x2a6a3a },
+      { off: 0x4a1c1c, glass: 0x7a3a3a, on: 0xff4a3a, glow: 0x6a2a24 },
+      { off: 0x34204a, glass: 0x5a4078, on: 0xc070ff, glow: 0x4a2c6a },
+    ],
+    paper: 0xe8dcb0, paperDark: 0x8a6a40, scrawl: 0x3a3048, // the sign
+    reel: 0xb8bcc4, reelLight: 0xe8ecf0, reelDark: 0x5a5e66, film: 0x2a2018, // the film reel
+    gurke: 0x5aa83a, gurkeLight: 0x9ad860, gurkeDark: 0x2e6a22, // mini-gurke
   },
   // Who each subsystem is (its accent is the layer's own DEEP.style line color).
   names: {
@@ -687,6 +709,10 @@ export const LOBBY = {
     logic: 'THE BRAIN: THE GAME LOGIC. I TELL THE FOUR GHOSTS WHERE TO GO.',
     input: 'THE JOYSTICK. FOUR SWITCHES ON WIRES DOWN TO THE BOARD. PUSH ME AND A BIT GOES LOW.',
     locked: '{name} IS ASLEEP. ZZZ... WAKE {prev} FIRST.',
+    crtLocked: 'THE MONITOR IS ASLEEP. CLEAR THE MAZE FIRST.',
+    hard: 'THE 256 SWITCH IS ON: HARD MODE.',
+    hardWon: 'BEATEN IN HARD MODE TOO.',
+    enterHard: 'ENTER (HARD MODE)',
     won: 'ALL DONE IN THERE.',
     woke: '{name} WOKE UP!',
     allWon: 'EVERY PART OF THE MACHINE IS AWAKE.',
@@ -713,14 +739,24 @@ export const LOBBY = {
     leave: 'LEAVE IT',
     mecha: "MECHA-PAC: BEEP. BUSY PLAYING. I'M ON THE JOYSTICK WHILE YOU'RE IN HERE. EVERY LIFE I LOSE IS YOURS.",
     mechaOver: 'MECHA-PAC: BEEP... GAME OVER. I LOST YOUR LAST LIFE. A COIN STARTS A NEW GAME.',
-    // The cheat lever (H, at the right edge above the 256 switch): pulling it wakes every subsystem, so the adder shows up.
-    lever: 'SOMEONE LEFT A SERVICE LEVER IN HERE. A TAG SAYS: TEST ONLY. WAKES EVERY PART AT ONCE.',
-    leverDown: 'THE SERVICE LEVER IS DOWN. EVERY PART OF THE MACHINE IS AWAKE.',
-    leverPulled: 'CLUNK! EVERY PART OF THE MACHINE WAKES UP. BY THE BUS, THE ADDER LIGHTS UP: THE ROUND COUNTER.',
+    // The status lamps (O) and the cheat lever (H) under each: pulling one flips its lamp's achievement.
+    lamps: ['THE MAZE, WON ONCE', 'EVERY PART AWAKE', 'THE 256 SWITCH, UNLOCKED', 'HARD MODE: EVERY PART BEATEN, LEVEL 256 WINNABLE'],
+    lamp: 'LAMP {n}: {what}. {state}',
+    lampOn: 'IT IS LIT.',
+    lampOff: 'IT IS DARK.',
+    lever: 'LEVER {n}. A TAG SAYS: TEST ONLY. FLIPS LAMP {n}.',
+    leverPulled: 'CLUNK! LAMP {n} IS {state} NOW.',
+    leverOn: 'ON',
+    leverOff: 'OFF',
     pull: 'PULL IT',
+    sign: 'HOW DO YOU TURN THIS ON... HMM, MAYBE I SHOULD RATHER PLAY.',
+    reel: 'A FILM REEL. THE CREDITS OF THIS MACHINE.',
+    reelEmpty: 'THE REEL IS EMPTY.',
+    watch: 'WATCH',
+    gurke: 'A TINY PICKLE. MINI-GURKE SAYS HI.',
   },
   // Which text a tile shows when you face it and tap (keys into `text`); subsystems and ghosts are handled apart.
-  cellText: { K: 'speaker', D: 'door', W: 'power', E: 'edge', '#': 'wall' },
+  cellText: { K: 'speaker', D: 'door', W: 'power', E: 'edge', '#': 'wall', N: 'sign', g: 'gurke' },
 };
 
 // The service manual (src/manual/), opened from the booklet on the hall's table: an HTML overlay of old paper.
@@ -815,6 +851,22 @@ export const MUSIC = {
       textures: [
         { type: 'tone', wave: 'saw', freq: 50, vol: 0.05 },
         { type: 'noise', filter: 'lowpass', freq: 350, vol: 0.12 },
+      ],
+    },
+    // The board lobby inside the cabinet: the transformer's hum breathing slowly, a clock ticking once a second,
+    // a low drone and the game's bleeps muffled through the board. Calm enough to read text boxes over.
+    lobby: {
+      bpm: 60, root: 43, vol: 0.8, // G, one step = a quarter second
+      tracks: [
+        { wave: 'tri', len: 30, vol: 0.16, notes: '0' + ' .'.repeat(31) + ' -2' + ' .'.repeat(31) },
+        { wave: 'sine', len: 6, vol: 0.05, oct: 12, notes: '. . . . . . . . 7 . . . . . . . . . . . . . . . 10 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .' },
+      ],
+      textures: [
+        { type: 'tone', wave: 'sine', freq: 50, vol: 0.07 },
+        { type: 'tone', wave: 'tri', freq: 100, vol: 0.025, lfo: { rate: 0.13, depth: 0.6 } }, // transformer buzz, breathing
+        { type: 'noise', filter: 'bandpass', freq: 180, vol: 0.03 },
+        { type: 'ticks', every: 4, freq: 2500, vol: 0.025 },
+        { type: 'blips', chance: 0.03, lo: 64, hi: 88, len: 1, wave: 'square', vol: 0.04, lp: 700 },
       ],
     },
     // The original has no music: just the siren, a little higher and faster every stage of dots eaten.
@@ -975,6 +1027,46 @@ export const CREDITS = {
   backPad: 34,
 };
 
+// The start screen (src/scenes/MenuScene.js): the cabinet's machine (Max's assets/cabinet/machine.png) standing on
+// a big layer cake (assets/menu/cake.png), both shown 1:1, with the attract show on the machine's screen.
+// Same oblique view as the cabinet: depth goes up and to the right at 45°.
+export const MENU = {
+  titleY: 150,            // below the sound button
+  machineX: 192,          // screen px of the machine texture's top-left corner
+  machineY: 196,
+  // The machine's picture, inside the bezel (texture px, see CABINET: screen at panelDepth plus the bezel).
+  screen: { x: 98, y: 67, w: 168, h: 264 },
+  castY: 120,             // texture px inside the screen: the row Pac-Man and the ghosts run along
+  castSpeed: 40,          // screen px per s
+  castGap: 34,            // screen px between the runners
+  dotGap: 16,             // screen px; the screen shows the maze at half its size, so this is one tile
+  promptY: 210,           // texture px inside the screen: TAP TO START
+  promptSize: 24,
+  cakeX: 50,              // screen px of the cake texture's top-left corner
+  cakeY: 778,
+  cake: {
+    w: 560,               // front face, art px
+    depth: 80,            // drawn as (+depth/2, -depth/2)
+    rim: 24,              // plate rim beyond the cake on each side
+    // Top to bottom, outside in like the game's layers: the hall's frosting, the cabinet, the maze, the board,
+    // the deep layers. Fillings between them.
+    layers: [
+      { name: 'frosting', h: 26, front: 0xfff4e0, side: 0xe0cfb4 },
+      { name: 'cabinet', h: 64, front: 0xf2c200, side: 0xa88600 },
+      { name: 'filling', h: 10, front: 0xffb8de, side: 0xd88fb8 },
+      { name: 'maze', h: 64, front: 0x05051a, side: 0x020210, line: 0x2121de, dot: 0xffb897 },
+      { name: 'filling', h: 10, front: 0xffb8de, side: 0xd88fb8 },
+      { name: 'board', h: 64, front: 0x24382c, side: 0x17241c, line: 0xd8a83a },
+      { name: 'filling', h: 10, front: 0xffb8de, side: 0xd88fb8 },
+      { name: 'deep', h: 56, front: 0x3a3448, side: 0x25212e, line: 0x6a6280 },
+    ],
+    top: 0xfffaf0,        // the frosting's top surface
+    drip: 0xfff4e0,       // frosting running down over the cabinet layer
+    sprinkles: [0xd32734, 0x00ffde, 0xffb847, 0x2121de, 0xffde00],
+    plate: 0xd8dce6, plateSide: 0x9aa0b0,
+  },
+};
+
 // Emulated arcade machine (Pac-Man-style hardware) that the lower layers read from. See design/systems/emulator.md.
 export const ARCADE = {
   // MIT Z80 core by Molly Howell, pinned to a commit. A classic script (global Z80), loaded by src/systems/arcade/z80.js.
@@ -991,6 +1083,12 @@ export const ARCADE = {
 export const LEVELS = {
   shelfCols: 9,          // shelf width in tiles, right-aligned under the maze (cols 10..18, the right half)
   param: 'level',        // ?level=256 starts the maze on that level (1..256), for testing
+  // Level 256's garbage half (the shelf's columns, every maze row) splits into this many strips, top to bottom, one
+  // per deep layer in DEEP_LAYERS order (crt at the top). A layer won in hard mode repairs its strip; with all of
+  // them the level is clean and can be cleared (the program's `repair`, game.asm).
+  repairs: 7,
+  beatenText: 'LEVEL 256\nCLEAR!',  // callout when the repaired level 256 is cleared, before the credits roll
+  creditsDelay: 2.5,     // s from that callout to the credits
   // Fruit tile colors (art maze/fruit-<name>, drawn in BootScene).
   colors: {
     red: 0xff2020, darkRed: 0xa00010, green: 0x30c030, brown: 0xa06030, white: 0xffffff, orange: 0xffa020,

@@ -27,6 +27,8 @@ export const world = {
   driver: 'bot',
   // setRound(): the level to put the machine's game on after the next frame (null: none asked for).
   pendingRound: null,
+  // Level 256's repaired strips, a bit each (LEVELS.repairs, DEEP_LAYERS order): the deep layers won in hard mode.
+  repairs: 0,
 };
 
 // The bot plays the player's game by the same rules: its deaths cost lives, and losing the last one is game
@@ -60,6 +62,10 @@ export function setRound(n) {
 }
 // The kill screen on or off: level 256 (counter 255), or back to level 1.
 export const setLevel256 = (on) => setRound(on ? 256 : 1);
+// Which strips of level 256 are repaired (bit k: strip k, top to bottom). The host latches the mask into the
+// program's REPAIRS byte before every frame; the program's own `repair` puts the clean maze back on those
+// strips, at once on a live level 256 and at the start of every round there.
+export const setRepairs = (mask) => { world.repairs = mask & 0xff; };
 // The level the machine's game is on now (1..256), read from the round counter.
 export const currentRound = () => (world.machine && world.program ? world.machine.read(world.program.symbols.LEVEL) + 1 : 1);
 
@@ -114,6 +120,7 @@ export function tickWorld(ms) {
     world.acc -= frameMs;
     if (world.driver === 'bot') botStep(m);
     applyInput(m);
+    if (world.program) m.ram[world.program.symbols.REPAIRS - MAP.ram[0]] = world.repairs;
     m.runFrame(world.trace ? traceStep : undefined);
     if (world.pendingRound != null && world.program) applyRound(m, world.program.symbols);
     if (world.trace?.steps.length) { world.trace.done(world.trace.steps); world.trace = null; }

@@ -1,9 +1,9 @@
-import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP, LOBBY, LEVELS, ADDER } from '../config.js';
+import { COLORS, MAZE, PIXEL, UI, CABINET, HALL, DEEP, LOBBY, LEVELS, ADDER, MENU } from '../config.js';
 import { tinyText } from '../systems/layers/font.js';
 import { mazeTiles, tileKey } from '../systems/tiles.js';
 import { world } from '../systems/arcade/world.js';
 import { openManual } from '../manual/index.js';
-import { setWonCount } from '../progress.js';
+import { setWonCount, setLamp, markHardWon, ORDER } from '../progress.js';
 
 const hex = (c) => `#${c.toString(16).padStart(6, '0')}`;
 
@@ -63,6 +63,7 @@ export default class BootScene extends Phaser.Scene {
     this.makeDeep();
     this.makeBoard();
     this.makeAdder();
+    this.makeCake();
     // Wait for the arcade font so text doesn't render in the fallback first (give up after 2 s).
     const font = document.fonts?.load(`8px ${UI.arcadeFont}`) ?? Promise.resolve();
     const timeout = new Promise((r) => setTimeout(r, 2000));
@@ -72,6 +73,9 @@ export default class BootScene extends Phaser.Scene {
     const data = params.has('layer') ? { layer: Number(params.get('layer')) } : undefined;
     // ?won=n: the first n subsystems inside the cabinet count as won (for testing the unlocks).
     if (params.has('won')) setWonCount(Number(params.get('won')));
+    // ?hard=n: everything up to the 256 switch won and the switch on (the deep layers play hard), and the first n
+    // layers won in hard mode (their strips of level 256 repaired; 7 makes it winnable).
+    if (params.has('hard')) { setLamp(2, true); ORDER.slice(0, Number(params.get('hard'))).forEach(markHardWon); }
     // With ?manual the arcade hall is underneath, so closing the manual lands where the booklet lies.
     const target = start && this.scene.get(start) ? start : params.has('manual') ? 'Hall' : 'Menu';
     // The emulated arcade machine has to be running too: the maze level is its picture.
@@ -126,6 +130,74 @@ export default class BootScene extends Phaser.Scene {
         if (dx * dx + dy * dy <= r * r) set(x, y, color);
       }
     }
+  }
+
+  // The start screen's layer cake (MENU.cake, shown 1:1): an oblique slab like the cabinet, one band per layer of
+  // the game, top to bottom, on a plate. The machine stands on its top (drawn by the scene).
+  makeCake() {
+    const C = MENU.cake, d = C.depth, total = C.layers.reduce((a, l) => a + l.h, 0);
+    const L = C.rim + 8, R = L + C.w, yt = d / 2 + 2, yb = yt + total;
+    const P = (x, y, dd) => [x + dd / 2, y - dd / 2];
+    const W = R + C.rim + (d + 16) / 2 + 4, H = yb + 8 + 8 + 4;
+    const rect = (set, x, y, w, h, c) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) set(i, j, c); };
+    const text = (set, str, x, y, k, color) => tinyText({ fillRect: (fx, fy, w, h) => rect(set, fx, fy, w, h, color) }, str, x, y, k);
+    this.pixels('menu/cake', W, H, (set) => {
+      // Plate: a thin slab sticking out around the cake.
+      const p0 = L - C.rim, p1 = R + C.rim;
+      this.poly(set, [P(p1, yb, -16), P(p1, yb, d + 16), P(p1, yb + 8, d + 16), P(p1, yb + 8, -16)], C.plateSide);
+      this.poly(set, [P(p0, yb, -16), P(p1, yb, -16), P(p1, yb, d + 16), P(p0, yb, d + 16)], C.plate);
+      this.poly(set, [P(p0, yb, -16), P(p1, yb, -16), P(p1, yb + 8, -16), P(p0, yb + 8, -16)], C.plateSide);
+      // The bands: front face and right side.
+      let y = yt;
+      const band = {};
+      for (const l of C.layers) {
+        this.poly(set, [[R, y], P(R, y, d), P(R, y + l.h, d), [R, y + l.h]], l.side);
+        rect(set, L, y, C.w, l.h, l.front);
+        band[l.name] = { y, h: l.h, ...l };
+        y += l.h;
+      }
+      this.poly(set, [[L, yt], [R, yt], P(R, yt, d), P(L, yt, d)], C.top);
+      // The cabinet: frosting running down over it.
+      const f = band.frosting, cab = band.cabinet;
+      for (let x = L + 6, i = 0; x < R - 14; x += 26, i++) {
+        const len = 8 + ((i * 7) % 5) * 5;
+        rect(set, x, cab.y, 12, len, C.drip);
+        rect(set, x + 2, cab.y + len, 8, 2, C.drip);
+      }
+      rect(set, L, f.y + f.h - 2, C.w, 2, C.drip);
+      // Sprinkles on top.
+      for (let i = 0; i < 60; i++) {
+        const u = ((i * 97) % 101) / 101, v = ((i * 61) % 53) / 53;
+        const [sx, sy] = P(L + 10 + u * (C.w - 20), yt, 6 + v * (d - 12));
+        const c = C.sprinkles[i % C.sprinkles.length];
+        if (i % 2) rect(set, Math.round(sx), Math.round(sy), 4, 2, c); else rect(set, Math.round(sx), Math.round(sy), 2, 4, c);
+      }
+      // The maze: double walls along the top and bottom, a row of dots with power pellets.
+      const m = band.maze;
+      for (const wy of [m.y + 5, m.y + 9, m.y + m.h - 11, m.y + m.h - 7]) rect(set, L, wy, C.w, 2, m.line);
+      for (let x = L + 16, i = 0; x < R - 8; x += 24, i++) {
+        if (i % 6 === 2) { rect(set, x - 4, m.y + m.h / 2 - 2, 8, 4, m.dot); rect(set, x - 2, m.y + m.h / 2 - 4, 4, 8, m.dot); }
+        else rect(set, x - 2, m.y + m.h / 2 - 2, 4, 4, m.dot);
+      }
+      // The board: copper traces with vias between black chips.
+      const b = band.board;
+      for (let k = 0; k < 3; k++) {
+        const ty = b.y + 12 + k * 20;
+        rect(set, L, ty, C.w, 2, b.line);
+        for (let x = L + 30 + k * 40; x < R - 8; x += 130) { rect(set, x - 3, ty - 3, 8, 8, b.line); rect(set, x - 1, ty - 1, 4, 4, b.front); }
+      }
+      for (let x = L + 70; x + 48 < R; x += 150) {
+        rect(set, x, b.y + 16, 48, 32, 0x111111);
+        for (let px = x + 4; px < x + 46; px += 8) { rect(set, px, b.y + 12, 3, 4, 0xc8c8c8); rect(set, px, b.y + 48, 3, 4, 0xc8c8c8); }
+        rect(set, x + 3, b.y + 19, 3, 3, 0x555555);
+      }
+      // The deep layers: bits.
+      const dp = band.deep;
+      const bits = '0110100011010010111001011000110100101110';
+      for (let r = 0; r < 3; r++) {
+        text(set, bits.slice(r * 7) + bits.slice(0, r * 7), L + 10, dp.y + 8 + r * 16, 3, r === 1 ? COLORS.pac : dp.line);
+      }
+    });
   }
 
   // The arcade hall (layer 3), a cozy top-down room: tileset assets/arcade/ (16x16 each), plus the coin.
@@ -972,7 +1044,7 @@ export default class BootScene extends Phaser.Scene {
       else { r(7, 11, 2, 3, stuck ? K.legOff : K.leg); r(6.5, 13.5, 3, 1, stuck ? K.legOff : K.eye); }
       if (on) { r(12, 12, 1, 1, A.line); } else if (!stuck) { r(12, 12, 1, 1, K.slot); }
     };
-    // The cheat lever above the 256 switch: a big service lever on a plate, up (ready) or down (pulled).
+    // The four cheat levers under the status lamps: a big service lever on a plate, up (ready) or down (pulled).
     for (const state of ['up', 'down']) tile(`lever-${state}`, (set) => {
       floor(set);
       rect(set, 3, 10, 10, 5, K.chip); rect(set, 3, 10, 10, 1, K.chipLight);
@@ -981,6 +1053,46 @@ export default class BootScene extends Phaser.Scene {
       const top = state === 'up' ? 1 : 6, x = state === 'up' ? 9 : 4;
       for (let y = top + 2; y < 10; y++) rect(set, Math.round(x + (8 - x) * (y - top) / (10 - top)), y, 1, 1, K.leg);
       rect(set, x - 1, top, 3, 3, K.slot); set(x - 1, top, 0xff9a90); // the red knob
+    });
+    // The four status lamps (lamp-<n>-<off/on>, n = 1..4): a bulb in a wire cage on a socket, each in its own color,
+    // dark glass when off, glowing with a highlight when on.
+    LOBBY.colors.lamps.forEach((c, n) => ['off', 'on'].forEach((state) => tile(`lamp-${n + 1}-${state}`, (set) => {
+      const on = state === 'on';
+      floor(set);
+      if (on) ellipse(set, 8, 7, 7, 7, c.glow);
+      rect(set, 4, 12, 8, 3, K.chip); rect(set, 4, 12, 8, 1, K.chipLight); // the socket
+      ellipse(set, 8, 7, 4, 5, on ? c.on : c.off);
+      if (on) { rect(set, 6, 4, 2, 2, K.eye); set(8, 5, c.glow); }
+      else set(6, 5, c.glass);
+      for (const x of [3, 12]) rect(set, x, 3, 1, 8, K.legOff); // the cage
+      rect(set, 4, 1, 8, 1, K.legOff); set(3, 2, K.legOff); set(12, 2, K.legOff);
+      set(5 + n * 2, 14, K.leg); // a dot per lamp number on the socket
+    })));
+    // The sign by the lamps: a scrawled note on a post (talking to it reads it).
+    tile('sign', (set) => {
+      floor(set);
+      rect(set, 7, 9, 2, 6, K.copperDark);
+      rect(set, 1, 2, 14, 8, K.paperDark); rect(set, 2, 3, 12, 6, K.paper);
+      for (const [x, y, w] of [[3, 4, 7], [3, 6, 9], [3, 8, 5]]) rect(set, x, y, w, 1, K.scrawl);
+      set(12, 8, K.scrawl); // the question mark's dot
+    });
+    // The film reel (the credits): a silver reel on its side with film running off it.
+    tile('reel', (set) => {
+      floor(set);
+      rect(set, 8, 12, 8, 3, K.film); for (let x = 9; x < 16; x += 2) { set(x, 12, K.reelLight); set(x, 14, K.reelLight); }
+      ellipse(set, 7, 7, 6.5, 6.5, K.reelDark);
+      ellipse(set, 7, 7, 5.5, 5.5, K.reel);
+      for (const [x, y] of [[7, 3], [4, 8], [10, 8]]) ellipse(set, x + 0.5, y + 0.5, 1.6, 1.6, K.film);
+      rect(set, 6, 6, 2, 2, K.reelDark); set(5, 3, K.reelLight); set(4, 4, K.reelLight);
+    });
+    // Mini-gurke: a tiny pickle with a face, lying on the board (the easter egg).
+    tile('gurke', (set) => {
+      floor(set);
+      ellipse(set, 8, 9, 7.5, 3.6, K.gurkeDark);
+      ellipse(set, 8, 8.6, 6.5, 2.9, K.gurke);
+      for (const [x, y] of [[4, 7], [11, 7], [7, 11], [12, 10]]) set(x, y, K.gurkeLight); // bumps
+      set(6, 8, K.pupil); set(9, 8, K.pupil); set(7, 10, K.pupil); set(8, 10, K.pupil); // eyes and smile
+      set(5, 9, K.cheek); set(10, 9, K.cheek);
     });
     for (const state of ['stuck', 'off', 'on']) tile(`switch-${state}`, (set) => { island(set, 'adder', state === 'stuck' ? 'off' : 'on'); toggle(set, 1, state); });
     this.pixels('board/portrait-switch', P, P, (set) => {

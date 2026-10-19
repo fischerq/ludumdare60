@@ -2,10 +2,10 @@ import { GAME_WIDTH, GAME_HEIGHT, COLORS, MAZE, PIXEL, RULES, INPUT, UI, BEST_KE
 import { createSwipe, swipeInput } from '../systems/swipe.js';
 import { sfx, unlockAudio, setAudioPaused, setBed, setSiren } from '../sound.js';
 import { addLayerButtonAt } from '../layerButton.js';
-import { isSwitchOn } from '../progress.js';
+import { isSwitchOn, markMazeWon } from '../progress.js';
 import { showCallout } from '../callout.js';
 import { coins, spendCoin } from '../wallet.js';
-import { world, onFrame, pressDir, pressStart, setDriver, newGame, setRound } from '../systems/arcade/world.js';
+import { world, onFrame, pressDir, pressStart, setDriver, newGame, setRound, currentRound } from '../systems/arcade/world.js';
 import { drawPlayfield, W, H, SCREEN_H } from '../systems/arcade/video.js';
 import { readState } from '../systems/arcade/state.js';
 
@@ -102,7 +102,9 @@ export default class GameScene extends Phaser.Scene {
     const mazeBottom = this.oy + H * T;
     this.readyText = this.text(this.sx(MAZE.houseExit.x), this.oy + 13 * T + 2, 'READY!', COLORS.textReady)
       .setOrigin(0.5, 0);
-    this.hint = this.text(this.viewW / 2, mazeBottom + 88, 'SWIPE TO TURN', COLORS.textDim).setOrigin(0.5, 0);
+    // How to play, under the maze until the first turn (it used to be on the start screen).
+    this.hint = this.text(this.viewW / 2, mazeBottom + 52, 'SWIPE TO TURN\nEAT ALL THE DOTS', COLORS.textDim)
+      .setOrigin(0.5, 0).setAlign('center').setLineSpacing(8);
     this.mazeBottom = mazeBottom;
     this.addLayerButtons();
     this.lifeIcons = [];
@@ -171,7 +173,8 @@ export default class GameScene extends Phaser.Scene {
       case 'death': sfx.frightOff(); sfx.death(); break;
       case 'clear': sfx.frightOff(); sfx.clear(); break;
       case 'over': this.finish(false); break;
-      case 'cleared': this.finish(true); break;
+      // The player cleared the maze (lamp 1): that wakes the monitor in the lobby. The bot only plays off this layer.
+      case 'cleared': if (world.driver === 'player') markMazeWon(); this.finish(true); break;
       default: break;
     }
   }
@@ -194,6 +197,13 @@ export default class GameScene extends Phaser.Scene {
     if (this.ended) return;
     this.ended = true;
     this.saveBest();
+    // Level 256 cleared (only possible once the hard-mode wins repaired it): the game is beaten, the credits roll.
+    // The machine's round counter wraps to level 1 on the next START (its one byte, like the original's).
+    if (cleared && currentRound() === 256 && this.scene.manager.keys.Credits) {
+      showCallout(this, this.viewW / 2, this.oy + 12 * T, LEVELS.beatenText);
+      this.time.delayedCall(LEVELS.creditsDelay * 1000, () => this.leave('Credits', { returnTo: 'Menu' }));
+      return;
+    }
     const broke = !cleared && coins() < COINS.perGame;
     const text = cleared ? 'MAZE CLEAR!\n\nWANT TO GO\nDEEPER?\n\nTAP TO PLAY AGAIN'
       : broke ? 'GAME OVER\n\nOUT OF COINS\nGO LAYER UP'

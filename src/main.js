@@ -8,7 +8,8 @@ import DeepScene from './scenes/DeepScene.js';
 import LobbyScene from './scenes/LobbyScene.js';
 import AdderScene from './scenes/AdderScene.js';
 import CreditsScene from './scenes/CreditsScene.js';
-import { world, startWorld, tickWorld, pauseWorld } from './systems/arcade/world.js';
+import { world, startWorld, tickWorld, pauseWorld, setRepairs } from './systems/arcade/world.js';
+import { ORDER, isHardWon, onChange } from './progress.js';
 import { loadProgram } from './systems/arcade/program.js';
 import { unlockAudio, toggleMute, isMuted } from './sound.js';
 
@@ -35,6 +36,10 @@ window.game = new Phaser.Game(config);
 window.__world = world; // for debugging in the console
 startWorld(loadProgram).catch((e) => console.warn('arcade machine unavailable', e));
 window.game.events.on(Phaser.Core.Events.STEP, (time, delta) => tickWorld(delta));
+// Level 256's repairs follow the hard-mode wins (a real win or the lobby lever alike): bit k for the k-th deep layer.
+const syncRepairs = () => setRepairs(ORDER.reduce((mask, id, k) => (isHardWon(id) ? mask | (1 << k) : mask), 0));
+onChange(syncRepairs);
+syncRepairs();
 window.game.events.on(Phaser.Core.Events.HIDDEN, () => pauseWorld(true));
 window.game.events.on(Phaser.Core.Events.VISIBLE, () => pauseWorld(false));
 
