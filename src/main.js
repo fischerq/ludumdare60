@@ -48,6 +48,17 @@ window.game.events.on(Phaser.Core.Events.VISIBLE, () => pauseWorld(false));
 document.addEventListener('visibilitychange', () => { if (!document.hidden) reloadAnim(); });
 if (location.protocol === 'http:') setInterval(() => { if (!document.hidden) reloadAnim(); }, 1000);
 
+// The phone's back gesture (an edge swipe, easy to hit by accident) must not leave the game: keep one extra history
+// entry on top, so going back lands on it and we stay. Browsers skip entries added without a tap, so it's (re)added
+// on the next touch after each back. Whatever is open on top (the manual) closes on the same popstate.
+let backGuard = false;
+window.addEventListener('pointerdown', () => {
+  if (backGuard) return;
+  backGuard = true;
+  history.pushState({ backGuard: true }, '');
+}, true);
+window.addEventListener('popstate', () => { backGuard = false; });
+
 // Sound on/off: one button over every scene (an HTML button, so no scene has to make room for it).
 const muteButton = document.getElementById('mute');
 const showMute = () => { muteButton.textContent = isMuted() ? '\u00d7' : '\u266a'; };
