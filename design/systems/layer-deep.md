@@ -201,7 +201,7 @@ says `PAC-MAN CAN'T GO LEFT: WIRE CUT`. A fixed wire lights white while its swit
 `sparkEvery` s; the switch blinks red `sparkWarn` s before; none on the wire you carry, `sparkDelay` s quiet at
 the start and after a hit). A spark that touches you is a hit, and you drop the end you carry where you stand.
 **Objectives (5):** the 4 wires, then the test game: with all four fixed the sparks stop and the stick blinks;
-walk onto it to grab it. The picture grows over the board (`pictureT` to `playT` px per maze tile in `playGrow` s),
+walk onto it to grab it. The round starts again on the same level with a full maze (score kept). The picture grows over the board (`pictureT` to `playT` px per maze tile in `playGrow` s),
 the machine runs at `playSpeed`, and your swipes are the stick's direction: held on the machine through the
 repaired switches into IN0. Eat `playDots` (20) dots, counted from your first swipe: LAYER CLEAR. The counter
 shows `WIRES n/4`, then `DOTS n/20`.
@@ -278,3 +278,5 @@ picture). How the other layers do on that, to decide later:
   for the session, entering the layer reverts them; warp pads and flag blocks removed. (Quirin, defaults accepted)
 - 2026-10-18: CPU harder: the program counter steps 4.5 lines/s (was 3.2), stays away 0.5 s (was 0.7), grace 0.6 s (was 1).
   Playtest quick runs: 100% at noise 0, 60-80% at 0.5-1 with many more hits. (Quirin asked; Claude picked the numbers)
+- 2026-10-19: Input: grabbing the stick restarts the round with a full maze; with the CPU's patches the bot had eaten
+  nearly all dots by then, so the test game was a near-empty maze at double speed. Patches stay on. (Quirin asked; Claude's fix)

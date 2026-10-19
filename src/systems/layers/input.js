@@ -4,11 +4,11 @@
 // walk) and carry it to its pin. Until a wire is fixed its switch can't pull its bit low: the machine's Pac-Man
 // (played by the bot) can't turn that way, and the switch and pin flash when he wants to. The enemy: noise sparks
 // that run along the wires from the switches (a switch blinks red before it fires one). With all four fixed, walk
-// onto the stick to grab it: the picture grows and your swipes go through the repaired switches into IN0, so you
+// onto the stick to grab it: the round starts again with a full maze, the picture grows and your swipes go through the repaired switches into IN0, so you
 // play the real game; eat DEEP.input.playDots dots to win. Numbers and the board in DEEP.input.
 
 import { DEEP } from '../../config.js';
-import { world, pressStart, setSpeed } from '../arcade/world.js';
+import { world, pressStart, setSpeed, setRound, currentRound } from '../arcade/world.js';
 import { IN0, DSW } from '../arcade/memmap.js';
 import { botDirection } from '../arcade/bot.js';
 import { drawPlayfield, W as MW, H as MH } from '../arcade/video.js';
@@ -147,6 +147,8 @@ export default {
         st.playFrom = t;
         st.held = null;
         this.park(st, player);
+        // A full maze for your test game: the bot (with the CPU's patches, very fast) has eaten most of it by now.
+        setRound(currentRound());
         return 'pickup';
       }
       return null;
