@@ -69,7 +69,11 @@
    "prompt": "Run the playtest. Make a credits/final screen (what is a common pattern for arcade boxes). It should be accessible from a move roll in the lower lobby. Should list my and max's names (including nick - I'm Zera, max is sadarenko) and roles (im prompts. Max is graphics). Add thanks to my wife and kids (emojis: 🐁🐦).\n\nWhen the game is toggled to 256, we should give the lower layers a harder mode to solve. Solving them should tweak the 256 level so that it is winnable. We should have a few status lamps in the lower lobby, with cheat levers below them (to flip that achievement, good for testing). Put a sign next to them (\"how do you turn this on.. hmm, maybe i should rather play).\nFirst lamp for winning maze once (unlocks screen) 2nd for unlocking all lower layers, 3rd for unlocking layer 256 , 4th to solve hardmode for all lower layers and make 256 winnable.\n\nAdd a new background sound for the lower lobby.\n\nDo all of these in parallel, separate prs for the big chunks\n\nAdd a mini-gurke in the lower lobby.",
    "followups": [],
    "images": [],
-   "claude_images": [],
+   "claude_images": [
+    "media/fcf47a68-2-c2.jpg",
+    "media/fcf47a68-2-c3.jpg",
+    "media/fcf47a68-2-c4.jpg"
+   ],
    "reply": "The making-of log update is committed and pushed to PR #84. The credits, lobby lamps and hard-mode agents and the bot playtest are still running.",
    "progress_notes": [
     "Now the shared progress API that the parallel agents build on.",
@@ -134,38 +138,43 @@
    "seq": 96,
    "date": "2026-10-19",
    "time": "17:50",
-   "duration_s": 1099,
+   "duration_s": 1114,
    "prompt": "Add claude to the credits",
    "followups": [],
    "images": [],
    "claude_images": [],
-   "reply": "The working tree is clean now. I reset `lab/playtest/results.json`, which only held partial numbers from the earlier quick runs; the full sweep will overwrite it when it finishes. The making-of log update is pushed to PR #84. Hard mode and the full playtest are still running.",
+   "reply": "All four PRs are open:\n\n- **#85, lobby sound:** the lobby has its own background sound. Listen for a low hum that slowly swells, a tick once a second and the odd muffled bleep.\n- **#87, credits:** an arcade staff roll listing you (Zera, prompts), Max (sadarenko, graphics) and Claude (code), then the 🐁🐦 thanks, ending on THE END. Pac-Man and the ghosts chase each other along the bottom. Hold the screen to fast-forward; tap after the end, or BACK at any time, to leave. Open it with `?scene=Credits`.\n- **#89, lobby:**\n  - Four lamps with a lever under each and the sign, in the upper half of the board.\n  - The film reel that plays the credits, on the right.\n  - The mini-gurke, in the bottom-left corner.\n  - The old single cheat lever is gone; lever 2 does its job.\n  - The monitor now only wakes once you clear the maze yourself. The monitor still looks awake while it's locked, because there's no asleep art for it yet.\n- **#90, hard mode:**\n  - With the 256 switch on, every lower layer has a HARD version: a faster beam, shorter timers, faster hazards and so on.\n  - Each hard win repairs one of 7 strips of level 256 in the emulated machine's own memory.\n  - With all 7 repaired, the level can be cleared; clearing it shows \"LEVEL 256 CLEAR!\" and rolls the credits.\n  - In the bot tests, a level 256 with all repairs gets cleared, and the hard bus and logic layers are tough but solvable.\n\n**To test on the phone:**\n- `?scene=Lobby`: pull a lever and its lamp flips; pull lever 3, then enter a part to see ENTER (HARD MODE).\n- `?hard=6`, then a lower layer: check the HARD label and the \"REPAIRED n/7\" message when you clear it.\n- `?hard=7`: the maze on level 256 should be clean and clearable, and clearing it rolls the credits.\n\nMerge #87 before testing the credits on the reel or after 256. The other PRs only open the credits if that screen exists.\n\nThe full bot playtest is still running. The bot for the video board layer no longer works since that layer was reworked, so the sweep leaves that layer out. On the first quick runs every other lower layer still clears at 100% for a skilled player (noise 0.25). I'll commit the full numbers when the sweep finishes.\n\nUsage stayed low as of my start-of-turn check: 5-hour 0%, weekly 28%.",
    "progress_notes": [
     "I asked the agent building the credits screen to add Claude, under a \"CODE\" heading after PROMPTS and GRAPHICS. I'll send you the credits PR link when it's done. The lobby lamps and hard-mode agents and the bot playtest are still running.",
     "The bot for the reworked video board layer is out of date: it needs a browser canvas and no longer matches the mechanic. I'm running the full sweep without that layer for now.",
-    "Three of the four PRs are open:\n- **Lobby sound:** #85\n- **Credits screen:** #87, with Claude listed under CODE\n- **Lamps, levers, sign, film reel and mini-gurke:** #89\n\nHard mode and the full playtest are still running. I'll send all PR links with what to test when they finish. `lab/playtest/results.json` is left uncommitted until the sweep finishes and overwrites it."
+    "Three of the four PRs are open:\n- **Lobby sound:** #85\n- **Credits screen:** #87, with Claude listed under CODE\n- **Lamps, levers, sign, film reel and mini-gurke:** #89\n\nHard mode and the full playtest are still running. I'll send all PR links with what to test when they finish. `lab/playtest/results.json` is left uncommitted until the sweep finishes and overwrites it.",
+    "The working tree is clean now. I reset `lab/playtest/results.json`, which only held partial numbers from the earlier quick runs; the full sweep will overwrite it when it finishes. The making-of log update is pushed to PR #84. Hard mode and the full playtest are still running."
    ],
    "tools": {
-    "Bash": 14,
+    "Bash": 15,
     "SendMessage": 3
    },
-   "api_requests": 123,
+   "api_requests": 125,
    "usage": {
     "claude-opus-5-5": {
-     "input": 252,
+     "input": 256,
      "cache_write_5m": 232411,
-     "cache_write_1h": 22005,
-     "cache_read": 14775467,
-     "output": 7917,
-     "thinking": 1249,
-     "cost_usd": 4.452536
+     "cache_write_1h": 22751,
+     "cache_read": 15069097,
+     "output": 8945,
+     "thinking": 1276,
+     "cost_usd": 4.537806
     }
    },
-   "cost_usd": 4.452536,
+   "cost_usd": 4.537806,
    "commits": [
     {
      "sha": "21e6ba605b3316bc34cfe05a69a8e9601eb24498",
      "subject": "Update AI-use log"
+    },
+    {
+     "sha": "db3426c003b5b67e96434ca305d25afb4b91e883",
+     "subject": "Add 640x512 Ludum Dare cover image built from the game's sprites"
     },
     {
      "sha": "c3e5f77237446da015f18110d97e61f93253f37b",
@@ -216,8 +225,40 @@
      "subject": "Merge pull request #88 from fischerq/ccr-1553643f-mcyvya"
     },
     {
+     "sha": "ed6291892a4ab66cf9fa0128ec0d4e8665019eab",
+     "subject": "Merge origin/main into ccr-f176db9b-jw0u93-hard"
+    },
+    {
+     "sha": "9e38dd2924825c3aeac9a782b9e6c7e13a80106a",
+     "subject": "Merge origin/main into ccr-f176db9b-jw0u93-lobby"
+    },
+    {
+     "sha": "91895675ad9b478c72733dc4843e4a867987bace",
+     "subject": "Merge origin/main into ccr-2d7bf3dc-07fa3w"
+    },
+    {
+     "sha": "c3ba9c1e22be7375b77ed7784ccbc27d7527a2b8",
+     "subject": "Merge origin/main into ccr-f176db9b-jw0u93-sound"
+    },
+    {
      "sha": "c9c563afcfa72d84cf5bbb1d4bdbb4a23e2e04da",
      "subject": "Merge origin/main into ccr-f176db9b-jw0u93"
+    },
+    {
+     "sha": "c17c73d4e2812d24ece54c01ac40db13bb1d8642",
+     "subject": "Merge origin/main into ccr-2d7bf3dc-07fa3w"
+    },
+    {
+     "sha": "cb041d1bda0db5861800273a6188489d210894f3",
+     "subject": "Merge remote branch"
+    },
+    {
+     "sha": "c33267bae14d875b62a8827882a85438288d73e3",
+     "subject": "Cover v2: arcade machine on the layer cake from the new start screen"
+    },
+    {
+     "sha": "34b6876d3f22174c47bf01a68ba48a0fe64dc589",
+     "subject": "Cover v3: bigger cake, no ghosts, tagline about play instead of eating"
     },
     {
      "sha": "23a134d8af6acabf9fd18d13ce7a9e1fa7bb30fa",
@@ -230,6 +271,74 @@
     {
      "sha": "488ce5afe33060e52fd828a90dbd3e13e9902bd1",
      "subject": "Merge remote-tracking branch 'origin/ccr-f176db9b-jw0u93' into ccr-f176db9b-jw0u93"
+    },
+    {
+     "sha": "d7cb08fee9e10ea4d2ad0648bcae483e35b83870",
+     "subject": "Update AI-use log"
+    },
+    {
+     "sha": "0c0c14e402ed410fadbe858a38bf0342f2b0b379",
+     "subject": "Merge pull request #84 from fischerq/ccr-f176db9b-jw0u93"
+    },
+    {
+     "sha": "fd5bfe383eb86e3be5cd00971e0459e8cdf3cf7f",
+     "subject": "Merge origin/main into ccr-f176db9b-jw0u93-hard"
+    },
+    {
+     "sha": "e9f4a2c1f4b3594633552f2a7e59ce7c9987ebe3",
+     "subject": "Merge origin/main into ccr-f176db9b-jw0u93-lobby"
+    },
+    {
+     "sha": "33c776fc599bd6c0fdfa9d4f89803c830115b410",
+     "subject": "Merge origin/main into ccr-2d7bf3dc-07fa3w"
+    },
+    {
+     "sha": "7e45f7297b3687f576e1c22739f77382da66dd78",
+     "subject": "Merge origin/main into ccr-f176db9b-jw0u93-sound"
+    },
+    {
+     "sha": "dc3ce3ca20535c2d38e3363e4f2c327d929ea637",
+     "subject": "Merge pull request #86 from fischerq/ccr-2d7bf3dc-07fa3w"
+    },
+    {
+     "sha": "0266b22cae79514ac11f247607cd356e0a6cd69f",
+     "subject": "Merge origin/main into ccr-f176db9b-jw0u93-hard"
+    },
+    {
+     "sha": "57810b18232c9627647f69f6528c15a3cf0429e6",
+     "subject": "Merge origin/main into ccr-f176db9b-jw0u93-lobby"
+    },
+    {
+     "sha": "31f5f4feb44878d35bab08e5100ccff0e16066f9",
+     "subject": "Merge origin/main into ccr-f176db9b-jw0u93-sound"
+    },
+    {
+     "sha": "0f96715324ff973fdb4a60f20bc5de380109df14",
+     "subject": "Merge pull request #89 from fischerq/ccr-f176db9b-jw0u93-lobby"
+    },
+    {
+     "sha": "70a3ef1e49b88f5762a8ee9744eca50a5d438601",
+     "subject": "Merge origin/main into ccr-f176db9b-jw0u93-hard"
+    },
+    {
+     "sha": "fbb80f4dba57955a4a6f2c4d955ab28cb9ecd6ba",
+     "subject": "Merge origin/main into ccr-f176db9b-jw0u93-sound"
+    },
+    {
+     "sha": "a3e5020817430d6005a2c1b38a30639a44e5c124",
+     "subject": "Merge pull request #85 from fischerq/ccr-f176db9b-jw0u93-sound"
+    },
+    {
+     "sha": "a726fd74d9f04defd50636e55575be3960914b88",
+     "subject": "Merge origin/main into ccr-f176db9b-jw0u93-hard"
+    },
+    {
+     "sha": "783c12e7ee72226daab812d42105fae3d4546f49",
+     "subject": "Merge pull request #90 from fischerq/ccr-f176db9b-jw0u93-hard"
+    },
+    {
+     "sha": "8dd4a07ec020f8b2b57769a05f997cc17df1af73",
+     "subject": "Merge origin/main into ccr-f176db9b-jw0u93"
     }
    ],
    "entrypoint": "remote_mobile",
@@ -250,9 +359,9 @@
  ],
  "totals": {
   "prompts": 3,
-  "cost_usd": 8.576554,
-  "output_tokens": 32643,
-  "input_tokens": 22103998
+  "cost_usd": 8.661824,
+  "output_tokens": 33671,
+  "input_tokens": 22398378
  },
  "reported_by_claude_code": null
 }
