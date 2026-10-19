@@ -17,11 +17,11 @@ const KEYS = {
   KeyA: 'left', KeyD: 'right', KeyW: 'up', KeyS: 'down',
 };
 // Tiles of the hall's tileset (assets/arcade/) by map character: on the wall, and standing on the floor.
-const DECOR = { '|': 'wall-face', '^': 'window', '*': 'poster-pac', '+': 'poster-ghost', '@': 'clock', a: 'sweater' };
+const DECOR = { '|': 'wall-face', '^': 'window', '*': 'poster-pac', '+': 'poster-ghost', '@': 'clock' };
 const ON_FLOOR = {
   '=': 'counter', M: 'change-top', m: 'change-bottom', C: 'claw-top', c: 'claw-bottom', Q: 'soda-top',
   q: 'soda-bottom', w: 'snow-globe', '%': 'plant', '!': 'bin', k: 'counter-gurke', j: 'counter-jar', u: 'mini-gurke', s: 'counter-sign', n: 'manual-stack', p: 'manual-pac',
-  h: 'rabbit', e: 'urmel-0', l: 'paper', x: 'gameboy',
+  h: 'rabbit', e: 'urmel-0', l: 'paper', a: 'sweater', x: 'gameboy',
 };
 
 // The Urmel figurine's stage (HALL.urmel, arcade/urmel-<n>): kept for the session, like the coins. The first talk
@@ -135,18 +135,20 @@ export default class HallScene extends Phaser.Scene {
 
   drawMap() {
     const { rows } = this.h;
-    const rug = (x, y) => rows[y]?.[x] === '~';
+    const rug = (x, y) => '~a'.includes(rows[y]?.[x] ?? '.'); // the sweater lies on the rug
     rows.forEach((row, y) => [...row].forEach((c, x) => {
       const at = (key) => this.add.image(this.ox + x * T, this.oy + y * T, tileKey('arcade', key)).setOrigin(0);
       if (c === '#') { at('wall-top'); return; }
       if (c === 'D') { at('door'); return; }
       if (DECOR[c]) { at(DECOR[c]); return; }
       at('floor');
-      if (c === '~') {
+      if (rug(x, y)) {
         const v = !rug(x, y - 1) ? 't' : !rug(x, y + 1) ? 'b' : 'm';
         const h = !rug(x - 1, y) ? 'l' : !rug(x + 1, y) ? 'r' : 'c';
         at(`rug-${v}${h}`);
-      } else if ('RBGVY'.includes(c)) at(`cab-top-${c.toLowerCase()}`);
+      }
+      if (c === '~') return;
+      if ('RBGVY'.includes(c)) at(`cab-top-${c.toLowerCase()}`);
       else if ('rbgvy'.includes(c)) at(`cab-bottom-${c}`);
       else if (c === 'e') this.urmelImg = at(`urmel-${urmel.stage}`);
       else if (ON_FLOOR[c]) at(ON_FLOOR[c]);

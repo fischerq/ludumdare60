@@ -657,10 +657,6 @@ export default class BootScene extends Phaser.Scene {
   }
 
   // The arcade hall's characters, top-down, feet at the bottom of the 32x32 sprite, two walk frames each:
-  // More things in the hall: the long-limbed plush rabbit (arcade/rabbit), the Urmel figurine on its stand in four
-  // stages (arcade/urmel-0 iceberg with the egg, 1 egg under a blanket, 2 small Urmel with a milk bottle, 3 Urmel
-  // talking), the blue paper on the floor (arcade/paper, drawn over the floor tile) and the old Anna and Elsa
-  // sweater on the back wall (arcade/sweater).
   // The Game Boy Color on the floor (x), seen from above: teal, its screen dark (dead batteries), Pokémon Red's
   // red cartridge sticking out at the top.
   makeGameBoy(rect, tile, shadow) {
@@ -787,6 +783,10 @@ export default class BootScene extends Phaser.Scene {
     });
   }
 
+  // More things in the hall: the long-limbed plush rabbit (arcade/rabbit), the Urmel figurine on its stand in four
+  // stages (arcade/urmel-0 iceberg with the egg, 1 egg under a blanket, 2 small Urmel with a milk bottle, 3 Urmel
+  // talking), the blue paper on the floor (arcade/paper, drawn over the floor tile) and the old Anna and Elsa
+  // sweater lying on the rug (arcade/sweater, drawn over the rug tile).
   makeHallToys(rect, tile, shadow, wallpaper) {
     const K = HALL.colors;
     const ellipse = (set, cx, cy, rx, ry, c) => {
@@ -863,9 +863,7 @@ export default class BootScene extends Phaser.Scene {
       rect(set, 12, 5, 1, 6, K.paperEdge);
       rect(set, 5, 7, 5, 1, K.paperInk); set(10, 7, K.paperInk); set(11, 6, K.paperInk); set(11, 8, K.paperInk);
     });
-    tile('sweater', (set) => {
-      wallpaper(set);
-      rect(set, 7, 0, 2, 1, K.hanger); rect(set, 4, 1, 8, 1, K.hanger);
+    tile('sweater', (set) => { // lying flat on the rug (drawn over the rug tile)
       rect(set, 4, 2, 8, 9, K.sweater); rect(set, 2, 2, 2, 8, K.sweater); rect(set, 12, 2, 2, 8, K.sweater);
       rect(set, 4, 10, 8, 1, K.sweaterDark); rect(set, 2, 9, 2, 1, K.sweaterDark); rect(set, 12, 9, 2, 1, K.sweaterDark);
       rect(set, 7, 2, 2, 1, K.sweaterDark); // the collar

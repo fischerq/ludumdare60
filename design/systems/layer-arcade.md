@@ -92,8 +92,8 @@ the arcade as a place.
   `HALL.urmel`): an iceberg with an egg inside (the first time), the egg under a blanket, a small Urmel drinking a milk
   bottle, the Urmel saying "OKOPUSPAPAT!", then the iceberg again; the stage is kept for the session. A **blue piece
   of paper** on the floor below the rug (`l`, `arcade/paper`, walkable): "BLAU!", with a 10% chance
-  (`HALL.paperRareChance`) "GRÜN!". An **old sweater with Anna and Elsa** on a hanger on the back wall, right side
-  (`a`, `arcade/sweater`).
+  (`HALL.paperRareChance`) "GRÜN!". An **old sweater with Anna and Elsa** lying in the middle of the rug
+  (`a`, `arcade/sweater`, drawn over the rug, solid).
 - **Portraits:** the text box shows a large portrait (48x48, `HALL.portraitSize`) in a frame on its top left edge:
   ghosts and the owner have their own (`arcade/portrait-<name>.png`, `portrait-ghosts` for the four together),
   things show their tile at 3x (a machine its top half). Pickup and chase messages have none.
@@ -151,4 +151,5 @@ the arcade as a place.
 - 2026-10-19: The snow globe close-up in 3D (sphere model drawn as pixel art, grab-anywhere rotation, heavy base that rights it, simulated glitter, mane and tail, tap to jolt), with a 3D/FLAT switch to the old picture. Defaults accepted (own renderer, 136 px, palette PNG + model JSON for Max, no bench). (Quirin)
 - 2026-10-19: More decoration: a long-limbed red/pink plush rabbit, an Urmel figurine on a stand that cycles iceberg with egg, egg under a blanket, small Urmel with a milk bottle, Urmel saying OKOPUSPAPAT, a blue paper on the floor saying BLAU! (10% GRÜN!), an old Anna and Elsa sweater on the side. (Quirin) Claude picked the spots (rabbit under the claw machine, Urmel in the bottom right corner, paper below the rug, sweater on the back wall's right side).
 - 2026-10-19: Snow globe close-up: glass and unicorn bigger (glass radius 36 to 44, unicorn scaled with it), base unchanged; the camera looks down from a little above (0.35 rad) so the settled globe is seen diagonally from above; the FLAT mode and its switch dropped. (Quirin)
+- 2026-10-19: The sweater moves from the back wall (unreachable there) to the floor, lying in the middle of the rug. (Quirin)
 - 2026-10-19: The other cabinets become playable, one level each for a coin (Space Invaders, Asteroids, Donkey Kong); Galaxian is broken and eats the coin; a Game Boy Color with Pokemon Red lies on the floor, batteries dead; walking into our cabinet zooms straight down, talking to it asks PLAY / NOT NOW; a mini-Gurke hidden in each game; each machine gets its own background track. Defaults accepted (full-screen scene per game, touch controls, no reward, no bot). (Quirin) Claude picked where the mini-Gurke hides in each game and wrote the dialog lines.
