@@ -29,11 +29,13 @@ export const world = {
   pendingRound: null,
 };
 
-// The bot plays with the demo dip switch on, so its deaths don't cost the player's lives.
+// The bot plays the player's game by the same rules: its deaths cost lives, and losing the last one is game
+// over. Only its own attract-mode game (no coin in) runs on the demo dip switch, where dying is free.
+const botDemo = () => world.driver === 'bot' && !world.paidGame;
 export function setDriver(driver) {
   world.driver = driver;
   world.input.held = null;
-  world.machine?.setDip(DSW.demo, driver === 'bot');
+  world.machine?.setDip(DSW.demo, botDemo());
 }
 
 // Power-cycles the machine and starts a fresh game (the program needs a few frames to boot).
@@ -125,6 +127,7 @@ export function tickWorld(ms) {
 // The bot holds the joystick toward its goal, and presses START after a clear (a game over halts the board).
 function botStep(m) {
   const S = world.program.symbols;
+  m.setDip(DSW.demo, botDemo());
   const phase = PHASES[m.read(S.PHASE)];
   if ((phase === 'attract' || phase === 'cleared') && !world.input.start) pressStart();
   world.input.held = botDirection(m, S);

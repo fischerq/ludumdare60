@@ -905,6 +905,27 @@ export default class BootScene extends Phaser.Scene {
       rect(set, 0, 0, P, P, A.bg);
       toggle((x, y, c) => set(x + 4, y + 4, c), 2.5, 'on');
     });
+    // Mecha-Pac, the bot, standing by the joystick (32x32 like every character, facing left at it): a steel
+    // Pac-Man chomping, with rivets, a dark visor whose red eye scans across, and an antenna that blinks.
+    // board/mecha-<frame>, and his portrait board/portrait-mecha.
+    const mecha = (set, f) => {
+      rect(set, 9, 27, 6, 3, K.foot); rect(set, 17, 27, 6, 3, K.foot);
+      rect(set, 11, 25, 2, 2, K.mechaDark); rect(set, 19, 25, 2, 2, K.mechaDark);
+      this.chomper(set, K.mechaDark, 12.5, 0.55, Math.PI, 16, 15);
+      this.chomper(set, K.mecha, 11.5, 0.55, Math.PI, 16, 15);
+      rect(set, 9, 20, 18, 1, K.mechaDark);                       // panel seam
+      [[12, 23], [17, 23], [22, 23], [25, 17], [22, 6]].forEach(([x, y]) => set(x, y, K.mechaLight)); // rivets
+      rect(set, 19, 5, 3, 1, K.mechaLight); rect(set, 24, 8, 1, 3, K.mechaLight); // shine
+      rect(set, 8, 8, 12, 4, K.visor);
+      rect(set, f ? 14 : 9, 9, 4, 2, K.visorEye);
+      rect(set, 16, 1, 1, 2, K.mechaDark);                        // antenna
+      rect(set, 15, 0, 3, 1, f ? K.mechaDark : K.antenna);
+    };
+    [0, 1].forEach((f) => this.pixels(`board/mecha-${f}`, S, S, (set) => mecha(set, f)));
+    this.pixels('board/portrait-mecha', P, P, (set) => {
+      rect(set, 0, 0, P, P, K.pcbDark);
+      mecha((x, y, c) => set(x + 8, y + 9, c), 0);
+    });
   }
 
   // The cabinet in an oblique view: the front is drawn flat, depth goes up and right at 45°, so the right side

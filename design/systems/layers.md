@@ -55,6 +55,9 @@ portraits, one screen at 4x). Wire auto-joining and lookups in `src/systems/lobb
   unlocks the next. A locked subsystem sleeps (separate art state `-off`, eyes shut) and says it's asleep and
   which one to wake first. API: `isWon(id)`, `isUnlocked(id)`, `allWon()`, `markWon(id)` (returns the id it
   unlocked), `ORDER`; `?won=n` marks the first n won for testing.
+- **Mecha-Pac, the bot** (`X`, next to the joystick): a steel Pac-Man with a red visor who plays the machine's game
+  while you're away from the maze. Talking to him: he's busy playing (every life he loses is yours), or after a
+  game over that he lost your last life. His antenna blinks while he plays. (Quirin, 2026-10-19)
 - **Navigation:** Maze LAYER DOWN → lobby (zooming out of the monitor). Lobby: only LAYER UP → maze (the
   machine's game continues). Deep layers: only LAYER UP, back to the lobby in front of their subsystem (no
   deep → deep). Winning a layer: the LAYER CLEAR callout (naming the subsystem that woke up), then back to the
@@ -147,3 +150,4 @@ minigame, a counter on the layer map, no unlock.*
 - 2026-10-18: Lobby art calmer: muted, plain PCB floor; all lines (traces, harness, ghost wires) in one copper; each
   subsystem (and the adder/switch) sits on its own island in its layer's colors (grey while locked), portraits use the
   layer's background. (Quirin)
+- 2026-10-19: Mecha-Pac (the bot) stands by the joystick in the board lobby; he says he's busy playing. (Quirin)

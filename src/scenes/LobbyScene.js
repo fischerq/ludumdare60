@@ -5,7 +5,7 @@ import { tileKey } from '../systems/tiles.js';
 import { charFrame } from '../systems/anim.js';
 import { DEEP_LAYERS } from '../systems/layers/index.js';
 import { ORDER, isUnlocked, isWon, allWon, isAdderWon, isSwitchOn, markAdderWon, setSwitch } from '../progress.js';
-import { setLevel256 } from '../systems/arcade/world.js';
+import { world, setLevel256 } from '../systems/arcade/world.js';
 import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
 import { addLayerButtonAt } from '../layerButton.js';
 
@@ -79,6 +79,8 @@ export default class LobbyScene extends Phaser.Scene {
     this.h.rows.forEach((row, y) => [...row].forEach((c, x) => {
       const name = LOBBY.ghosts[c];
       if (name) this.ghosts.push({ name, x, y, dir: ghostFacing(this.h, x, y), s: actor(`maze/ghost-${name}-down-0`) });
+      // Mecha-Pac (X), the bot, at the joystick: he plays the machine's game while you're in here.
+      if (c === 'X') this.mecha = { x, y, s: actor('board/mecha-0') };
     }));
 
     this.makeUi();
@@ -220,6 +222,7 @@ export default class LobbyScene extends Phaser.Scene {
     if (id) { this.talkTo(id); return; }
     if (f.cell === 'A') { this.talkToAdder(); return; }
     if (f.cell === 'Z') { this.useSwitch(); return; }
+    if (f.cell === 'X') { this.say(world.halted ? tx.mechaOver : tx.mecha, 'board/portrait-mecha'); return; }
     const ghost = LOBBY.ghosts[f.cell];
     if (ghost) { this.say(tx[ghost], 'board/portrait-logic'); return; }
     const key = LOBBY.cellText[f.cell];
@@ -372,6 +375,7 @@ export default class LobbyScene extends Phaser.Scene {
     const p = this.h.pac;
     const frame = p.moving ? charFrame('pac', (p.steps + p.t) / LOBBY.walkSpeed, 2) : 0;
     this.place(this.pac.setTexture(`arcade/pac-${p.dir === 'left' ? 'right' : p.dir}-${frame}`).setFlipX(p.dir === 'left'), pacPos(this.h));
+    if (this.mecha) this.place(this.mecha.s.setTexture(`board/mecha-${world.halted ? 1 : Math.floor(this.t * LOBBY.mechaRate) % 2}`), this.mecha);
     for (const g of this.ghosts) this.place(g.s.setTexture(`maze/ghost-${g.name}-${g.dir}-${charFrame(g.name, this.t, 2)}`), g);
     this.updateCamera();
   }
