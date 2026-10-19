@@ -8,7 +8,8 @@ import { sfx, unlockAudio, setAudioPaused, setBed } from '../sound.js';
 import { addLayerButtonAt } from '../layerButton.js';
 import { showCallout } from '../callout.js';
 import { markWon, isHard, markHardWon, hardWonCount, ORDER } from '../progress.js';
-import { setHard } from '../systems/layers/hard.js';
+import { setLevel, startLevel } from '../systems/layers/levels.js';
+import { addTextButton } from '../textButton.js';
 
 const KEYS = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
@@ -29,9 +30,13 @@ export default class DeepScene extends Phaser.Scene {
     this.index = Phaser.Math.Clamp(data.layer ?? 0, 0, DEEP_LAYERS.length - 1);
     this.L = DEEP_LAYERS[this.index];
     this.P = DEEP.style[this.L.id];
-    // With the 256 switch on the layer plays its hard variant (DEEP.<id>.hard over its numbers).
+    // Levels (src/systems/layers/levels.js): each entry starts at level 1, or DEEP.hardLevel with the 256 switch on;
+    // NEXT LEVEL after a clear restarts the scene one level up. data.cleared: this entry already won the layer.
     this.hard = isHard();
-    setHard(this.L.id, this.hard);
+    this.level = data.level ?? startLevel(this.hard);
+    this.clearedOnce = !!data.cleared;
+    setLevel(this.L.id, this.level);
+    this.done = false; // the level is cleared: the layer stops, the choice shows
     setBed(this.L.id);
     this.machine = world.machine;
     this.S = world.program.symbols;
@@ -80,13 +85,14 @@ export default class DeepScene extends Phaser.Scene {
     // Centered in the space left of the sound button (top-right corner); long subtitles wrap.
     const tw = vw - 68, tx = 8 + tw / 2;
     text(tx, 12, this.L.title, css(this.P.line));
-    if (this.hard) text(8, 2, DEEP.hardLabel, css(DEEP.hazard)).setOrigin(0, 0);
+    const lv = text(8, 2, `${DEEP.levelLabel} ${this.level}`, COLORS.textDim).setOrigin(0, 0);
+    if (this.hard) text(lv.x + lv.width + 8, 2, DEEP.hardLabel, css(DEEP.hazard)).setOrigin(0, 0);
     text(tx, 30, this.L.subtitle, COLORS.textDim).setWordWrapWidth(tw);
     this.counter = text(vw / 2, vh - BOTTOM + 8, '');
     this.info = text(vw / 2, vh - BOTTOM + 22, '', COLORS.textDim);
 
     // Only up: back out into the board lobby inside the cabinet (each layer is entered from its subsystem there).
-    addLayerButtonAt(this, 'up', () => this.go({ from: this.L.id }), { zoom: ZOOM });
+    addLayerButtonAt(this, 'up', () => this.go({ from: this.L.id, won: this.clearedOnce }), { zoom: ZOOM });
 
     this.setupInput();
     this.setupPauseOnHide();
@@ -144,7 +150,9 @@ export default class DeepScene extends Phaser.Scene {
     this.t += dt;
     const env = { id: this.L.id, P: this.P, m: this.machine, S: this.S, t: this.t, dt, player: this.player, sounds: this.sounds.splice(0), art: this.art };
     const open = (x, y) => this.L.open(this.st, env, x, y);
-    if (this.hitT > 0) {
+    if (this.done) {
+      // Cleared: the layer stands still behind the choice.
+    } else if (this.hitT > 0) {
       this.hitT -= dt;
       if (this.hitT <= 0) { Object.assign(this.player, createWalker(this.L.start.x, this.L.start.y)); this.trail = []; this.L.onRespawn?.(this.st, env); }
     } else {
@@ -158,7 +166,7 @@ export default class DeepScene extends Phaser.Scene {
       if (r === 'dot' || r === 'objective' || r === 'bonus' || r === 'pickup') this.glowT = DEEP.glowTime;
       if (r === 'hit') { this.hits++; this.hitT = DEEP.hitPause; sfx.death(); this.L.onHit?.(this.st, env); }
     }
-    if (this.L.drive) holdDir(this.L.drive(this.st, env));
+    if (this.L.drive && !this.done) holdDir(this.L.drive(this.st, env));
 
     const ctx = this.canvas.getContext();
     ctx.imageSmoothingEnabled = false;
@@ -196,17 +204,30 @@ export default class DeepScene extends Phaser.Scene {
     }
   }
 
-  // Goal reached: the layer is won (src/progress.js), which wakes the next subsystem; back to the lobby.
-  // In hard mode the win also repairs this layer's strip of level 256 (src/progress.js, applied by main.js).
+  // Goal reached. The entry's first clear is the LAYER CLEAR: the layer is won (src/progress.js), which wakes the
+  // next subsystem; in hard mode it also repairs this layer's strip of level 256 (applied by main.js). Then the
+  // choice: NEXT LEVEL (the scene again, one level up, endless) or BACK TO THE BOARD (the lobby, as before).
   cleared() {
+    if (this.done) return;
+    this.done = true;
     sfx.clear();
-    const next = markWon(this.L.id);
-    let woke = next ? `\n${LOBBY.names[next]}\nWOKE UP` : '';
-    if (this.hard) {
-      markHardWon(this.L.id);
-      woke = `\nLEVEL 256\nREPAIRED ${hardWonCount()}/${ORDER.length}`;
+    let msg = `${DEEP.levelLabel} ${this.level} CLEAR!`;
+    if (!this.clearedOnce) {
+      this.clearedOnce = true;
+      const next = markWon(this.L.id);
+      msg = `LAYER CLEAR!${next ? `\n${LOBBY.names[next]}\nWOKE UP` : ''}`;
+      if (this.hard) {
+        markHardWon(this.L.id);
+        msg = `LAYER CLEAR!\nLEVEL 256\nREPAIRED ${hardWonCount()}/${ORDER.length}`;
+      }
     }
-    showCallout(this, GAME_WIDTH / ZOOM / 2, this.oy + 40, `LAYER CLEAR!${woke}`, 1);
-    this.time.delayedCall(LOBBY.clearDelay * 1000, () => this.go({ from: this.L.id, won: true }));
+    const cx = GAME_WIDTH / ZOOM / 2;
+    showCallout(this, cx, this.oy + 40, msg, 1);
+    addTextButton(this, cx, this.oy + 104, DEEP.nextLabel, () => {
+      if (this.leaving) return;
+      this.leaving = true;
+      this.scene.restart({ layer: this.index, level: this.level + 1, cleared: true });
+    });
+    addTextButton(this, cx, this.oy + 144, DEEP.backLabel, () => this.go({ from: this.L.id, won: true }));
   }
 }

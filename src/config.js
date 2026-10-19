@@ -239,8 +239,18 @@ export const DEEP = {
     input:   { bg: 0x140602, grid: 0x34140a, line: 0xff6a2a, glow: 0x4a1a08, dot: 0xffb08a, dot2: 0xffffff, special: 0xffffff },
   },
   machineSlowdown: 4,    // the machine runs this many times slower in the deep layers than on the maze
-  // Hard mode (the lobby's 256 switch on): each layer's `hard` block is merged over its numbers while it plays
-  // (src/systems/layers/hard.js). Winning a layer in hard mode repairs its strip of level 256 (LEVELS.repairs).
+  // Levels: clearing a layer's level 1 is its LAYER CLEAR; then it offers NEXT LEVEL, endless. Each layer's
+  // `levels.cap` block names the numbers that ramp and their value at capLevel (level 1 plays the layer's own
+  // numbers, in between a straight line, past capLevel they stay at the cap). src/systems/layers/levels.js.
+  capLevel: 8,           // default level at which the ramp reaches its cap (a layer's levels.capLevel overrides it)
+  levelLabel: 'LEVEL',   // HUD corner: LEVEL n
+  nextLabel: 'NEXT LEVEL',
+  backLabel: 'BACK TO THE BOARD',
+  backShort: 'BACK',     // the adder's back choice when it wasn't entered from the board
+  choiceButton: { w: 200, h: 30 }, // art px of each choice button after a clear (shown at 2x: 400 x 60 screen px)
+  // Hard mode (the lobby's 256 switch on): a deep layer starts at hardLevel instead of 1; clearing it is the hard
+  // win, which repairs its strip of level 256 (LEVELS.repairs).
+  hardLevel: 4,
   hardLabel: 'HARD',     // marker left of the layer's title
   // Each layer: its own verb and enemy, and goal = the number of objectives (3 to 5) that win it.
   crt: {                 // -1 inside the tube: phosphor triads lit by a raster beam, one pixel at a time
@@ -272,10 +282,10 @@ export const DEEP = {
     bonusModes: ['columns', 'up'], // taken in turn: column by column left to right, row by row bottom to top
     msgTime: 3,          // s an adjustment's message stays in the status line
     labelScale: 2,       // art px per font pixel of the pads' names
-    hard: { beamPeriod: 10, bonusTime: 10 }, // hard mode (the 256 switch on): a faster beam, shorter bonus scans
+    levels: { cap: { beamPeriod: 5.5, bonusTime: 6 } }, // levels: a faster beam, shorter bonus scans
   },
   signals: {             // -2 the video board: a race against the frame timer, tile pixels via the palette to the DAC
-    frameTime: 12,       // s on the frame timer; at zero the pixels you carry are dropped and a new tile is fetched
+    frameTime: 16,       // s on the frame timer (was 12: only 35% at bot noise 0.5); at zero the pixels you carry are dropped and a new tile is fetched
     pixels: 3,           // pixels taken from the fetched tile per delivery
     paletteSize: 8,      // palette entries: the most common colors of the picture, every pixel maps to the nearest
     dropTime: 0.4,       // s delivered pixels take to drop from you into the DAC's slots
@@ -314,7 +324,7 @@ export const DEEP = {
       '...................',
     ],
     goal: 4,             // colors delivered
-    hard: { frameTime: 9, goal: 5 }, // hard mode: a shorter frame timer, one more color
+    levels: { cap: { frameTime: 10 } }, // levels: a shorter frame timer (9 s is about one perfect delivery: unwinnable)
   },
   ram: {                 // -3 work RAM, poke the game state: bit lamps flip bits in the real RAM, the write head dashes
     waitTime: 0.8,       // s the write head waits at a variable's left edge (telegraph: its bits glow red)
@@ -344,7 +354,7 @@ export const DEEP = {
       { id: 'moved', name: 'MOVE BLINKY', var: 'blinkyX' },
       { id: 'scared', name: 'SCARE BLINKY', var: 'scared' },
     ],
-    hard: { waitTime: 0.55, dashSpeed: 12, restTime: 0.15 }, // hard mode: the write head telegraphs less, dashes faster
+    levels: { cap: { waitTime: 0.1, dashSpeed: 12, restTime: 0 } }, // levels: the write head telegraphs less, dashes faster
   },
   bus: {                 // -4 the spatial bus: chip rooms behind decoder doors, packets on the lanes
     cycleTime: 1.1,      // s between bus cycles shown
@@ -383,7 +393,7 @@ export const DEEP = {
       '##################',
     ],
     goal: 4,             // one data byte from each chip room
-    hard: { cycleTime: 0.85, packetSpeed: 9, readDelay: 1, doorHold: 1.2 }, // hard mode: a busier, faster bus
+    levels: { cap: { cycleTime: 0.55, packetSpeed: 13, readDelay: 0.75, doorHold: 0.9 } }, // levels: a busier, faster bus
   },
   cpu: {                 // -5 Game Genie: carry a patch onto a line of the real program; the PC steps through it
     rate: 4.5,           // lines per second the program counter steps while it's in the routine on screen
@@ -404,7 +414,7 @@ export const DEEP = {
       { name: 'PAC EATS ANY GHOST', routine: 'check_hits', line: 'jr z, .death', above: 11, text: 'NOP  NOP', nop: true },
     ],
     goal: 4,             // patches written
-    hard: { rate: 6, grace: 0.4 }, // hard mode: the program counter steps faster
+    levels: { cap: { rate: 6, grace: 0.45 } }, // levels: the program counter steps faster, less grace after a hit
   },
   logic: {               // -6 line of sight: crossing a ghost's target vector sends a seeker after you
     vectorWidth: 0.45,   // tiles: how close to a target vector line counts as crossing it
@@ -412,7 +422,7 @@ export const DEEP = {
     seekSpeed: 3.6,      // tiles per second (you walk DEEP.walkSpeed)
     vectorColors: { blinky: 0xff2a3a, pinky: 0xff6a8a, inky: 0xff8a5a, clyde: 0xffb0a0 },
     goal: 4,             // stand on each ghost's target tile
-    hard: { vectorWidth: 0.6, seekTime: 8, seekSpeed: 4.2 }, // hard mode: wider vectors, faster seekers that hunt longer
+    levels: { cap: { vectorWidth: 2, seekTime: 20, seekSpeed: 6 } }, // levels: wider vectors, faster seekers that hunt longer
   },
   input: {               // -7 fix the joystick, then play: carry the 4 cut wire ends to IN0's pins, then swipe-play
     // The board below the picture (tiles; 11 x 17, the picture and IN0's port take the rows above `top`).
@@ -441,7 +451,7 @@ export const DEEP = {
     playSpeed: 0.5,      // machine speed while you play (the deep layers run it at 1 / machineSlowdown)
     playDots: 20,        // dots to eat with the repaired stick to win
     goal: 5,             // the 4 wires and the test game
-    hard: { sparkSpeed: 4, sparkEvery: [2.5, 4.5], sparkWarn: 0.6, playDots: 30 }, // hard mode: more, faster sparks, a longer test game
+    levels: { cap: { sparkSpeed: 12, sparkEvery: [0.45, 0.9], sparkWarn: 0.15, sparkDelay: 0.4, playSpeed: 1 } }, // levels: more, faster sparks with less warning, a faster test game
   },
 };
 
@@ -465,6 +475,8 @@ export const ADDER = {
   camEase: 8,            // how fast the camera catches up (per s)
   overflowTime: 2.8,     // s of the OVERFLOW moment before the layer ends
   transition: 0.35,      // s of zooming in and out
+  // Levels (like the deep layers, DEEP.capLevel): faster, denser lanes up to the cap, then they stay there.
+  levels: { cap: { speed: [2.1, 4.2], gap: [[2.4, 4.8], [1.8, 3.6]] } },
   // Tron look like the deep layers (bg, floor grid, neon line and its halo); pulses use DEEP.hazard (deadly).
   style: {
     bg: 0x0c0a02, grid: 0x2a2408, line: 0xffe02a, glow: 0x4a400a,
@@ -1143,6 +1155,7 @@ export async function reloadAnim() {
 export const PLAYTEST = {
   levels: [0, 0.25, 0.5, 0.75, 1], // noise levels swept; 0 is the bare bot, 1 is a sloppy player
   runs: 20,              // seeded runs per layer and level (--quick: quickRuns)
+  levelNoise: [0.25, 0.5], // noise levels of the game-level sweep (--levels)
   quickRuns: 5,
   // Noise at level 1; every knob scales linearly with the level.
   noise: {

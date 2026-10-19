@@ -90,7 +90,7 @@ export default {
   subtitle: 'BEAT THE FRAME TIMER: TAKE 3 PIXELS\nTO THEIR PALETTE COLORS, THEN THE DAC',
   cols: COLS, rows: ROWS,
   start: { x: 4, y: 8 },
-  get goal() { return C.goal; }, // read live: hard mode can change it (hard.js)
+  get goal() { return C.goal; }, // read live: levels can change it (levels.js)
 
   init() {
     return { frame: null, frameT: 0, carry: [], follow: null, tile: null, out: null, dropped: -99 };

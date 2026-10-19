@@ -52,7 +52,7 @@ export default {
   subtitle: 'CARRY THE 4 CUT WIRES TO THEIR PINS\nTHEN PLAY WITH THE STICK',
   cols: COLS, rows: ROWS,
   start: C.start,
-  get goal() { return C.goal; }, // read live: hard mode can change it (hard.js)
+  get goal() { return C.goal; }, // read live: levels can change it (levels.js)
   dots: false,
   TOP, STICK, ROUTE, DIRS,   // for the playtest bot
 
