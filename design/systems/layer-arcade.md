@@ -68,13 +68,15 @@ the arcade as a place.
   glitter. Talking to it: one line with the note taped to the bottom ("MY SISTER LOVED THIS ONE AS A KID."), then
   LOOK CLOSER / CLOSE. LOOK CLOSER shows it big over the dimmed hall: turn it, tap it to shake, tap outside to put
   it down. Turning stirs the water and the glitter flies, then slowly settles; a soft chime plays. The note is in the
-  text only. *(Quirin, defaults accepted 2026-10-19)*
+  text, and also taped under the base of the 3D globe (tip it over to read it). *(Quirin, defaults accepted 2026-10-19)*
   - **3D close-up** *(decided, Quirin, defaults accepted 2026-10-19)*: LOOK CLOSER shows the globe in 3D (the FLAT
     picture and its switch are gone). The camera looks down on it from a little above (`HALL.globe3d.pitch`), so the
-    settled globe shows the top of the snow and the base's rim. The glass (44 px radius) and the unicorn are about
-    a fifth bigger than at first; the base kept its size. The globe is
-    a model of colored spheres (`src/settings/globe-model.json`: unicorn shapes, mane and tail strands, the snowy
-    mound and the base) drawn by a small pixel renderer (`src/systems/globeRender.js`, 152x152 art px at the hall's
+    settled globe shows the top of the meadow and the base's rim. The glass has a 52 px radius; the unicorn is about
+    a fifth bigger than at first; the base is a flat stand (14 px tall, same width as before). Inside: the unicorn on
+    a green meadow hill, a fluffy cloud fixed overhead (upper left, behind the horn). The note
+    (`assets/arcade/globe-note.png`, written in the 3x5 pixel font) is taped under the stand. The globe is
+    a model of colored spheres (`src/settings/globe-model.json`: unicorn shapes, the cloud, mane and tail strands, the
+    meadow mound and the base) drawn by a small pixel renderer (`src/systems/globeRender.js`, 152x152 art px at the hall's
     4x): three light bands per part with a 2x2 dither at their edges, a 1 px outline wherever the depth jumps,
     glitter as single pixels, the glass rim and a shine that stays put while the globe turns. Colors come from
     `assets/arcade/globe-palette.png` (one row per part: outline, dark, mid, light; rows in `HALL.globe3d.palette`).
@@ -83,7 +85,8 @@ the arcade as a place.
     it along on a spring, so the globe turns any way (tip it, spin it, upside down) about its glass center; it never
     slides across the screen. The base is heavy: let go and it swings back upright, wobbling a little. The water
     lags behind the glass, and that lag stirs it; glitter flakes ride the water, sink slowly and flash as they
-    tumble. Mane and tail are 12 bead chains that float in the water, trail behind turns and fall back into shape.
+    tumble. Mane and tail are 12 thick bead chains that float in the water, trail behind turns and fall back into shape;
+    they collide with the unicorn's body, so they never pass through it.
     A tap jolts the globe, spins it a little and churns the water, with the chime. Arrow keys tip it, Space shakes.
   - Not built: a lab bench for the globe (add one if the feel needs tuning), 3D in the hall tile.
 - **More decorations** *(decided, Quirin, 2026-10-19)*: a stuffed **rabbit** with long floppy limbs, red/pink, on
@@ -153,3 +156,4 @@ the arcade as a place.
 - 2026-10-19: Snow globe close-up: glass and unicorn bigger (glass radius 36 to 44, unicorn scaled with it), base unchanged; the camera looks down from a little above (0.35 rad) so the settled globe is seen diagonally from above; the FLAT mode and its switch dropped. (Quirin)
 - 2026-10-19: The sweater moves from the back wall (unreachable there) to the floor, lying in the middle of the rug. (Quirin)
 - 2026-10-19: The other cabinets become playable, one level each for a coin (Space Invaders, Asteroids, Donkey Kong); Galaxian is broken and eats the coin; a Game Boy Color with Pokemon Red lies on the floor, batteries dead; walking into our cabinet zooms straight down, talking to it asks PLAY / NOT NOW; a mini-Gurke hidden in each game; each machine gets its own background track. Defaults accepted (full-screen scene per game, touch controls, no reward, no bot). (Quirin) Claude picked where the mini-Gurke hides in each game and wrote the dialog lines.
+- 2026-10-19: Snow globe close-up: glass bigger again (radius 52, unicorn kept), flat stand (14 px instead of 28), thicker mane and tail that collide with the body, a green meadow instead of snow (also in the hall tile), a fluffy cloud overhead, and the note taped under the stand (read it by tipping the globe over). (Quirin) Claude picked the cloud's spot (upper left, behind the horn) and that the note only shows on the underside.

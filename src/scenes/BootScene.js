@@ -877,8 +877,9 @@ export default class BootScene extends Phaser.Scene {
 
   // arcade/pac-<right|up|down>-<frame> (the game flips right for left) and arcade/ghost-<name>-<dir>-<frame>, the
   // ghost visitors with their cap on (seen from behind when walking up).
-  // The snow globe in the hall: its tile (arcade/snow-globe), a white unicorn with a rainbow mane on a snowy mound, in
-  // a glass sphere on a pink base. Also the 3D close-up's palette (arcade/globe-palette).
+  // The snow globe in the hall: its tile (arcade/snow-globe), a white unicorn with a rainbow mane on a green meadow,
+  // in a glass sphere on a pink base. Also the 3D close-up's palette (arcade/globe-palette) and the note taped under
+  // its base (arcade/globe-note, top edge toward the front of the globe).
   makeSnowGlobe(rect, tile, shadow) {
     const G = HALL.globe, R = G.rainbow;
     const ellipse = (set, cx, cy, rx, ry, c) => {
@@ -892,7 +893,7 @@ export default class BootScene extends Phaser.Scene {
       shadow(set);
       ellipse(set, 8, 6.5, 5.5, 5.5, G.glassEdge);
       ellipse(set, 8, 6.5, 4.5, 4.5, G.glass);
-      rect(set, 4, 9, 8, 2, G.snow);
+      rect(set, 4, 9, 8, 2, G.meadow);
       rect(set, 6, 7, 3, 2, G.unicorn); set(9, 6, G.unicorn); set(10, 5, G.horn); // the unicorn
       set(5, 8, R[0]); set(6, 6, R[2]); set(8, 6, R[4]); // its rainbow
       set(5, 4, G.colors[0]); set(10, 3, G.colors[1]); set(7, 3, G.colors[3]); set(11, 7, G.colors[0]); // glitter
@@ -902,6 +903,14 @@ export default class BootScene extends Phaser.Scene {
     // The 3D close-up's colors (HALL.globe3d.palette): one row per part, columns outline, dark, mid, light.
     const P = HALL.globe3d.palette, rows = Object.keys(P);
     this.pixels('arcade/globe-palette', 4, rows.length, (set) => rows.forEach((k, y) => P[k].forEach((c, x) => set(x, y, c))));
+    const N = HALL.globe3d.note, { w: nw, h: nh } = N.size;
+    this.pixels('arcade/globe-note', nw, nh, (set) => {
+      rect(set, 0, 0, nw, nh, N.paperEdge);
+      rect(set, 1, 1, nw - 2, nh - 2, N.paper);
+      rect(set, nw / 2 - 6, 0, 12, 3, N.tape);
+      const pen = { fillRect: (x, y) => set(x, y, N.ink) };
+      N.lines.forEach((l, i) => tinyText(pen, l, Math.round((nw - (l.length * 4 - 1)) / 2), 5 + i * 6));
+    });
   }
 
   makeHallCharacters() {
