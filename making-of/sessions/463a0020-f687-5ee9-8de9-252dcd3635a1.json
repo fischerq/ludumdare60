@@ -1,0 +1,69 @@
+{
+ "session_id": "463a0020-f687-5ee9-8de9-252dcd3635a1",
+ "title": "Estimated human work time in making-of",
+ "session_url": "https://claude.ai/code/session_01LmTd5MR8LomqXhWUq4pPTk",
+ "claude_code_version": "2.1.304",
+ "first_date": "2026-10-20",
+ "last_date": "2026-10-20",
+ "turns": [
+  {
+   "index": 1,
+   "seq": 116,
+   "date": "2026-10-20",
+   "duration_s": 107,
+   "prompt": "Add an estimated human work time to the making of. Estimate it based on the activity in claude/GitHub (i mostly spent time writing prompts, reviewing results, playtesting in between). Roughly 10-15 on Saturday 10-13 sunday and yesterday night 10-midnight were blocks of focus, rest was on the go.",
+   "followups": [],
+   "images": [],
+   "claude_images": [
+    "media/463a0020-1-c1.jpg"
+   ],
+   "reply": "Works. Publishing the tile screenshot, then committing and opening the PR.",
+   "progress_notes": [
+    "Pulling prompt times from the session logs to build the estimate.",
+    "Now the page: the time tile shows the human estimate with Claude's time as its subtitle, and the explainer gets the method.",
+    "Taking a phone screenshot of the making-of page to check it."
+   ],
+   "tools": {
+    "Bash": 17,
+    "mcp__claude-code-remote__list_events": 2,
+    "Read": 1,
+    "mcp__github__list_pull_requests": 1
+   },
+   "api_requests": 20,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 40,
+     "cache_write_5m": 0,
+     "cache_write_1h": 51004,
+     "cache_read": 1716160,
+     "output": 7562,
+     "thinking": 2482,
+     "cost_usd": 0.902664
+    }
+   },
+   "cost_usd": 0.902664,
+   "commits": [],
+   "entrypoint": "remote_mobile",
+   "branch": "claude/estimated-work-time-cz0pfo",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.44,
+     "end": 0.44,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.06,
+     "end": 0.06,
+     "delta": 0.0
+    }
+   }
+  }
+ ],
+ "totals": {
+  "prompts": 1,
+  "cost_usd": 0.902664,
+  "output_tokens": 7562,
+  "input_tokens": 1767204
+ },
+ "reported_by_claude_code": null
+}

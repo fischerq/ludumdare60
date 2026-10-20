@@ -17,5 +17,9 @@
   },
   "prompt_kinds": {
     "00d8a3e0-14": "nudge"
+  },
+  "human_time": {
+    "hours": 20,
+    "note": "A rough estimate by Quirin and Claude, up to the end of the jam: mostly writing prompts, reviewing results and playtesting on the phone in between. About 10 h were focused blocks (Saturday 10:00–15:00, Sunday 10:00–13:00, Monday 22:00–24:00). About 7 h more went into short sessions on the go during the jam, counted from the prompts sent outside those blocks: each run of prompts sent within half an hour of each other, plus about 10 minutes to write the first and test the last. About 3 h went into the setup before the jam (picking the engine, the repo and Netlify, 21 prompts and their merges, at roughly 8 minutes a prompt like during the jam). Max's art time isn't included."
   }
 }

@@ -165,7 +165,10 @@ function renderStats(turns, meta, repo, manualCount, sessionCount) {
     repo ? [repo.prs_merged, 'pull requests merged', `${repo.lines_of_code.toLocaleString()} lines of code · ${plural(repo.commits, 'commit')}`] : null,
     tracked ? [share, `of a month of ${plan || 'the subscription'}`, `${amount ? `${amount} of ${money(price)} · ` : ''}${below ? '<1%' : fmtPct(weekly)} of a weekly limit`] : null,
     [fmtNum(tk.read + tk.out), 'tokens', `${fmtNum(tk.out)} written · ${fmtNum(tk.read)} read`],
-    [fmtDur(secs), 'Claude working', `${fmtDur(Math.round(secs / Math.max(1, turns.length)))} per prompt on average`],
+    // Human time is a hand-written estimate (`human_time` in meta.json); Claude's own time rides along as the subtitle.
+    meta.human_time
+      ? [`≈${meta.human_time.hours} h`, 'human work (estimate)', `Claude working ${fmtDur(secs)} · ${fmtDur(Math.round(secs / Math.max(1, turns.length)))} per prompt`]
+      : [fmtDur(secs), 'Claude working', `${fmtDur(Math.round(secs / Math.max(1, turns.length)))} per prompt on average`],
     [fmtUSD(cost), 'at API list prices', 'for reference; paid via the subscription'],
   ].filter(Boolean);
   $('#stats').innerHTML = tiles.map(([v, k, sub]) =>
@@ -415,6 +418,7 @@ async function main() {
   if (meta.about) $('#lede').innerHTML = md(meta.about);
   plan = meta.plan || '';
   if (meta.plan_note) $('#plan-note').textContent = meta.plan_note;
+  if (meta.human_time?.note) $('#human-note').textContent = meta.human_time.note;
   $('#links').innerHTML = [
     meta.game_url && `<a href="${esc(meta.game_url)}">Play the game</a>`,
     meta.repo_url && `<a href="${esc(meta.repo_url)}" target="_blank" rel="noopener">Source code</a>`,
