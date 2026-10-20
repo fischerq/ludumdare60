@@ -118,8 +118,8 @@ Every human prompt and its token usage/cost is published in `making-of/` as a sc
   which takes a phone-size shot and publishes it; `--root <worktree>` shoots an old commit for backfilling. Turns
   that only touch docs, tooling or the log don't need one. The exporter attaches them to that turn as Claude's
   images, also for sessions whose transcript is gone.
-- The headline has six equal tiles: prompts, merged PRs (lines of code, commits), subscription share, tokens, Claude
-  time, API list price. PR count and lines of code come from git via `making-of/repo-stats.json` (written by the exporter).
+- The headline has six equal tiles: prompts, merged PRs (lines of code, commits), subscription share, tokens, human work
+  time (hand-written estimate in `human_time` in `meta.json`, with Claude time as its subtitle), API list price. PR count and lines of code come from git via `making-of/repo-stats.json` (written by the exporter).
 - **Commits made outside Claude Code** (Max's art, anyone's direct pushes) show up automatically: the exporter turns
   every non-merge commit not authored by Claude into a timeline entry in `making-of/commits.json` (generated, never
   edit it), with a before/after pair for each changed file under `assets/` (copied to `making-of/media/art/<sha8>/`).
