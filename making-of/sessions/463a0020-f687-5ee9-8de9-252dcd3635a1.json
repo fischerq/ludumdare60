@@ -10,39 +10,46 @@
    "index": 1,
    "seq": 116,
    "date": "2026-10-20",
-   "duration_s": 107,
+   "duration_s": 123,
    "prompt": "Add an estimated human work time to the making of. Estimate it based on the activity in claude/GitHub (i mostly spent time writing prompts, reviewing results, playtesting in between). Roughly 10-15 on Saturday 10-13 sunday and yesterday night 10-midnight were blocks of focus, rest was on the go.",
    "followups": [],
    "images": [],
    "claude_images": [
     "media/463a0020-1-c1.jpg"
    ],
-   "reply": "Works. Publishing the tile screenshot, then committing and opening the PR.",
+   "reply": "I added an estimated human work time of **about 20 hours** (up to the end of the jam) to the making-of page. It's a rough estimate:\n\n- **About 10 h of focused work:** your blocks on Saturday 10–15, Sunday 10–13 and last night 22–24.\n- **About 7 h on the go during the jam:** worked out from the 51 prompts you sent outside those blocks. Prompts sent within half an hour of each other count as one stretch, from the first to the last, and each stretch gets about 10 extra minutes for writing the first prompt and testing the result.\n- **About 3 h of setup before the jam (7–10 Oct):** the engine chat, the repo, Netlify, and 21 prompts with their merges. Those days have no recorded clock times, so I used about 8 minutes per prompt, which is roughly the rate during the jam.\n\nToday's work after the jam isn't counted, and neither is Max's art time.\n\nOn the page, the time tile now shows \"≈20 h · human work (estimate)\", with Claude's working time (13 h 46 min) moved into its subtitle, so the headline still has six tiles. The breakdown is under \"How to read the numbers\". The estimate is hand-written in `human_time` in `making-of/meta.json`, so changing the number is a one-line edit.\n\n**To test on the phone:** open the making-of page and check the fifth tile, then expand \"How to read the numbers\" to read the breakdown.\n\nPR: https://github.com/fischerq/ludumdare60/pull/114\n\nPlan usage at the start of this turn was 44% of the 5-hour limit and 6% of the weekly limit.",
    "progress_notes": [
     "Pulling prompt times from the session logs to build the estimate.",
     "Now the page: the time tile shows the human estimate with Claude's time as its subtitle, and the explainer gets the method.",
-    "Taking a phone screenshot of the making-of page to check it."
+    "Taking a phone screenshot of the making-of page to check it.",
+    "Works. Publishing the tile screenshot, then committing and opening the PR."
    ],
    "tools": {
     "Bash": 17,
     "mcp__claude-code-remote__list_events": 2,
     "Read": 1,
-    "mcp__github__list_pull_requests": 1
+    "mcp__github__list_pull_requests": 1,
+    "mcp__github__create_pull_request": 1
    },
-   "api_requests": 20,
+   "api_requests": 22,
    "usage": {
     "claude-opus-5-5": {
-     "input": 40,
+     "input": 44,
      "cache_write_5m": 0,
-     "cache_write_1h": 51004,
-     "cache_read": 1716160,
-     "output": 7562,
-     "thinking": 2482,
-     "cost_usd": 0.902664
+     "cache_write_1h": 52004,
+     "cache_read": 1911009,
+     "output": 8637,
+     "thinking": 2504,
+     "cost_usd": 0.97115
     }
    },
-   "cost_usd": 0.902664,
-   "commits": [],
+   "cost_usd": 0.97115,
+   "commits": [
+    {
+     "sha": "8f9a97e4b1c7dc54b1f7c0891abe50d061c36749",
+     "subject": "Making-of: estimated human work time in the headline"
+    }
+   ],
    "entrypoint": "remote_mobile",
    "branch": "claude/estimated-work-time-cz0pfo",
    "plan_usage": {
@@ -57,13 +64,67 @@
      "delta": 0.0
     }
    }
+  },
+  {
+   "index": 2,
+   "seq": 117,
+   "date": "2026-10-20",
+   "duration_s": 43,
+   "prompt": "The 7h on the go seem wrong. Should have a cutoff more like 5min to make a stretch. Should model on a timeline and merge adjacent ones accordingly",
+   "followups": [],
+   "images": [],
+   "claude_images": [
+    "media/463a0020-2-c1.jpg"
+   ],
+   "reply": "The check failed because the local server from last turn is gone. Restarting it.",
+   "progress_notes": [
+    "The 5-minute model brings \"on the go\" down to about 3.5 h (207 min). Updating the note and number."
+   ],
+   "tools": {
+    "Bash": 4,
+    "mcp__claude-code-remote__list_events": 2
+   },
+   "api_requests": 4,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 8,
+     "cache_write_5m": 0,
+     "cache_write_1h": 60596,
+     "cache_read": 361830,
+     "output": 2648,
+     "thinking": 541,
+     "cost_usd": 0.610126
+    }
+   },
+   "cost_usd": 0.610126,
+   "commits": [],
+   "entrypoint": "remote_mobile",
+   "branch": "claude/estimated-work-time-cz0pfo",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.16,
+     "end": 0.16,
+     "delta": 0.0
+    },
+    "seven_day": {
+     "start": 0.16,
+     "end": 0.16,
+     "delta": 0.0
+    }
+   }
   }
  ],
  "totals": {
-  "prompts": 1,
-  "cost_usd": 0.902664,
-  "output_tokens": 7562,
-  "input_tokens": 1767204
+  "prompts": 2,
+  "cost_usd": 1.581276,
+  "output_tokens": 11285,
+  "input_tokens": 2385491
  },
- "reported_by_claude_code": null
+ "reported_by_claude_code": {
+  "total_usd": 1.0256049999999999,
+  "by_model": {
+   "claude-haiku-5-5": 0.000137,
+   "claude-opus-5-5": 1.025468
+  }
+ }
 }
