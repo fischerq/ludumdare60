@@ -10,14 +10,14 @@
    "index": 1,
    "seq": 110,
    "date": "2026-10-20",
-   "duration_s": 1452,
+   "duration_s": 1474,
    "prompt": "Do a full playtest (test every interaction), fix bugs you find (e.g. crashes)",
    "followups": [],
    "images": [],
    "claude_images": [
     "media/f60ac814-1-c1.jpg"
    ],
-   "reply": "All three bugs reproduce on the old code and are gone with the fixes. Taking the screenshot for the making-of, then committing.",
+   "reply": "I ran a full playtest in a headless phone browser and found and fixed three bugs. All three fixes are in PR #110: https://github.com/fischerq/ludumdare60/pull/110\n\n**What the playtest covered:**\n- Every scene with random taps, swipes, holds and keys.\n- Scripted runs of every hall and lobby interaction with each of its choices, with the lobby at four stages of progress.\n- Each deep layer cleared, then NEXT LEVEL, then BACK, in normal and hard mode.\n- The maze's game over (with and without coins) and clear, and level 256 through to the credits.\n- The adder's overflow.\n- The three hall mini games, ending in a win, a loss and a quit.\n- The lab, making-of, event, Impressum and manual pages.\n\n**Bugs fixed** (all from leftover state when a scene is entered again; each one happens on the old code and is gone with the fix):\n1. **Lobby crash:** pulling the cheat lever that turns off \"all subsystems won\" crashed the game.\n2. **Credits stuck:** the second time the credits played in a session (for example the film reel twice), BACK, ESC and tapping did nothing.\n3. **Cabinet hint missing:** coming down to the cabinet a second time with no coins, the \"NEED COINS? / LAYER UP\" box never appeared.\n\nI also fixed `lab/playtest.html`, whose level tables made the page scroll sideways on a phone; they now scroll inside their card. It still requests a hard-mode results file that was never committed, but the page handles the missing file without breaking.\n\nNothing else raised errors. Two things look odd in the test but are how the game is built: credits don't skip on a tap (hold to fast-forward, tap once it's over), and when you're out of coins after a game over only the LAYER UP button works.\n\n**To test on the phone:**\n- In the lobby, pull lever 2 (on, then off): the room should restart cleanly.\n- Watch the film reel twice: BACK should work both times.\n- Spend your coin, go down to the cabinet with none left, go up a layer and come back: the NEED COINS? box should show again.\n\nPlan usage at the end of this turn: about 17% of the 5-hour limit, 50% weekly.",
    "progress_notes": [
     "Checking out the existing tooling. Next I'll write a headless-browser script that opens every scene, taps and swipes everywhere, and logs any errors.",
     "Meanwhile, starting the remaining scenes in parallel on a different port.",
@@ -35,7 +35,8 @@
     "Two lab issues: `lab/playtest.html` asks for a `results-hard.json` that was never committed, and it scrolls sideways on a phone (405px wide at 360). Looking.",
     "The missing file is handled (it's optional), so the 404 is harmless. Finding what overflows the page.",
     "The level tables aren't wrapped like the others, so they overflow the card. Wrapping them in a container that scrolls sideways.",
-    "Page scroll fixed. Now checking the three game fixes directly: lever pull in the lobby, credits played twice, and two visits to the cabinet without coins."
+    "Page scroll fixed. Now checking the three game fixes directly: lever pull in the lobby, credits played twice, and two visits to the cabinet without coins.",
+    "All three bugs reproduce on the old code and are gone with the fixes. Taking the screenshot for the making-of, then committing."
    ],
    "tools": {
     "Bash": 62,
@@ -44,21 +45,22 @@
     "Edit": 2,
     "Monitor": 1,
     "TaskStop": 1,
-    "mcp__github__list_pull_requests": 1
+    "mcp__github__list_pull_requests": 1,
+    "mcp__github__create_pull_request": 1
    },
-   "api_requests": 68,
+   "api_requests": 70,
    "usage": {
     "claude-opus-5-5": {
-     "input": 136,
+     "input": 140,
      "cache_write_5m": 0,
-     "cache_write_1h": 143630,
-     "cache_read": 9640650,
-     "output": 29583,
-     "thinking": 7772,
-     "cost_usd": 3.669374
+     "cache_write_1h": 145185,
+     "cache_read": 10020933,
+     "output": 31132,
+     "thinking": 7818,
+     "cost_usd": 3.788867
     }
    },
-   "cost_usd": 3.669374,
+   "cost_usd": 3.788867,
    "commits": [
     {
      "sha": "3d0bfce7e62edd73953643368b2a695b1c3f5632",
@@ -131,6 +133,22 @@
     {
      "sha": "5ea54217d89d2210b145fd113b9077c4ba7e3ccb",
      "subject": "Merge origin/main into ccr-368b67e4-ewfd82"
+    },
+    {
+     "sha": "4cd4a167a3aec19b523aa6bbc5345bc1394bd2b0",
+     "subject": "Playtest fixes: lobby crash after a lever pull, credits stuck on the second roll, cabinet NEED COINS gone on the second visit"
+    },
+    {
+     "sha": "0099f17f9a39f22ad35f31bed69b2b6d04a8f213",
+     "subject": "Merge pull request #110 from fischerq/ccr-368b67e4-ewfd82"
+    },
+    {
+     "sha": "b2ae8d092cd31b8a2e295774f8e381e0c9b4889b",
+     "subject": "Snow globe: smaller cloud off to the left, a moon, daisies, a mane of 12 short swept-back strands"
+    },
+    {
+     "sha": "a6234d3f52347ce5d1ae3d6bce1e6fc6650d7992",
+     "subject": "Merge origin/main into ccr-33a95e3c-6i9j5t"
     }
    ],
    "entrypoint": "remote_mobile",
@@ -147,13 +165,114 @@
      "delta": 0.05
     }
    }
+  },
+  {
+   "index": 2,
+   "seq": 115,
+   "date": "2026-10-20",
+   "duration_s": 1381,
+   "prompt": "Do another check for consistency across the games (placement of buttons, scores etc.). I think the pacman arcade machine diverged abit and has a different menu.\nMake the font for the labeled things in the lkwer level games a bit bigger so its more readable",
+   "followups": [
+    {
+     "text": "Make the maze hud text a bit smaller to match",
+     "after_reply_index": 6
+    },
+    {
+     "text": "The placement of instructions is inconsistent put it always on top",
+     "after_reply_index": 9
+    }
+   ],
+   "images": [],
+   "claude_images": [
+    "media/f60ac814-2-c1.jpg",
+    "media/f60ac814-2-c2.jpg",
+    "media/f60ac814-2-c3.jpg"
+   ],
+   "reply": "The force push was blocked. It isn't needed: `main` already contains the branch's merged commits, so a normal push should fast-forward.",
+   "progress_notes": [
+    "Starting from the latest `main` (the last PR was merged). First I'll screenshot every game screen side by side to compare HUDs, buttons and text sizes.",
+    "Several deep layers look cut off on the right. That may just be 16 pages rendering at once and slowing the zoom-in, so I'll reshoot them one at a time to be sure.",
+    "Those were artifacts of the parallel run; the layers render fine. The small labels (VRAM, TILES, PALETTE, ROM/RAM/Z80, MODE SCATTER, ...) are the tiny ones. Checking how they're drawn.",
+    "Also checking the frame-timer bar's `k` doesn't collide with the new `k` variables, then screenshotting.",
+    "The labels are now twice the size and readable. Committing this part so you can test it while I put the consistency questions to you.",
+    "Going with your picks: the other machines get Pac-Man's arcade HUD, the deep HUD text goes to 1.5x, and both small fixes are in. Reading the mini-game config first.",
+    "Now the deep layers' HUD: 12px text needs more room at the top, so the play area's top margin will follow the subtitle's height instead of a fixed 72.",
+    "The info line under the counter can run to 37 characters, which would wrap at 12px and hit the LAYER UP button, so it stays at 8px; the GOALS line goes to 12px.",
+    "The changes are in. Now screenshotting the maze, the three machines, three deep layers and the adder to check the new layout.",
+    "The hall and lobby now use the shared size, and input wires renders fine on its own. Now moving the instructions up. Checking how much room the maze has at the top.",
+    "The inside-the-screen hint can be two lines, so the top area reserves two lines for the hint in every layer.",
+    "The adder's controls line runs under the sound button; centering it in the space left of the button like the title.",
+    "Re-running the scripted playtest found no errors. Recording the decisions in the design docs.",
+    "Retaking the making-of screenshots so they show the final state.",
+    "Resolving a merge conflict with `main` in the hall design doc's decision log (keeping both sides), then pushing.",
+    "Pushed. Quick check that the game still boots cleanly with the latest `main` merged in.",
+    "The consistency pass is done and in PR #112: https://github.com/fischerq/ludumdare60/pull/112. A scripted re-run of the deep layers, maze, adder and the three machines showed no errors.\n\n- **Pac-Man vs the other machines:** Invaders, Asteroids and Kong now have the maze's HUD: 1UP and HIGH SCORE across the top, and spare lives as icons next to LAYER UP. Each machine remembers its own best score on the phone. Kong's \"HELP!\" no longer sits under the sound button.\n- **Text size:** all HUD text in every game is now the same size (24 screen px, set by `hudPx` in `src/config.js`):\n  - The maze HUD is a bit smaller.\n  - The deep layers' level, title, subtitle and goals line are 1.5x. The play area moves down to make room.\n  - The hall's coin count and the lobby's \"INSIDE THE CABINET\" title use the same size.\n- **Instructions on top:**\n  - \"SWIPE TO TURN / EAT ALL THE DOTS\" is now above the maze, and the maze moved down a bit.\n  - In the deep layers, the hint line (\"PICK UP THE PATCH\" and so on) is under the subtitle. Only the goals counter is still at the bottom.\n  - The adder's \"TAP: HOP UP / SWIPE: HOP THAT WAY\" is under its title, and its LEVEL is top-left like everywhere else.\n- **Labels inside the deep layers:** VRAM, TILES, PALETTE, the palette numbers, the frame timer, ROM/RAM/Z80/I/O and MODE SCATTER are drawn twice as big.\n\n**Two instructions I left in place:**\n- \"TAP THE COIN DOOR\" in the cabinet is a box that points at the door, so it stays next to it.\n- \"FLICK THE COIN INTO THE SLOT\" stays at the bottom, because the coin and the BACK button take up the top of that screen.\n\nSay if you want either moved anyway.\n\n**To test on the phone:**\n- Play a round of Kong or Invaders and check the 1UP / HIGH SCORE row and the life icons.\n- Open the video board and the system bus layers: the labels should be readable and the hint should sit at the top.\n\nPlan usage: about 35% of the 5-hour limit, 55% weekly.",
+    "That notice is about an old background waiter from the first playtest. It hit its time limit, but I had already read its results, so nothing needs re-running and nothing changes. PR #112 has since been merged.",
+    "PR #112 is merged, so I'll restart the branch from `main`, commit the updated log there, and open a PR for it."
+   ],
+   "tools": {
+    "Bash": 59,
+    "Read": 9,
+    "mcp__claude-code-remote__list_events": 2,
+    "AskUserQuestion": 1,
+    "mcp__github__create_pull_request": 1
+   },
+   "api_requests": 71,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 144,
+     "cache_write_5m": 0,
+     "cache_write_1h": 99326,
+     "cache_read": 17910469,
+     "output": 46198,
+     "thinking": 19681,
+     "cost_usd": 5.301238
+    }
+   },
+   "cost_usd": 5.301238,
+   "commits": [
+    {
+     "sha": "ffd4cfc1a54e78a4bc86ca578562cd6058114519",
+     "subject": "Merge pull request #111 from fischerq/ccr-33a95e3c-6i9j5t"
+    },
+    {
+     "sha": "f446fbe821c7ee504f1777a33a6c4ddc1b0a1a5b",
+     "subject": "One HUD across the games: shared text size, instructions on top, arcade HUD on the other machines, bigger layer labels"
+    },
+    {
+     "sha": "76f4042dd884e61d79eda3bca5b418fecd208d02",
+     "subject": "Merge remote-tracking branch 'origin/main' into ccr-368b67e4-ewfd82"
+    },
+    {
+     "sha": "634f006ec2409af397863376606a83beeecfaf90",
+     "subject": "Merge pull request #112 from fischerq/ccr-368b67e4-ewfd82"
+    },
+    {
+     "sha": "56f20cf0022a55ea3601a351193b1a137b52bad1",
+     "subject": "Merge origin/main into ccr-368b67e4-ewfd82"
+    }
+   ],
+   "entrypoint": "remote_mobile",
+   "branch": "ccr-368b67e4-ewfd82",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0.17,
+     "end": 0.35,
+     "delta": 0.18
+    },
+    "seven_day": {
+     "start": 0.5,
+     "end": 0.55,
+     "delta": 0.05
+    }
+   }
   }
  ],
  "totals": {
-  "prompts": 1,
-  "cost_usd": 3.669374,
-  "output_tokens": 29583,
-  "input_tokens": 9784416
+  "prompts": 2,
+  "cost_usd": 9.090105,
+  "output_tokens": 77330,
+  "input_tokens": 28176197
  },
  "reported_by_claude_code": null
 }
