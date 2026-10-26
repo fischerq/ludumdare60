@@ -1,0 +1,63 @@
+{
+ "session_id": "ea312967-26ea-59ca-9dd3-d1d57d9a00d0",
+ "title": "Project cost measurement method",
+ "session_url": "https://claude.ai/code/session_01XgA5C6UmUsyKupoHFmEhJD",
+ "claude_code_version": "2.1.310",
+ "first_date": "2026-10-26",
+ "last_date": "2026-10-26",
+ "turns": [
+  {
+   "index": 1,
+   "seq": 118,
+   "date": "2026-10-26",
+   "duration_s": 48,
+   "prompt": "Give me a summary how you measured cost on this project. I want to use it in a different one",
+   "followups": [],
+   "images": [],
+   "claude_images": [],
+   "reply": "",
+   "progress_notes": [],
+   "tools": {
+    "Bash": 4,
+    "ToolSearch": 2,
+    "mcp__claude-code-remote__list_events": 2,
+    "mcp__github__list_pull_requests": 1
+   },
+   "api_requests": 5,
+   "usage": {
+    "claude-opus-5-5": {
+     "input": 10,
+     "cache_write_5m": 0,
+     "cache_write_1h": 36461,
+     "cache_read": 355227,
+     "output": 1671,
+     "thinking": 187,
+     "cost_usd": 0.396193
+    }
+   },
+   "cost_usd": 0.396193,
+   "commits": [],
+   "entrypoint": "remote_mobile",
+   "branch": "ccr-d6cc2642-f4b601",
+   "plan_usage": {
+    "five_hour": {
+     "start": 0,
+     "end": 0,
+     "delta": 0
+    },
+    "seven_day": {
+     "start": 0.97,
+     "end": 0.97,
+     "delta": 0.0
+    }
+   }
+  }
+ ],
+ "totals": {
+  "prompts": 1,
+  "cost_usd": 0.396193,
+  "output_tokens": 1671,
+  "input_tokens": 391698
+ },
+ "reported_by_claude_code": null
+}
